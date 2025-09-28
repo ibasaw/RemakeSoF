@@ -65,10 +65,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float torsoMaxYaw = 90f; // degrees for normalization
 
 	[Header("BGPlayer Bones")]
-	[SerializeField] private Transform modelRoot;
 	[SerializeField] private Transform lowerLumbar;
 	[SerializeField] private Transform upperLumbar;
 	[SerializeField] private Transform cranium;
+	[SerializeField] private Transform modelRoot;
 
 	[Header("Bone Axis Multipliers")]
 	[SerializeField] private Vector3 legsMultiplier = new Vector3(1f, 1f, 1f);
@@ -91,6 +91,17 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private float lastTorsoYawNormalized = 0f;
 	private float lastHeadPitch = 0f;
 	private float lastHeadYaw = 0f;
+
+	// BGPlayer animation state
+	private BGPlayer.AnimInfo torsoInfo = new BGPlayer.AnimInfo();
+	private BGPlayer.AnimInfo legsInfo = new BGPlayer.AnimInfo();
+	private int currentTime = 0;
+	private int frameTime = 16; // ~60fps = 16ms per frame
+
+	// Lean state
+	private bool isLeaningLeft = false;
+	private bool isLeaningRight = false;
+	private int leanOffset = 0; // -30 for left, +30 for right, 0 for none
 
 	private void Awake()
 	{
@@ -130,23 +141,43 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	}
 	private void OnLeanLeftPerformed(InputAction.CallbackContext ctx)
 	{
-		Debug.Log("Q Pressed");
-		//TODO
+		Debug.Log("Q Pressed - Lean Left");
+		isLeaningLeft = true;
+		UpdateLeanOffset();
 	}
 	private void OnLeanLeftCanceled(InputAction.CallbackContext ctx)
 	{
-		Debug.Log("Q Released");
-		//TODO
+		Debug.Log("Q Released - Stop Lean Left");
+		isLeaningLeft = false;
+		UpdateLeanOffset();
 	}
 	private void OnLeanRightPerformed(InputAction.CallbackContext ctx)
 	{
-		Debug.Log("E Pressed");
-		//TODO
+		Debug.Log("E Pressed - Lean Right");
+		isLeaningRight = true;
+		UpdateLeanOffset();
 	}
 	private void OnLeanRightCanceled(InputAction.CallbackContext ctx)
 	{
-		Debug.Log("E Released");
-		//TODO
+		Debug.Log("E Released - Stop Lean Right");
+		isLeaningRight = false;
+		UpdateLeanOffset();
+	}
+
+	private void UpdateLeanOffset()
+	{
+		if (isLeaningLeft && !isLeaningRight)
+		{
+			leanOffset = -30; // Left lean
+		}
+		else if (isLeaningRight && !isLeaningLeft)
+		{
+			leanOffset = 30; // Right lean
+		}
+		else
+		{
+			leanOffset = 0; // No lean
+		}
 	}
 
 	private void OnDisable()
@@ -257,6 +288,12 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Set walking state based on input (like SoF2)
 		isWalking = isGrounded && (Mathf.Abs(moveInput.x) > 0.1f || Mathf.Abs(moveInput.y) > 0.1f);
+	}
+
+	private void LateUpdate()
+	{
+		// Update BGPlayer bone angles after all other updates
+		UpdateBGPlayerAngles();
 	}
 
 
@@ -478,13 +515,45 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (move.sqrMagnitude < 0.0001f)
 			return 0f;
 
-		// angle in degrees: forward is 0, right is 90
-		float ang = Mathf.Atan2(move.x, move.y) * Mathf.Rad2Deg; // x is right, y is forward
-		if (ang < 0f) ang += 360f;
+		// Convert to SoF2-style forwardmove/rightmove values (-1 to 1)
+		float forwardmove = move.y; // W/S keys
+		float rightmove = move.x;   // A/D keys
 
-		// Map to 8-direction index
-		int idx = Mathf.RoundToInt(ang / 45f) % 8;
-		return (float)idx;
+		// Exact SoF2 PM_SetMovementDir logic
+		if (rightmove == 0 && forwardmove > 0)
+		{
+			return 0; // forward
+		}
+		else if (rightmove < 0 && forwardmove > 0)
+		{
+			return 1; // forward-right
+		}
+		else if (rightmove < 0 && forwardmove == 0)
+		{
+			return 2; // right
+		}
+		else if (rightmove < 0 && forwardmove < 0)
+		{
+			return 3; // back-right
+		}
+		else if (rightmove == 0 && forwardmove < 0)
+		{
+			return 4; // back
+		}
+		else if (rightmove > 0 && forwardmove < 0)
+		{
+			return 5; // back-left
+		}
+		else if (rightmove > 0 && forwardmove == 0)
+		{
+			return 6; // left
+		}
+		else if (rightmove > 0 && forwardmove > 0)
+		{
+			return 7; // forward-left
+		}
+
+		return 0; // default
 	}
 
 	/// <summary>
@@ -650,6 +719,101 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 	}
 
+	private void UpdateBGPlayerAngles()
+	{
+		// Get current character view angles (not camera angles!)
+		Vector3 startAngles = Vector3.zero;
+		if (pitchTarget != null && yawTarget != null)
+		{
+			// Use character's actual view angles, not camera angles
+			startAngles = new Vector3(
+				pitchTarget.eulerAngles.x,  // pitch (up/down)
+				yawTarget.eulerAngles.y,    // yaw (left/right) 
+				0f                          // roll (fall over)
+			);
+		}
+		else if (cameraTransform != null)
+		{
+			// Fallback to camera if character transforms not available
+			startAngles = new Vector3(
+				cameraTransform.eulerAngles.x,  // pitch 
+				cameraTransform.eulerAngles.y,  // yaw
+				cameraTransform.eulerAngles.z   // roll (fall over)
+			);
+		}
+
+		// Calculate movement direction (0-7 like SoF2)
+		// Convert camera-relative input to character-relative movement
+		// Use pitchTarget and yawTarget for character's actual facing direction
+		Vector3 characterForward = Vector3.forward;
+		Vector3 characterRight = Vector3.right;
+		
+		if (pitchTarget != null && yawTarget != null)
+		{
+			// Use character's actual facing direction
+			characterForward = yawTarget.forward;
+			characterRight = yawTarget.right;
+		}
+		else if (cameraTransform != null)
+		{
+			// Fallback to camera if character transforms not available
+			characterForward = cameraTransform.forward;
+			characterRight = cameraTransform.right;
+		}
+		
+		// Project to horizontal plane
+		characterForward.y = 0;
+		characterRight.y = 0;
+		characterForward.Normalize();
+		characterRight.Normalize();
+		
+		// Calculate character-relative movement direction
+		Vector3 moveDirection = characterForward * moveInput.y + characterRight * moveInput.x;
+		Vector2 characterRelativeMove = new Vector2(moveDirection.x, moveDirection.z);
+		
+		float movementDir = ComputeMovementDir(characterRelativeMove);
+
+		// Get lean offset (0 = no lean, positive/negative for left/right)
+		// leanOffset is already set by UpdateLeanOffset() from input callbacks
+
+		// Pain/damage state (0 = no pain)
+		int painTime = 0;
+		int painDirection = 0;
+
+		// Calculate BGPlayer angles
+		lastAngles = BGPlayer.PlayerAngles(
+			startAngles,
+			torsoInfo,
+			legsInfo,
+			leanOffset,
+			painTime,
+			painDirection,
+			currentTime,
+			movementDir,
+			velocity,
+			false, // dead
+			frameTime
+		);
+
+		// Apply angles to bone transforms
+		BGPlayer.ApplyAnglesToBones(
+			lastAngles,
+			lowerLumbar,
+			upperLumbar,
+			cranium,
+			legsMultiplier,
+			lowerMultiplier,
+			upperMultiplier,
+			headMultiplier
+		);
+
+		// Update debug values for OnGUI
+		lastTorsoYawDeg = lastAngles.lowerTorsoAngles.y;
+		lastTorsoYawNormalized = lastAngles.lowerTorsoAngles.y;
+		lastHeadPitch = lastAngles.headAngles.x;
+		lastHeadYaw = lastAngles.headAngles.y;
+	}
+
 #if UNITY_EDITOR
 	private void OnDrawGizmos()
 	{
@@ -706,7 +870,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Input Info
 		GUI.Label(new Rect(x, y, 600, line), $"MoveInput: {moveInput}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"MovementDir: {lastAngles.movementDir:F1}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Jump Debounce: {jumpDebounce:F2}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Lean: Left={isLeaningLeft} Right={isLeaningRight} Offset={leanOffset}", valueStyle); y += line;
 		y += line * 0.5f; // Spacing
 
 		// Physics Settings

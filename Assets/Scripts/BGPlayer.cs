@@ -18,6 +18,7 @@ public static class BGPlayer
         public Vector3 lowerTorsoAngles;
         public Vector3 upperTorsoAngles;
         public Vector3 headAngles;
+        public float movementDir; // 0-7 movement direction
     }
 
     // Helper: normalize angle to 0..360
@@ -124,7 +125,7 @@ public static class BGPlayer
             }
         }
 
-        // legs yaw = headYaw + 2*movementOffsets[dir]
+        // legs yaw = headYaw + 2*movementOffsets[dir] (exact SoF2 implementation)
         legsAngles.y = headAngles.y + 2f * movementOffsets[dir];
         lowerTorsoAngles.y = headAngles.y + 2f * movementOffsets[dir];
 
@@ -146,10 +147,10 @@ public static class BGPlayer
             legsAngles.y = tmpLegs;
         }
 
-        float lowerDelta = AngleDelta(headAngles.y, legsAngles.y);
-        lowerDelta = Mathf.Clamp(lowerDelta, -90f, 90f);
-        lowerTorsoAngles.y = legsAngles.y + lowerDelta / 2f;
-        upperTorsoAngles.y = lowerDelta / 2f;
+        // Exact SoF2 calculation
+        lowerTorsoAngles.y = Mathf.Clamp(AngleDelta(headAngles.y, legsAngles.y), -90f, 90f);
+        upperTorsoAngles.y = lowerTorsoAngles.y / 2f;
+        lowerTorsoAngles.y = legsAngles.y + lowerTorsoAngles.y / 2f;
         headAngles.y = AngleMod(headAngles.y - upperTorsoAngles.y);
 
         // pitch: torso gets 75% of head pitch
@@ -186,6 +187,7 @@ public static class BGPlayer
         res.lowerTorsoAngles = lowerTorsoAngles;
         res.upperTorsoAngles = upperTorsoAngles;
         res.headAngles = headAngles;
+        res.movementDir = dir;
 
         return res;
     }
@@ -201,70 +203,47 @@ public static class BGPlayer
     }
 
     // Apply computed angles to Unity transforms.
-    // modelRoot: root transform that receives legsAngles as world rotation
     // lowerLumbar, upperLumbar, cranium: transforms for those bones
-    // Note: you may need to adjust axis conversions depending on your model
+    // Note: SoF2 uses PITCH=0, YAW=1, ROLL=2, Unity uses X=Pitch, Y=Yaw, Z=Roll
     // multipliers allow per-axis sign/scale adjustments for bones (useful to invert axes per-model)
-    public static void ApplyAnglesToBones(AnglesResult angles, Transform modelRoot, Transform lowerLumbar, Transform upperLumbar, Transform cranium,
+    public static void ApplyAnglesToBones(AnglesResult angles, Transform lowerLumbar, Transform upperLumbar, Transform cranium,
         Vector3 legsMultiplier, Vector3 lowerMultiplier, Vector3 upperMultiplier, Vector3 headMultiplier)
     {
-        if (modelRoot != null)
-        {
-            Vector3 legsEuler = new Vector3(angles.legsAngles.x * legsMultiplier.x, angles.legsAngles.y * legsMultiplier.y, angles.legsAngles.z * legsMultiplier.z);
-            Quaternion legsWorld = Quaternion.Euler(legsEuler.x, legsEuler.y, legsEuler.z);
-            modelRoot.rotation = legsWorld;
-        }
 
-        // lower torso world rotation
-    Vector3 lowerEuler = new Vector3(angles.lowerTorsoAngles.x * lowerMultiplier.x, angles.lowerTorsoAngles.y * lowerMultiplier.y, angles.lowerTorsoAngles.z * lowerMultiplier.z);
-    Quaternion lowerWorld = Quaternion.Euler(lowerEuler.x, lowerEuler.y, lowerEuler.z);
+        // Apply lower torso rotation (relative to legs/parent)
         if (lowerLumbar != null)
         {
-            // set local rotation relative to modelRoot
-            if (modelRoot != null)
-            {
-                lowerLumbar.localRotation = Quaternion.Inverse(modelRoot.rotation) * lowerWorld;
-            }
-            else
-            {
-                lowerLumbar.rotation = lowerWorld;
-            }
+            // SoF2: lowerTorsoAngles = (pitch, yaw, roll) -> Unity: (x, y, z)
+            // Model has skeleton_root rotation (-90, 0, 0), so we need to adjust axes
+            // With -90° X rotation: Y becomes Z, Z becomes -Y
+            Vector3 lowerEuler = new Vector3(
+                angles.lowerTorsoAngles.x * lowerMultiplier.x,  // PITCH[0] -> x (hoch/runter)
+                angles.lowerTorsoAngles.y * lowerMultiplier.y,  // YAW[1] -> y (links/rechts)
+                angles.lowerTorsoAngles.z * lowerMultiplier.z  // ROLL[2] -> z (kippen, inverted)
+            );
+            lowerLumbar.localRotation = Quaternion.Euler(lowerEuler);
         }
 
-    Vector3 upperEuler = new Vector3(angles.upperTorsoAngles.x * upperMultiplier.x, angles.upperTorsoAngles.y * upperMultiplier.y, angles.upperTorsoAngles.z * upperMultiplier.z);
-    Quaternion upperWorld = Quaternion.Euler(upperEuler.x, upperEuler.y, upperEuler.z);
+        // Apply upper torso rotation (relative to lower torso)
         if (upperLumbar != null)
         {
-            if (lowerLumbar != null)
-            {
-                upperLumbar.localRotation = Quaternion.Inverse(lowerLumbar.rotation) * upperWorld;
-            }
-            else if (modelRoot != null)
-            {
-                upperLumbar.localRotation = Quaternion.Inverse(modelRoot.rotation) * upperWorld;
-            }
-            else
-            {
-                upperLumbar.rotation = upperWorld;
-            }
+            Vector3 upperEuler = new Vector3(
+                angles.upperTorsoAngles.x * upperMultiplier.x,  // PITCH[0] -> x (hoch/runter)
+                angles.upperTorsoAngles.y * upperMultiplier.y,  // YAW[1] -> y (links/rechts)
+                angles.upperTorsoAngles.z * upperMultiplier.z  // ROLL[2] -> z (kippen, inverted)
+            );
+            upperLumbar.localRotation = Quaternion.Euler(upperEuler);
         }
 
-    Vector3 headEuler = new Vector3(angles.headAngles.x * headMultiplier.x, angles.headAngles.y * headMultiplier.y, angles.headAngles.z * headMultiplier.z);
-    Quaternion headWorld = Quaternion.Euler(headEuler.x, headEuler.y, headEuler.z);
+        // Apply head rotation (relative to upper torso)
         if (cranium != null)
         {
-            if (lowerLumbar != null)
-            {
-                cranium.localRotation = Quaternion.Inverse(lowerLumbar.rotation) * headWorld;
-            }
-            else if (modelRoot != null)
-            {
-                cranium.localRotation = Quaternion.Inverse(modelRoot.rotation) * headWorld;
-            }
-            else
-            {
-                cranium.rotation = headWorld;
-            }
+            Vector3 headEuler = new Vector3(
+                angles.headAngles.x * headMultiplier.x,  // PITCH[0] -> x (hoch/runter)
+                angles.headAngles.y * headMultiplier.y,  // YAW[1] -> y (links/rechts)
+                angles.headAngles.z * headMultiplier.z  // ROLL[2] -> z (kippen, inverted)
+            );
+            cranium.localRotation = Quaternion.Euler(headEuler);
         }
     }
 }
