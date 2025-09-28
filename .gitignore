@@ -1,0 +1,9 @@
+Assets/Data
+Assets/docs
+Assets/Materials
+Library
+Logs
+Temp
+*.meta
+Assets/uQuake
+*.fbx
