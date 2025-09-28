@@ -15,8 +15,8 @@ public class AimCameraController : MonoBehaviour
     [SerializeField] private float gamepadSensitivity = 0.5f;
     [SerializeField] private float sensitivity = 1.5f;
 
-    //[SerializeField] private float pitchMin = -40f;
-    //[SerializeField] private float pitchMax = 80f;
+    [SerializeField] private float pitchMin = -80f;
+    [SerializeField] private float pitchMax = 80f;
 
     [SerializeField] private CinemachineThirdPersonFollow aimCam;
 
@@ -75,6 +75,7 @@ public class AimCameraController : MonoBehaviour
 
         yaw += look.x * sensitivity;
         pitch -= look.y * sensitivity;
+        pitch = Mathf.Clamp(pitch, pitchMin, pitchMax);
 
         yawTarget.rotation = Quaternion.Euler(0f, yaw, 0f);
         pitchTarget.localRotation = Quaternion.Euler(pitch, 0f, 0f);

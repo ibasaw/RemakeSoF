@@ -1,11 +1,14 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(CharacterController))]
 public class MyPlayerControllerCustom : MonoBehaviour
 {
-	private CharacterController characterController;
 	private Animator animator;
+	// CharacterController removed - use capsule-based manual movement
+	[Header("Capsule Settings (replaces CharacterController)")]
+	[SerializeField] private float capsuleRadius = 0.5f;
+	[SerializeField] private float capsuleHeight = 2.0f;
+	[SerializeField] private Vector3 capsuleCenter = Vector3.zero;
 
 	// Input System
 	private AvatarActions inputActions;
@@ -53,9 +56,25 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	[Header("Camera/Rotation")]
 	[SerializeField] private Transform yawTarget;
+	[SerializeField] private Transform pitchTarget;
 	[SerializeField] private Transform cameraTransform;
 	[SerializeField] public bool isAiming = false;
 	[SerializeField] public bool isNPC = false;
+
+	[Header("Torso Settings")]
+	[SerializeField] private float torsoMaxYaw = 90f; // degrees for normalization
+
+	[Header("BGPlayer Bones")]
+	[SerializeField] private Transform modelRoot;
+	[SerializeField] private Transform lowerLumbar;
+	[SerializeField] private Transform upperLumbar;
+	[SerializeField] private Transform cranium;
+
+	[Header("Bone Axis Multipliers")]
+	[SerializeField] private Vector3 legsMultiplier = new Vector3(1f, 1f, 1f);
+	[SerializeField] private Vector3 lowerMultiplier = new Vector3(1f, 1f, 1f);
+	[SerializeField] private Vector3 upperMultiplier = new Vector3(1f, 1f, 1f);
+	[SerializeField] private Vector3 headMultiplier = new Vector3(1f, 1f, 1f);
 
 	// SoF2 Movement State
 	private Vector3 velocity = Vector3.zero;           // Current velocity (x, y, z)
@@ -63,11 +82,19 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private bool isWalking = false;                    // Ground walking state
 	private bool isJumping = false;                    // Jumping state
 	private bool isSwimming = false;                   // Swimming state
+	private bool isCrouching = false;                  // Crouching state
 	private float jumpDebounce = 0f;                   // Jump debounce timer
+
+	// Debug: store last BGPlayer results for OnGUI
+	private BGPlayer.AnglesResult lastAngles;
+	private float lastTorsoYawDeg = 0f;
+	private float lastTorsoYawNormalized = 0f;
+	private float lastHeadPitch = 0f;
+	private float lastHeadYaw = 0f;
 
 	private void Awake()
 	{
-		characterController = GetComponent<CharacterController>();
+		// no CharacterController - using capsule-based physics
 		animator = GetComponentInChildren<Animator>();
 		inputActions = new AvatarActions();
 	}
@@ -79,6 +106,47 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		inputActions.Player.Move.performed += OnMovePerformed;
 		inputActions.Player.Move.canceled += OnMoveCanceled;
 		inputActions.Player.Jump.performed += OnJumpPerformed;
+		inputActions.Player.Crouch.performed += OnCrouchPerformed;
+		inputActions.Player.Crouch.canceled += OnCrouchCanceled;
+		inputActions.Player.LeanLeft.performed += OnLeanLeftPerformed;
+		inputActions.Player.LeanLeft.canceled += OnLeanLeftCanceled;
+		inputActions.Player.LeanRight.performed += OnLeanRightPerformed;
+		inputActions.Player.LeanRight.canceled += OnLeanRightCanceled;
+	}
+
+	private void OnCrouchPerformed(InputAction.CallbackContext ctx)
+	{
+		Debug.Log("C Pressed");
+		isCrouching = true;
+		animator?.SetBool("IsCrouching", isCrouching);
+		//TODO
+	}
+	private void OnCrouchCanceled(InputAction.CallbackContext ctx)
+	{
+		Debug.Log("C Released");
+		isCrouching = false;
+		animator?.SetBool("IsCrouching", isCrouching);
+		//TODO
+	}
+	private void OnLeanLeftPerformed(InputAction.CallbackContext ctx)
+	{
+		Debug.Log("Q Pressed");
+		//TODO
+	}
+	private void OnLeanLeftCanceled(InputAction.CallbackContext ctx)
+	{
+		Debug.Log("Q Released");
+		//TODO
+	}
+	private void OnLeanRightPerformed(InputAction.CallbackContext ctx)
+	{
+		Debug.Log("E Pressed");
+		//TODO
+	}
+	private void OnLeanRightCanceled(InputAction.CallbackContext ctx)
+	{
+		Debug.Log("E Released");
+		//TODO
 	}
 
 	private void OnDisable()
@@ -129,17 +197,19 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	private bool CheckGrounded()
 	{
-		if (characterController.isGrounded)
-			return true;
+		// Capsule bottom and top in world space
+		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
+		Vector3 center = transform.TransformPoint(capsuleCenter);
+		Vector3 top = center + Vector3.up * halfHeight;
+		Vector3 bottom = center - Vector3.up * halfHeight;
 
-		// SphereCast from the bottom of the controller
-		Vector3 origin = transform.position + Vector3.up * characterController.radius; // Start slightly above ground to account for uneven terrain
-		float rayLength = groundCheckDistance; // Use configurable distance to check below the controller
-
-		// Use SphereCast with the controller's radius
-		if (Physics.SphereCast(origin, characterController.radius * 0.9f, Vector3.down, out RaycastHit hit, rayLength, groundMask))
+		// Check by casting slightly down from current position
+		float castDistance = groundCheckDistance + 0.01f;
+		if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit hit, castDistance, groundMask))
 		{
-			return true;
+			// Consider grounded if the normal is reasonably upwards
+			if (Vector3.Dot(hit.normal, Vector3.up) > 0.5f)
+				return true;
 		}
 
 		return false;
@@ -149,7 +219,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	{
 		// Ground state with raycast check
 		isGrounded = CheckGrounded();
-		animator?.SetBool("Grounded", isGrounded);
+		animator?.SetBool("IsGrounded", isGrounded);
 
 		// Update jump debounce
 		if (jumpDebounce > 0f)
@@ -189,7 +259,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		isWalking = isGrounded && (Mathf.Abs(moveInput.x) > 0.1f || Mathf.Abs(moveInput.y) > 0.1f);
 	}
 
-	// SoF2 Movement Functions
 
 	/// <summary>
 	/// SoF2 PM_Friction equivalent - handles ground and air friction (exact from bg_pmove.c)
@@ -402,6 +471,22 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		return scale;
 	}
 
+	// Compute movementDir (0..7) like SoF2 PM_SetMovementDir based on move input
+	private float ComputeMovementDir(Vector2 move)
+	{
+		// If no input, return 0
+		if (move.sqrMagnitude < 0.0001f)
+			return 0f;
+
+		// angle in degrees: forward is 0, right is 90
+		float ang = Mathf.Atan2(move.x, move.y) * Mathf.Rad2Deg; // x is right, y is forward
+		if (ang < 0f) ang += 360f;
+
+		// Map to 8-direction index
+		int idx = Mathf.RoundToInt(ang / 45f) % 8;
+		return (float)idx;
+	}
+
 	/// <summary>
 	/// Apply gravity to velocity
 	/// </summary>
@@ -449,40 +534,71 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	/// </summary>
 	private void PM_StepSlideMove(bool gravity)
 	{
-		Vector3 motion = velocity * Time.deltaTime;
-		CollisionFlags flags = characterController.Move(motion);
+		// Manual capsule move with simple sliding and ground detection
+		Vector3 desired = velocity * Time.deltaTime;
 
-		// Handle sliding on walls (SoF2 style)
-		if ((flags & CollisionFlags.Sides) != 0)
+		// We'll perform an iterative slide similar to PM_SlideMove but simplified
+		int numbumps = 4;
+		Vector3 primal_velocity = velocity;
+		Vector3 currentPos = transform.position;
+		float time_left = 1.0f; // fraction of movement remaining
+
+		// compute capsule top/bottom for casts
+		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
+		Vector3 center = transform.TransformPoint(capsuleCenter);
+
+		Vector3 top = center + Vector3.up * halfHeight;
+		Vector3 bottom = center - Vector3.up * halfHeight;
+
+		Vector3 vel = velocity;
+
+		for (int bump = 0; bump < numbumps; bump++)
 		{
-			// Get the collision normal by checking what we hit
-			Vector3 hitNormal = Vector3.zero;
-
-			// Simple wall detection - if we're moving horizontally but hit something
-			if (Mathf.Abs(velocity.x) > 0.1f || Mathf.Abs(velocity.z) > 0.1f)
+			Vector3 end = currentPos + vel * Time.deltaTime * time_left;
+			Vector3 castDir = end - currentPos;
+			float castDist = castDir.magnitude;
+			if (castDist < 1e-6f)
 			{
-				// Calculate approximate wall normal
-				Vector3 horizontalVel = new Vector3(velocity.x, 0, velocity.z);
-				if (horizontalVel.magnitude > 0.1f)
-				{
-					hitNormal = -horizontalVel.normalized;
-				}
+				transform.position = currentPos;
+				break;
 			}
 
-			// Apply SoF2 clip velocity
-			if (hitNormal.magnitude > 0.1f)
+			if (Physics.CapsuleCast(top, bottom, capsuleRadius, castDir.normalized, out RaycastHit hit, castDist, ~0, QueryTriggerInteraction.Ignore))
 			{
-				PM_ClipVelocity(velocity, hitNormal, out velocity, OVERCLIP);
+				// move up to hit
+				float moveFraction = hit.distance / castDist;
+				currentPos += castDir * moveFraction;
+				// save touch entity? (not available here)
+
+				// slide along plane
+				Vector3 clipVel;
+				PM_ClipVelocity(vel, hit.normal, out clipVel, OVERCLIP);
+				vel = clipVel;
+
+				// reduce time left
+				time_left -= time_left * moveFraction;
+				// if too many planes / stuck, stop
+				if (time_left <= 0.001f)
+					break;
+			}
+			else
+			{
+				// no hit, move entire distance
+				currentPos = end;
+				break;
 			}
 		}
 
-		// Handle ground collision
-		if ((flags & CollisionFlags.Below) != 0)
+		// Apply final position
+		transform.position = currentPos;
+
+		// ground check: cast a short distance down to determine if we're on the ground now
+		float downDist = 0.2f;
+		if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit downHit, downDist, groundMask))
 		{
-			isGrounded = true;
-			// kleine "Stick to Ground" Geschwindigkeit
-			if (velocity.y < 0)
-				velocity.y = -2f;
+			isGrounded = Vector3.Dot(downHit.normal, Vector3.up) > 0.5f;
+			if (isGrounded && velocity.y < 0)
+				velocity.y = -2f; // stick to ground
 		}
 		else
 		{
@@ -537,24 +653,20 @@ public class MyPlayerControllerCustom : MonoBehaviour
 #if UNITY_EDITOR
 	private void OnDrawGizmos()
 	{
-		if (!characterController) return;
+		// Draw capsule top and bottom based on capsule settings
+		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
+		Vector3 center = transform.TransformPoint(capsuleCenter);
+		Vector3 top = center + Vector3.up * halfHeight;
+		Vector3 bottom = center - Vector3.up * halfHeight;
+		float radius = capsuleRadius * 0.9f;
 
-		// Draw ground check sphere cast
-		Vector3 origin = transform.position + Vector3.up * characterController.radius;
-		Vector3 end = origin + Vector3.down * groundCheckDistance;
-		float radius = characterController.radius * 0.9f;
-
-		// Draw the path of the SphereCast
 		Gizmos.color = isGrounded ? Color.green : Color.red;
-		Gizmos.DrawWireSphere(origin, radius);
-		Gizmos.DrawWireSphere(end, radius);
-		Gizmos.DrawLine(origin, end);
-
-		// Draw thin lines connecting the spheres to show the sweep volume
-		Gizmos.DrawLine(origin + Vector3.right * radius, end + Vector3.right * radius);
-		Gizmos.DrawLine(origin - Vector3.right * radius, end - Vector3.right * radius);
-		Gizmos.DrawLine(origin + Vector3.forward * radius, end + Vector3.forward * radius);
-		Gizmos.DrawLine(origin - Vector3.forward * radius, end - Vector3.forward * radius);
+		Gizmos.DrawWireSphere(top, radius);
+		Gizmos.DrawWireSphere(bottom, radius);
+		Gizmos.DrawLine(top + Vector3.right * radius, bottom + Vector3.right * radius);
+		Gizmos.DrawLine(top - Vector3.right * radius, bottom - Vector3.right * radius);
+		Gizmos.DrawLine(top + Vector3.forward * radius, bottom + Vector3.forward * radius);
+		Gizmos.DrawLine(top - Vector3.forward * radius, bottom - Vector3.forward * radius);
 	}
 #endif
 
@@ -580,7 +692,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
 
 		// Movement States (vertical layout)
-		GUI.Label(new Rect(x, y, 600, line), $"IsGrounded: {characterController.isGrounded}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsGrounded: {isGrounded}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsJumping: {isJumping}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsSwimming: {isSwimming}", valueStyle); y += line;
@@ -600,5 +711,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Physics Settings
 		GUI.Label(new Rect(x, y, 600, line), $"Accel: {pm_accelerate}  AirAccel: {pm_airaccelerate}  Friction: {pm_friction}", valueStyle); y += line;
+
+		// BGPlayer Debug Info
+		GUI.Label(new Rect(x, y, 600, line), "--- BGPlayer Debug ---", headerStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Legs Euler: {lastAngles.legsAngles}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Lower Torso Euler: {lastAngles.lowerTorsoAngles}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Upper Torso Euler: {lastAngles.upperTorsoAngles}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Head Euler: {lastAngles.headAngles}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"TorsoYaw deg: {lastTorsoYawDeg:F1}  normalized: {lastTorsoYawNormalized:F2}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Head Pitch/Yaw: {lastHeadPitch:F1} / {lastHeadYaw:F1}", valueStyle); y += line;
 	}
 }

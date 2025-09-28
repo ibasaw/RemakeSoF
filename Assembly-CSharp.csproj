@@ -85,6 +85,7 @@
     <Compile Include="Assets\Scripts\Sofmodels\ItemTemplate.cs" />
     <Compile Include="Assets\GameServer\Scripts\GameServer.cs" />
     <Compile Include="Assets\Scripts\Sofmodels\Ladder.cs" />
+    <Compile Include="Assets\Scripts\BGPlayer.cs" />
     <Compile Include="Assets\Scripts\Sofmodels\Animation.cs" />
     <Compile Include="Assets\Scripts\LoginController.cs" />
     <Compile Include="Assets\Scripts\AutoBoundsAdjuster.cs" />
