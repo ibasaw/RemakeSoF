@@ -1,0 +1,23 @@
+* {
+    --sans-serif-font: url("project://database/Assets/Fonts/arial.ttf?fileID=12800000&guid=ae3fa31b7436b4541b1a40b4da1bfb37&type=3#arial");
+    --script-font: url("project://database/Assets/Fonts/Grandstander-SemiBold.ttf?fileID=12800000&guid=01732851f19ed41ffa80b26ee3b16cf5&type=3#Grandstander-SemiBold");
+    --secondary-color: rgb(83, 51, 33);
+    --main-color: rgb(188, 130, 99);
+    --light-text-color: rgb(246, 246, 255);
+    --highlight-color: rgb(255, 218, 70);
+    --pickup-background-color: rgba(255, 255, 255, 0.5);
+    --dark-text-color: rgb(16, 16, 16);
+    --border-radius: 12px;
+    --border-radius--small: 4px;
+    --border-width: 3px;
+    --pickup-base-height: 24px;
+    --mic-icon-size: 36px;
+    --menu-button-size: 60px;
+    --menu-button-font-size: 30px;
+    --regular-font-size: 20px;
+    -unity-font-definition: var(--script-font);
+}
+
+* {
+    height: 100%;
+}
