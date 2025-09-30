@@ -1,0 +1,74 @@
+{
+  "prefs": {
+    "models": {
+      "1": "average_sleeves"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/f_mullins"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/f2_mullins"
+        }
+      ]
+    },
+    {
+      "name": "avmedhat",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/h_avmedhat_mullins"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_sleeves/a_mullins_jungle"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_sleeves/b_mullins_jungle"
+        }
+      ]
+    },
+    {
+      "name": "body_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_sleeves/b2_mullins_jungle"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

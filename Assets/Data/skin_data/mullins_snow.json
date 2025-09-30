@@ -1,0 +1,74 @@
+{
+  "prefs": {
+    "models": {
+      "1": "snow"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/f_mullins_snow"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/f2_mullins_snow"
+        }
+      ]
+    },
+    {
+      "name": "avmedhat",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/h_avmedhat_mullins"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/snow/a_mullins_snow"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/snow/b_mullins_snow"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    },
+    {
+      "name": "hood",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/snow/hood_snow1"
+        }
+      ]
+    }
+  ]
+}

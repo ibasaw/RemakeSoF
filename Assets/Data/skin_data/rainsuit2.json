@@ -1,0 +1,74 @@
+{
+  "prefs": {
+    "models": {
+      "1": "snow"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/f_rainsuit_w1"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/f2_rainsuit_w1"
+        }
+      ]
+    },
+    {
+      "name": "head",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/h_civilian_w1"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/snow/a_rainsuit_green"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/snow/b_rainsuit_green"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    },
+    {
+      "name": "hood",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/snow/hood_rainsuit_green"
+        }
+      ]
+    }
+  ]
+}

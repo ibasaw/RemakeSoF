@@ -1,0 +1,1268 @@
+{
+  "weapons": [
+    {
+      "name": "Knife",
+      "boltpoint": "model_root",
+      "canholster": "true",
+      "holstmodel": "models\\characters\\bolt_ons\\knife.glm",
+      "canshootoff": "true",
+      "clips": "-1",
+      "level": "1",
+      "atktype": "melee",
+      "_type": "weapon"
+    },
+    {
+      "name": "US SOCOM",
+      "boltpoint": "*hand_r",
+      "canholster": "true",
+      "holstmodel": "models\\characters\\bolt_ons\\holster.glm",
+      "holstsurf": "gun",
+      "canshootoff": "true",
+      "clips": "-1",
+      "level": "1",
+      "atktype": "slug",
+      "_type": "weapon"
+    },
+    {
+      "name": "M1911A1",
+      "boltpoint": "*hand_r",
+      "canholster": "true",
+      "holstmodel": "models\\characters\\bolt_ons\\holster.glm",
+      "holstsurf": "gun",
+      "canshootoff": "true",
+      "clips": "-1",
+      "level": "1",
+      "atktype": "slug",
+      "_type": "weapon"
+    },
+    {
+      "name": "USAS-12",
+      "boltpoint": "*hand_r",
+      "canshootoff": "true",
+      "canjam": "false",
+      "clips": "-1",
+      "level": "2",
+      "atktype": "slug",
+      "_type": "weapon"
+    },
+    {
+      "name": "M590",
+      "boltpoint": "*hand_r",
+      "canshootoff": "true",
+      "canjam": "false",
+      "clips": "-1",
+      "level": "2",
+      "atktype": "slug",
+      "_type": "weapon"
+    },
+    {
+      "name": "Micro Uzi",
+      "boltpoint": "*hand_r",
+      "canshootoff": "true",
+      "clips": "-1",
+      "atktype": "slug",
+      "_type": "weapon"
+    },
+    {
+      "name": "M3A1",
+      "boltpoint": "*hand_r",
+      "canshootoff": "true",
+      "clips": "-1",
+      "atktype": "slug",
+      "_type": "weapon"
+    },
+    {
+      "name": "AK74",
+      "boltpoint": "*hand_r",
+      "canshootoff": "true",
+      "canjam": "true",
+      "clips": "-1",
+      "level": "2",
+      "atktype": "slug",
+      "_type": "weapon"
+    },
+    {
+      "name": "M4",
+      "boltpoint": "*hand_r",
+      "canshootoff": "true",
+      "canjam": "true",
+      "clips": "-1",
+      "level": "3",
+      "atktype": "slug",
+      "_type": "weapon"
+    },
+    {
+      "name": "MSG90A1",
+      "boltpoint": "*hand_r",
+      "canshootoff": "true",
+      "canjam": "false",
+      "clips": "-1",
+      "level": "3",
+      "atktype": "slug",
+      "_type": "weapon"
+    },
+    {
+      "name": "M60",
+      "boltpoint": "*hand_r",
+      "canshootoff": "true",
+      "canjam": "false",
+      "clips": "-1",
+      "level": "3",
+      "atktype": "slug",
+      "_type": "weapon"
+    },
+    {
+      "name": "MM1",
+      "boltpoint": "*hand_r",
+      "canshootoff": "true",
+      "canjam": "false",
+      "clips": "-1",
+      "level": "3",
+      "atktype": "projectile",
+      "_type": "weapon"
+    },
+    {
+      "name": "RPG7",
+      "boltpoint": "*hand_r",
+      "canshootoff": "true",
+      "canjam": "false",
+      "clips": "-1",
+      "level": "3",
+      "atktype": "missile",
+      "_type": "weapon"
+    },
+    {
+      "name": "ANM14",
+      "boltpoint": "*hand_l",
+      "canholster": "true",
+      "holstmodel": "models/weapons/anm14/world/anm14world.glm",
+      "clips": "50",
+      "atktype": "projectile",
+      "_type": "weapon"
+    },
+    {
+      "name": "F1",
+      "boltpoint": "*hand_l",
+      "canholster": "true",
+      "holstmodel": "models/weapons/f1/world/f1world.glm",
+      "clips": "50",
+      "atktype": "projectile",
+      "_type": "weapon"
+    },
+    {
+      "name": "L2A2",
+      "boltpoint": "*hand_l",
+      "canholster": "true",
+      "holstmodel": "models/weapons/l2a2/world/l2a2world.glm",
+      "clips": "50",
+      "atktype": "projectile",
+      "_type": "weapon"
+    },
+    {
+      "name": "M15",
+      "boltpoint": "*hand_l",
+      "canholster": "true",
+      "holstmodel": "models/weapons/m15/world/m15world.glm",
+      "clips": "50",
+      "atktype": "projectile",
+      "_type": "weapon"
+    },
+    {
+      "name": "M67",
+      "boltpoint": "*hand_l",
+      "canholster": "true",
+      "holstmodel": "models/weapons/m67/world/m67world.glm",
+      "clips": "50",
+      "atktype": "projectile",
+      "_type": "weapon"
+    },
+    {
+      "name": "M84",
+      "boltpoint": "*hand_l",
+      "canholster": "true",
+      "holstmodel": "models/weapons/m84/world/m84world.glm",
+      "clips": "50",
+      "atktype": "projectile",
+      "_type": "weapon"
+    },
+    {
+      "name": "MDN11",
+      "boltpoint": "*hand_l",
+      "canholster": "true",
+      "holstmodel": "models/weapons/m84/world/m84world.glm",
+      "clips": "50",
+      "atktype": "projectile",
+      "_type": "weapon"
+    },
+    {
+      "name": "SMOHG92",
+      "boltpoint": "*hand_l",
+      "canholster": "true",
+      "holstmodel": "models/weapons/smohg92/world/smohg92world.glm",
+      "clips": "50",
+      "atktype": "projectile",
+      "_type": "weapon"
+    },
+    {
+      "name": "war_wing",
+      "onsurf": [
+        "war_wing",
+        "rocket_pod_left",
+        "rocket_pod_right"
+      ],
+      "muzzle": [
+        "bfx_pod_left",
+        "bfx_pod_right"
+      ],
+      "canshootoff": "false",
+      "clips": "-1",
+      "fxname": [
+        "OSPREYRPG7"
+      ],
+      "atktype": "missile",
+      "_type": "weapon"
+    },
+    {
+      "name": "tomahawk_left",
+      "onsurf": [
+        "tomahawk_left"
+      ],
+      "fxname": [
+        "OSPREYRPG7"
+      ],
+      "canshootoff": "false",
+      "clips": "-1",
+      "atktype": "missile",
+      "_type": "weapon"
+    },
+    {
+      "name": "tomahawk_right",
+      "onsurf": [
+        "tomahawk_right"
+      ],
+      "canshootoff": "false",
+      "clips": "-1",
+      "atktype": "missile",
+      "_type": "weapon"
+    },
+    {
+      "name": "mounted_chaingun",
+      "onsurf": [
+        "chaingun"
+      ],
+      "muzzle": [
+        "bfx_muzzleflash"
+      ],
+      "eject": [
+        "bfx_ejection"
+      ],
+      "fxname": [
+        "OSPREYM60"
+      ],
+      "canshootoff": "false",
+      "clips": "-1",
+      "atktype": "slug",
+      "_type": "weapon"
+    }
+  ],
+  "items": [
+    {
+      "name": "noears",
+      "offsurf": [
+        "ear_l",
+        "ear_r"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "backpack",
+      "onsurf": [
+        "backpack_lrg_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "scarf",
+      "onsurf": [
+        "scarf_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "medium_hair_1",
+      "offsurf": [
+        "head_bck_lwr_l",
+        "head_bck_lwr_r",
+        "head_bck_uppr_l",
+        "head_bck_uppr_r",
+        "head_side_l",
+        "head_side_r"
+      ],
+      "onsurf": [
+        "head_bck_lwr_l_avmed_off",
+        "head_bck_lwr_r_avmed_off",
+        "head_bck_uppr_l_avmed_off",
+        "head_bck_uppr_r_avmed_off",
+        "head_side_l_avmed_off",
+        "head_side_r_avmed_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "medium_hair_2",
+      "offsurf": [
+        "head_bck_lwr_l",
+        "head_bck_lwr_r",
+        "head_bck_uppr_l",
+        "head_bck_uppr_r",
+        "head_side_l",
+        "head_side_r"
+      ],
+      "onsurf": [
+        "head_bck_lwr_l_avmed_off",
+        "head_bck_lwr_r_avmed_off",
+        "head_bck_uppr_l_avmed_off",
+        "head_bck_uppr_r_avmed_off",
+        "head_side_l_avmed_off",
+        "head_side_r_avmed_off",
+        "avmedbangs_l_off",
+        "avmedbangs_r_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "medium_hat",
+      "offsurf": [
+        "head_bck_lwr_l",
+        "head_bck_lwr_r",
+        "head_bck_uppr_l",
+        "head_bck_uppr_r",
+        "head_side_l",
+        "head_side_r"
+      ],
+      "onsurf": [
+        "head_bck_lwr_l_avmedhat_off",
+        "head_bck_lwr_r_avmedhat_off",
+        "head_bck_uppr_l_avmedhat_off",
+        "head_bck_uppr_r_avmedhat_off",
+        "head_side_l_avmedhat_off",
+        "head_side_r_avmedhat_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "beard",
+      "offsurf": [
+        "head_frnt_lwr_l",
+        "head_frnt_lwr_r",
+        "head_frnt_mid_l",
+        "head_frnt_mid_r"
+      ],
+      "onsurf": [
+        "beardhead_frnt_lwr_l_off",
+        "beardhead_frnt_lwr_r_off",
+        "beardhead_frnt_mid_l_off",
+        "beardhead_frnt_mid_r_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "labcoat",
+      "onsurf": [
+        "labcoat_r_off",
+        "labcoat_l_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "collar_lab",
+      "onsurf": [
+        "labcollar_r_off",
+        "labcollar_l_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "trenchcoat",
+      "onsurf": [
+        "trenchcoat_r_off",
+        "trenchcoat_l_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "suit",
+      "onsurf": [
+        "suitcoat_r_off",
+        "suitcoat_l_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "collar_trench",
+      "onsurf": [
+        "trenchcollar_r_off",
+        "trenchcollar_l_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "long_hair_1",
+      "offsurf": [
+        "head_bck_lwr_l",
+        "head_bck_lwr_r",
+        "head_bck_uppr_l",
+        "head_bck_uppr_r",
+        "head_side_l",
+        "head_side_r"
+      ],
+      "onsurf": [
+        "head_bck_lwr_l_avlong_off",
+        "head_bck_lwr_r_avlong_off",
+        "head_bck_uppr_l_avlong_off",
+        "head_bck_uppr_r_avlong_off",
+        "head_side_l_avlong_off",
+        "head_side_r_avlong_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "hood_up",
+      "onsurf": [
+        "hood_up_off",
+        "fur_off"
+      ],
+      "offsurf": [
+        "ear_l",
+        "ear_r"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "hood_down",
+      "onsurf": [
+        "hood_down_off"
+      ],
+      "offsurf": [
+        "ear_l",
+        "ear_r"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "hood_down_ears_on",
+      "onsurf": [
+        "hood_down_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "mittens",
+      "onsurf": [
+        "mitten_l_off",
+        "mitten_r_off"
+      ],
+      "offsurf": [
+        "hand_l",
+        "fingers_l",
+        "hand_r",
+        "fingers_r"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "collar_snow",
+      "onsurf": [
+        "collar_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "collar_snow1",
+      "onsurf": [
+        "collar_off"
+      ],
+      "offsurf": [
+        "ear_l",
+        "ear_r"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "collar_suitsleeves",
+      "offsurf": [
+        "collar_l",
+        "collar_r"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "sleeves",
+      "offsurf": [
+        "sleeve_l",
+        "sleeve_r"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "asian_eyes",
+      "offsurf": [
+        "head_frnt_uppr_r",
+        "head_frnt_uppr_l"
+      ],
+      "onsurf": [
+        "head_frnt_uppra_r_off",
+        "head_frnt_uppra_l_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "fshort",
+      "offsurf": [
+        "head_bck_lwr_l",
+        "head_bck_lwr_r",
+        "head_bck_uppr_l",
+        "head_bck_uppr_r",
+        "head_side_l",
+        "head_side_r"
+      ],
+      "onsurf": [
+        "head_bck_lwr_l_fshort_off",
+        "head_bck_uppr_r_fshort_off",
+        "head_bck_uppr_l_fshort_off",
+        "head_bck_lwr_r_fshort_off",
+        "head_uppr_l_fshort_off",
+        "head_uppr_r_fshort_off",
+        "head_side_l_fshort_off",
+        "head_side_r_fshort_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "flong",
+      "offsurf": [
+        "head_side_r",
+        "head_side_l",
+        "head_bck_uppr_l",
+        "head_bck_uppr_r",
+        "head_bck_lwr_l",
+        "head_bck_lwr_r"
+      ],
+      "onsurf": [
+        "head_bck_lwr_l_flong_off",
+        "head_bck_lwr_r_flong_off",
+        "head_bck_uppr_l_flong_off",
+        "head_bck_uppr_r_flong_off",
+        "head_side_l_flong_off",
+        "head_side_r_flong_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "taylor_bun",
+      "offsurf": [
+        "head_bck_lwr_l",
+        "head_bck_lwr_r",
+        "head_bck_uppr_l",
+        "head_bck_uppr_r",
+        "head_side_l",
+        "head_side_r",
+        "ponytail_off"
+      ],
+      "onsurf": [
+        "head_bck_lwr_l_pony_off",
+        "head_bck_lwr_r_pony_off",
+        "head_bck_uppr_l_pony_off",
+        "head_bck_uppr_r_pony_off",
+        "head_side_l_pony_off",
+        "head_side_r_pony_off",
+        "bun_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "ponytail",
+      "offsurf": [
+        "head_bck_lwr_l",
+        "head_bck_lwr_r",
+        "head_bck_uppr_l",
+        "head_bck_uppr_r",
+        "head_side_l",
+        "head_side_r"
+      ],
+      "onsurf": [
+        "head_bck_lwr_l_pony_off",
+        "head_bck_lwr_r_pony_off",
+        "head_bck_uppr_l_pony_off",
+        "head_bck_uppr_r_pony_off",
+        "head_side_l_pony_off",
+        "head_side_r_pony_off",
+        "ponytail_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "bun",
+      "offsurf": [
+        "head_bck_lwr_l",
+        "head_bck_lwr_r",
+        "head_bck_uppr_l",
+        "head_bck_uppr_r",
+        "head_side_l",
+        "head_side_r"
+      ],
+      "onsurf": [
+        "head_bck_lwr_l_bun_off",
+        "head_bck_lwr_r_bun_off",
+        "head_bck_uppr_l_bun_off",
+        "head_bck_uppr_r_bun_off",
+        "head_side_l_bun_off",
+        "head_side_r_bun_off",
+        "bun_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "female_asian_eyes",
+      "offsurf": [
+        "head_frnt_uppr_l",
+        "head_frnt_uppr_r",
+        "head_frnt_mid_l",
+        "head_frnt_mid_r",
+        "eyelash_l_off",
+        "eyelash_r_off"
+      ],
+      "onsurf": [
+        "head_frnt_uppra_l_off",
+        "head_frnt_uppra_r_off",
+        "head_frnt_mida_l_off",
+        "head_frnt_mida_r_off",
+        "eyelasha_l_off",
+        "eyelasha_r_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "skirt_off",
+      "offsurf": [
+        "skirt_bck_l",
+        "skirt_bck_r",
+        "skirt_frnt_l",
+        "skirt_frnt_r"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "chem_taylor",
+      "offsurf": [
+        "head_bck_lwr_l",
+        "head_bck_lwr_r",
+        "head_bck_uppr_l",
+        "head_bck_uppr_r",
+        "head_side_l",
+        "head_side_r",
+        "head_frnt_uppr_r",
+        "head_frnt_uppr_l",
+        "head_frnt_mid_r",
+        "head_frnt_mid_l",
+        "head_frnt_lwr_l",
+        "head_frnt_lwr_r",
+        "eyeball_r",
+        "eyeball_l",
+        "mouth_r",
+        "mouth_l",
+        "teeth_r",
+        "teeth_l",
+        "mcollar_l",
+        "mcollar_r"
+      ],
+      "onsurf": [
+        "fhead_bck_lwr_l_off",
+        "fhead_bck_lwr_r_off",
+        "fhead_bck_uppr_l_off",
+        "fhead_bck_uppr_r_off",
+        "fhead_side_l_off",
+        "fhead_side_r_off",
+        "fhead_frnt_uppr_r_off",
+        "fhead_frnt_uppr_l_off",
+        "fhead_frnt_mid_r_off",
+        "fhead_frnt_mid_l_off",
+        "fhead_frnt_lwr_l_off",
+        "fhead_frnt_lwr_r_off",
+        "feyeball_r_off",
+        "feyeball_l_off",
+        "fmouth_r_off",
+        "fmouth_l_off",
+        "fteeth_r_off",
+        "fteeth_l_off",
+        "fcollar_l_off",
+        "fcollar_r_off",
+        "feyelash_l_off",
+        "feyelash_r_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "backpack_radio",
+      "model": "models\\characters\\bolt_ons\\backpack_radio.glm",
+      "candamage": "true",
+      "health": "50",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "scarf_rebel",
+      "model": "models\\characters\\bolt_ons\\scarf_rebel.glm",
+      "_type": "item"
+    },
+    {
+      "name": "hat_marine",
+      "model": "models\\characters\\bolt_ons\\hat_marine.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "hat_boone",
+      "model": "models\\characters\\bolt_ons\\hat_boone.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "hat_baseball",
+      "model": "models\\characters\\bolt_ons\\hat_baseball.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "hat_baseball_medhair",
+      "model": "models\\characters\\bolt_ons\\hat_baseball.glm",
+      "canshootoff": "true",
+      "offsurf": [
+        "head_bck_lwr_l_avmed_off",
+        "head_bck_lwr_r_avmed_off",
+        "head_bck_uppr_l_avmed_off",
+        "head_bck_uppr_r_avmed_off",
+        "head_side_l_avmed_off",
+        "head_side_r_avmed_off"
+      ],
+      "onsurf": [
+        "head_bck_lwr_l_avmedhat_off",
+        "head_bck_lwr_r_avmedhat_off",
+        "head_bck_uppr_l_avmedhat_off",
+        "head_bck_uppr_r_avmedhat_off",
+        "head_side_l_avmedhat_off",
+        "head_side_r_avmedhat_off"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "helmet_military",
+      "model": "models\\characters\\bolt_ons\\helmet_military.glm",
+      "onsurf": [
+        "helmet_chin_strap_off"
+      ],
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "helmet_military_blk",
+      "model": "models\\characters\\bolt_ons\\helmet_military_blk.glm",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "helmet_military_grn",
+      "model": "models\\characters\\bolt_ons\\helmet_military_grn.glm",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "helmet_military_white",
+      "model": "models\\characters\\bolt_ons\\helmet_military_white.glm",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "holster",
+      "model": "models\\characters\\bolt_ons\\holster.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "holster_black",
+      "model": "models\\characters\\bolt_ons\\holster_black_temp.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "holster_sanchez",
+      "model": "models\\characters\\bolt_ons\\holster_sanchez.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "bandana",
+      "model": "models\\characters\\bolt_ons\\bandana.glm",
+      "_type": "item"
+    },
+    {
+      "name": "ammo_pack",
+      "model": "models\\characters\\bolt_ons\\ammo_pack.glm",
+      "canshootoff": "true",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "ammo_pack_green",
+      "model": "models\\characters\\bolt_ons\\ammo_pack_green_temp.glm",
+      "canshootoff": "true",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "ammo_pack_white",
+      "model": "models\\characters\\bolt_ons\\ammo_pack_white_temp.glm",
+      "canshootoff": "true",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "flashlight",
+      "model": "models\\characters\\bolt_ons\\flashlight.glm",
+      "candamage": "true",
+      "health": "20",
+      "canshootoff": "true",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "canteen",
+      "model": "models\\characters\\bolt_ons\\canteen.glm",
+      "canshootoff": "true",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "canteen_black",
+      "model": "models\\characters\\bolt_ons\\canteen_black_temp.glm",
+      "canshootoff": "true",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "glasses",
+      "model": "models\\characters\\bolt_ons\\glasses.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "glasses_sun2",
+      "model": "models\\characters\\bolt_ons\\glasses_sun2.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "glasses_reading",
+      "model": "models\\characters\\bolt_ons\\glasses_reading.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "glasses_reading2",
+      "model": "models\\characters\\bolt_ons\\glasses_reading2.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "nightvision",
+      "model": "models\\characters\\bolt_ons\\nightvision_bolt_on.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "alexei_glasses",
+      "model": "models\\characters\\bolt_ons\\alexei_glasses.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "goggles",
+      "model": "models\\characters\\bolt_ons\\goggles.glm",
+      "_type": "item"
+    },
+    {
+      "name": "goggles2",
+      "model": "models\\characters\\bolt_ons\\goggles_tinted2_temp.glm",
+      "_type": "item"
+    },
+    {
+      "name": "helmet_heli",
+      "model": "models\\characters\\bolt_ons\\helmet_heli.glm",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "knife",
+      "model": "models\\characters\\bolt_ons\\knife.glm",
+      "canshootoff": "true",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "knife_green",
+      "model": "models\\characters\\bolt_ons\\knife_green_temp.glm",
+      "canshootoff": "true",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "knife_white",
+      "model": "models\\characters\\bolt_ons\\knife_white_temp.glm",
+      "canshootoff": "true",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "hueystick",
+      "model": "models\\characters\\bolt_ons\\hueystick.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "hat_boone_blk",
+      "model": "models\\characters\\bolt_ons\\hat_boone_blk_temp.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "hat_warf_snow",
+      "model": "models\\characters\\bolt_ons\\hat_warf_snow.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "hat_warf_blk",
+      "model": "models\\characters\\bolt_ons\\hat_warf_blk.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "gasmask",
+      "model": "models\\characters\\bolt_ons\\mask_gas.glm",
+      "protects": "false",
+      "_type": "item"
+    },
+    {
+      "name": "hitechdevice",
+      "model": "models\\characters\\bolt_ons\\hi_tech_device.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "clipboard",
+      "model": "models\\characters\\bolt_ons\\clipboard.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "briefcase",
+      "model": "models\\characters\\bolt_ons\\briefcase.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "briefcase_silver",
+      "model": "models\\characters\\bolt_ons\\briefcase_silver_hand.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "shoppingbag",
+      "model": "models\\characters\\bolt_ons\\shopping_bag.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "gunny_sack",
+      "model": "models\\characters\\bolt_ons\\gunny_sack.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "parachute",
+      "model": "models\\characters\\bolt_ons\\parachute.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "cigarette",
+      "model": "models\\characters\\bolt_ons\\cigarette.glm",
+      "Deathmatch": "no",
+      "candraw": "true",
+      "canuse": "true",
+      "canexamine": "false",
+      "canthrow": "true",
+      "canholster": "false",
+      "bolt": [
+        "*hand_l"
+      ],
+      "useeffect": [
+        "effects/misc/cigarette_smoke.efx"
+      ],
+      "usebone": "*head_f",
+      "usecount": "5",
+      "usefrequency": "50",
+      "alwaysprecache": "true",
+      "_type": "item"
+    },
+    {
+      "name": "ponytail_grey",
+      "model": "models\\characters\\bolt_ons\\ponytail_grey.glm",
+      "_type": "item"
+    },
+    {
+      "name": "ponytail_blk",
+      "model": "models\\characters\\bolt_ons\\ponytail_blk.glm",
+      "_type": "item"
+    },
+    {
+      "name": "hat_fireman",
+      "model": "models\\characters\\bolt_ons\\hat_fireman.glm",
+      "_type": "item"
+    },
+    {
+      "name": "hat_police",
+      "model": "models\\characters\\bolt_ons\\hat_police.glm",
+      "_type": "item"
+    },
+    {
+      "name": "hat_taxi",
+      "model": "models\\characters\\bolt_ons\\hat_taxi.glm",
+      "_type": "item"
+    },
+    {
+      "name": "hat_beret_blk",
+      "model": "models\\characters\\bolt_ons\\hat_beret_blk.glm",
+      "_type": "item"
+    },
+    {
+      "name": "hat_beret_red",
+      "model": "models\\characters\\bolt_ons\\hat_beret_red.glm",
+      "_type": "item"
+    },
+    {
+      "name": "hat_chief",
+      "model": "models\\characters\\bolt_ons\\hat_chief.glm",
+      "_type": "item"
+    },
+    {
+      "name": "heavypack_l",
+      "model": "models\\characters\\bolt_ons\\heavypack_l.glm",
+      "_type": "item"
+    },
+    {
+      "name": "heavypack_r",
+      "model": "models\\characters\\bolt_ons\\heavypack_r.glm",
+      "_type": "item"
+    },
+    {
+      "name": "chem_backpack",
+      "model": "models\\characters\\bolt_ons\\chem_backpack.glm",
+      "_type": "item"
+    },
+    {
+      "name": "chem_backpack_russian",
+      "model": "models\\characters\\bolt_ons\\chem_backpack_russian.glm",
+      "_type": "item"
+    },
+    {
+      "name": "chem_backpack_taylor",
+      "model": "models\\characters\\bolt_ons\\chem_backpack_t.glm",
+      "_type": "item"
+    },
+    {
+      "name": "hat_warf_brn",
+      "model": "models\\characters\\bolt_ons\\hat_warf_brn.glm",
+      "_type": "item"
+    },
+    {
+      "name": "hat_conductor",
+      "model": "models\\characters\\bolt_ons\\hat_conductor.glm",
+      "_type": "item"
+    },
+    {
+      "name": "hat_honor",
+      "model": "models\\characters\\bolt_ons\\hat_honor.glm",
+      "_type": "item"
+    },
+    {
+      "name": "backpack_tank",
+      "model": "models\\characters\\bolt_ons\\backpack_tank.glm",
+      "_type": "item"
+    },
+    {
+      "name": "backpack_snow",
+      "model": "models\\characters\\bolt_ons\\backpack_snow.glm",
+      "_type": "item"
+    },
+    {
+      "name": "hat_beret_marine",
+      "model": "models\\characters\\bolt_ons\\hat_beret_marine.glm",
+      "_type": "item"
+    },
+    {
+      "name": "bar_stool_bolt_on",
+      "model": "models\\characters\\bolt_ons\\bar_stool_bolt_on.glm",
+      "_type": "item"
+    },
+    {
+      "name": "headset",
+      "model": "models\\characters\\bolt_ons\\headset.glm",
+      "_type": "item"
+    },
+    {
+      "name": "headset_col1",
+      "model": "models\\characters\\bolt_ons\\headset_col1.glm",
+      "_type": "item"
+    },
+    {
+      "name": "helmet_shield",
+      "model": "models\\characters\\bolt_ons\\helmet_shield.glm",
+      "canshootoff": "false",
+      "protects": "true",
+      "_type": "item"
+    },
+    {
+      "name": "shield",
+      "model": "models\\characters\\bolt_ons\\shield.glm",
+      "canshootoff": "false",
+      "protects": "true",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "wilson_tube",
+      "model": "models\\characters\\bolt_ons\\wilson_tube.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "pen",
+      "model": "models\\characters\\bolt_ons\\pen.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "finca4_ussocom",
+      "model": "models\\weapons\\ussocom\\world\\ussocomworld.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "smoke_grenade",
+      "model": "models/weapons/m15/world/m15world.glm",
+      "canshootoff": "false",
+      "protects": "false",
+      "alwaysprecache": "true",
+      "candraw": "true",
+      "canuse": "false",
+      "canexamine": "false",
+      "canthrow": "true",
+      "canholster": "false",
+      "detonatetimer": "1500",
+      "detonateeffect": [
+        "effects/fire/smoke_grenade"
+      ],
+      "detonateloseffect": [
+        "effects/fire/smoke_grenade_flash"
+      ],
+      "inaireffect": [
+        "effects/fire/smoke_grenade_trail"
+      ],
+      "bolt": [
+        "*hand_l"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "flash_grenade",
+      "model": "models/weapons/m15/world/m15world.glm",
+      "canshootoff": "false",
+      "protects": "false",
+      "alwaysprecache": "true",
+      "candraw": "true",
+      "canuse": "false",
+      "canexamine": "false",
+      "canthrow": "true",
+      "canholster": "false",
+      "detonatetimer": "1500",
+      "detonateeffect": [
+        "effects/explosions/stun_flash2"
+      ],
+      "detonateloseffect": [
+        "effects/explosions/stun_flash_noflash"
+      ],
+      "inaireffect": [
+        "effects/fire/smoke_grenade_trail"
+      ],
+      "bolt": [
+        "*hand_l"
+      ],
+      "_type": "item"
+    },
+    {
+      "name": "bum_bottle",
+      "model": "models\\objects\\finca\\misc\\winebottle\\winebottle.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "hat_security",
+      "model": "models\\characters\\bolt_ons\\hat_security.glm",
+      "canshootoff": "true",
+      "_type": "item"
+    },
+    {
+      "name": "high_tech_device_hand",
+      "model": "models\\characters\\bolt_ons\\high_tech_device_hand.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "headset_hand_r",
+      "model": "models\\characters\\bolt_ons\\headset_hand_r.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "headset_hand_l",
+      "model": "models\\characters\\bolt_ons\\headset_hand_l.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "M1911A1_hand",
+      "model": "models\\weapons\\m1911a1\\world\\m1911a1world.glm",
+      "Deathmatch": "no",
+      "_type": "item"
+    },
+    {
+      "name": "HK7Key",
+      "model": "models\\characters\\bolt_ons\\keycard.glm",
+      "Deathmatch": "no",
+      "canshootoff": "false",
+      "protects": "true",
+      "usetarget": "int_door",
+      "_type": "item"
+    },
+    {
+      "name": "HK7Disc",
+      "model": "models\\characters\\bolt_ons\\deviant1_disc.glm",
+      "Deathmatch": "no",
+      "canshootoff": "false",
+      "protects": "true",
+      "usetarget": "hk7_nextlevel",
+      "_type": "item"
+    }
+  ]
+}

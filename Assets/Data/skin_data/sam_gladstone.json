@@ -1,0 +1,85 @@
+{
+  "prefs": {
+    "models": {
+      "1": "average_sleeves"
+    },
+    "surfaces_on": {
+      "name0": "head_side_r_avmed_off",
+      "name1": "head_side_l_avmed_off",
+      "name2": "head_bck_uppr_r_avmed_off",
+      "name3": "head_bck_uppr_l_avmed_off",
+      "name4": "head_bck_lwr_r_avmed_off",
+      "name5": "head_bck_lwr_l_avmed_off",
+      "name6": "avmedbangs_r_off",
+      "name7": "avmedbangs_l_off",
+      "name8": "beardhead_frnt_lwr_l_off",
+      "name9": "beardhead_frnt_lwr_r_off",
+      "name10": "beardhead_frnt_mid_l_off",
+      "name11": "beardhead_frnt_mid_r_off"
+    },
+    "surfaces_off": {
+      "name0": "collar_r",
+      "name1": "collar_l",
+      "name2": "head_side_r",
+      "name3": "head_side_l",
+      "name4": "head_bck_lwr_r",
+      "name5": "head_bck_lwr_l"
+    }
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/f_sam"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/f2_sam"
+        }
+      ]
+    },
+    {
+      "name": "avmed",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/h_avmed_sam"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_sleeves/a_sam"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_sleeves/b_sam"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

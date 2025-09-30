@@ -1,0 +1,68 @@
+{
+  "prefs": {
+    "models": {
+      "1": "female_pants"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {
+      "name0": "sleeve_r",
+      "name1": "sleeve_l"
+    }
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_face/f_fpro_armored2"
+        }
+      ]
+    },
+    {
+      "name": "eye_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/female_face/f2_nurse_w1"
+        }
+      ]
+    },
+    {
+      "name": "head",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_face/h_fpro_armored2"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_pants/a_fpro_grunt"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_pants/b_fpro_grunt"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

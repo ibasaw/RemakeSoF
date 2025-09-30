@@ -1,0 +1,29 @@
+{
+  "prefs": {
+    "models": {
+      "1": "dog"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "dog",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/dog/dog1"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

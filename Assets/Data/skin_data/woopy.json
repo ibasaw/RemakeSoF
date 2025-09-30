@@ -1,0 +1,75 @@
+{
+  "prefs": {
+    "models": {
+      "1": "average_sleeves",
+      "2": "newformat"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/f_col_rebel_h1"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/f2_col_rebel_h1"
+        }
+      ]
+    },
+    {
+      "name": "avmedhat",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/h_avmedhat_col_rebel_h1"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_sleeves/woopy_arms_test"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_sleeves/woopy_test"
+        }
+      ]
+    },
+    {
+      "name": "body_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_sleeves/woopy_test"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

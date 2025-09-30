@@ -92,7 +92,6 @@
     <Compile Include="Assets\Scripts\Sofmodels\SurfaceList.cs" />
     <Compile Include="Assets\Scripts\Models\BoundsProfile.cs" />
     <Compile Include="Assets\Scripts\UI\UIToolkitCrosshair.cs" />
-    <Compile Include="Assets\Scripts\SkeletonLoaderUI.cs" />
     <Compile Include="Assets\Scripts\SetUpdateWhenOffscreenEditor.cs" />
     <Compile Include="Assets\Scripts\BgPublic.cs" />
     <Compile Include="Assets\Scripts\MeasureRootMotionSpeed.cs" />
@@ -109,8 +108,8 @@
     <Compile Include="Assets\Scripts\Models\NPCStats.cs" />
     <Compile Include="Assets\Scripts\Sofmodels\Pmove.cs" />
     <Compile Include="Assets\AuthServer\MongoUserStore.cs" />
-    <Compile Include="Assets\Scripts\SkeletonLoader.cs" />
     <Compile Include="Assets\Scripts\Sofmodels\ModelSounds.cs" />
+    <Compile Include="Assets\Scripts\SkeletonConfig.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\uQuake\ext_data\outfitting\hk1.txt" />

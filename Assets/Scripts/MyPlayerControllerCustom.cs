@@ -92,22 +92,56 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private float lastHeadPitch = 0f;
 	private float lastHeadYaw = 0f;
 
+	// class fields
+	private Vector3 lastMoveDirection = Vector3.forward; // merkt sich die letzte NonZero-Richtung
+	public float legsRotationSmooth = 8f;   // smoothing wenn im Stand die Beine nachziehen
+	public float standCameraInfluence = 0.0f; // 0 = in Stand niemals zur Kamera drehen, 0.05-0.2 = langsam nachziehen
+	public Quaternion skeletonOffset = Quaternion.Euler(0f, 90f, 0f); // dein Y-Offset
+	[SerializeField] private float legsYawOffsetDegrees = 75f; // legs offset so left foot leads slightly
+
+	[Header("Idle Facing Offsets (by movement dir 0..7)")]
+	// 0:fwd,1:fwd-right,2:right,3:back-right,4:back,5:back-left,6:left,7:fwd-left
+	[SerializeField] private float[] idleYawByDir = new float[8] { 112f, 45f, 68f, 68f, 112f, 180f, 180f, 90f };
+
+
 	// BGPlayer animation state
 	private BGPlayer.AnimInfo torsoInfo = new BGPlayer.AnimInfo();
 	private BGPlayer.AnimInfo legsInfo = new BGPlayer.AnimInfo();
-	private int currentTime = 0;
+	private float currentTime = 0f;
 	private int frameTime = 16; // ~60fps = 16ms per frame
+
+	// Smoothed legs forward to avoid snapping/jitter
+	private Vector3 smoothedLegsForward = Vector3.forward;
+	private int lastMoveDirIndex = 0;
 
 	// Lean state
 	private bool isLeaningLeft = false;
 	private bool isLeaningRight = false;
 	private int leanOffset = 0; // -30 for left, +30 for right, 0 for none
 
+	[Header("Lean Settings")]
+	[SerializeField] private float rollLeanDegrees = 15f;  // left/right roll lean magnitude
+	[SerializeField] private float pitchLeanDegrees = 12f; // forward/backward pitch lean magnitude
+	[SerializeField] private float leanSmooth = 8f;        // smoothing speed for lean interpolation
+
+	// Smoothed lean state
+	private Vector2 currentLeanAngles = Vector2.zero; // x = roll, y = pitch
+
 	private void Awake()
 	{
 		// no CharacterController - using capsule-based physics
 		animator = GetComponentInChildren<Animator>();
 		inputActions = new AvatarActions();
+
+		// Load skeleton configuration
+		SkeletonConfigLoader.LoadSkeletonConfig("Data/skeletons/average_sleeves.skl");
+
+		// Initialize smoothed legs forward with current facing
+		Vector3 initialForward = transform.forward;
+		initialForward.y = 0f;
+		if (initialForward.sqrMagnitude < 0.0001f)
+			initialForward = Vector3.forward;
+		smoothedLegsForward = initialForward.normalized;
 	}
 
 	private void OnEnable()
@@ -193,6 +227,20 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	{
 		moveInput = ctx.ReadValue<Vector2>();
 		Debug.Log($"Move Input: {moveInput}");
+
+		// Calculate the intended movement direction based on camera and input
+		Vector3 forward = cameraTransform != null ? cameraTransform.forward : transform.forward;
+		Vector3 right = cameraTransform != null ? cameraTransform.right : transform.right;
+		forward.y = 0;
+		right.y = 0;
+		forward.Normalize();
+		right.Normalize();
+
+		Vector3 moveDirection = forward * moveInput.y + right * moveInput.x;
+		if (moveDirection.sqrMagnitude > 0.01f)
+		{
+			lastMoveDirection = moveDirection.normalized;
+		}
 	}
 
 	private void OnMoveCanceled(InputAction.CallbackContext ctx)
@@ -248,6 +296,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	private void Update()
 	{
+		// Update time tracking for BGPlayer
+		currentTime += Time.deltaTime;
+		frameTime = Mathf.RoundToInt(Time.deltaTime * 1000f); // Convert to milliseconds
+
 		// Ground state with raycast check
 		isGrounded = CheckGrounded();
 		animator?.SetBool("IsGrounded", isGrounded);
@@ -292,8 +344,89 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	private void LateUpdate()
 	{
-		// Update BGPlayer bone angles after all other updates
-		UpdateBGPlayerAngles();
+		// The skeleton has an offset rotation.
+		// We apply a counter-rotation to correct the orientation.
+		// You mentioned it was on the Y axis.
+		Quaternion offset = Quaternion.Euler(0, 90, 0);
+		Quaternion legsOffset = Quaternion.Euler(0, legsYawOffsetDegrees, 0);
+
+		// Rotate modelRoot (legs) to face movement input direction (W/A/S/D)
+		if (modelRoot != null) 
+		{
+			Vector3 fwd = cameraTransform != null ? cameraTransform.forward : transform.forward;
+			Vector3 rgt = cameraTransform != null ? cameraTransform.right : transform.right;
+			fwd.y = 0f; rgt.y = 0f; fwd.Normalize(); rgt.Normalize();
+			bool hasInput = moveInput.sqrMagnitude > 0.0001f;
+			if (hasInput)
+			{
+				// Legs orientation: keep forward when going straight back; mirror strafe when moving back-diagonal
+				float forwardComp = Mathf.Abs(moveInput.y);
+				float effectiveX = (moveInput.y < 0f) ? -moveInput.x : moveInput.x;
+				Vector3 inputDir = fwd * forwardComp + rgt * effectiveX;
+				if (inputDir.sqrMagnitude > 0.0001f)
+				{
+					Vector3 desiredFlat = inputDir; desiredFlat.y = 0f;
+					float t = Mathf.Clamp01(legsRotationSmooth * Time.deltaTime);
+					smoothedLegsForward = Vector3.Slerp(smoothedLegsForward, desiredFlat.normalized, t);
+				}
+				// Update last movement dir index based on raw input
+				lastMoveDirIndex = (int)ComputeMovementDir(moveInput);
+			}
+			// Use smoothed forward direction for legsLook
+			Quaternion legsLook = Quaternion.LookRotation(smoothedLegsForward, Vector3.up);
+			// When idle, use configured idle yaw offset for last movement dir; when moving, use running offset
+			Quaternion offsetToUse = hasInput ? legsOffset : Quaternion.Euler(0f, idleYawByDir[Mathf.Clamp(lastMoveDirIndex, 0, 7)], 0f);
+			modelRoot.rotation = legsLook * offsetToUse;
+		}
+
+		if (yawTarget != null)
+		{
+			Vector3 lookAtPoint;
+			// komplette LookPoint von pitchTarget (Position + forward * Distanz)
+			if (pitchTarget != null)
+			{
+				lookAtPoint = pitchTarget.position + pitchTarget.forward * 100f;
+			}
+			else
+			{
+				lookAtPoint = yawTarget.position + yawTarget.forward * 100f;
+			}
+
+			// Calculate movement-based lean angle (10 degrees max)
+			Vector2 targetLeanAngles = Vector2.zero;
+			if (moveInput.sqrMagnitude > 0.0001f)
+			{
+				// Target lean based on movement (left/right and forward/backward)
+				targetLeanAngles.x = -moveInput.x * rollLeanDegrees; // Roll lean (left/right)
+				targetLeanAngles.y = moveInput.y * pitchLeanDegrees;  // Pitch lean (forward/backward)
+			}
+			// Smooth toward target lean
+			float leanT = Mathf.Clamp01(leanSmooth * Time.deltaTime);
+			currentLeanAngles = Vector2.Lerp(currentLeanAngles, targetLeanAngles, leanT);
+
+			if (lowerLumbar != null)
+			{
+				Quaternion lookRotation = Quaternion.LookRotation(lookAtPoint - lowerLumbar.position, transform.up);
+				// Add lean rotation (roll + pitch)
+				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y, 0, currentLeanAngles.x);
+				lowerLumbar.rotation = lookRotation * leanRotation * offset;
+			}
+			if (upperLumbar != null)
+			{
+				Quaternion lookRotation = Quaternion.LookRotation(lookAtPoint - upperLumbar.position, transform.up);
+				// Add lean rotation (roll + pitch) - slightly less for upper torso
+				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y * 0.7f, 0, currentLeanAngles.x * 0.7f);
+				upperLumbar.rotation = lookRotation * leanRotation * offset;
+			}
+			/*if (cranium != null)
+			{
+				Quaternion lookRotation = Quaternion.LookRotation(lookAtPoint - cranium.position, transform.up);
+				// Add lean rotation (roll + pitch) - even less for head
+				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y * 0.3f, 0, currentLeanAngles.x * 0.3f);
+				cranium.rotation = lookRotation * leanRotation * offset;
+			}*/
+
+		}
 	}
 
 
@@ -514,7 +647,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// If no input, return 0
 		if (move.sqrMagnitude < 0.0001f)
 			return 0f;
-
 		// Convert to SoF2-style forwardmove/rightmove values (-1 to 1)
 		float forwardmove = move.y; // W/S keys
 		float rightmove = move.x;   // A/D keys
@@ -522,38 +654,38 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Exact SoF2 PM_SetMovementDir logic
 		if (rightmove == 0 && forwardmove > 0)
 		{
-			return 0; // forward
+			return 0; // forward 0
 		}
 		else if (rightmove < 0 && forwardmove > 0)
 		{
-			return 1; // forward-right
+			return 1; // forward-right 22
 		}
 		else if (rightmove < 0 && forwardmove == 0)
 		{
-			return 2; // right
+			return 2; // right 45
 		}
 		else if (rightmove < 0 && forwardmove < 0)
 		{
-			return 3; // back-right
+			return 3; // back-right -22
 		}
 		else if (rightmove == 0 && forwardmove < 0)
 		{
-			return 4; // back
+			return 4; // back 0
 		}
 		else if (rightmove > 0 && forwardmove < 0)
 		{
-			return 5; // back-left
+			return 5; // back-left -22
 		}
 		else if (rightmove > 0 && forwardmove == 0)
 		{
-			return 6; // left
+			return 6; // left 45
 		}
 		else if (rightmove > 0 && forwardmove > 0)
 		{
-			return 7; // forward-left
+			return 7; // forward-left -45
 		}
 
-		return 0; // default
+		return 0; // default 0	
 	}
 
 	/// <summary>
@@ -738,7 +870,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			startAngles = new Vector3(
 				cameraTransform.eulerAngles.x,  // pitch 
 				cameraTransform.eulerAngles.y,  // yaw
-				cameraTransform.eulerAngles.z   // roll (fall over)
+				0f  // roll (fall over)
 			);
 		}
 
@@ -747,7 +879,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Use pitchTarget and yawTarget for character's actual facing direction
 		Vector3 characterForward = Vector3.forward;
 		Vector3 characterRight = Vector3.right;
-		
+
 		if (pitchTarget != null && yawTarget != null)
 		{
 			// Use character's actual facing direction
@@ -760,17 +892,17 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			characterForward = cameraTransform.forward;
 			characterRight = cameraTransform.right;
 		}
-		
+
 		// Project to horizontal plane
 		characterForward.y = 0;
 		characterRight.y = 0;
 		characterForward.Normalize();
 		characterRight.Normalize();
-		
+
 		// Calculate character-relative movement direction
 		Vector3 moveDirection = characterForward * moveInput.y + characterRight * moveInput.x;
 		Vector2 characterRelativeMove = new Vector2(moveDirection.x, moveDirection.z);
-		
+
 		float movementDir = ComputeMovementDir(characterRelativeMove);
 
 		// Get lean offset (0 = no lean, positive/negative for left/right)
@@ -796,8 +928,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		);
 
 		// Apply angles to bone transforms
-		BGPlayer.ApplyAnglesToBones(
+		/*BGPlayer.ApplyAnglesToBones(
 			lastAngles,
+			modelRoot,
 			lowerLumbar,
 			upperLumbar,
 			cranium,
@@ -805,7 +938,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			lowerMultiplier,
 			upperMultiplier,
 			headMultiplier
-		);
+		);*/
 
 		// Update debug values for OnGUI
 		lastTorsoYawDeg = lastAngles.lowerTorsoAngles.y;

@@ -1,0 +1,65 @@
+{
+  "prefs": {
+    "models": {
+      "1": "average_sleeves"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/f_sam_hurt"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/f2_sam_hurt"
+        }
+      ]
+    },
+    {
+      "name": "avmed",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/h_avmed_sam"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_sleeves/a_sam_hurt"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_sleeves/b_sam_hurt"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

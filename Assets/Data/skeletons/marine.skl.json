@@ -1,0 +1,461 @@
+{
+  "SkeletonInfo": {
+    "GLMFile": "models\\test\\keithmarine\\marine.glm",
+    "Skelement": [
+      {
+        "Name": "Arms",
+        "Bone": "r_clavical",
+        "Bone1": "l_clavical",
+        "Parent": "Torso"
+      },
+      {
+        "Name": "Body",
+        "Bone": "model_root"
+      },
+      {
+        "Name": "Torso",
+        "Bone": "upper_lumbar",
+        "Parent": "Body"
+      }
+    ],
+    "PCJ": [
+      {
+        "Name": "Torso",
+        "H": 50.0,
+        "V": 90.0,
+        "BoneAim": [
+          {
+            "Name": "upper_lumbar",
+            "Fwd": "-Z",
+            "Up": "+X",
+            "Right": "-Y"
+          }
+        ],
+        "BoneRelative": [
+          {
+            "Name": "lower_lumbar",
+            "Fwd": "-Z",
+            "Up": "+Z",
+            "Right": "+Y"
+          }
+        ]
+      },
+      {
+        "Name": "Eyes",
+        "Parent": "Torso",
+        "H": 30.0,
+        "V": 80.0,
+        "BoneAim": [
+          {
+            "Name": "cranium",
+            "Fwd": "+X",
+            "Up": "+Z",
+            "Right": "-Y"
+          }
+        ],
+        "BoneRelative": [
+          {
+            "Name": "cervical",
+            "Fwd": "-Z",
+            "Up": "+Z",
+            "Right": "+Y"
+          }
+        ]
+      },
+      {
+        "Name": "Hold Rifle",
+        "Parent": "Torso",
+        "BoneAim": [
+          {
+            "Name": "ITEM",
+            "Fwd": "+X",
+            "Up": "+Z",
+            "Right": "+Y"
+          }
+        ],
+        "BoneRelative": [
+          {
+            "Name": "",
+            "Fwd": "-Y",
+            "Up": "+Z",
+            "Right": "+Y"
+          }
+        ]
+      }
+    ]
+  },
+  "Action": [
+    {
+      "Name": "Fire M4",
+      "Skelement": "Arms",
+      "Primitive": "Attack",
+      "VAngle": 0.0,
+      "HAngle": 0.0,
+      "Item": "Hold Rifle",
+      "Transition": [
+        {
+          "ToAction": "Inventory|Full+Hold Rifle+Normal+Stand|Hold",
+          "Sync": "None",
+          "Duration": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/shootm4.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Fire Pistol",
+      "Skelement": "Arms",
+      "Primitive": "Attack",
+      "VAngle": 0.0,
+      "HAngle": 0.0,
+      "Item": "Hold Pistol",
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/shootonehanded.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Hold",
+      "Skelement": "Arms",
+      "Primitive": "Inventory",
+      "X": 0.0,
+      "Y": 0.0,
+      "Item": "Hold Rifle",
+      "Transition": [
+        {
+          "ToAction": "Attack|Full+Hold Rifle+Normal+Stand|Fire M4",
+          "Sync": "None",
+          "Duration": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/holdm4.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Front Death",
+      "Skelement": "Body",
+      "Primitive": "Damage",
+      "VAngle": -1.0,
+      "HAngle": 1.0,
+      "Health": "None",
+      "DamageType": "Bullet",
+      "DamageLevel": "Low Death",
+      "HitRegion": "Legs",
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/death.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Walk",
+      "Skelement": "Body",
+      "Primitive": "HMove",
+      "Speed": 19.0,
+      "Angle": 0.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Fwd Left",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Fwd Right",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Right",
+          "Sync": "None",
+          "Duration": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Left",
+          "Sync": "None",
+          "Duration": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/walk01.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Walk Back",
+      "Skelement": "Body",
+      "Primitive": "HMove",
+      "Speed": 19.0,
+      "Angle": 180.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Back Right",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Back Left",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Right",
+          "Sync": "None",
+          "Duration": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Left",
+          "Sync": "None",
+          "Duration": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/walkback01.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Walk Back Left",
+      "Skelement": "Body",
+      "Primitive": "HMove",
+      "Speed": 19.0,
+      "Angle": 225.0,
+      "Transition": [
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Back",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Left",
+          "Sync": "Equal Percent"
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/walkbackstrafeleft01.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Walk Back Right",
+      "Skelement": "Body",
+      "Primitive": "HMove",
+      "Speed": 19.0,
+      "Angle": 135.0,
+      "Transition": [
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Right",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Back",
+          "Sync": "Equal Percent"
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/walkbackstraferight01.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Walk Fwd Left",
+      "Skelement": "Body",
+      "Primitive": "HMove",
+      "Speed": 19.0,
+      "Angle": 315.0,
+      "Transition": [
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Left",
+          "Sync": "Equal Percent"
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/walkforwardstrafeleft01.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Walk Fwd Right",
+      "Skelement": "Body",
+      "Primitive": "HMove",
+      "Speed": 19.0,
+      "Angle": 45.0,
+      "Transition": [
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Right",
+          "Sync": "Equal Percent"
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/walkforwardstraferight01.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Walk Left",
+      "Skelement": "Body",
+      "Primitive": "HMove",
+      "Speed": 19.0,
+      "Angle": 270.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Fwd Left",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Back Left",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Back",
+          "Sync": "None",
+          "Duration": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "None",
+          "Duration": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/walkstrafeleft01.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Walk Right",
+      "Skelement": "Body",
+      "Primitive": "HMove",
+      "Speed": 19.0,
+      "Angle": 90.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Fwd Right",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Back Right",
+          "Sync": "Equal Percent"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "None",
+          "Duration": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Back",
+          "Sync": "None",
+          "Duration": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/walkstraferight01.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Breathe",
+      "Skelement": "Body",
+      "Primitive": "Stationary",
+      "X": 0.0,
+      "Y": 0.0,
+      "Transition": [
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "None"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Right",
+          "Sync": "None"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Left",
+          "Sync": "None"
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk Back",
+          "Sync": "None"
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Crouch|Breathe",
+          "Sync": "None",
+          "Duration": 100
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/idle01.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Breathe",
+      "Skelement": "Body",
+      "Primitive": "Stationary",
+      "X": 0.0,
+      "Y": 0.0,
+      "Stance": "Crouch",
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 100
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/crouchidle.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Front Pain",
+      "Skelement": "Torso",
+      "Primitive": "Damage",
+      "VAngle": -1.0,
+      "HAngle": 1.0,
+      "DamageType": "Bullet",
+      "DamageLevel": "Low",
+      "HitRegion": "Legs",
+      "AnimationFile": [
+        {
+          "File": "models/test/marine/pain01.xsi"
+        }
+      ]
+    }
+  ],
+  "filename": "marine.skl"
+}
