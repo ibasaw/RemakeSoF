@@ -36,11 +36,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float pm_airaccelerate = 1.0f;     // Air acceleration  
 	[SerializeField] private float pm_flyaccelerate = 8.0f;     // Flying acceleration
 	[SerializeField] private float pm_friction = 6.0f;          // Ground friction
+
 	[SerializeField] private float pm_waterfriction = 3.0f;     // Water friction
 	[SerializeField] private float pm_ladderfriction = 6.0f;    // Ladder friction
 	[SerializeField] private float pm_headfriction = 0.0f;      // Friction when on someone's head
 	[SerializeField] private float pm_spectatorfriction = 5.0f;  // Spectator friction
+
 	[SerializeField] private float pm_watergravity = 400.0f; // Water acceleration
+
 	[SerializeField] private float pm_wateraccelerate = 4.0f;  // Water acceleration
 	[SerializeField] private float pm_maxswimvelocity = 150.0f;   // Water max swim velocity
 	[SerializeField] private float pm_stopspeed = 100.0f;       // Stop speed threshold
@@ -102,14 +105,25 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[Header("Idle Facing Offsets (by movement dir 0..7)")]
 	// 0:fwd,1:fwd-right,2:right,3:back-right,4:back,5:back-left,6:left,7:fwd-left
 	[SerializeField] private float[] idleYawByDir = new float[8] { 112f, 45f, 68f, 68f, 112f, 180f, 180f, 90f };
+	[SerializeField] private float strafeYawDegrees = 12f; // strafe yaw twist magnitude
 
+	[Header("Animator Smoothing")]
+	[SerializeField] private float animParamSmooth = 10f; // higher = faster response
+	private float animHorizontal = 0f;
+	private float animVertical = 0f;
+
+	[Header("Torso-Legs Follow")]
+	[SerializeField] private float torsoFollowYawInfluence = 4f; // legs yaw catch-up when torso twists
+
+	[Header("Head Settings")]
+	[SerializeField] private float headForwardBlend = 0.2f; // blend toward body forward so head looks straighter
+	[SerializeField] private bool headSwapPitchRoll = false;   // swap lean pitch/roll for head bone axes
+	[SerializeField] private float headPitchMultiplier = 0.3f;  // scale head pitch from lean
+	[SerializeField] private float headRollMultiplier = 0.3f;   // scale head roll from lean
+	[SerializeField] private int headPitchSign = 1;             // 1 or -1 to flip pitch
+	[SerializeField] private int headRollSign = -1;             // 1 or -1 to flip roll (default -1 fixes common Z flip)
 
 	// BGPlayer animation state
-	private BGPlayer.AnimInfo torsoInfo = new BGPlayer.AnimInfo();
-	private BGPlayer.AnimInfo legsInfo = new BGPlayer.AnimInfo();
-	private float currentTime = 0f;
-	private int frameTime = 16; // ~60fps = 16ms per frame
-
 	// Smoothed legs forward to avoid snapping/jitter
 	private Vector3 smoothedLegsForward = Vector3.forward;
 	private int lastMoveDirIndex = 0;
@@ -287,7 +301,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit hit, castDistance, groundMask))
 		{
 			// Consider grounded if the normal is reasonably upwards
-			if (Vector3.Dot(hit.normal, Vector3.up) > 0.5f)
+			if (Vector3.Dot(hit.normal, Vector3.up) > pm_maxsteepness)
 				return true;
 		}
 
@@ -296,30 +310,20 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	private void Update()
 	{
-		// Update time tracking for BGPlayer
-		currentTime += Time.deltaTime;
-		frameTime = Mathf.RoundToInt(Time.deltaTime * 1000f); // Convert to milliseconds
-
 		// Ground state with raycast check
 		isGrounded = CheckGrounded();
 		animator?.SetBool("IsGrounded", isGrounded);
 
-		// Update jump debounce
-		if (jumpDebounce > 0f)
-			jumpDebounce -= Time.deltaTime;
+		// jump debounce
+		if (jumpDebounce > 0f) jumpDebounce -= Time.deltaTime;
+
+		// restliche Logik -> ersetze Time.deltaTime mit dt
+		isGrounded = CheckGrounded();
+		if (isGrounded) PM_WalkMove();
+		else PM_AirMove();
 
 		// Check for swimming (simple water detection)
 		isSwimming = transform.position.y < 0f; // Assuming water level is at y=0
-
-		// SoF2 Movement System
-		if (isGrounded)
-		{
-			PM_WalkMove();
-		}
-		else
-		{
-			PM_AirMove();
-		}
 
 		// Apply gravity
 		ApplyGravity();
@@ -335,8 +339,12 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		bool isMoving = horizontalVel.sqrMagnitude > 0.001f;
 		animator?.SetBool("IsMoving", isMoving);
 		animator?.SetFloat("Speed", horizontalVel.magnitude);
-		animator?.SetFloat("Horizontal", moveInput.x);
-		animator?.SetFloat("Vertical", moveInput.y);
+		// Smooth animator parameters for better transition blending
+		float animT = Mathf.Clamp01(animParamSmooth * Time.deltaTime);
+		animHorizontal = Mathf.Lerp(animHorizontal, moveInput.x, animT);
+		animVertical = Mathf.Lerp(animVertical, moveInput.y, animT);
+		animator?.SetFloat("Horizontal", animHorizontal);
+		animator?.SetFloat("Vertical", animVertical);
 
 		// Set walking state based on input (like SoF2)
 		isWalking = isGrounded && (Mathf.Abs(moveInput.x) > 0.1f || Mathf.Abs(moveInput.y) > 0.1f);
@@ -351,7 +359,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		Quaternion legsOffset = Quaternion.Euler(0, legsYawOffsetDegrees, 0);
 
 		// Rotate modelRoot (legs) to face movement input direction (W/A/S/D)
-		if (modelRoot != null) 
+		if (modelRoot != null)
 		{
 			Vector3 fwd = cameraTransform != null ? cameraTransform.forward : transform.forward;
 			Vector3 rgt = cameraTransform != null ? cameraTransform.right : transform.right;
@@ -372,11 +380,44 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				// Update last movement dir index based on raw input
 				lastMoveDirIndex = (int)ComputeMovementDir(moveInput);
 			}
+			/*else
+			{
+				// When idle, slowly follow camera yaw based on standCameraInfluence
+				float idleFollowT = Mathf.Clamp01(standCameraInfluence * Time.deltaTime);
+				if (idleFollowT > 0f)
+				{
+					smoothedLegsForward = Vector3.Slerp(smoothedLegsForward, fwd, idleFollowT);
+				}
+			}*/
+
+			// Additionally, when torso (upper/lower) twists to follow camera, let legs catch up proportionally
+			// Apply this subtly while idle; movement uses input-driven facing, idle uses idleYawByDir offset
+			if (!hasInput)
+			{
+				// Compute yaw delta between current legs forward and camera forward
+				float yawDelta = Vector3.SignedAngle(smoothedLegsForward, fwd, Vector3.up);
+				float torsoDrivenT = Mathf.Clamp01(torsoFollowYawInfluence * Time.deltaTime * (Mathf.Abs(yawDelta) / 90f));
+				if (torsoDrivenT > 0f)
+				{
+					smoothedLegsForward = Vector3.Slerp(smoothedLegsForward, fwd, torsoDrivenT);
+				}
+			}
 			// Use smoothed forward direction for legsLook
 			Quaternion legsLook = Quaternion.LookRotation(smoothedLegsForward, Vector3.up);
-			// When idle, use configured idle yaw offset for last movement dir; when moving, use running offset
-			Quaternion offsetToUse = hasInput ? legsOffset : Quaternion.Euler(0f, idleYawByDir[Mathf.Clamp(lastMoveDirIndex, 0, 7)], 0f);
-			modelRoot.rotation = legsLook * offsetToUse;
+			// When idle, apply SoF2 idle correction (2->1, 6->7) before using idleYawByDir
+			if (!hasInput)
+			{
+				int idleDir = Mathf.Clamp(lastMoveDirIndex, 0, 7);
+				//if (idleDir == 2) idleDir = 1; // right -> forward-right
+				//else if (idleDir == 6) idleDir = 7; // left -> forward-left
+				Quaternion offsetToUseIdle = Quaternion.Euler(0f, idleYawByDir[idleDir], 0f);
+				modelRoot.rotation = legsLook * offsetToUseIdle;
+			}
+			else
+			{
+				Quaternion offsetToUseRun = legsOffset;
+				modelRoot.rotation = legsLook * offsetToUseRun;
+			}
 		}
 
 		if (yawTarget != null)
@@ -407,22 +448,33 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			if (lowerLumbar != null)
 			{
 				Quaternion lookRotation = Quaternion.LookRotation(lookAtPoint - lowerLumbar.position, transform.up);
-				// Add lean rotation (roll + pitch)
-				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y, 0, currentLeanAngles.x);
+				// Add lean rotation (roll + pitch) and strafe yaw twist
+				float strafeYaw = moveInput.x * strafeYawDegrees;
+				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y, strafeYaw, currentLeanAngles.x);
 				lowerLumbar.rotation = lookRotation * leanRotation * offset;
 			}
 			if (upperLumbar != null)
 			{
 				Quaternion lookRotation = Quaternion.LookRotation(lookAtPoint - upperLumbar.position, transform.up);
-				// Add lean rotation (roll + pitch) - slightly less for upper torso
-				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y * 0.7f, 0, currentLeanAngles.x * 0.7f);
+				// Add lean rotation (roll + pitch) and reduced strafe yaw for upper torso
+				float strafeYawUpper = moveInput.x * (strafeYawDegrees * 0.6f);
+				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y * 0.7f, strafeYawUpper, currentLeanAngles.x * 0.7f);
 				upperLumbar.rotation = lookRotation * leanRotation * offset;
 			}
+
 			/*if (cranium != null)
 			{
-				Quaternion lookRotation = Quaternion.LookRotation(lookAtPoint - cranium.position, transform.up);
-				// Add lean rotation (roll + pitch) - even less for head
-				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y * 0.3f, 0, currentLeanAngles.x * 0.3f);
+				// Make head look slightly more straight ahead by blending toward body forward
+				Vector3 toLook = (lookAtPoint - cranium.position).normalized;
+				Vector3 bodyForward = (modelRoot != null ? modelRoot.forward : transform.forward).normalized;
+				Vector3 blendedForward = Vector3.Slerp(toLook, bodyForward, Mathf.Clamp01(headForwardBlend));
+				Quaternion lookRotation = Quaternion.LookRotation(blendedForward, transform.up);
+				// Subtle lean for head with configurable axis mapping
+				float srcRoll = currentLeanAngles.x;  // x = roll
+				float srcPitch = currentLeanAngles.y; // y = pitch
+				float headPitch = headSwapPitchRoll ? (srcRoll * headPitchMultiplier * headPitchSign) : (srcPitch * headPitchMultiplier * headPitchSign);
+				float headRoll  = headSwapPitchRoll ? (srcPitch * headRollMultiplier  * headRollSign)  : (srcRoll  * headRollMultiplier  * headRollSign);
+				Quaternion leanRotation = Quaternion.Euler(headPitch, 0f, headRoll);
 				cranium.rotation = lookRotation * leanRotation * offset;
 			}*/
 
@@ -545,6 +597,27 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Get movement input
 		Vector3 forward = (isAiming || isNPC) ? transform.forward : (cameraTransform != null ? cameraTransform.forward : transform.forward);
 		Vector3 right = (isAiming || isNPC) ? transform.right : (cameraTransform != null ? cameraTransform.right : transform.right);
+		// derive a ground normal via a short down cast to project movement like SoF2
+		Vector3 groundNormal = Vector3.up;
+		{
+			float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
+			Vector3 center = transform.TransformPoint(capsuleCenter);
+			Vector3 top = center + Vector3.up * halfHeight;
+			Vector3 bottom = center - Vector3.up * halfHeight;
+			if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit groundHit, groundCheckDistance + 0.05f, groundMask))
+			{
+				if (Vector3.Dot(groundHit.normal, Vector3.up) > pm_maxsteepness)
+					groundNormal = groundHit.normal;
+			}
+		}
+		// project forward/right onto ground plane (like PM_ClipVelocity on directions)
+		forward = Vector3.ProjectOnPlane(forward, Vector3.up); // start flat
+		right = Vector3.ProjectOnPlane(right, Vector3.up);
+		if (groundNormal != Vector3.up)
+		{
+			forward = Vector3.ProjectOnPlane(forward, Vector3.Cross(groundNormal, Vector3.Cross(forward, groundNormal))).normalized;
+			right = Vector3.ProjectOnPlane(right, Vector3.Cross(groundNormal, Vector3.Cross(right, groundNormal))).normalized;
+		}
 		forward.y = 0f; right.y = 0f; forward.Normalize(); right.Normalize();
 
 		// Calculate movement direction
@@ -629,15 +702,16 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	/// </summary>
 	private float PM_CmdScale()
 	{
-		// Get the movement input magnitude
-		float max = Mathf.Max(Mathf.Abs(moveInput.x), Mathf.Abs(moveInput.y));
+		// Emulate SoF2 PM_CmdScale with inputs in [-1..1] by mapping to [-127..127]
+		float forwardmove = moveInput.y * 127f;
+		float rightmove = moveInput.x * 127f;
+		float upmove = 0f;
+		float max = Mathf.Max(Mathf.Abs(forwardmove), Mathf.Abs(rightmove));
+		max = Mathf.Max(max, Mathf.Abs(upmove));
 		if (max <= 0.0f)
 			return 0.0f;
-
-		// Calculate the scale like in SoF2
-		float total = Mathf.Sqrt(moveInput.x * moveInput.x + moveInput.y * moveInput.y);
+		float total = Mathf.Sqrt(forwardmove * forwardmove + rightmove * rightmove + upmove * upmove);
 		float scale = pm_maxspeed * max / (127.0f * total);
-
 		return scale;
 	}
 
@@ -699,6 +773,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 		else
 		{
+			// emulate ground stick like SoF2: small negative to keep contact
+			if (velocity.y < 0f) velocity.y = -2f;
 			// Reset jumping state when grounded
 			if (isJumping)
 			{
@@ -851,102 +927,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 	}
 
-	private void UpdateBGPlayerAngles()
-	{
-		// Get current character view angles (not camera angles!)
-		Vector3 startAngles = Vector3.zero;
-		if (pitchTarget != null && yawTarget != null)
-		{
-			// Use character's actual view angles, not camera angles
-			startAngles = new Vector3(
-				pitchTarget.eulerAngles.x,  // pitch (up/down)
-				yawTarget.eulerAngles.y,    // yaw (left/right) 
-				0f                          // roll (fall over)
-			);
-		}
-		else if (cameraTransform != null)
-		{
-			// Fallback to camera if character transforms not available
-			startAngles = new Vector3(
-				cameraTransform.eulerAngles.x,  // pitch 
-				cameraTransform.eulerAngles.y,  // yaw
-				0f  // roll (fall over)
-			);
-		}
-
-		// Calculate movement direction (0-7 like SoF2)
-		// Convert camera-relative input to character-relative movement
-		// Use pitchTarget and yawTarget for character's actual facing direction
-		Vector3 characterForward = Vector3.forward;
-		Vector3 characterRight = Vector3.right;
-
-		if (pitchTarget != null && yawTarget != null)
-		{
-			// Use character's actual facing direction
-			characterForward = yawTarget.forward;
-			characterRight = yawTarget.right;
-		}
-		else if (cameraTransform != null)
-		{
-			// Fallback to camera if character transforms not available
-			characterForward = cameraTransform.forward;
-			characterRight = cameraTransform.right;
-		}
-
-		// Project to horizontal plane
-		characterForward.y = 0;
-		characterRight.y = 0;
-		characterForward.Normalize();
-		characterRight.Normalize();
-
-		// Calculate character-relative movement direction
-		Vector3 moveDirection = characterForward * moveInput.y + characterRight * moveInput.x;
-		Vector2 characterRelativeMove = new Vector2(moveDirection.x, moveDirection.z);
-
-		float movementDir = ComputeMovementDir(characterRelativeMove);
-
-		// Get lean offset (0 = no lean, positive/negative for left/right)
-		// leanOffset is already set by UpdateLeanOffset() from input callbacks
-
-		// Pain/damage state (0 = no pain)
-		int painTime = 0;
-		int painDirection = 0;
-
-		// Calculate BGPlayer angles
-		lastAngles = BGPlayer.PlayerAngles(
-			startAngles,
-			torsoInfo,
-			legsInfo,
-			leanOffset,
-			painTime,
-			painDirection,
-			currentTime,
-			movementDir,
-			velocity,
-			false, // dead
-			frameTime
-		);
-
-		// Apply angles to bone transforms
-		/*BGPlayer.ApplyAnglesToBones(
-			lastAngles,
-			modelRoot,
-			lowerLumbar,
-			upperLumbar,
-			cranium,
-			legsMultiplier,
-			lowerMultiplier,
-			upperMultiplier,
-			headMultiplier
-		);*/
-
-		// Update debug values for OnGUI
-		lastTorsoYawDeg = lastAngles.lowerTorsoAngles.y;
-		lastTorsoYawNormalized = lastAngles.lowerTorsoAngles.y;
-		lastHeadPitch = lastAngles.headAngles.x;
-		lastHeadYaw = lastAngles.headAngles.y;
-	}
-
 #if UNITY_EDITOR
 	private void OnDrawGizmos()
 	{
@@ -993,6 +973,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		GUI.Label(new Rect(x, y, 600, line), $"IsJumping: {isJumping}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsSwimming: {isSwimming}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsWalking: {isWalking}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"FPS: {(int)(1f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f))}", valueStyle); y += line;
 		y += line * 0.5f; // Spacing
 
 		// Velocity Info
