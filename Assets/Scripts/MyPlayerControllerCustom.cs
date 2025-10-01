@@ -43,9 +43,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float pm_spectatorfriction = 5.0f;  // Spectator friction
 
 	[SerializeField] private float pm_watergravity = 400.0f; // Water acceleration
-
 	[SerializeField] private float pm_wateraccelerate = 4.0f;  // Water acceleration
 	[SerializeField] private float pm_maxswimvelocity = 150.0f;   // Water max swim velocity
+
 	[SerializeField] private float pm_stopspeed = 100.0f;       // Stop speed threshold
 	[SerializeField] private float pm_maxspeed = 320.0f;        // Maximum speed / max velocity
 	[SerializeField] private float pm_maxwalkvelocity = 320.0f; // Maximum walk speed / max velocity
@@ -64,20 +64,11 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] public bool isAiming = false;
 	[SerializeField] public bool isNPC = false;
 
-	[Header("Torso Settings")]
-	[SerializeField] private float torsoMaxYaw = 90f; // degrees for normalization
-
 	[Header("BGPlayer Bones")]
 	[SerializeField] private Transform lowerLumbar;
 	[SerializeField] private Transform upperLumbar;
 	[SerializeField] private Transform cranium;
 	[SerializeField] private Transform modelRoot;
-
-	[Header("Bone Axis Multipliers")]
-	[SerializeField] private Vector3 legsMultiplier = new Vector3(1f, 1f, 1f);
-	[SerializeField] private Vector3 lowerMultiplier = new Vector3(1f, 1f, 1f);
-	[SerializeField] private Vector3 upperMultiplier = new Vector3(1f, 1f, 1f);
-	[SerializeField] private Vector3 headMultiplier = new Vector3(1f, 1f, 1f);
 
 	// SoF2 Movement State
 	private Vector3 velocity = Vector3.zero;           // Current velocity (x, y, z)
@@ -88,40 +79,33 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private bool isCrouching = false;                  // Crouching state
 	private float jumpDebounce = 0f;                   // Jump debounce timer
 
-	// Debug: store last BGPlayer results for OnGUI
-	private BGPlayer.AnglesResult lastAngles;
-	private float lastTorsoYawDeg = 0f;
-	private float lastTorsoYawNormalized = 0f;
-	private float lastHeadPitch = 0f;
-	private float lastHeadYaw = 0f;
-
 	// class fields
 	private Vector3 lastMoveDirection = Vector3.forward; // merkt sich die letzte NonZero-Richtung
 	public float legsRotationSmooth = 8f;   // smoothing wenn im Stand die Beine nachziehen
 	public float standCameraInfluence = 0.0f; // 0 = in Stand niemals zur Kamera drehen, 0.05-0.2 = langsam nachziehen
-	public Quaternion skeletonOffset = Quaternion.Euler(0f, 90f, 0f); // dein Y-Offset
-	[SerializeField] private float legsYawOffsetDegrees = 75f; // legs offset so left foot leads slightly
+	[SerializeField] private float legsYawOffsetDegrees = 90f; // legs offset so left foot leads slightly
 
 	[Header("Idle Facing Offsets (by movement dir 0..7)")]
-	// 0:fwd,1:fwd-right,2:right,3:back-right,4:back,5:back-left,6:left,7:fwd-left
 	[SerializeField] private float[] idleYawByDir = new float[8] { 112f, 45f, 68f, 68f, 112f, 180f, 180f, 90f };
-	[SerializeField] private float strafeYawDegrees = 12f; // strafe yaw twist magnitude
 
 	[Header("Animator Smoothing")]
 	[SerializeField] private float animParamSmooth = 10f; // higher = faster response
 	private float animHorizontal = 0f;
 	private float animVertical = 0f;
 
-	[Header("Torso-Legs Follow")]
-	[SerializeField] private float torsoFollowYawInfluence = 4f; // legs yaw catch-up when torso twists
+	[Header("Lumbar Yaw Offsets")]
+	[SerializeField] private float upperLumbarYawOffset = 0f;    // Upper lumbar yaw offset in degrees
+	[SerializeField] private float lowerLumbarYawOffset = 0f;    // Lower lumbar yaw offset in degrees
+	[SerializeField] private float lumbarYawSmooth = 8f;          // Smoothing speed for lumbar yaw changes
 
-	[Header("Head Settings")]
-	[SerializeField] private float headForwardBlend = 0.2f; // blend toward body forward so head looks straighter
-	[SerializeField] private bool headSwapPitchRoll = false;   // swap lean pitch/roll for head bone axes
-	[SerializeField] private float headPitchMultiplier = 0.3f;  // scale head pitch from lean
-	[SerializeField] private float headRollMultiplier = 0.3f;   // scale head roll from lean
-	[SerializeField] private int headPitchSign = 1;             // 1 or -1 to flip pitch
-	[SerializeField] private int headRollSign = -1;             // 1 or -1 to flip roll (default -1 fixes common Z flip)
+	[Header("Lumbar Pitch Offsets")]
+	[SerializeField] private float upperLumbarPitchOffset = 0f;    // Upper lumbar pitch offset in degrees (forward/backward)
+	[SerializeField] private float lowerLumbarPitchOffset = 0f;   // Lower lumbar pitch offset in degrees (forward/backward)
+	[SerializeField] private float lumbarPitchSmooth = 8f;        // Smoothing speed for lumbar pitch changes
+
+	[Header("Movement Direction Idle Offsets")]
+	[SerializeField] private int[] movementOffsets = new int[8] { 0, 22, 45, -22, 0, 22, -45, -22 }; // forward,forward-left,right,forward-right,back,back-left,left,back-right
+	[SerializeField] private float movementOffsetSmooth = 6f;     // Smoothing speed for movement-based offsets
 
 	// BGPlayer animation state
 	// Smoothed legs forward to avoid snapping/jitter
@@ -137,18 +121,29 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float rollLeanDegrees = 15f;  // left/right roll lean magnitude
 	[SerializeField] private float pitchLeanDegrees = 12f; // forward/backward pitch lean magnitude
 	[SerializeField] private float leanSmooth = 8f;        // smoothing speed for lean interpolation
+	[Header("Torso-Legs Follow")]
+	[SerializeField] private float torsoFollowYawInfluence = 4f; // legs yaw catch-up when torso twists
+	[SerializeField] private float strafeYawDegrees = 12f; // strafe yaw twist magnitude
 
 	// Smoothed lean state
 	private Vector2 currentLeanAngles = Vector2.zero; // x = roll, y = pitch
+	
+	// Smoothed lumbar yaw offsets
+	private float currentUpperLumbarYaw = 0f;
+	private float currentLowerLumbarYaw = 0f;
+	
+	// Smoothed lumbar pitch offsets
+	private float currentUpperLumbarPitch = 0f;
+	private float currentLowerLumbarPitch = 0f;
+	
+	// Movement-based idle offset
+	private float currentMovementIdleOffset = 0f;
 
 	private void Awake()
 	{
 		// no CharacterController - using capsule-based physics
 		animator = GetComponentInChildren<Animator>();
 		inputActions = new AvatarActions();
-
-		// Load skeleton configuration
-		SkeletonConfigLoader.LoadSkeletonConfig("Data/skeletons/average_sleeves.skl");
 
 		// Initialize smoothed legs forward with current facing
 		Vector3 initialForward = transform.forward;
@@ -240,7 +235,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private void OnMovePerformed(InputAction.CallbackContext ctx)
 	{
 		moveInput = ctx.ReadValue<Vector2>();
-		Debug.Log($"Move Input: {moveInput}");
 
 		// Calculate the intended movement direction based on camera and input
 		Vector3 forward = cameraTransform != null ? cameraTransform.forward : transform.forward;
@@ -445,38 +439,45 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			float leanT = Mathf.Clamp01(leanSmooth * Time.deltaTime);
 			currentLeanAngles = Vector2.Lerp(currentLeanAngles, targetLeanAngles, leanT);
 
+			// Smooth lumbar yaw offsets
+			float yawSmoothT = Mathf.Clamp01(lumbarYawSmooth * Time.deltaTime);
+			currentUpperLumbarYaw = Mathf.Lerp(currentUpperLumbarYaw, upperLumbarYawOffset, yawSmoothT);
+			currentLowerLumbarYaw = Mathf.Lerp(currentLowerLumbarYaw, lowerLumbarYawOffset, yawSmoothT);
+			
+			// Smooth lumbar pitch offsets
+			float pitchSmoothT = Mathf.Clamp01(lumbarPitchSmooth * Time.deltaTime);
+			currentUpperLumbarPitch = Mathf.Lerp(currentUpperLumbarPitch, upperLumbarPitchOffset, pitchSmoothT);
+			currentLowerLumbarPitch = Mathf.Lerp(currentLowerLumbarPitch, lowerLumbarPitchOffset, pitchSmoothT);
+			
+			// Calculate movement-based idle offset
+			bool hasInput = moveInput.sqrMagnitude > 0.0001f;
+			float targetMovementOffset = 0f;
+			if (!hasInput && lastMoveDirIndex >= 0 && lastMoveDirIndex < movementOffsets.Length)
+			{
+				targetMovementOffset = movementOffsets[lastMoveDirIndex];
+			}
+			
+			// Smooth movement-based offset
+			float movementSmoothT = Mathf.Clamp01(movementOffsetSmooth * Time.deltaTime);
+			currentMovementIdleOffset = Mathf.Lerp(currentMovementIdleOffset, targetMovementOffset, movementSmoothT);
+
 			if (lowerLumbar != null)
 			{
 				Quaternion lookRotation = Quaternion.LookRotation(lookAtPoint - lowerLumbar.position, transform.up);
-				// Add lean rotation (roll + pitch) and strafe yaw twist
+				// Add lean rotation (roll + pitch), strafe yaw twist, lumbar yaw offset, and lumbar pitch offset
 				float strafeYaw = moveInput.x * strafeYawDegrees;
-				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y, strafeYaw, currentLeanAngles.x);
+				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y + currentLowerLumbarPitch, strafeYaw + currentLowerLumbarYaw, currentLeanAngles.x);
 				lowerLumbar.rotation = lookRotation * leanRotation * offset;
 			}
 			if (upperLumbar != null)
 			{
 				Quaternion lookRotation = Quaternion.LookRotation(lookAtPoint - upperLumbar.position, transform.up);
-				// Add lean rotation (roll + pitch) and reduced strafe yaw for upper torso
+				// Add lean rotation (roll + pitch), reduced strafe yaw, lumbar yaw offset, lumbar pitch offset, and movement-based idle offset for upper torso
 				float strafeYawUpper = moveInput.x * (strafeYawDegrees * 0.6f);
-				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y * 0.7f, strafeYawUpper, currentLeanAngles.x * 0.7f);
+				float totalYawOffset = strafeYawUpper + currentUpperLumbarYaw + currentMovementIdleOffset;
+				Quaternion leanRotation = Quaternion.Euler(currentLeanAngles.y * 0.7f + currentUpperLumbarPitch, totalYawOffset, currentLeanAngles.x * 0.7f);
 				upperLumbar.rotation = lookRotation * leanRotation * offset;
 			}
-
-			/*if (cranium != null)
-			{
-				// Make head look slightly more straight ahead by blending toward body forward
-				Vector3 toLook = (lookAtPoint - cranium.position).normalized;
-				Vector3 bodyForward = (modelRoot != null ? modelRoot.forward : transform.forward).normalized;
-				Vector3 blendedForward = Vector3.Slerp(toLook, bodyForward, Mathf.Clamp01(headForwardBlend));
-				Quaternion lookRotation = Quaternion.LookRotation(blendedForward, transform.up);
-				// Subtle lean for head with configurable axis mapping
-				float srcRoll = currentLeanAngles.x;  // x = roll
-				float srcPitch = currentLeanAngles.y; // y = pitch
-				float headPitch = headSwapPitchRoll ? (srcRoll * headPitchMultiplier * headPitchSign) : (srcPitch * headPitchMultiplier * headPitchSign);
-				float headRoll  = headSwapPitchRoll ? (srcPitch * headRollMultiplier  * headRollSign)  : (srcRoll  * headRollMultiplier  * headRollSign);
-				Quaternion leanRotation = Quaternion.Euler(headPitch, 0f, headRoll);
-				cranium.rotation = lookRotation * leanRotation * offset;
-			}*/
 
 		}
 	}
@@ -984,21 +985,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Input Info
 		GUI.Label(new Rect(x, y, 600, line), $"MoveInput: {moveInput}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"MovementDir: {lastAngles.movementDir:F1}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Jump Debounce: {jumpDebounce:F2}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Lean: Left={isLeaningLeft} Right={isLeaningRight} Offset={leanOffset}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Lumbar Yaw: Upper={currentUpperLumbarYaw:F1}° Lower={currentLowerLumbarYaw:F1}°", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Lumbar Pitch: Upper={currentUpperLumbarPitch:F1}° Lower={currentLowerLumbarPitch:F1}°", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Movement Dir: {lastMoveDirIndex} Idle Offset: {currentMovementIdleOffset:F1}°", valueStyle); y += line;
 		y += line * 0.5f; // Spacing
 
 		// Physics Settings
 		GUI.Label(new Rect(x, y, 600, line), $"Accel: {pm_accelerate}  AirAccel: {pm_airaccelerate}  Friction: {pm_friction}", valueStyle); y += line;
-
-		// BGPlayer Debug Info
-		GUI.Label(new Rect(x, y, 600, line), "--- BGPlayer Debug ---", headerStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Legs Euler: {lastAngles.legsAngles}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Lower Torso Euler: {lastAngles.lowerTorsoAngles}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Upper Torso Euler: {lastAngles.upperTorsoAngles}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Head Euler: {lastAngles.headAngles}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"TorsoYaw deg: {lastTorsoYawDeg:F1}  normalized: {lastTorsoYawNormalized:F2}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Head Pitch/Yaw: {lastHeadPitch:F1} / {lastHeadYaw:F1}", valueStyle); y += line;
 	}
 }
