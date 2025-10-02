@@ -220,7 +220,7 @@ Transform:
   m_GameObject: {fileID: 264026610}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -664, y: 619.10004, z: 355.5}
+  m_LocalPosition: {x: -664, y: 629.10004, z: 355.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -262,7 +262,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineThirdPersonFollow
   Damping: {x: 0.1, y: 0.5, z: 0.3}
-  ShoulderOffset: {x: 0, y: 0, z: 0}
+  ShoulderOffset: {x: 0, y: 10, z: 0}
   VerticalArmLength: 0
   CameraSide: 1
   CameraDistance: 110
@@ -763,7 +763,7 @@ Animator:
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: d67a39a1e9ee9ac42b32666fda3b2a4d, type: 3}
   m_Controller: {fileID: 9100000, guid: 0af4f13a340015f49bf37f2faf41bb9b, type: 2}
-  m_CullingMode: 0
+  m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
@@ -818,7 +818,7 @@ MonoBehaviour:
   pm_maxwalkvelocity: 320
   pm_maxcrouchvelocity: 100
   pm_gravity: 800
-  jumpVelocity: 320
+  jumpVelocity: 270
   rotationSpeed: 14
   yawTarget: {fileID: 26258238}
   pitchTarget: {fileID: 18061825}
@@ -829,6 +829,7 @@ MonoBehaviour:
   upperLumbar: {fileID: 173700779}
   cranium: {fileID: 274203085}
   modelRoot: {fileID: 2124588031}
+  jumpBounceAfterMs: 0.25
   standCameraInfluence: 0
   legsYawOffsetDegrees: 90
   idleYawByDir:

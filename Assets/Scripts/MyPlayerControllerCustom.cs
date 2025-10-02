@@ -34,7 +34,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[Header("Physics Constants")]
 	[SerializeField] private float pm_accelerate = 6.0f;        // Ground acceleration
 	[SerializeField] private float pm_airaccelerate = 1.0f;     // Air acceleration  
-	[SerializeField] private float pm_flyaccelerate = 8.0f;     // Flying acceleration
 	[SerializeField] private float pm_friction = 6.0f;          // Ground friction
 
 	[SerializeField] private float pm_waterfriction = 3.0f;     // Water friction
@@ -77,12 +76,16 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private bool isJumping = false;                    // Jumping state
 	private bool isSwimming = false;                   // Swimming state
 	private bool isCrouching = false;                  // Crouching state
-	private float jumpDebounce = 0f;                   // Jump debounce timer
+	private float jumpDebounce = 0f;                   // Jump debounce timer (starts after landing)
+	private bool isDebounceActive = false;             // Whether debounce is currently active
 	private float airTime = 0f;                        // Time spent in air
 	private float lastJumpTime = 0f;                   // Time when last jump started
 	private Vector3 jumpStartPosition = Vector3.zero;  // Position when jump started
 	private float jumpDistance = 0f;                   // Horizontal distance traveled during jump
-	[SerializeField] private float jumpBounceMultiplier = 0.25f; // 250ms debounce like SoF2
+	private float jumpHeight = 0f;                     // Maximum height reached during jump
+	private float jumpStartY = 0f;                     // Y position when jump started
+	[SerializeField] private float jumpDebounceAfterMs = 0.25f; // 250ms debounce like SoF2
+	[SerializeField] private bool autoJump = false; // Auto jump when grounded and space is pressed
 
 	// class fields
 	private Vector3 lastMoveDirection = Vector3.forward; // merkt sich die letzte NonZero-Richtung
@@ -291,11 +294,26 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		TryJump();
 	}
 
+	/// <summary>
+	/// Auto-jump for testing debounce system - jumps continuously while space is held
+	/// </summary>
+	private void HandleAutoJump()
+	{
+		// Check if jump input is currently being held down
+		bool jumpInputHeld = inputActions.Player.Jump.ReadValue<float>() > 0f;
+		
+		if (jumpInputHeld)
+		{
+			// Try to jump (will be blocked by debounce/grounded checks)
+			TryJump();
+		}
+	}
+
 	// Try to perform a jump immediately (removes queued-jump logic)
 	private void TryJump()
 	{
-		// Can't jump if debounce active
-		if (jumpDebounce > 0f)
+		// Can't jump if debounce active (now only active after landing)
+		if (isDebounceActive)
 			return;
 
 		// Must be grounded to initiate a jump
@@ -308,13 +326,19 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Perform jump now
 		isJumping = true;
-		jumpDebounce = jumpBounceMultiplier; // 250ms debounce like SoF2
+		isDebounceActive = false; // Reset debounce state (will be activated after landing)
 		velocity.y = jumpVelocity;
 		lastJumpTime = Time.time;
 		airTime = 0f;
 		jumpStartPosition = transform.position;
+		jumpStartY = transform.position.y;
 		jumpDistance = 0f;
-		Debug.Log("Jump performed - Starting airtime and distance tracking");
+		jumpHeight = 0f;
+		
+		// Trigger jump animation (Trigger resets automatically after one frame)
+		animator?.SetTrigger("Jump");
+		
+		//Debug.Log("Jump performed - Starting airtime, distance and height tracking");
 	}
 
 	private bool CheckGrounded()
@@ -350,8 +374,21 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		float speedFactor = Mathf.Clamp01(smoothedMouseSpeed / 100f); // Normalize to 0-1 range (100 degrees/s = max)
 		dynamicLegsRotationSmooth = Mathf.Lerp(baseLegsRotationSmooth, maxLegsRotationSmooth, speedFactor * mouseSpeedMultiplier);
 
-		// jump debounce
-		if (jumpDebounce > 0f) jumpDebounce -= Time.deltaTime;
+		// jump debounce (only runs after landing)
+		if (isDebounceActive && jumpDebounce > 0f) 
+		{
+			jumpDebounce -= Time.deltaTime;
+			if (jumpDebounce <= 0f)
+			{
+				isDebounceActive = false; // Debounce finished, can jump again
+			}
+		}
+
+		// Auto-jump for testing debounce system
+		if (autoJump && !isNPC)
+		{
+			HandleAutoJump();
+		}
 
 		isGrounded = CheckGrounded();
 		animator?.SetBool("IsGrounded", isGrounded);
@@ -446,8 +483,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			if (!hasInput)
 			{
 				int idleDir = Mathf.Clamp(lastMoveDirIndex, 0, 7);
-				//if (idleDir == 2) idleDir = 1; // right -> forward-right
-				//else if (idleDir == 6) idleDir = 7; // left -> forward-left
 				Quaternion offsetToUseIdle = Quaternion.Euler(0f, idleYawByDir[idleDir], 0f);
 				modelRoot.rotation = legsLook * offsetToUseIdle;
 			}
@@ -699,21 +734,31 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		Vector3 right = (isAiming || isNPC) ? transform.right : (cameraTransform != null ? cameraTransform.right : transform.right);
 		forward.y = 0f; right.y = 0f; forward.Normalize(); right.Normalize();
 
-		Vector3 wishvel = forward * moveInput.y + right * moveInput.x;
+		// Use raw input values like SoF2 (fmove, smove are -127 to +127)
+		float fmove = moveInput.y * 127f;
+		float smove = moveInput.x * 127f;
+		
+		Vector3 wishvel = forward * fmove + right * smove;
 		wishvel.y = 0f;
 
 		float scale = PM_CmdScale();
-		if (scale == 0)
+		
+		// Copy wishvel to wishdir and normalize (like original SoF2)
+		Vector3 wishdir = wishvel;
+		float wishspeed = wishdir.magnitude;
+		
+		if (wishspeed > 0.0001f)
 		{
-			wishvel = Vector3.zero;
+			wishdir /= wishspeed; // Normalize
 		}
 		else
 		{
-			wishvel *= scale;
+			wishdir = Vector3.zero;
+			wishspeed = 0f;
 		}
-
-		Vector3 wishdir = wishvel.normalized;
-		float wishspeed = wishvel.magnitude;
+		
+		// Apply scale AFTER normalization (like original SoF2)
+		wishspeed *= scale;
 
 		// Clamp to max speed
 		if (wishspeed > pm_maxspeed)
@@ -731,7 +776,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private bool PM_CheckJump()
 	{
 		// If debounce active, no jump
-		if (jumpDebounce > 0f)
+		if (isDebounceActive)
 			return false;
 
 		// If we've already performed a jump this frame, signal caller to switch to air movement
@@ -756,6 +801,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (max <= 0.0f)
 			return 0.0f;
 		float total = Mathf.Sqrt(forwardmove * forwardmove + rightmove * rightmove + upmove * upmove);
+		// Use pm_maxspeed as player speed (like pm->ps->speed in original)
 		float scale = pm_maxspeed * max / (127.0f * total);
 		return scale;
 	}
@@ -815,7 +861,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (!isGrounded)
 		{
 			velocity.y -= pm_gravity * Time.deltaTime;
-			// Track airtime and distance while in air
+			// Track airtime, distance and height while in air
 			if (isJumping)
 			{
 				airTime = Time.time - lastJumpTime;
@@ -823,6 +869,12 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				Vector3 currentPos = transform.position;
 				Vector3 horizontalDiff = new Vector3(currentPos.x - jumpStartPosition.x, 0f, currentPos.z - jumpStartPosition.z);
 				jumpDistance = horizontalDiff.magnitude;
+				// Track maximum height reached
+				float currentHeight = currentPos.y - jumpStartY;
+				if (currentHeight > jumpHeight)
+				{
+					jumpHeight = currentHeight;
+				}
 			}
 		}
 		else
@@ -833,14 +885,23 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			if (isJumping && velocity.y <= 0f)
 			{
 				float totalAirTime = Time.time - lastJumpTime;
-				// Calculate final jump distance
+				// Calculate final jump distance and height
 				Vector3 currentPos = transform.position;
 				Vector3 horizontalDiff = new Vector3(currentPos.x - jumpStartPosition.x, 0f, currentPos.z - jumpStartPosition.z);
 				float finalJumpDistance = horizontalDiff.magnitude;
-				Debug.Log($"Landing detected - Total airtime: {totalAirTime:F3}s, Jump distance: {finalJumpDistance:F2} units");
+				float finalJumpHeight = jumpHeight; // Use the maximum height reached
+				Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
+				Debug.Log($"Landing detected - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}");
+				
+				// Reset jumping state
 				isJumping = false;
 				airTime = 0f;
 				jumpDistance = finalJumpDistance; // Keep final distance for UI display
+				// jumpHeight is kept for UI display until next jump
+				
+				// Start debounce timer AFTER landing
+				jumpDebounce = jumpDebounceAfterMs;
+				isDebounceActive = true;
 			}
 		}
 	}
@@ -1060,7 +1121,41 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			distanceStyle.normal.textColor = Color.cyan; // Cyan for last recorded distance
 		}
 		GUI.Label(new Rect(x, y, 600, line), $"Jump Distance: {jumpDistance:F2} units", distanceStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Jump Debounce: {jumpDebounce:F2}", valueStyle); y += line;
+		
+		// Jump height display with color coding
+		GUIStyle heightStyle = new GUIStyle(valueStyle);
+		if (isJumping)
+		{
+			heightStyle.normal.textColor = Color.yellow; // Yellow while jumping
+		}
+		else if (jumpHeight > 0f)
+		{
+			heightStyle.normal.textColor = Color.magenta; // Magenta for last recorded height
+		}
+		GUI.Label(new Rect(x, y, 600, line), $"Jump Height: {jumpHeight:F2} units", heightStyle); y += line;
+		
+		// Jump debounce display with color coding
+		GUIStyle debounceStyle = new GUIStyle(valueStyle);
+		if (isDebounceActive && jumpDebounce > 0f)
+		{
+			debounceStyle.normal.textColor = Color.red; // Red while debounce is active
+		}
+		else
+		{
+			debounceStyle.normal.textColor = Color.green; // Green when can jump
+		}
+		string debounceText = isDebounceActive ? $"Jump Debounce: {jumpDebounce:F2}s" : "Jump Ready";
+		GUI.Label(new Rect(x, y, 600, line), debounceText, debounceStyle); y += line;
+		
+		// Auto-jump status display
+		if (autoJump)
+		{
+			GUIStyle autoJumpStyle = new GUIStyle(valueStyle);
+			bool jumpInputHeld = !isNPC && inputActions.Player.Jump.ReadValue<float>() > 0f;
+			autoJumpStyle.normal.textColor = jumpInputHeld ? Color.yellow : Color.gray;
+			string autoJumpText = jumpInputHeld ? "Auto-Jump: ACTIVE (Space Held)" : "Auto-Jump: Enabled (Press & Hold Space)";
+			GUI.Label(new Rect(x, y, 600, line), autoJumpText, autoJumpStyle); y += line;
+		}
 		y += line * 0.5f; // Spacing
 
 		// Velocity Info
