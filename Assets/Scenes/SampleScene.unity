@@ -829,7 +829,6 @@ MonoBehaviour:
   upperLumbar: {fileID: 173700779}
   cranium: {fileID: 274203085}
   modelRoot: {fileID: 2124588031}
-  legsRotationSmooth: 8
   standCameraInfluence: 0
   legsYawOffsetDegrees: 90
   idleYawByDir:
@@ -842,12 +841,6 @@ MonoBehaviour:
   - 160
   - 90
   animParamSmooth: 10
-  headForwardBlend: 0.2
-  headSwapPitchRoll: 0
-  headPitchMultiplier: 0.3
-  headRollMultiplier: 0.3
-  headPitchSign: 1
-  headRollSign: -1
   upperLumbarYawOffset: -5
   lowerLumbarYawOffset: 0
   lumbarYawSmooth: 8
@@ -856,11 +849,15 @@ MonoBehaviour:
   lumbarPitchSmooth: 8
   movementOffsets: 0000000000000000000000000000000000000000000000000000000000000000
   movementOffsetSmooth: 6
+  torsoFollowYawInfluence: 65
+  strafeYawDegrees: 12
+  baseLegsRotationSmooth: 8
+  maxLegsRotationSmooth: 20
+  mouseSpeedMultiplier: 2
+  mouseSpeedSmooth: 10
   rollLeanDegrees: 25
   pitchLeanDegrees: 20
   leanSmooth: 8
-  torsoFollowYawInfluence: 65
-  strafeYawDegrees: 12
   testAlternativeAccelaration: 0
 --- !u!114 &338497860
 MonoBehaviour:

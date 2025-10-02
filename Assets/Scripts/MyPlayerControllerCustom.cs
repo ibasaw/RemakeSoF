@@ -78,14 +78,18 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private bool isSwimming = false;                   // Swimming state
 	private bool isCrouching = false;                  // Crouching state
 	private float jumpDebounce = 0f;                   // Jump debounce timer
+	private float airTime = 0f;                        // Time spent in air
+	private float lastJumpTime = 0f;                   // Time when last jump started
+	private Vector3 jumpStartPosition = Vector3.zero;  // Position when jump started
+	private float jumpDistance = 0f;                   // Horizontal distance traveled during jump
+	[SerializeField] private float jumpBounceMultiplier = 0.25f; // 250ms debounce like SoF2
 
 	// class fields
 	private Vector3 lastMoveDirection = Vector3.forward; // merkt sich die letzte NonZero-Richtung
-	public float legsRotationSmooth = 8f;   // smoothing wenn im Stand die Beine nachziehen
 	public float standCameraInfluence = 0.0f; // 0 = in Stand niemals zur Kamera drehen, 0.05-0.2 = langsam nachziehen
 	[SerializeField] private float legsYawOffsetDegrees = 90f; // legs offset so left foot leads slightly
 
-	[Header("Idle Facing Offsets (by movement dir 0..7)")]
+	[Header("legs Idle Facing Offsets (by movement dir 0..7)")]
 	[SerializeField] private float[] idleYawByDir = new float[8] { 112f, 45f, 68f, 68f, 112f, 180f, 180f, 90f };
 
 	[Header("Animator Smoothing")]
@@ -103,11 +107,20 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float lowerLumbarPitchOffset = 0f;   // Lower lumbar pitch offset in degrees (forward/backward)
 	[SerializeField] private float lumbarPitchSmooth = 8f;        // Smoothing speed for lumbar pitch changes
 
-	[Header("Movement Direction Idle Offsets")]
-	[SerializeField] private int[] movementOffsets = new int[8] { 0, 22, 45, -22, 0, 22, -45, -22 }; // forward,forward-left,right,forward-right,back,back-left,left,back-right
+	[Header("Movement Direction upperLumbar Idle Offsets")]
+	[SerializeField] private int[] movementOffsets = new int[8] { 0, 22, 45, -22, 0, 22, -45, -22 };
 	[SerializeField] private float movementOffsetSmooth = 6f;     // Smoothing speed for movement-based offsets
 
-	// BGPlayer animation state
+	[Header("Torso-Legs Follow")]
+	[SerializeField] private float torsoFollowYawInfluence = 4f; // legs yaw catch-up when torso twists
+	[SerializeField] private float strafeYawDegrees = 12f; // strafe yaw twist magnitude
+	[SerializeField] private float baseLegsRotationSmooth = 8f;   // Base smoothing speed for legs rotation
+
+	[Header("Dynamic ModelRoot Follow")]
+	[SerializeField] private float maxLegsRotationSmooth = 20f;   // Maximum smoothing speed when mouse moves fast
+	[SerializeField] private float mouseSpeedMultiplier = 2f;     // How much mouse speed affects smoothing
+	[SerializeField] private float mouseSpeedSmooth = 10f;        // Smoothing for mouse speed calculation
+	
 	// Smoothed legs forward to avoid snapping/jitter
 	private Vector3 smoothedLegsForward = Vector3.forward;
 	private int lastMoveDirIndex = 0;
@@ -121,10 +134,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float rollLeanDegrees = 15f;  // left/right roll lean magnitude
 	[SerializeField] private float pitchLeanDegrees = 12f; // forward/backward pitch lean magnitude
 	[SerializeField] private float leanSmooth = 8f;        // smoothing speed for lean interpolation
-	[Header("Torso-Legs Follow")]
-	[SerializeField] private float torsoFollowYawInfluence = 4f; // legs yaw catch-up when torso twists
-	[SerializeField] private float strafeYawDegrees = 12f; // strafe yaw twist magnitude
-
+	
 	// Smoothed lean state
 	private Vector2 currentLeanAngles = Vector2.zero; // x = roll, y = pitch
 	
@@ -138,6 +148,12 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	
 	// Movement-based idle offset
 	private float currentMovementIdleOffset = 0f;
+	
+	// Mouse speed detection for dynamic modelRoot follow (using Input System)
+	private Vector2 lookInput = Vector2.zero;
+	private float currentMouseSpeed = 0f;
+	private float smoothedMouseSpeed = 0f;
+	private float dynamicLegsRotationSmooth = 8f;
 
 	private void Awake()
 	{
@@ -166,6 +182,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		inputActions.Player.LeanLeft.canceled += OnLeanLeftCanceled;
 		inputActions.Player.LeanRight.performed += OnLeanRightPerformed;
 		inputActions.Player.LeanRight.canceled += OnLeanRightCanceled;
+		inputActions.Player.Look.performed += OnLookPerformed;
+		inputActions.Player.Look.canceled += OnLookCanceled;
 	}
 
 	private void OnCrouchPerformed(InputAction.CallbackContext ctx)
@@ -206,6 +224,16 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		isLeaningRight = false;
 		UpdateLeanOffset();
 	}
+	
+	private void OnLookPerformed(InputAction.CallbackContext ctx)
+	{
+		lookInput = ctx.ReadValue<Vector2>();
+	}
+	
+	private void OnLookCanceled(InputAction.CallbackContext ctx)
+	{
+		lookInput = Vector2.zero;
+	}
 
 	private void UpdateLeanOffset()
 	{
@@ -229,6 +257,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		inputActions.Player.Move.performed -= OnMovePerformed;
 		inputActions.Player.Move.canceled -= OnMoveCanceled;
 		inputActions.Player.Jump.performed -= OnJumpPerformed;
+		inputActions.Player.Look.performed -= OnLookPerformed;
+		inputActions.Player.Look.canceled -= OnLookCanceled;
 		inputActions.Disable();
 	}
 
@@ -278,8 +308,13 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Perform jump now
 		isJumping = true;
-		jumpDebounce = 0.25f; // 250ms debounce like SoF2
+		jumpDebounce = jumpBounceMultiplier; // 250ms debounce like SoF2
 		velocity.y = jumpVelocity;
+		lastJumpTime = Time.time;
+		airTime = 0f;
+		jumpStartPosition = transform.position;
+		jumpDistance = 0f;
+		Debug.Log("Jump performed - Starting airtime and distance tracking");
 	}
 
 	private bool CheckGrounded()
@@ -304,15 +339,22 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	private void Update()
 	{
-		// Ground state with raycast check
-		isGrounded = CheckGrounded();
-		animator?.SetBool("IsGrounded", isGrounded);
+		// Calculate mouse speed for dynamic modelRoot follow using Input System
+		currentMouseSpeed = lookInput.magnitude / Time.deltaTime; // degrees per second
+		
+		// Smooth mouse speed
+		float mouseSpeedSmoothT = Mathf.Clamp01(mouseSpeedSmooth * Time.deltaTime);
+		smoothedMouseSpeed = Mathf.Lerp(smoothedMouseSpeed, currentMouseSpeed, mouseSpeedSmoothT);
+		
+		// Calculate dynamic legs rotation smooth based on mouse speed
+		float speedFactor = Mathf.Clamp01(smoothedMouseSpeed / 100f); // Normalize to 0-1 range (100 degrees/s = max)
+		dynamicLegsRotationSmooth = Mathf.Lerp(baseLegsRotationSmooth, maxLegsRotationSmooth, speedFactor * mouseSpeedMultiplier);
 
 		// jump debounce
 		if (jumpDebounce > 0f) jumpDebounce -= Time.deltaTime;
 
-		// restliche Logik -> ersetze Time.deltaTime mit dt
 		isGrounded = CheckGrounded();
+		animator?.SetBool("IsGrounded", isGrounded);
 		if (isGrounded) PM_WalkMove();
 		else PM_AirMove();
 
@@ -368,7 +410,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				if (inputDir.sqrMagnitude > 0.0001f)
 				{
 					Vector3 desiredFlat = inputDir; desiredFlat.y = 0f;
-					float t = Mathf.Clamp01(legsRotationSmooth * Time.deltaTime);
+					float t = Mathf.Clamp01(dynamicLegsRotationSmooth * Time.deltaTime);
 					smoothedLegsForward = Vector3.Slerp(smoothedLegsForward, desiredFlat.normalized, t);
 				}
 				// Update last movement dir index based on raw input
@@ -391,6 +433,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				// Compute yaw delta between current legs forward and camera forward
 				float yawDelta = Vector3.SignedAngle(smoothedLegsForward, fwd, Vector3.up);
 				float torsoDrivenT = Mathf.Clamp01(torsoFollowYawInfluence * Time.deltaTime * (Mathf.Abs(yawDelta) / 90f));
+				// Apply dynamic smoothing to torso follow as well
+				torsoDrivenT *= (dynamicLegsRotationSmooth / baseLegsRotationSmooth);
 				if (torsoDrivenT > 0f)
 				{
 					smoothedLegsForward = Vector3.Slerp(smoothedLegsForward, fwd, torsoDrivenT);
@@ -771,15 +815,32 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (!isGrounded)
 		{
 			velocity.y -= pm_gravity * Time.deltaTime;
+			// Track airtime and distance while in air
+			if (isJumping)
+			{
+				airTime = Time.time - lastJumpTime;
+				// Calculate horizontal distance from jump start position
+				Vector3 currentPos = transform.position;
+				Vector3 horizontalDiff = new Vector3(currentPos.x - jumpStartPosition.x, 0f, currentPos.z - jumpStartPosition.z);
+				jumpDistance = horizontalDiff.magnitude;
+			}
 		}
 		else
 		{
 			// emulate ground stick like SoF2: small negative to keep contact
 			if (velocity.y < 0f) velocity.y = -2f;
-			// Reset jumping state when grounded
-			if (isJumping)
+			// Reset jumping state when grounded AND falling (landed)
+			if (isJumping && velocity.y <= 0f)
 			{
+				float totalAirTime = Time.time - lastJumpTime;
+				// Calculate final jump distance
+				Vector3 currentPos = transform.position;
+				Vector3 horizontalDiff = new Vector3(currentPos.x - jumpStartPosition.x, 0f, currentPos.z - jumpStartPosition.z);
+				float finalJumpDistance = horizontalDiff.magnitude;
+				Debug.Log($"Landing detected - Total airtime: {totalAirTime:F3}s, Jump distance: {finalJumpDistance:F2} units");
 				isJumping = false;
+				airTime = 0f;
+				jumpDistance = finalJumpDistance; // Keep final distance for UI display
 			}
 		}
 	}
@@ -970,11 +1031,36 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
 
 		// Movement States (vertical layout)
+		GUI.Label(new Rect(x, y, 600, line), $"FPS: {(int)(1f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f))}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsGrounded: {isGrounded}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsJumping: {isJumping}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsSwimming: {isSwimming}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsWalking: {isWalking}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"FPS: {(int)(1f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f))}", valueStyle); y += line;
+		
+		// Airtime display with color coding
+		GUIStyle airtimeStyle = new GUIStyle(valueStyle);
+		if (isJumping)
+		{
+			airtimeStyle.normal.textColor = Color.yellow; // Yellow while jumping
+		}
+		else if (airTime > 0f)
+		{
+			airtimeStyle.normal.textColor = Color.green; // Green for last recorded airtime
+		}
+		GUI.Label(new Rect(x, y, 600, line), $"Airtime: {(isJumping ? airTime : 0f):F3}s", airtimeStyle); y += line;
+		
+		// Jump distance display with color coding
+		GUIStyle distanceStyle = new GUIStyle(valueStyle);
+		if (isJumping)
+		{
+			distanceStyle.normal.textColor = Color.yellow; // Yellow while jumping
+		}
+		else if (jumpDistance > 0f)
+		{
+			distanceStyle.normal.textColor = Color.cyan; // Cyan for last recorded distance
+		}
+		GUI.Label(new Rect(x, y, 600, line), $"Jump Distance: {jumpDistance:F2} units", distanceStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Jump Debounce: {jumpDebounce:F2}", valueStyle); y += line;
 		y += line * 0.5f; // Spacing
 
 		// Velocity Info
@@ -985,11 +1071,11 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Input Info
 		GUI.Label(new Rect(x, y, 600, line), $"MoveInput: {moveInput}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Jump Debounce: {jumpDebounce:F2}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Lean: Left={isLeaningLeft} Right={isLeaningRight} Offset={leanOffset}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Lumbar Yaw: Upper={currentUpperLumbarYaw:F1}° Lower={currentLowerLumbarYaw:F1}°", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Lumbar Pitch: Upper={currentUpperLumbarPitch:F1}° Lower={currentLowerLumbarPitch:F1}°", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Movement Dir: {lastMoveDirIndex} Idle Offset: {currentMovementIdleOffset:F1}°", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Look Speed: {smoothedMouseSpeed:F1}°/s Legs Smooth: {dynamicLegsRotationSmooth:F1}", valueStyle); y += line;
 		y += line * 0.5f; // Spacing
 
 		// Physics Settings
