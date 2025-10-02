@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Audio;
+using System.Collections.Generic;
+using System.Linq;
 
 public class MyPlayerControllerCustom : MonoBehaviour
 {
@@ -22,7 +25,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	[Header("SoF2 Movement Settings")]
 	[SerializeField] public LayerMask groundMask = ~0;    // All layers or just "Ground" layer
-	[SerializeField] private float groundCheckDistance = 0.3f;  // Distance to check for ground
+	[SerializeField] private float groundCheckDistance = 0.1f;  // Distance to check for ground
 
 	[Header("Movement Limits")]
 	[SerializeField] private float pm_maxsteepness = 0.7f;      // maximum floor steepness
@@ -34,22 +37,22 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[Header("Physics Constants")]
 	[SerializeField] private float pm_accelerate = 6.0f;        // Ground acceleration
 	[SerializeField] private float pm_airaccelerate = 1.0f;     // Air acceleration  
-	[SerializeField] private float pm_friction = 6.0f;          // Ground friction
+	[SerializeField] private float pm_wateraccelerate = 4.0f;  // Water acceleration
 
+	[SerializeField] private float pm_friction = 6.0f;          // Ground friction
 	[SerializeField] private float pm_waterfriction = 3.0f;     // Water friction
 	[SerializeField] private float pm_ladderfriction = 6.0f;    // Ladder friction
 	[SerializeField] private float pm_headfriction = 0.0f;      // Friction when on someone's head
 	[SerializeField] private float pm_spectatorfriction = 5.0f;  // Spectator friction
 
-	[SerializeField] private float pm_watergravity = 400.0f; // Water acceleration
-	[SerializeField] private float pm_wateraccelerate = 4.0f;  // Water acceleration
-	[SerializeField] private float pm_maxswimvelocity = 150.0f;   // Water max swim velocity
-
 	[SerializeField] private float pm_stopspeed = 100.0f;       // Stop speed threshold
-	[SerializeField] private float pm_maxspeed = 320.0f;        // Maximum speed / max velocity
-	[SerializeField] private float pm_maxwalkvelocity = 320.0f; // Maximum walk speed / max velocity
-	[SerializeField] private float pm_maxcrouchvelocity = 100.0f;  // Maximum run speed / max velocity
-	[SerializeField] private float pm_gravity = 800.0f;         // Gravity value
+	[SerializeField] private float pm_maxspeed = 280.0f;        // Maximum speed / max velocity g_speed
+	[SerializeField] private float pm_maxswimspeed = 150.0f;   // Water max swim velocity
+	[SerializeField] private float pm_maxcrouchspeed = 100.0f;  // Maximum run speed / max velocity
+
+	[SerializeField] private float pm_gravity = 800.0f;         // Gravity value g_gravity
+	[SerializeField] private float pm_watergravity = 400.0f; // Water acceleration
+
 	[SerializeField] private float jumpVelocity = 270.0f;       // Jump velocity (from phys_jumpvel)
 	[SerializeField] private float rotationSpeed = 10f;         // Rotation speed for character
 
@@ -68,6 +71,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private Transform upperLumbar;
 	[SerializeField] private Transform cranium;
 	[SerializeField] private Transform modelRoot;
+	[SerializeField] private Transform pelvis;
 
 	// SoF2 Movement State
 	private Vector3 velocity = Vector3.zero;           // Current velocity (x, y, z)
@@ -123,7 +127,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float maxLegsRotationSmooth = 20f;   // Maximum smoothing speed when mouse moves fast
 	[SerializeField] private float mouseSpeedMultiplier = 2f;     // How much mouse speed affects smoothing
 	[SerializeField] private float mouseSpeedSmooth = 10f;        // Smoothing for mouse speed calculation
-	
+
 	// Smoothed legs forward to avoid snapping/jitter
 	private Vector3 smoothedLegsForward = Vector3.forward;
 	private int lastMoveDirIndex = 0;
@@ -137,26 +141,36 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float rollLeanDegrees = 15f;  // left/right roll lean magnitude
 	[SerializeField] private float pitchLeanDegrees = 12f; // forward/backward pitch lean magnitude
 	[SerializeField] private float leanSmooth = 8f;        // smoothing speed for lean interpolation
-	
+
 	// Smoothed lean state
 	private Vector2 currentLeanAngles = Vector2.zero; // x = roll, y = pitch
-	
+
 	// Smoothed lumbar yaw offsets
 	private float currentUpperLumbarYaw = 0f;
 	private float currentLowerLumbarYaw = 0f;
-	
+
 	// Smoothed lumbar pitch offsets
 	private float currentUpperLumbarPitch = 0f;
 	private float currentLowerLumbarPitch = 0f;
-	
+
 	// Movement-based idle offset
 	private float currentMovementIdleOffset = 0f;
-	
+
 	// Mouse speed detection for dynamic modelRoot follow (using Input System)
 	private Vector2 lookInput = Vector2.zero;
 	private float currentMouseSpeed = 0f;
 	private float smoothedMouseSpeed = 0f;
 	private float dynamicLegsRotationSmooth = 8f;
+
+	[Header("Landing Sound System")]
+	[SerializeField] private AudioSource landingSoundSource;
+	[SerializeField] private UnityEngine.Audio.AudioMixerGroup sfxGroup; // <-- MixerGroup für SFX
+	[SerializeField] private float landingSoundVolume = 0.8f;
+	[SerializeField] private bool enableLandingSounds = true;
+
+	// Sound cache for different surface materials
+	private Dictionary<string, AudioClip> landingSounds = new Dictionary<string, AudioClip>();
+	private bool soundsLoaded = false;
 
 	private void Awake()
 	{
@@ -170,6 +184,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (initialForward.sqrMagnitude < 0.0001f)
 			initialForward = Vector3.forward;
 		smoothedLegsForward = initialForward.normalized;
+
+		// Initialize landing sound system
+		InitializeLandingSoundSystem();
 	}
 
 	private void OnEnable()
@@ -227,12 +244,12 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		isLeaningRight = false;
 		UpdateLeanOffset();
 	}
-	
+
 	private void OnLookPerformed(InputAction.CallbackContext ctx)
 	{
 		lookInput = ctx.ReadValue<Vector2>();
 	}
-	
+
 	private void OnLookCanceled(InputAction.CallbackContext ctx)
 	{
 		lookInput = Vector2.zero;
@@ -301,7 +318,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	{
 		// Check if jump input is currently being held down
 		bool jumpInputHeld = inputActions.Player.Jump.ReadValue<float>() > 0f;
-		
+
 		if (jumpInputHeld)
 		{
 			// Try to jump (will be blocked by debounce/grounded checks)
@@ -334,15 +351,29 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		jumpStartY = transform.position.y;
 		jumpDistance = 0f;
 		jumpHeight = 0f;
-		
+
 		// Trigger jump animation (Trigger resets automatically after one frame)
 		animator?.SetTrigger("Jump");
-		
+
 		//Debug.Log("Jump performed - Starting airtime, distance and height tracking");
 	}
 
+	private RaycastHit lastGroundHit; // Store ground hit info for sound system
+
 	private bool CheckGrounded()
 	{
+		// Jump grace period - don't detect ground for a short time after jumping
+		if (isJumping && (Time.time - lastJumpTime) < 0.1f)
+		{
+			return false;
+		}
+
+		// Don't detect ground if still moving upward significantly
+		if (isJumping && velocity.y > 50f)
+		{
+			return false;
+		}
+
 		// Capsule bottom and top in world space
 		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
 		Vector3 center = transform.TransformPoint(capsuleCenter);
@@ -355,7 +386,18 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		{
 			// Consider grounded if the normal is reasonably upwards
 			if (Vector3.Dot(hit.normal, Vector3.up) > pm_maxsteepness)
+			{
+				// Debug unexpected ground detection during jumping
+				if (isJumping && velocity.y > 10f) // Still going up
+				{
+					Debug.LogWarning($"Prevented ground detection! Y-vel: {velocity.y:F2}, Hit distance: {hit.distance:F3}, Time since jump: {(Time.time - lastJumpTime):F3}s");
+					return false;
+				}
+
+				// Store ground hit for sound system
+				lastGroundHit = hit;
 				return true;
+			}
 		}
 
 		return false;
@@ -365,17 +407,17 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	{
 		// Calculate mouse speed for dynamic modelRoot follow using Input System
 		currentMouseSpeed = lookInput.magnitude / Time.deltaTime; // degrees per second
-		
+
 		// Smooth mouse speed
 		float mouseSpeedSmoothT = Mathf.Clamp01(mouseSpeedSmooth * Time.deltaTime);
 		smoothedMouseSpeed = Mathf.Lerp(smoothedMouseSpeed, currentMouseSpeed, mouseSpeedSmoothT);
-		
+
 		// Calculate dynamic legs rotation smooth based on mouse speed
 		float speedFactor = Mathf.Clamp01(smoothedMouseSpeed / 100f); // Normalize to 0-1 range (100 degrees/s = max)
 		dynamicLegsRotationSmooth = Mathf.Lerp(baseLegsRotationSmooth, maxLegsRotationSmooth, speedFactor * mouseSpeedMultiplier);
 
 		// jump debounce (only runs after landing)
-		if (isDebounceActive && jumpDebounce > 0f) 
+		if (isDebounceActive && jumpDebounce > 0f)
 		{
 			jumpDebounce -= Time.deltaTime;
 			if (jumpDebounce <= 0f)
@@ -389,6 +431,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		{
 			HandleAutoJump();
 		}
+
 
 		isGrounded = CheckGrounded();
 		animator?.SetBool("IsGrounded", isGrounded);
@@ -522,12 +565,12 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			float yawSmoothT = Mathf.Clamp01(lumbarYawSmooth * Time.deltaTime);
 			currentUpperLumbarYaw = Mathf.Lerp(currentUpperLumbarYaw, upperLumbarYawOffset, yawSmoothT);
 			currentLowerLumbarYaw = Mathf.Lerp(currentLowerLumbarYaw, lowerLumbarYawOffset, yawSmoothT);
-			
+
 			// Smooth lumbar pitch offsets
 			float pitchSmoothT = Mathf.Clamp01(lumbarPitchSmooth * Time.deltaTime);
 			currentUpperLumbarPitch = Mathf.Lerp(currentUpperLumbarPitch, upperLumbarPitchOffset, pitchSmoothT);
 			currentLowerLumbarPitch = Mathf.Lerp(currentLowerLumbarPitch, lowerLumbarPitchOffset, pitchSmoothT);
-			
+
 			// Calculate movement-based idle offset
 			bool hasInput = moveInput.sqrMagnitude > 0.0001f;
 			float targetMovementOffset = 0f;
@@ -535,7 +578,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			{
 				targetMovementOffset = movementOffsets[lastMoveDirIndex];
 			}
-			
+
 			// Smooth movement-based offset
 			float movementSmoothT = Mathf.Clamp01(movementOffsetSmooth * Time.deltaTime);
 			currentMovementIdleOffset = Mathf.Lerp(currentMovementIdleOffset, targetMovementOffset, movementSmoothT);
@@ -737,16 +780,16 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Use raw input values like SoF2 (fmove, smove are -127 to +127)
 		float fmove = moveInput.y * 127f;
 		float smove = moveInput.x * 127f;
-		
+
 		Vector3 wishvel = forward * fmove + right * smove;
 		wishvel.y = 0f;
 
 		float scale = PM_CmdScale();
-		
+
 		// Copy wishvel to wishdir and normalize (like original SoF2)
 		Vector3 wishdir = wishvel;
 		float wishspeed = wishdir.magnitude;
-		
+
 		if (wishspeed > 0.0001f)
 		{
 			wishdir /= wishspeed; // Normalize
@@ -756,7 +799,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			wishdir = Vector3.zero;
 			wishspeed = 0f;
 		}
-		
+
 		// Apply scale AFTER normalization (like original SoF2)
 		wishspeed *= scale;
 
@@ -801,7 +844,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (max <= 0.0f)
 			return 0.0f;
 		float total = Mathf.Sqrt(forwardmove * forwardmove + rightmove * rightmove + upmove * upmove);
-		// Use pm_maxspeed as player speed (like pm->ps->speed in original)
+		// Use (like pm->ps->speed in original SoF2)
 		float scale = pm_maxspeed * max / (127.0f * total);
 		return scale;
 	}
@@ -891,14 +934,30 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				float finalJumpDistance = horizontalDiff.magnitude;
 				float finalJumpHeight = jumpHeight; // Use the maximum height reached
 				Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
-				Debug.Log($"Landing detected - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}");
-				
+
+				// Play landing sound based on ground material
+				if (enableLandingSounds && soundsLoaded)
+				{
+					string materialType = GetGroundMaterialType(lastGroundHit);
+					PlayLandingSound(materialType);
+				}
+
+				// Debug suspicious landings
+				if (totalAirTime < 0.1f || finalJumpHeight < 10f)
+				{
+					Debug.LogWarning($"SUSPICIOUS LANDING - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}, Y-vel: {velocity.y:F2}");
+				}
+				else
+				{
+					Debug.Log($"Landing detected - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}");
+				}
+
 				// Reset jumping state
 				isJumping = false;
 				airTime = 0f;
 				jumpDistance = finalJumpDistance; // Keep final distance for UI display
-				// jumpHeight is kept for UI display until next jump
-				
+												  // jumpHeight is kept for UI display until next jump
+
 				// Start debounce timer AFTER landing
 				jumpDebounce = jumpDebounceAfterMs;
 				isDebounceActive = true;
@@ -993,8 +1052,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		transform.position = currentPos;
 
 		// ground check: cast a short distance down to determine if we're on the ground now
-		float downDist = 0.2f;
-		if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit downHit, downDist, groundMask))
+		if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit downHit, groundCheckDistance, groundMask))
 		{
 			isGrounded = Vector3.Dot(downHit.normal, Vector3.up) > 0.5f;
 			if (isGrounded && velocity.y < 0)
@@ -1016,7 +1074,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		PM_StepSlideMove(!isGrounded);
 		//Debug.Log($"After Move - Position: {transform.position}, Velocity: {velocity}");
 	}
-
 
 	private void HandleRotation()
 	{
@@ -1070,6 +1127,142 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	}
 #endif
 
+	/// <summary>
+	/// Initialize the landing sound system
+	/// </summary>
+	private void InitializeLandingSoundSystem()
+	{
+		if (!enableLandingSounds) return;
+
+		// Create AudioSource if not assigned
+		if (landingSoundSource == null)
+		{
+			landingSoundSource = gameObject.GetComponent<AudioSource>();
+			if (landingSoundSource == null)
+			{
+				landingSoundSource = gameObject.AddComponent<AudioSource>();
+			}
+		}
+
+		// Configure AudioSource for MAXIMUM compatibility
+		landingSoundSource.volume = 1.0f; // Full volume
+		landingSoundSource.pitch = 1.0f;
+		landingSoundSource.spatialBlend = 0.0f; // 2D sound (always audible)
+		landingSoundSource.rolloffMode = AudioRolloffMode.Logarithmic;
+		landingSoundSource.minDistance = 1f;
+		landingSoundSource.maxDistance = 500f;
+		landingSoundSource.playOnAwake = false;
+		landingSoundSource.loop = false;
+		landingSoundSource.mute = false;
+		landingSoundSource.enabled = true;
+		landingSoundSource.priority = 128;
+
+
+		// Set MixerGroup if assigned
+		if (sfxGroup != null)
+		{
+			landingSoundSource.outputAudioMixerGroup = sfxGroup;
+		}
+
+		LoadLandingSounds();
+	}
+
+	/// <summary>
+	/// Load all landing sounds from the uQuake/sound/player/jumps/ directory
+	/// </summary>
+	private void LoadLandingSounds()
+	{
+		string[] materialTypes = { "concrete", "dirt", "metal", "wood" };
+
+		foreach (string material in materialTypes)
+		{
+			string soundPath = $"uQuake/sound/player/jumps/{material}";
+			AudioClip clip = Resources.Load<AudioClip>(soundPath);
+
+			if (clip != null)
+			{
+				landingSounds[material] = clip;
+			}
+		}
+
+		soundsLoaded = true;
+	}
+
+	/// <summary>
+	/// Get the material type from the ground mesh's shader_file property
+	/// </summary>
+	private string GetGroundMaterialType(RaycastHit hit)
+	{
+		string detectedMaterial = "concrete"; // Default
+		string detectionMethod = "default";
+
+		// Try to get Ghoul2Meta component from the hit object
+		Ghoul2Meta meta = hit.collider.GetComponent<Ghoul2Meta>();
+		if (meta != null)
+		{
+			// Try to get shader_file property (using new dynamic API)
+			string shaderFile = meta.Q3MapMaterial; // This uses the convenience property
+
+			if (!string.IsNullOrEmpty(shaderFile))
+			{
+				string shaderFileLower = shaderFile.ToLower();
+				detectionMethod = $"shader_file: '{shaderFile}'";
+
+				// Map shader file names to material types
+				if (shaderFileLower.Contains("concrete") || shaderFileLower.Contains("stone") || shaderFileLower.Contains("brick"))
+					detectedMaterial = "concrete";
+				else if (shaderFileLower.Contains("dirt") || shaderFileLower.Contains("sand") || shaderFileLower.Contains("earth"))
+					detectedMaterial = "dirt";
+				else if (shaderFileLower.Contains("metal") || shaderFileLower.Contains("steel") || shaderFileLower.Contains("iron"))
+					detectedMaterial = "metal";
+				else if (shaderFileLower.Contains("wood") || shaderFileLower.Contains("plank"))
+					detectedMaterial = "wood";
+				else
+				{
+					// Keep default but log the unknown shader
+					detectionMethod = $"shader_file (unknown): '{shaderFile}'";
+				}
+			}
+			else
+			{
+				// No shader_file property found
+				detectionMethod = $"Ghoul2Meta found but no shader_file property. Available: [{string.Join(", ", meta.GetPropertyNames())}]";
+			}
+		}
+		else
+		{
+			detectionMethod = $"no Ghoul2Meta, using default for object name: '{hit.collider.gameObject.name}";
+		}
+
+		return detectedMaterial;
+	}
+
+	/// <summary>
+	/// Play landing sound based on ground material
+	/// </summary>
+	private void PlayLandingSound(string materialType)
+	{
+		if (!enableLandingSounds || !soundsLoaded || landingSoundSource == null)
+			return;
+
+		if (landingSounds.TryGetValue(materialType, out AudioClip clip))
+		{
+			if (clip == null) return;
+
+			// Set mixer group if available
+			if (sfxGroup != null)
+			{
+				landingSoundSource.outputAudioMixerGroup = sfxGroup;
+			}
+			else
+			{
+				landingSoundSource.outputAudioMixerGroup = null;
+			}
+
+			landingSoundSource.PlayOneShot(clip, landingSoundVolume);
+		}
+	}
+
 	private void OnGUI()
 	{
 		float scaleFactor = Screen.height / 1080f;
@@ -1097,7 +1290,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		GUI.Label(new Rect(x, y, 600, line), $"IsJumping: {isJumping}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsSwimming: {isSwimming}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsWalking: {isWalking}", valueStyle); y += line;
-		
+
 		// Airtime display with color coding
 		GUIStyle airtimeStyle = new GUIStyle(valueStyle);
 		if (isJumping)
@@ -1109,7 +1302,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			airtimeStyle.normal.textColor = Color.green; // Green for last recorded airtime
 		}
 		GUI.Label(new Rect(x, y, 600, line), $"Airtime: {(isJumping ? airTime : 0f):F3}s", airtimeStyle); y += line;
-		
+
 		// Jump distance display with color coding
 		GUIStyle distanceStyle = new GUIStyle(valueStyle);
 		if (isJumping)
@@ -1121,7 +1314,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			distanceStyle.normal.textColor = Color.cyan; // Cyan for last recorded distance
 		}
 		GUI.Label(new Rect(x, y, 600, line), $"Jump Distance: {jumpDistance:F2} units", distanceStyle); y += line;
-		
+
 		// Jump height display with color coding
 		GUIStyle heightStyle = new GUIStyle(valueStyle);
 		if (isJumping)
@@ -1133,7 +1326,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			heightStyle.normal.textColor = Color.magenta; // Magenta for last recorded height
 		}
 		GUI.Label(new Rect(x, y, 600, line), $"Jump Height: {jumpHeight:F2} units", heightStyle); y += line;
-		
+
 		// Jump debounce display with color coding
 		GUIStyle debounceStyle = new GUIStyle(valueStyle);
 		if (isDebounceActive && jumpDebounce > 0f)
@@ -1146,7 +1339,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 		string debounceText = isDebounceActive ? $"Jump Debounce: {jumpDebounce:F2}s" : "Jump Ready";
 		GUI.Label(new Rect(x, y, 600, line), debounceText, debounceStyle); y += line;
-		
+
 		// Auto-jump status display
 		if (autoJump)
 		{

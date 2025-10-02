@@ -81,6 +81,7 @@
     <Compile Include="Assets\Scripts\Sofmodels\GItem.cs" />
     <Compile Include="Assets\Scripts\MyPlayerController.cs" />
     <Compile Include="Assets\Scripts\IMyPlayerStatus.cs" />
+    <Compile Include="Assets\Scripts\Ghoul2Meta.cs" />
     <Compile Include="Assets\Scripts\Sofmodels\CharacterTemplate.cs" />
     <Compile Include="Assets\Scripts\Sofmodels\ItemTemplate.cs" />
     <Compile Include="Assets\GameServer\Scripts\GameServer.cs" />
