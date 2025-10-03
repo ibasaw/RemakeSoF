@@ -79,11 +79,19 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private Transform modelRoot;
 	[SerializeField] private Transform pelvis;
 
+	[SerializeField] private Transform rightHandBolt;
+	[SerializeField] private Transform leftHandBolt;
+	[SerializeField] private GameObject startWeaponPrefab;
+	[SerializeField] private float startWeaponZOverride = -90f;
+	[SerializeField] private float startWeaponScaleOverride = 0.01f;
+
+
 	// SoF2 Movement State
 	private Vector3 velocity = Vector3.zero;           // Current velocity (x, y, z)
 	private bool isGrounded = false;                   // Grounded state
 	private bool isWalking = false;                    // Ground walking state
 	private bool isJumping = false;                    // Jumping state
+	private bool isAttacking = false;				   // Attacking state
 	private bool landedThisGround = false;             // Ensures landing sound/log fire once per ground contact
 	private bool wasGroundedPrev = false;              // Previous grounded state for transitions
 	private float nonJumpAirTime = 0f;                 // Airtime when falling without an explicit jump
@@ -178,10 +186,13 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private AudioMixerGroup sfxGroup; // <-- MixerGroup für SFX
 	[SerializeField] private float landingSoundVolume = 1f;
 	[SerializeField] private float footstepSoundVolume = 1f;
+	[SerializeField] private float weaponSoundVolume = 1f;
 	[SerializeField] private bool enableLandingSounds = true;
 	[SerializeField] private bool enableFootstepSounds = true;
+	[SerializeField] private bool enableWeaponSounds = true;
 	private AudioSource landingSoundSource;
 	private AudioSource footstepSoundSource;
+	private AudioSource weaponSoundSource;
 
 	// Footstep playback control
 	private Dictionary<string, int> footstepNextIndexByMaterial = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -189,10 +200,16 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private int footstepFramesInterval = 12;
 	private int footstepFrameCounter = 0;
 
+	// Weapon sound playback control
+	private bool isWeaponSoundPlaying = false;
+	private float lastWeaponSoundTime = 0f;
+	private float currentSoundDuration = 0f;
+
 	// Sound cache for different surface materials
 	private Dictionary<string, MaterialInfo> materialInfos = new Dictionary<string, MaterialInfo>(StringComparer.OrdinalIgnoreCase);
 	private Dictionary<string, AudioClip> landingSounds = new Dictionary<string, AudioClip>();
 	private Dictionary<string, AudioClip[]> footstepSounds = new Dictionary<string, AudioClip[]>();
+	private Dictionary<string, AudioClip[]> weaponSounds = new Dictionary<string, AudioClip[]>();
 
 	[Serializable]
 	public class MaterialInfo
@@ -220,6 +237,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Initialize landing sound system
 		InitializeSoundSystem();
+
+		// Attach start weapon to right hand bolt when player spawns
+		AttachStartWeapon();
 	}
 
 	private void OnEnable()
@@ -237,6 +257,41 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		inputActions.Player.LeanRight.canceled += OnLeanRightCanceled;
 		inputActions.Player.Look.performed += OnLookPerformed;
 		inputActions.Player.Look.canceled += OnLookCanceled;
+		inputActions.Player.Attack.performed += OnAttack;
+		inputActions.Player.Attack.canceled += OnCancelAttack;
+	}
+
+	private void OnDisable()
+	{
+		if (isNPC) return;
+		inputActions.Player.Move.performed -= OnMovePerformed;
+		inputActions.Player.Move.canceled -= OnMoveCanceled;
+		inputActions.Player.Jump.performed -= OnJumpPerformed;
+		inputActions.Player.Look.performed -= OnLookPerformed;
+		inputActions.Player.Look.canceled -= OnLookCanceled;
+		inputActions.Player.Crouch.performed -= OnCrouchPerformed;
+		inputActions.Player.Crouch.canceled -= OnCrouchCanceled;
+		inputActions.Player.LeanLeft.performed -= OnLeanLeftPerformed;	
+		inputActions.Player.LeanLeft.canceled -= OnLeanLeftCanceled;
+		inputActions.Player.LeanRight.performed -= OnLeanRightPerformed;
+		inputActions.Player.LeanRight.canceled -= OnLeanRightCanceled;
+		inputActions.Player.Attack.performed -= OnAttack;
+		inputActions.Player.Attack.canceled -= OnCancelAttack;
+		inputActions.Disable();
+	}
+
+	private void OnAttack(InputAction.CallbackContext ctx)
+	{
+		Debug.Log("Attack Pressed");
+		isAttacking = true;
+		animator?.SetBool("IsAttacking", true);
+	}
+
+	private void OnCancelAttack(InputAction.CallbackContext ctx)
+	{
+		Debug.Log("Attack Released");
+		isAttacking = false;
+		animator?.SetBool("IsAttacking", false);
 	}
 
 	private void OnCrouchPerformed(InputAction.CallbackContext ctx)
@@ -314,17 +369,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 	}
 
-	private void OnDisable()
-	{
-		if (isNPC) return;
-		inputActions.Player.Move.performed -= OnMovePerformed;
-		inputActions.Player.Move.canceled -= OnMoveCanceled;
-		inputActions.Player.Jump.performed -= OnJumpPerformed;
-		inputActions.Player.Look.performed -= OnLookPerformed;
-		inputActions.Player.Look.canceled -= OnLookCanceled;
-		inputActions.Disable();
-	}
-
 	private void OnMovePerformed(InputAction.CallbackContext ctx)
 	{
 		moveInput = ctx.ReadValue<Vector2>();
@@ -397,7 +441,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Trigger jump animation (Trigger resets automatically after one frame)
 		animator?.SetTrigger("Jump");
-
 		//Debug.Log("Jump performed - Starting airtime, distance and height tracking");
 	}
 
@@ -474,6 +517,31 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			HandleAutoJump();
 		}
 
+		// Weapon sound - play next sound when current one finishes
+		if (isAttacking && enableWeaponSounds)
+		{
+			// Check if we need to start a new sound
+			if (!isWeaponSoundPlaying)
+			{
+				currentSoundDuration = PlayWeaponSoundWithDuration("Knife", "swing");
+				isWeaponSoundPlaying = true;
+				lastWeaponSoundTime = Time.time;
+			}
+			else
+			{
+				// Check if enough time has passed for the sound to finish
+				if (Time.time - lastWeaponSoundTime >= currentSoundDuration)
+				{
+					isWeaponSoundPlaying = false;
+				}
+			}
+		}
+		else
+		{
+			// Reset when not attacking
+			isWeaponSoundPlaying = false;
+		}
+
 		bool wasGrounded = wasGroundedPrev;
 		isGrounded = CheckGrounded();
 		// Start/track non-jump airtime immediately when leaving ground (no jump)
@@ -516,7 +584,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		animVertical = Mathf.Lerp(animVertical, moveInput.y, animT);
 		animator?.SetFloat("Horizontal", animHorizontal);
 		animator?.SetFloat("Vertical", animVertical);
-
 
 		// Set walking state based on input (like SoF2)
 		isWalking = isGrounded && (Mathf.Abs(moveInput.x) > 0.1f || Mathf.Abs(moveInput.y) > 0.1f);
@@ -1291,6 +1358,15 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			}
 		}
 
+		if (weaponSoundSource == null)
+		{
+			weaponSoundSource = gameObject.GetComponent<AudioSource>();
+			if (weaponSoundSource == null)
+			{
+				weaponSoundSource = gameObject.AddComponent<AudioSource>();
+			}
+		}
+
 		// Configure AudioSource for MAXIMUM compatibility
 		/*landingSoundSource.volume = 1.0f; // Full volume
 		landingSoundSource.pitch = 1.0f;
@@ -1310,6 +1386,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		{
 			landingSoundSource.outputAudioMixerGroup = sfxGroup;
 			footstepSoundSource.outputAudioMixerGroup = sfxGroup;
+			weaponSoundSource.outputAudioMixerGroup = sfxGroup;
 		}
 
 		LoadPlayerSounds();
@@ -1321,6 +1398,139 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private void LoadPlayerSounds()
 	{
 		LoadSounds();
+		LoadWeaponSounds("Knife"); // Load Knife sounds as example
+	}
+
+	private void LoadWeaponSounds(string weaponName)
+	{
+		if (string.IsNullOrEmpty(weaponName))
+		{
+			Debug.LogWarning("[LoadWeaponSounds] Weapon name is null or empty!");
+			return;
+		}
+
+		string json = TryLoadJsonText("SoF2_Weapons");
+		if (string.IsNullOrEmpty(json))
+		{
+			Debug.Log("[LoadWeaponSounds] Keine SoF2_Weapons.json gefunden!");
+			return;
+		}
+
+		JArray weaponsArray;
+		try
+		{
+			weaponsArray = JArray.Parse(json);
+		}
+		catch (Exception ex)
+		{
+			Debug.LogError("[LoadWeaponSounds] JSON Parse Error: " + ex);
+			return;
+		}
+
+		// Find the specific weapon
+		JObject targetWeapon = null;
+		foreach (JObject weaponObj in weaponsArray)
+		{
+			string currentWeaponName = weaponObj.Value<string>("name");
+			if (string.Equals(currentWeaponName, weaponName, StringComparison.OrdinalIgnoreCase))
+			{
+				targetWeapon = weaponObj;
+				break;
+			}
+		}
+
+		if (targetWeapon == null)
+		{
+			Debug.LogWarning($"[LoadWeaponSounds] Weapon '{weaponName}' not found in SoF2_Weapons.json!");
+			return;
+		}
+
+		JObject soundsObj = targetWeapon.Value<JObject>("sounds");
+		if (soundsObj == null)
+		{
+			Debug.LogWarning($"[LoadWeaponSounds] No sounds block found for weapon '{weaponName}'!");
+			return;
+		}
+
+		// Load sounds for each key in the sounds block (ready, swing, toss, etc.)
+		foreach (var soundKeyProp in soundsObj.Properties())
+		{
+			string soundKey = soundKeyProp.Name; // e.g., "ready", "swing", "toss"
+			JObject soundKeyObj = soundKeyProp.Value as JObject;
+			if (soundKeyObj == null) continue;
+
+			// Create dictionary key: "weaponName_soundKey"
+			string dictionaryKey = $"{weaponName}_{soundKey}";
+			
+			// Collect all sound files for this key (sound1, sound2, sound3, etc.)
+			var soundFiles = new List<string>();
+			foreach (var soundProp in soundKeyObj.Properties())
+			{
+				if (soundProp.Value.Type == JTokenType.String)
+				{
+					string soundPath = soundProp.Value.ToString();
+					soundFiles.Add(soundPath);
+				}
+			}
+
+			if (soundFiles.Count == 0)
+			{
+				Debug.LogWarning($"[LoadWeaponSounds] No sound files found for {dictionaryKey}");
+				continue;
+			}
+
+			// Load AudioClips for each sound file
+			var audioClips = new List<AudioClip>();
+			foreach (string soundFile in soundFiles)
+			{
+				AudioClip clip = TryLoadWeaponSoundClip(soundFile);
+				if (clip != null)
+				{
+					audioClips.Add(clip);
+				}
+			}
+
+			if (audioClips.Count > 0)
+			{
+				weaponSounds[dictionaryKey] = audioClips.ToArray();
+				Debug.Log($"[LoadWeaponSounds] Loaded {audioClips.Count} sounds for {dictionaryKey}");
+			}
+			else
+			{
+				Debug.LogWarning($"[LoadWeaponSounds] No valid AudioClips found for {dictionaryKey}");
+			}
+		}
+
+		Debug.Log($"[LoadWeaponSounds] Completed loading sounds for weapon '{weaponName}'");
+	}
+
+	/// <summary>
+	/// Attach the start weapon to the right hand bolt when player spawns
+	/// </summary>
+	private void AttachStartWeapon()
+	{
+		if (rightHandBolt == null)
+		{
+			Debug.LogWarning("Right hand bolt is not assigned in the inspector!");
+			return;
+		}
+
+		// Instantiate from prefab (no existing Transform reference)
+		if (startWeaponPrefab != null)
+		{
+			GameObject weaponInstance = Instantiate(startWeaponPrefab, rightHandBolt);
+			Transform weaponTransform = weaponInstance.transform;
+			weaponTransform.localPosition = Vector3.zero;
+			// Apply Z rotation override to fix SoF2 weapon axis issues
+			weaponTransform.localRotation = Quaternion.Euler(0f, 0f, startWeaponZOverride);
+			// Apply scale override to fix SoF2 weapon size issues
+			weaponTransform.localScale = Vector3.one * startWeaponScaleOverride;
+			Debug.Log($"Instantiated and attached start weapon prefab '{startWeaponPrefab.name}' to right hand bolt '{rightHandBolt.name}' with Z-rotation: {startWeaponZOverride}° and scale: {startWeaponScaleOverride}");
+		}
+		else
+		{
+			Debug.LogWarning("No startWeaponPrefab set in the inspector!");
+		}
 	}
 
 	/// <summary>
@@ -1481,11 +1691,11 @@ private void TryLoadLandingAudioClip(string materialName, string soundName)
 
 private string TryLoadJsonText(string fileName = "SoF2_sounds_per_surface")
 {
-    // 1) Resources/Data/my_export (TextAsset)
+    // 1) Resources/Data/ (TextAsset)
     TextAsset ta = Resources.Load<TextAsset>("Data/" + fileName);
     if (ta != null) return ta.text;
 
-    // 2) Assets/Data/my_export.json (Editor & Standalone)
+    // 2) Assets/Data/ (Editor & Standalone)
     string path = Path.Combine(Application.dataPath, "Data", fileName + ".json");
     if (File.Exists(path)) return File.ReadAllText(path);
 
@@ -1579,6 +1789,58 @@ private AudioClip TryLoadLandingClipFromCandidates(string soundName)
     return null;
 }
 
+private AudioClip TryLoadWeaponSoundClip(string soundName)
+{
+    if (string.IsNullOrEmpty(soundName)) return null;
+
+    // Kandidatenliste für Waffen-Sounds
+    var candidates = new List<string>
+    {
+        "uQuake/" + soundName
+    };
+
+    foreach (var c in candidates)
+    {
+        if (string.IsNullOrEmpty(c)) continue;
+        string resourcePath = c.TrimStart('/', '\\');
+        resourcePath = Path.ChangeExtension(resourcePath, null).Replace('\\', '/');
+        AudioClip clip = Resources.Load<AudioClip>(resourcePath);
+        if (clip != null) return clip;
+    }
+    return null;
+}
+
+private AudioClip[] TryLoadWeaponSoundsFromFolder(string folderPath)
+{
+    if (string.IsNullOrEmpty(folderPath)) return null;
+
+    // Convert folder path to Resources path
+    string resourcePath = folderPath.TrimStart('/', '\\');
+    resourcePath = "uQuake/" + resourcePath;
+    resourcePath = resourcePath.Replace('\\', '/');
+
+    // Load all AudioClips from the folder
+    AudioClip[] allClips = Resources.LoadAll<AudioClip>(resourcePath);
+    if (allClips == null || allClips.Length == 0)
+    {
+        Debug.LogWarning($"[TryLoadWeaponSoundsFromFolder] No AudioClips found in folder '{resourcePath}'");
+        return null;
+    }
+
+    // Filter out null clips and return valid ones
+    var validClips = new List<AudioClip>();
+    foreach (AudioClip clip in allClips)
+    {
+        if (clip != null)
+        {
+            validClips.Add(clip);
+        }
+    }
+
+    Debug.Log($"[TryLoadWeaponSoundsFromFolder] Found {validClips.Count} valid AudioClips in folder '{resourcePath}'");
+    return validClips.Count > 0 ? validClips.ToArray() : null;
+}
+
 	/// <summary>
 	/// Get the material type from the ground mesh's shader_file property
 	/// </summary>
@@ -1667,6 +1929,76 @@ private void PlayFootstepSound(string materialType)
 
 	footstepSoundSource.PlayOneShot(clip, footstepSoundVolume);
 	footstepNextIndexByMaterial[materialType] = safeIndex + 1;
+}
+
+/// <summary>
+/// Play weapon sound cycling through sound clips for the specified weapon and sound type
+/// </summary>
+private void PlayWeaponSound(string weaponName, string soundType)
+{
+	if (!enableWeaponSounds || !soundsLoaded || weaponSoundSource == null)
+		return;
+
+	string soundKey = $"{weaponName}_{soundType}";
+	if (!weaponSounds.TryGetValue(soundKey, out AudioClip[] clips) || clips == null || clips.Length == 0)
+	{
+		Debug.LogWarning($"[PlayWeaponSound] No sounds found for {soundKey}");
+		return;
+	}
+
+	// Play a random sound from the available clips
+	int randomIndex = UnityEngine.Random.Range(0, clips.Length);
+	AudioClip clip = clips[randomIndex];
+	if (clip == null) return;
+
+	// Set mixer group if available
+	if (sfxGroup != null)
+	{
+		weaponSoundSource.outputAudioMixerGroup = sfxGroup;
+	}
+	else
+	{
+		weaponSoundSource.outputAudioMixerGroup = null;
+	}
+
+	weaponSoundSource.PlayOneShot(clip, weaponSoundVolume);
+	Debug.Log($"[PlayWeaponSound] Playing {soundKey} - {clip.name}");
+}
+
+/// <summary>
+/// Play weapon sound and return the duration of the played sound
+/// </summary>
+private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
+{
+	if (!enableWeaponSounds || !soundsLoaded || weaponSoundSource == null)
+		return 0f;
+
+	string soundKey = $"{weaponName}_{soundType}";
+	if (!weaponSounds.TryGetValue(soundKey, out AudioClip[] clips) || clips == null || clips.Length == 0)
+	{
+		Debug.LogWarning($"[PlayWeaponSoundWithDuration] No sounds found for {soundKey}");
+		return 0f;
+	}
+
+	// Play a random sound from the available clips
+	int randomIndex = UnityEngine.Random.Range(0, clips.Length);
+	AudioClip clip = clips[randomIndex];
+	if (clip == null) return 0f;
+
+	// Set mixer group if available
+	if (sfxGroup != null)
+	{
+		weaponSoundSource.outputAudioMixerGroup = sfxGroup;
+	}
+	else
+	{
+		weaponSoundSource.outputAudioMixerGroup = null;
+	}
+
+	weaponSoundSource.PlayOneShot(clip, weaponSoundVolume);
+	Debug.Log($"[PlayWeaponSoundWithDuration] Playing {soundKey} - {clip.name} (Duration: {clip.length:F2}s)");
+	
+	return clip.length; // Return the actual duration of the sound
 }
 
 	private void OnGUI()
