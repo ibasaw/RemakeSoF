@@ -1,8 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Audio;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
+using System.IO;
+
 
 public class MyPlayerControllerCustom : MonoBehaviour
 {
@@ -168,14 +172,29 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private float smoothedMouseSpeed = 0f;
 	private float dynamicLegsRotationSmooth = 8f;
 
-	[Header("Landing Sound System")]
+	[Header("Sound System")]
 	[SerializeField] private AudioMixerGroup sfxGroup; // <-- MixerGroup für SFX
-	[SerializeField] private float landingSoundVolume = 0.8f;
+	[SerializeField] private float landingSoundVolume = 1f;
+	[SerializeField] private float footstepSoundVolume = 1f;
 	[SerializeField] private bool enableLandingSounds = true;
+	[SerializeField] private bool enableFootstepSounds = true;
 	private AudioSource landingSoundSource;
+	private AudioSource footstepSoundSource;
 
 	// Sound cache for different surface materials
+	private Dictionary<string, MaterialInfo> materialInfos = new Dictionary<string, MaterialInfo>(StringComparer.OrdinalIgnoreCase);
 	private Dictionary<string, AudioClip> landingSounds = new Dictionary<string, AudioClip>();
+	private Dictionary<string, AudioClip> footstepSounds = new Dictionary<string, AudioClip>();
+
+	[Serializable]
+	public class MaterialInfo
+	{
+		public double? loudness;
+		public double? density;
+		public double? projectileBounce;
+		public double? friction;
+		public double? damage;
+	}
 	private bool soundsLoaded = false;
 
 	private void Awake()
@@ -192,7 +211,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		smoothedLegsForward = initialForward.normalized;
 
 		// Initialize landing sound system
-		InitializeLandingSoundSystem();
+		InitializeSoundSystem();
 	}
 
 	private void OnEnable()
@@ -964,14 +983,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 				if (!landedThisGround)
 				{
-					Debug.Log($"Landing detected (jump) - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u");
+					Debug.Log($"Landing detected (jump) - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u");
 					landedThisGround = true;
 				}
 
 				// Debug suspicious landings
 				if (totalAirTime < 0.1f || finalJumpHeight < 10f)
 				{
-					Debug.LogWarning($"SUSPICIOUS LANDING - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}");
+					Debug.LogWarning($"SUSPICIOUS LANDING - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}, Vertical Speed: {velocity.y:F2}u");
 				}
 
 				// Reset jumping state
@@ -1174,30 +1193,38 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 	}
 
-#if UNITY_EDITOR
+	#if UNITY_EDITOR
 	private void OnDrawGizmos()
 	{
-		// Draw capsule top and bottom based on capsule settings
-		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
-		Vector3 center = transform.TransformPoint(capsuleCenter);
-		Vector3 top = center + Vector3.up * halfHeight;
-		Vector3 bottom = center - Vector3.up * halfHeight;
-		float radius = capsuleRadius * 0.9f;
+		Vector3 centerWorld = transform.TransformPoint(capsuleCenter);
+
+		float scaleY = Mathf.Abs(transform.lossyScale.y);
+		float horizontalScale = Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.z));
+
+		float worldRadius = capsuleRadius * horizontalScale;
+		float halfHeightWorld = Mathf.Max(0f, (capsuleHeight * scaleY) * 0.5f - worldRadius);
+
+		Vector3 up = transform.up;
+		Vector3 right = transform.right;
+		Vector3 forward = transform.forward;
+
+		Vector3 top = centerWorld + up * halfHeightWorld;
+		Vector3 bottom = centerWorld - up * halfHeightWorld;
 
 		Gizmos.color = isGrounded ? Color.green : Color.red;
-		Gizmos.DrawWireSphere(top, radius);
-		Gizmos.DrawWireSphere(bottom, radius);
-		Gizmos.DrawLine(top + Vector3.right * radius, bottom + Vector3.right * radius);
-		Gizmos.DrawLine(top - Vector3.right * radius, bottom - Vector3.right * radius);
-		Gizmos.DrawLine(top + Vector3.forward * radius, bottom + Vector3.forward * radius);
-		Gizmos.DrawLine(top - Vector3.forward * radius, bottom - Vector3.forward * radius);
+		Gizmos.DrawWireSphere(top, worldRadius);
+		Gizmos.DrawWireSphere(bottom, worldRadius);
+		Gizmos.DrawLine(top + right * worldRadius, bottom + right * worldRadius);
+		Gizmos.DrawLine(top - right * worldRadius, bottom - right * worldRadius);
+		Gizmos.DrawLine(top + forward * worldRadius, bottom + forward * worldRadius);
+		Gizmos.DrawLine(top - forward * worldRadius, bottom - forward * worldRadius);
 	}
-#endif
+	#endif
 
 	/// <summary>
-	/// Initialize the landing sound system
+	/// Initialize the sound system
 	/// </summary>
-	private void InitializeLandingSoundSystem()
+	private void InitializeSoundSystem()
 	{
 		if (!enableLandingSounds) return;
 
@@ -1211,8 +1238,17 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			}
 		}
 
+		if (footstepSoundSource == null)
+		{
+			footstepSoundSource = gameObject.GetComponent<AudioSource>();
+			if (footstepSoundSource == null)
+			{
+				footstepSoundSource = gameObject.AddComponent<AudioSource>();
+			}
+		}
+
 		// Configure AudioSource for MAXIMUM compatibility
-		landingSoundSource.volume = 1.0f; // Full volume
+		/*landingSoundSource.volume = 1.0f; // Full volume
 		landingSoundSource.pitch = 1.0f;
 		landingSoundSource.spatialBlend = 0.0f; // 2D sound (always audible)
 		landingSoundSource.rolloffMode = AudioRolloffMode.Logarithmic;
@@ -1222,38 +1258,215 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		landingSoundSource.loop = false;
 		landingSoundSource.mute = false;
 		landingSoundSource.enabled = true;
-		landingSoundSource.priority = 128;
+		landingSoundSource.priority = 128;*/
 
 
 		// Set MixerGroup if assigned
 		if (sfxGroup != null)
 		{
 			landingSoundSource.outputAudioMixerGroup = sfxGroup;
+			footstepSoundSource.outputAudioMixerGroup = sfxGroup;
 		}
 
-		LoadLandingSounds();
+		LoadPlayerSounds();
 	}
 
 	/// <summary>
 	/// Load all landing sounds from the uQuake/sound/player/jumps/ directory
 	/// </summary>
-	private void LoadLandingSounds()
+	private void LoadPlayerSounds()
 	{
-		string[] materialTypes = { "concrete", "dirt", "metal", "wood" };
-
-		foreach (string material in materialTypes)
-		{
-			string soundPath = $"uQuake/sound/player/jumps/{material}";
-			AudioClip clip = Resources.Load<AudioClip>(soundPath);
-
-			if (clip != null)
-			{
-				landingSounds[material] = clip;
-			}
-		}
-
-		soundsLoaded = true;
+		LoadSounds();
 	}
+
+	/// <summary>
+/// Load all landing sounds from Data/my_export.json (falls vorhanden), ansonsten fallback auf uQuake/sound/player/jumps/{material}
+/// Zusätzlich werden optionale Material-Eigenschaften (loudness, density, projectileBounce, friction, damage) eingelesen.
+/// </summary>
+private void LoadSounds()
+{
+    landingSounds.Clear();
+    materialInfos.Clear();
+
+    string json = TryLoadJsonText("SoF2_sounds_per_surface");
+    if (string.IsNullOrEmpty(json))
+    {
+        Debug.Log("[LoadSounds] Keine JSON-Datei für Sounds gefunden!");
+        return;
+    }
+
+    JObject root;
+    try
+    {
+        root = JObject.Parse(json);
+    }
+    catch (Exception ex)
+    {
+        Debug.LogError("[LoadSounds] JSON Parse Error: " + ex);
+        return;
+    }
+
+    foreach (var prop in root.Properties())
+    {
+        string materialName = prop.Name;
+        JObject matObj = prop.Value as JObject;
+        if (matObj == null)
+        {
+            // falls Wert kein Objekt ist, überspringen
+            continue;
+        }
+
+        var info = new MaterialInfo
+        {
+            loudness = TryGetDouble(matObj, "loudness"),
+            density = TryGetDouble(matObj, "density"),
+            projectileBounce = TryGetDouble(matObj, "projectileBounce"),
+            friction = TryGetDouble(matObj, "friction"),
+            damage = TryGetDouble(matObj, "damage")
+        };
+        materialInfos[materialName] = info;
+
+        // land.sound extrahieren (flexibel)
+        string landSound = null;
+        JObject land = matObj.Value<JObject>("land");
+        if (land != null)
+        {
+            JToken soundTok;
+            if (land.TryGetValue("sound", StringComparison.OrdinalIgnoreCase, out soundTok) && soundTok.Type == JTokenType.String)
+            {
+                landSound = soundTok.ToString();
+            }
+            else
+            {
+                // fallback: nimm das erste string-Feld in land (manche Exporte haben unkonventionelle Struktur)
+                foreach (var lp in land.Properties())
+                {
+                    if (lp.Value.Type == JTokenType.String)
+                    {
+                        landSound = lp.Value.ToString();
+                        break;
+                    }
+                }
+            }
+        }
+		string footstepSound = null;
+		JObject footstep = matObj.Value<JObject>("footstep");
+		if (footstep != null)
+		{
+            JToken soundTok;
+            if (footstep.TryGetValue("sound", StringComparison.OrdinalIgnoreCase, out soundTok) && soundTok.Type == JTokenType.String)
+            {
+                footstepSound = soundTok.ToString();
+            }
+            else
+            {
+                // fallback: nimm das erste string-Feld in land (manche Exporte haben unkonventionelle Struktur)
+                foreach (var lp in footstep.Properties())
+                {
+                    if (lp.Value.Type == JTokenType.String)
+                    {
+                        footstepSound = lp.Value.ToString();
+                        break;
+                    }
+                }
+            }
+        }
+        // manchmal steht sound direkt auf oberer Ebene
+        if (string.IsNullOrEmpty(landSound))
+        {
+            if (matObj.TryGetValue("sound", StringComparison.OrdinalIgnoreCase, out JToken sndTok) && sndTok.Type == JTokenType.String)
+            {
+                landSound = sndTok.ToString();
+            }
+        }
+		if (string.IsNullOrEmpty(footstepSound))
+        {
+            if (matObj.TryGetValue("sound", StringComparison.OrdinalIgnoreCase, out JToken sndTok) && sndTok.Type == JTokenType.String)
+            {
+                footstepSound = sndTok.ToString();
+            }
+        }
+        TryLoadClipForMaterial(materialName, landSound, landingSounds, "land");
+		TryLoadClipForMaterial(materialName, footstepSound, footstepSounds, "footstep");
+    }
+	soundsLoaded = true;
+    Debug.Log($"[LoadSounds] geladen: {landingSounds.Count} land-sounds {footstepSounds.Count} footstep-sounds, materialInfos: {materialInfos.Count}");
+}
+
+// --- Hilfsmethoden ---
+
+private void TryLoadClipForMaterial(string materialName, string soundName, Dictionary<string, AudioClip> container, string soundType)
+{
+    AudioClip clip = null;
+
+    if (!string.IsNullOrEmpty(soundName))
+    {
+        clip = TryLoadClipFromCandidates(soundName, soundType);
+    }
+
+    if (clip != null)
+    {
+		container[materialName] = clip;
+        Debug.Log($"[LoadSounds] Loaded '{materialName}' -> {clip.name}");
+    }
+    else
+    {
+        // optional: nur warnen, nicht spammen
+        // Debug.LogWarning($"[LoadSounds] Kein Clip für '{materialName}' gefunden (landSound='{landSound}')");
+    }
+}
+
+private string TryLoadJsonText(string fileName = "SoF2_sounds_per_surface")
+{
+    // 1) Resources/Data/my_export (TextAsset)
+    TextAsset ta = Resources.Load<TextAsset>("Data/" + fileName);
+    if (ta != null) return ta.text;
+
+    // 2) Assets/Data/my_export.json (Editor & Standalone)
+    string path = Path.Combine(Application.dataPath, "Data", fileName + ".json");
+    if (File.Exists(path)) return File.ReadAllText(path);
+
+    return null;
+}
+
+private double? TryGetDouble(JObject obj, string key)
+{
+    if (obj == null) return null;
+    if (obj.TryGetValue(key, StringComparison.OrdinalIgnoreCase, out JToken tok))
+    {
+        if (tok.Type == JTokenType.Float || tok.Type == JTokenType.Integer)
+            return tok.Value<double>();
+        if (tok.Type == JTokenType.String)
+        {
+            if (double.TryParse(tok.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double v))
+                return v;
+        }
+    }
+    return null;
+}
+
+private AudioClip TryLoadClipFromCandidates(string soundName, string soundType)
+{
+    // Kandidatenliste — passe an deine Projektstruktur an
+    var candidates = new List<string>
+    {
+        soundName,                                       // exakt wie in JSON, z.B. "sound/player/jumps/dirt"
+        "uQuake/" + soundName,                           // z.B. "uQuake/sound/player/jumps/dirt"
+        Path.GetFileName(soundName),                     // nur Dateiname ohne Pfad
+        Path.Combine("uQuake", "sound", Path.GetFileName(soundName)).Replace('\\','/'),
+        soundName.Replace("sound/", ""),                 // evtl. alternative kürzere Pfade
+    };
+
+    foreach (var c in candidates)
+    {
+        if (string.IsNullOrEmpty(c)) continue;
+        string resourcePath = c.TrimStart('/', '\\');
+        resourcePath = Path.ChangeExtension(resourcePath, null).Replace('\\', '/');
+        AudioClip clip = Resources.Load<AudioClip>(resourcePath);
+        if (clip != null) return clip;
+    }
+    return null;
+}
 
 	/// <summary>
 	/// Get the material type from the ground mesh's shader_file property
@@ -1261,38 +1474,17 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private string GetGroundMaterialType(RaycastHit hit)
 	{
 		string detectedMaterial = "concrete"; // Default
-		string detectionMethod = "default";
+		string detectionMethod = "default";		
 
 		// Try to get Ghoul2Meta component from the hit object
 		if (hit.collider.TryGetComponent<Ghoul2Meta>(out var meta))
 		{
 			// Try to get shader_file property (using new dynamic API)
-			string shaderFile = meta.Q3MapMaterial; // This uses the convenience property
-
-			if (!string.IsNullOrEmpty(shaderFile))
+			string q3MapMaterialName = meta.Q3MapMaterial; // This uses the convenience property
+			if (!string.IsNullOrEmpty(q3MapMaterialName) && landingSounds.ContainsKey(q3MapMaterialName))
 			{
-				string shaderFileLower = shaderFile.ToLower();
-				detectionMethod = $"shader_file: '{shaderFile}'";
-
-				// Map shader file names to material types
-				if (shaderFileLower.Contains("concrete") || shaderFileLower.Contains("stone") || shaderFileLower.Contains("brick"))
-					detectedMaterial = "concrete";
-				else if (shaderFileLower.Contains("dirt") || shaderFileLower.Contains("sand") || shaderFileLower.Contains("earth"))
-					detectedMaterial = "dirt";
-				else if (shaderFileLower.Contains("metal") || shaderFileLower.Contains("steel") || shaderFileLower.Contains("iron"))
-					detectedMaterial = "metal";
-				else if (shaderFileLower.Contains("wood") || shaderFileLower.Contains("plank"))
-					detectedMaterial = "wood";
-				else
-				{
-					// Keep default but log the unknown shader
-					detectionMethod = $"shader_file (unknown): '{shaderFile}'";
-				}
-			}
-			else
-			{
-				// No shader_file property found
-				detectionMethod = $"Ghoul2Meta found but no shader_file property. Available: [{string.Join(", ", meta.GetPropertyNames())}]";
+				detectedMaterial = q3MapMaterialName;
+				detectionMethod = $"q3MapMaterialName '{q3MapMaterialName}' found in landingSounds";
 			}
 		}
 		else
@@ -1448,9 +1640,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		y += line * 0.5f; // Spacing
 
 		// Landing Sound Info
-		GUI.Label(new Rect(x, y, 600, line), "Sound System:", headerStyle); y += line * 1.2f;
-		GUI.Label(new Rect(x, y, 600, line), $"Enabled: {enableLandingSounds}  Sounds Loaded: {soundsLoaded}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Volume: {landingSoundVolume:F2}  SFX Group: {(sfxGroup != null ? sfxGroup.name : "None")}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Sound System Loaded: {soundsLoaded}", headerStyle); y += line * 1.2f;
+		GUI.Label(new Rect(x, y, 600, line), $"SFX Group: {(sfxGroup != null ? sfxGroup.name : "None")}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Landing enabled: {enableLandingSounds} Footstep enabled: {enableFootstepSounds}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Landing Volume: {landingSoundVolume:F2} Footstep Volume: {footstepSoundVolume:F2}", valueStyle); y += line;
 		if (lastGroundHit.collider != null)
 			GUI.Label(new Rect(x, y, 600, line), $"Last Ground Material: {GetGroundMaterialType(lastGroundHit)}", valueStyle); y += line;
 		y += line * 0.5f; // Spacing

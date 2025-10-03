@@ -64,33 +64,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Models\VoiceProfile.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\Goutfitting.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\InventoryTemplate.cs" />
     <Compile Include="Assets\Scripts\MeshVisibilityLogger.cs" />
     <Compile Include="Assets\Scripts\MyPlayerControllerCustom.cs" />
     <Compile Include="Assets\Scripts\AimCameraController.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\SkinTemplate.cs" />
     <Compile Include="Assets\Scripts\Models\NPCParsing.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\GametypePhoto.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\GametypeData.cs" />
     <Compile Include="Assets\Scripts\Models\Enums\Rank.cs" />
     <Compile Include="Assets\Scripts\CameraSwitcher.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\Identity.cs" />
     <Compile Include="Assets\Scripts\ServiceHelper.cs" />
     <Compile Include="Assets\Scripts\Models\Enums\VoiceReport.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\GItem.cs" />
     <Compile Include="Assets\Scripts\MyPlayerController.cs" />
     <Compile Include="Assets\Scripts\IMyPlayerStatus.cs" />
     <Compile Include="Assets\Scripts\Ghoul2Meta.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\CharacterTemplate.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\ItemTemplate.cs" />
     <Compile Include="Assets\GameServer\Scripts\GameServer.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\Ladder.cs" />
     <Compile Include="Assets\Scripts\BGPlayer.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\Animation.cs" />
     <Compile Include="Assets\Scripts\LoginController.cs" />
     <Compile Include="Assets\Scripts\AutoBoundsAdjuster.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\SurfaceList.cs" />
     <Compile Include="Assets\Scripts\Models\BoundsProfile.cs" />
     <Compile Include="Assets\Scripts\UI\UIToolkitCrosshair.cs" />
     <Compile Include="Assets\Scripts\SetUpdateWhenOffscreenEditor.cs" />
@@ -108,9 +96,7 @@
     <Compile Include="Assets\Scripts\Models\SkinProfile.cs" />
     <Compile Include="Assets\Scripts\AddAndCombimeMeshColliders.cs" />
     <Compile Include="Assets\Scripts\Models\NPCStats.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\Pmove.cs" />
     <Compile Include="Assets\AuthServer\MongoUserStore.cs" />
-    <Compile Include="Assets\Scripts\Sofmodels\ModelSounds.cs" />
     <Compile Include="Assets\Scripts\SkeletonConfig.cs" />
   </ItemGroup>
   <ItemGroup>
