@@ -1,0 +1,74 @@
+{
+  "prefs": {
+    "models": {
+      "1": "suit_long_coat"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/f_patient_w1"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/f2_patient_w1"
+        }
+      ]
+    },
+    {
+      "name": "head",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/h_patient_w1"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/suit_long_coat/a_patient_w1"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/suit_long_coat/b_patient_w1"
+        }
+      ]
+    },
+    {
+      "name": "coat_long",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/suit_long_coat/trench_robe"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "prefs": {
+    "models": {
+      "1": "suit_long_coat"
+    },
+    "surfaces_on": {
+      "name0": "trenchcollar_r_off",
+      "name1": "trenchcoat_r_off",
+      "name2": "trenchcollar_l_off",
+      "name3": "trenchcoat_l_off",
+      "name4": "head_side_r_avlong_off",
+      "name5": "head_side_l_avlong_off",
+      "name6": "head_bck_uppr_r_avlong_off",
+      "name7": "head_bck_uppr_l_avlong_off",
+      "name8": "head_bck_lwr_r_avlong_off",
+      "name9": "head_bck_lwr_l_avlong_off"
+    },
+    "surfaces_off": {
+      "name0": "ear_l",
+      "name1": "ear_r",
+      "name2": "head_side_r",
+      "name3": "head_side_l",
+      "name4": "head_bck_uppr_l",
+      "name5": "head_bck_uppr_r",
+      "name6": "head_bck_lwr_l",
+      "name7": "head_bck_lwr_r"
+    }
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/average_face/f_vergara"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "hispanic",
+          "shader1": "models/characters/average_face/f2_vergara"
+        }
+      ]
+    },
+    {
+      "name": "avlong",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/average_face/h_avlong_vergara"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/suit_long_coat/a_vergara"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/suit_long_coat/b_vergara"
+        }
+      ]
+    },
+    {
+      "name": "coat_long",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/suit_long_coat/trench_vergara"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "hispanic",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "prefs": {
+    "models": {
+      "1": "suit_sleeves"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/f_alexei"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/f2_alexei"
+        }
+      ]
+    },
+    {
+      "name": "avmed",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/h_avmed_alexei"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/suit_sleeves/a_alexei"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/suit_sleeves/b_alexei"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

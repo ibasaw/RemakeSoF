@@ -1,0 +1,65 @@
+{
+  "prefs": {
+    "models": {
+      "1": "fat"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/average_face/f_sanchez"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "hispanic",
+          "shader1": "models/characters/average_face/f2_sanchez"
+        }
+      ]
+    },
+    {
+      "name": "head",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/average_face/h_sanchez"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/fat/a_sanchez"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/fat/b_sanchez"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "hispanic",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "prefs": {
+    "models": {
+      "1": "female_pants"
+    },
+    "surfaces_on": {
+      "name0": "head_bck_lwr_l_flong_off",
+      "name1": "head_bck_lwr_r_flong_off",
+      "name2": "head_bck_uppr_l_flong_off",
+      "name3": "head_bck_uppr_r_flong_off",
+      "name4": "head_side_l_flong_off",
+      "name5": "head_side_r_flong_off"
+    },
+    "surfaces_off": {
+      "name0": "sleeve_r",
+      "name1": "collar_r",
+      "name2": "sleeve_l",
+      "name3": "collar_l",
+      "name4": "head_side_r",
+      "name5": "head_side_l",
+      "name6": "head_bck_uppr_l",
+      "name7": "head_bck_uppr_r",
+      "name8": "head_bck_lwr_l",
+      "name9": "head_bck_lwr_r"
+    }
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/female_face/f_fvillager_h1"
+        }
+      ]
+    },
+    {
+      "name": "eye_2sided",
+      "groups": [
+        {
+          "name": "hispanic",
+          "shader1": "models/characters/female_face/f2_fvillager_h1"
+        }
+      ]
+    },
+    {
+      "name": "flong",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/female_face/h_fvillager_flong_h1"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/female_pants/a_fvillager_h1"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "hispanic",
+          "texture1": "models/characters/female_pants/b_fvillager_h1"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "hispanic",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

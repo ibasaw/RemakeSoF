@@ -1,0 +1,81 @@
+{
+  "prefs": {
+    "models": {
+      "1": "suit_sleeves"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/f_czech_w2",
+          "texture2": "models/characters/average_face/f_medic_w1"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/f2_czech_w2",
+          "shader2": "models/characters/average_face/f2_medic_w1"
+        }
+      ]
+    },
+    {
+      "name": "head",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/h_czech_w1",
+          "texture2": "models/characters/average_face/h_medic_w1"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/suit_sleeves/a_czech_thug",
+          "texture2": "models/characters/suit_sleeves/a_czech_thug"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/suit_sleeves/b_czech_thug",
+          "texture2": "models/characters/suit_sleeves/b_czech_thug"
+        }
+      ]
+    },
+    {
+      "name": "body_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/suit_sleeves/b2_czech_thug",
+          "shader2": "models/characters/suit_sleeves/b2_czech_thug"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps",
+          "shader2": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

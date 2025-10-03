@@ -1,0 +1,101 @@
+{
+  "prefs": {
+    "models": {
+      "1": "average_sleeves"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/f_marine_camo3"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/f2_marine_camo3"
+        }
+      ]
+    },
+    {
+      "name": "head",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/h_marine_camo3"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_sleeves/a_marine_camo3"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_sleeves/b_marine_camo3"
+        }
+      ]
+    },
+    {
+      "name": "body_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_sleeves/b2_marine_camo3"
+        }
+      ]
+    },
+    {
+      "name": "backpack_lrg",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_sleeves/backpack_lrg"
+        }
+      ]
+    },
+    {
+      "name": "scarf",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_sleeves/scarf"
+        }
+      ]
+    },
+    {
+      "name": "helmet_chin_strap",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_sleeves/helmet_chin_strap"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "prefs": {
+    "models": {
+      "1": "suit_sleeves"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "black",
+          "texture1": "models/characters/average_face/f_swiss_police_b1"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "black",
+          "texture1": "models/characters/average_face/f2_swiss_police_b1"
+        }
+      ]
+    },
+    {
+      "name": "head",
+      "groups": [
+        {
+          "name": "black",
+          "texture1": "models/characters/average_face/h_firefighter_b1"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "black",
+          "texture1": "models/characters/suit_sleeves/a_swiss_police_b1"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "black",
+          "texture1": "models/characters/suit_sleeves/b_swiss_police_b1"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "black",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

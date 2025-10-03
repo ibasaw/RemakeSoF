@@ -1,0 +1,98 @@
+{
+  "prefs": {
+    "models": {
+      "1": "chem_suit"
+    },
+    "surfaces_on": {
+      "name0": "bun_off",
+      "name1": "head_bck_lwr_l_pony_off",
+      "name2": "head_bck_lwr_r_pony_off",
+      "name3": "head_bck_uppr_l_pony_off",
+      "name4": "head_bck_uppr_r_pony_off",
+      "name5": "head_side_l_pony_off",
+      "name6": "head_side_r_pony_off"
+    },
+    "surfaces_off": {
+      "name0": "head_side_r",
+      "name1": "head_side_l",
+      "name2": "head_bck_uppr_l",
+      "name3": "head_bck_uppr_r",
+      "name4": "head_bck_lwr_l",
+      "name5": "head_bck_lwr_r"
+    }
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/f_chem_wilson"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/average_face/f2_chem_male_w1"
+        }
+      ]
+    },
+    {
+      "name": "head",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/average_face/h_chem_male"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/chem_suit/a_chem"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/chem_suit/b_chem"
+        }
+      ]
+    },
+    {
+      "name": "chem_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/chem_suit/fplate_chem"
+        }
+      ]
+    },
+    {
+      "name": "chem",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/chem_suit/hood_chem"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

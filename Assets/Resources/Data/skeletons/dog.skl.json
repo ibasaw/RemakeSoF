@@ -1,0 +1,746 @@
+{
+  "SkeletonInfo": {
+    "GLMFile": "models\\characters\\dog\\dog.glm",
+    "FramesFile": "skeletons\\dog",
+    "MaxSpeed": 350,
+    "HeaderAnim": "",
+    "TrailerAnim": "",
+    "Skelement": [
+      {
+        "Name": "Body",
+        "Bone": "model_root",
+        "Bone1": "",
+        "Bone2": "",
+        "Parent": ""
+      }
+    ],
+    "PCJ": [
+      {
+        "Name": "Eyes",
+        "Maxs": [
+          30,
+          70,
+          40
+        ],
+        "Mins": [
+          -30,
+          -70,
+          -40
+        ],
+        "BoneAim": [
+          {
+            "Name": "head",
+            "Fwd": "-Y",
+            "Up": "+Z",
+            "Right": "-X"
+          }
+        ],
+        "BoneRelative": [
+          {
+            "Name": "neck_a",
+            "Fwd": "-Y",
+            "Up": "+Z",
+            "Right": "-X"
+          }
+        ]
+      }
+    ]
+  },
+  "Action": [
+    {
+      "Name": "Bite",
+      "Skelement": "Body",
+      "Primitive": "Attack",
+      "VAngle": 16.0,
+      "HAngle": 0.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Sit|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Run",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Crouch|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogbite.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Tear",
+      "Skelement": "Body",
+      "Primitive": "Attack",
+      "VAngle": -39.0,
+      "HAngle": 0.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Sit|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Run",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Crouch|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogtear.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Danger",
+      "Skelement": "Body",
+      "Primitive": "Communication",
+      "X": -1.0,
+      "Y": 4.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0,
+          "AnimationFile": [
+            {
+              "File": ""
+            }
+          ]
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogbark.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "de",
+      "Skelement": "Body",
+      "Primitive": "Damage",
+      "NewStance": "LayFaceUp",
+      "VAngle": 8.0,
+      "HAngle": 9.0,
+      "Health": "Dead",
+      "DamageType": "Bullet",
+      "DamageLevel": "Low Death",
+      "HitRegion": "Head",
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogmed_deathback_1.xsi"
+        },
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogmed_deathfront_1.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "ggffff",
+      "Skelement": "Body",
+      "Primitive": "Damage",
+      "NewStance": "LayFaceUp",
+      "VAngle": -20.0,
+      "HAngle": 146.0,
+      "Health": "Dead",
+      "DamageType": "Bullet",
+      "DamageLevel": "Low Death",
+      "HitRegion": "Head",
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogmed_deathfront_2.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Death - from back",
+      "Skelement": "Body",
+      "Primitive": "Damage",
+      "VAngle": 7.0,
+      "HAngle": 179.0,
+      "Health": "Dead",
+      "DamageType": "Bullet",
+      "DamageLevel": "Medium Death",
+      "HitRegion": "Head",
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogmed_deathback_1.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Death - from front",
+      "Skelement": "Body",
+      "Primitive": "Damage",
+      "VAngle": 3.0,
+      "HAngle": 1.0,
+      "Health": "Dead",
+      "DamageType": "Bullet",
+      "DamageLevel": "Medium Death",
+      "HitRegion": "Head",
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogmed_deathfront_1.xsi"
+        },
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogmed_deathfront_2.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Death - from back",
+      "Skelement": "Body",
+      "Primitive": "Damage",
+      "VAngle": -5.0,
+      "HAngle": 180.0,
+      "Health": "Dead",
+      "DamageType": "Bullet",
+      "DamageLevel": "High Death",
+      "HitRegion": "Chest",
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\doghvydeathfromback.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Death - from front",
+      "Skelement": "Body",
+      "Primitive": "Damage",
+      "VAngle": 1.0,
+      "HAngle": 2.0,
+      "Health": "Dead",
+      "DamageType": "Bullet",
+      "DamageLevel": "High Death",
+      "HitRegion": "Chest",
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\doghvydeathfromfront.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Run",
+      "Skelement": "Body",
+      "Primitive": "HMove",
+      "Speed": 53.902855,
+      "Angle": 2.0,
+      "Transition": [
+        {
+          "ToAction": "HMove|Full+None+Normal+Jump|Jump",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Attack|Full+None+Normal+Stand|Tear",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Attack|Full+None+Normal+Stand|Bite",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogrun.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Walk",
+      "Skelement": "Body",
+      "Primitive": "HMove",
+      "Speed": 10.522857,
+      "Angle": 1.0,
+      "Transition": [
+        {
+          "ToAction": "HMove|Full+None+Normal+Jump|Jump",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0,
+          "AnimationFile": [
+            {
+              "File": ""
+            }
+          ]
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Run",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Crouch|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Sit|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Attack|Full+None+Normal+Stand|Tear",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Attack|Full+None+Normal+Stand|Bite",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Communication|Full+None+Normal+Stand|Danger",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0,
+          "AnimationFile": [
+            {
+              "File": ""
+            }
+          ]
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogwalk.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Jump",
+      "Skelement": "Body",
+      "Primitive": "HMove",
+      "Speed": 87.024857,
+      "Angle": 2.0,
+      "Stance": "Jump",
+      "Transition": [
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0,
+          "AnimationFile": [
+            {
+              "File": ""
+            }
+          ]
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Run",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Crouch|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogjump.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Touch",
+      "Skelement": "Body",
+      "Primitive": "Interaction",
+      "X": -46.0,
+      "Y": 4.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogsniff.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Breathe",
+      "Skelement": "Body",
+      "Primitive": "Stationary",
+      "X": -3.0,
+      "Y": 4.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Lean Right",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Prone|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Sit|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Crouch|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Interaction|Full+None+Normal+Stand|Touch",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Communication|Full+None+Normal+Stand|Danger",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Attack|Full+None+Normal+Stand|Bite",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Attack|Full+None+Normal+Stand|Tear",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Turn Left",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0,
+          "AnimationFile": [
+            {
+              "File": ""
+            }
+          ]
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Turn Right",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0,
+          "AnimationFile": [
+            {
+              "File": ""
+            }
+          ]
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogidle.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Lean Right",
+      "Skelement": "Body",
+      "Primitive": "Stationary",
+      "X": 43.0,
+      "Y": 8.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogurinate.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Turn Left",
+      "Skelement": "Body",
+      "Primitive": "Stationary",
+      "NewStance": "",
+      "X": -59.0,
+      "Y": -40.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0,
+          "AnimationFile": [
+            {
+              "File": ""
+            }
+          ]
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogturn.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Turn Right",
+      "Skelement": "Body",
+      "Primitive": "Stationary",
+      "NewStance": "",
+      "X": 41.0,
+      "Y": -72.0,
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0,
+          "AnimationFile": [
+            {
+              "File": ""
+            }
+          ]
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogturn.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Breathe",
+      "Skelement": "Body",
+      "Primitive": "Stationary",
+      "X": 6.0,
+      "Y": 16.0,
+      "Stance": "Crouch",
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Prone|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Sit|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Jump|Jump",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Attack|Full+None+Normal+Stand|Bite",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Attack|Full+None+Normal+Stand|Tear",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogreadytopounce.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Breathe",
+      "Skelement": "Body",
+      "Primitive": "Stationary",
+      "X": -2.0,
+      "Y": 0.0,
+      "Stance": "Prone",
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Crouch|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Sit|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogsleep.xsi"
+        }
+      ]
+    },
+    {
+      "Name": "Breathe",
+      "Skelement": "Body",
+      "Primitive": "Stationary",
+      "X": 3.0,
+      "Y": 8.0,
+      "Stance": "Sit",
+      "Transition": [
+        {
+          "ToAction": "Stationary|Full+None+Normal+Prone|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Crouch|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Stationary|Full+None+Normal+Stand|Breathe",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "HMove|Full+None+Normal+Stand|Walk",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Attack|Full+None+Normal+Stand|Tear",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        },
+        {
+          "ToAction": "Attack|Full+None+Normal+Stand|Bite",
+          "Sync": "None",
+          "Duration": 150,
+          "RandomDur": 0
+        }
+      ],
+      "AnimationFile": [
+        {
+          "File": "m:\\_animation\\xsi\\rottweiler01\\dogsit.xsi"
+        }
+      ]
+    }
+  ],
+  "filename": "dog.skl"
+}
