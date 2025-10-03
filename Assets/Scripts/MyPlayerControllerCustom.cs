@@ -136,6 +136,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private bool isLeaningLeft = false;
 	private bool isLeaningRight = false;
 	private int leanOffset = 0; // -30 for left, +30 for right, 0 for none
+	private List<string> touchedObjects = new List<string>();
 
 	[Header("Lean Settings")]
 	[SerializeField] private float rollLeanDegrees = 15f;  // left/right roll lean magnitude
@@ -163,10 +164,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private float dynamicLegsRotationSmooth = 8f;
 
 	[Header("Landing Sound System")]
-	[SerializeField] private AudioSource landingSoundSource;
-	[SerializeField] private UnityEngine.Audio.AudioMixerGroup sfxGroup; // <-- MixerGroup für SFX
+	[SerializeField] private AudioMixerGroup sfxGroup; // <-- MixerGroup für SFX
 	[SerializeField] private float landingSoundVolume = 0.8f;
 	[SerializeField] private bool enableLandingSounds = true;
+	private AudioSource landingSoundSource;
 
 	// Sound cache for different surface materials
 	private Dictionary<string, AudioClip> landingSounds = new Dictionary<string, AudioClip>();
@@ -393,7 +394,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 					Debug.LogWarning($"Prevented ground detection! Y-vel: {velocity.y:F2}, Hit distance: {hit.distance:F3}, Time since jump: {(Time.time - lastJumpTime):F3}s");
 					return false;
 				}
-
 				// Store ground hit for sound system
 				lastGroundHit = hit;
 				return true;
@@ -993,74 +993,102 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	/// </summary>
 	private void PM_StepSlideMove(bool gravity)
 	{
-		// Manual capsule move with simple sliding and ground detection
+		//touchedObjects.Clear();
+		const float SKIN_WIDTH = 0.01f; // Abstand vor der Oberfläche
 		Vector3 desired = velocity * Time.deltaTime;
 
-		// We'll perform an iterative slide similar to PM_SlideMove but simplified
 		int numbumps = 4;
 		Vector3 primal_velocity = velocity;
 		Vector3 currentPos = transform.position;
-		float time_left = 1.0f; // fraction of movement remaining
+		float time_left = 1.0f;
 
-		// compute capsule top/bottom for casts
-		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
-		Vector3 center = transform.TransformPoint(capsuleCenter);
-
-		Vector3 top = center + Vector3.up * halfHeight;
-		Vector3 bottom = center - Vector3.up * halfHeight;
+		// Lokale Angaben beibehalten (capsuleCenter ist in lokalen Koordinaten)
+		float halfHeightLocal = Mathf.Max(0f, (capsuleHeight * 0.5f) - capsuleRadius);
 
 		Vector3 vel = velocity;
 
 		for (int bump = 0; bump < numbumps; bump++)
 		{
+			// Berechne world-space center / top / bottom basierend auf currentPos (wichtig!)
+			Vector3 worldCenter = currentPos + transform.rotation * capsuleCenter;
+			Vector3 top = worldCenter + transform.up * halfHeightLocal;
+			Vector3 bottom = worldCenter - transform.up * halfHeightLocal;
+
 			Vector3 end = currentPos + vel * Time.deltaTime * time_left;
 			Vector3 castDir = end - currentPos;
 			float castDist = castDir.magnitude;
+
 			if (castDist < 1e-6f)
 			{
 				transform.position = currentPos;
 				break;
 			}
 
-			if (Physics.CapsuleCast(top, bottom, capsuleRadius, castDir.normalized, out RaycastHit hit, castDist, ~0, QueryTriggerInteraction.Ignore))
-			{
-				// move up to hit
-				float moveFraction = hit.distance / castDist;
-				currentPos += castDir * moveFraction;
-				// save touch entity? (not available here)
+			Vector3 castDirNorm = castDir / castDist;
 
-				// slide along plane
+			// Bewegungscast (alle Layer prüfen -> ~0). Falls du Layer filtern willst, ersetze ~0 durch passende Maske.
+			if (Physics.CapsuleCast(top, bottom, capsuleRadius, castDirNorm, out RaycastHit hit, castDist + SKIN_WIDTH, ~0, QueryTriggerInteraction.Ignore))
+			{
+				if (!touchedObjects.Contains(hit.collider.name))
+				{
+					touchedObjects.Add(hit.collider.name);
+				}
+				// Bewege nur bis kurz vor den Hit (skin width), damit wir nicht "in" die Geometrie landen
+				float moveDist = Mathf.Max(hit.distance - SKIN_WIDTH, 0f);
+				currentPos += castDirNorm * moveDist;
+
+				// Debug: wer wird getroffen und wie weit waren wir von ihm entfernt
+				//Debug.Log($"Movement Hit: {hit.collider.name}, hitDist={hit.distance:F4}, moveDist={moveDist:F4}, bump={bump}");
+
+				// Slide entlang der Fläche
 				Vector3 clipVel;
 				PM_ClipVelocity(vel, hit.normal, out clipVel, OVERCLIP);
 				vel = clipVel;
 
-				// reduce time left
-				time_left -= time_left * moveFraction;
-				// if too many planes / stuck, stop
+				// Zeit reduzieren (proportional zur Strecke)
+				float fraction = (moveDist / castDist);
+				time_left -= time_left * fraction;
+
 				if (time_left <= 0.001f)
 					break;
 			}
 			else
 			{
-				// no hit, move entire distance
+				// kein Treffer -> komplette Strecke gehen
 				currentPos = end;
 				break;
 			}
 		}
 
-		// Apply final position
+		// Endposition setzen
 		transform.position = currentPos;
 
-		// ground check: cast a short distance down to determine if we're on the ground now
-		if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit downHit, groundCheckDistance, groundMask))
+		// --- Finaler Ground-Check: endpoints anhand der finalen Pos aktualisieren ---
+		Vector3 finalWorldCenter = currentPos + transform.rotation * capsuleCenter;
+		Vector3 finalTop = finalWorldCenter + transform.up * halfHeightLocal;
+		Vector3 finalBottom = finalWorldCenter - transform.up * halfHeightLocal;
+
+		float groundCheckDist = groundCheckDistance + SKIN_WIDTH;
+
+		if (Physics.CapsuleCast(finalTop, finalBottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit downHit, groundCheckDist, groundMask, QueryTriggerInteraction.Ignore))
 		{
 			isGrounded = Vector3.Dot(downHit.normal, Vector3.up) > 0.5f;
 			if (isGrounded && velocity.y < 0)
 				velocity.y = -2f; // stick to ground
+								  //Debug.Log($"Final Grounded on {downHit.collider.name} at distance {downHit.distance:F3}");
 		}
 		else
 		{
 			isGrounded = false;
+
+			// Extra Debug: prüfen, ob die Kapsel mit irgendwas overlapped (Penetration)
+			Collider[] overlaps = Physics.OverlapCapsule(finalTop, finalBottom, capsuleRadius * 0.9f, groundMask, QueryTriggerInteraction.Ignore);
+			if (overlaps != null && overlaps.Length > 0)
+			{
+				string names = "";
+				foreach (var c in overlaps) names += c.name + ", ";
+				Debug.LogWarning($"No ground detected but OverlapCapsule found {overlaps.Length} colliders: {names}. Possibly stuck inside geometry.");
+			}
 		}
 	}
 
@@ -1197,8 +1225,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		string detectionMethod = "default";
 
 		// Try to get Ghoul2Meta component from the hit object
-		Ghoul2Meta meta = hit.collider.GetComponent<Ghoul2Meta>();
-		if (meta != null)
+		if (hit.collider.TryGetComponent<Ghoul2Meta>(out var meta))
 		{
 			// Try to get shader_file property (using new dynamic API)
 			string shaderFile = meta.Q3MapMaterial; // This uses the convenience property
@@ -1233,7 +1260,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		{
 			detectionMethod = $"no Ghoul2Meta, using default for object name: '{hit.collider.gameObject.name}";
 		}
-
+		//Debug.Log($"Ground material detected as '{detectedMaterial}' via {detectionMethod}");
 		return detectedMaterial;
 	}
 
@@ -1364,6 +1391,29 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		GUI.Label(new Rect(x, y, 600, line), $"Lumbar Pitch: Upper={currentUpperLumbarPitch:F1}° Lower={currentLowerLumbarPitch:F1}°", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Movement Dir: {lastMoveDirIndex} Idle Offset: {currentMovementIdleOffset:F1}°", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Look Speed: {smoothedMouseSpeed:F1}°/s Legs Smooth: {dynamicLegsRotationSmooth:F1}", valueStyle); y += line;
+		y += line * 0.5f; // Spacing
+
+		// Touched Objects Debug
+		GUI.Label(new Rect(x, y, 600, line), "Last Touched Objects:", headerStyle); y += line * 1.2f;
+		if (touchedObjects.Count > 0)
+		{
+			foreach (string objName in touchedObjects)
+			{
+				GUI.Label(new Rect(x, y, 600, line), $"- {objName}", valueStyle); y += line;
+			}
+		}
+		else
+		{
+			GUI.Label(new Rect(x, y, 600, line), "- None", valueStyle); y += line;
+		}
+		y += line * 0.5f; // Spacing
+
+		// Landing Sound Info
+		GUI.Label(new Rect(x, y, 600, line), "Sound System:", headerStyle); y += line * 1.2f;
+		GUI.Label(new Rect(x, y, 600, line), $"Enabled: {enableLandingSounds}  Sounds Loaded: {soundsLoaded}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Volume: {landingSoundVolume:F2}  SFX Group: {(sfxGroup != null ? sfxGroup.name : "None")}", valueStyle); y += line;
+		if (lastGroundHit.collider != null)
+			GUI.Label(new Rect(x, y, 600, line), $"Last Ground Material: {GetGroundMaterialType(lastGroundHit)}", valueStyle); y += line;
 		y += line * 0.5f; // Spacing
 
 		// Physics Settings

@@ -106,6 +106,7 @@
     <Compile Include="Assets\Scripts\Models\CharacterTemplate.cs" />
     <Compile Include="Assets\Scripts\AddMeshColliders.cs" />
     <Compile Include="Assets\Scripts\Models\SkinProfile.cs" />
+    <Compile Include="Assets\Scripts\AddAndCombimeMeshColliders.cs" />
     <Compile Include="Assets\Scripts\Models\NPCStats.cs" />
     <Compile Include="Assets\Scripts\Sofmodels\Pmove.cs" />
     <Compile Include="Assets\AuthServer\MongoUserStore.cs" />
