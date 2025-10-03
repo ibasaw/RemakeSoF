@@ -13,6 +13,10 @@ public class MeasureRootMotionSpeed : MonoBehaviour
     void Awake()
     {
         if (animator == null) animator = GetComponent<Animator>();
+        if (animator != null)
+        {
+            animator.applyRootMotion = true;
+        }
     }
 
     void OnAnimatorMove()

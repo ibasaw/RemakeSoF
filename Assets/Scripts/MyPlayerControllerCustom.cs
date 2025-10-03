@@ -67,6 +67,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private Transform yawTarget;
 	[SerializeField] private Transform pitchTarget;
 	[SerializeField] private Transform cameraTransform;
+	[SerializeField] private float standYawTargetY = 85f;
+	[SerializeField] private float crouchYawTargetY = 45f;
 	[SerializeField] public bool isAiming = false;
 	[SerializeField] public bool isNPC = false;
 
@@ -132,7 +134,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float strafeYawDegrees = 12f; // strafe yaw twist magnitude
 	[SerializeField] private float baseLegsRotationSmooth = 8f;   // Base smoothing speed for legs rotation
 
-	[Header("Dynamic ModelRoot Follow")]
+	[Header("Dynamic Pelvis(legs) Follow")]
 	[SerializeField] private float maxLegsRotationSmooth = 20f;   // Maximum smoothing speed when mouse moves fast
 	[SerializeField] private float mouseSpeedMultiplier = 2f;     // How much mouse speed affects smoothing
 	[SerializeField] private float mouseSpeedSmooth = 10f;        // Smoothing for mouse speed calculation
@@ -166,7 +168,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	// Movement-based idle offset
 	private float currentMovementIdleOffset = 0f;
 
-	// Mouse speed detection for dynamic modelRoot follow (using Input System)
+	// Mouse speed detection for dynamic pelvisTarget follow (using Input System)
 	private Vector2 lookInput = Vector2.zero;
 	private float currentMouseSpeed = 0f;
 	private float smoothedMouseSpeed = 0f;
@@ -242,14 +244,24 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		Debug.Log("C Pressed");
 		isCrouching = true;
 		animator?.SetBool("IsCrouching", isCrouching);
-		//TODO
+		if (yawTarget != null)
+		{
+			Vector3 localPos = yawTarget.localPosition;
+			localPos.y = crouchYawTargetY;
+			yawTarget.localPosition = localPos;
+		}
 	}
 	private void OnCrouchCanceled(InputAction.CallbackContext ctx)
 	{
 		Debug.Log("C Released");
 		isCrouching = false;
 		animator?.SetBool("IsCrouching", isCrouching);
-		//TODO
+		if (yawTarget != null)
+		{
+			Vector3 localPos = yawTarget.localPosition;
+			localPos.y = standYawTargetY;
+			yawTarget.localPosition = localPos;
+		}
 	}
 	private void OnLeanLeftPerformed(InputAction.CallbackContext ctx)
 	{
@@ -435,7 +447,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	private void Update()
 	{
-		// Calculate mouse speed for dynamic modelRoot follow using Input System
+		// Calculate mouse speed for dynamic pelvisTarget follow using Input System
 		currentMouseSpeed = lookInput.magnitude / Time.deltaTime; // degrees per second
 
 		// Smooth mouse speed
@@ -534,9 +546,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// You mentioned it was on the Y axis.
 		Quaternion offset = Quaternion.Euler(0, 90, 0);
 		Quaternion legsOffset = Quaternion.Euler(0, legsYawOffsetDegrees, 0);
-
-		// Rotate modelRoot (legs) to face movement input direction (W/A/S/D)
-		if (modelRoot != null)
+	
+		// Rotate pelvisTarget (legs) to face movement input direction (W/A/S/D)
+		if (pelvis != null)
 		{
 			Vector3 fwd = cameraTransform != null ? cameraTransform.forward : transform.forward;
 			Vector3 rgt = cameraTransform != null ? cameraTransform.right : transform.right;
@@ -588,12 +600,12 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			{
 				int idleDir = Mathf.Clamp(lastMoveDirIndex, 0, 7);
 				Quaternion offsetToUseIdle = Quaternion.Euler(0f, idleYawByDir[idleDir], 0f);
-				modelRoot.rotation = legsLook * offsetToUseIdle;
+				pelvis.rotation = legsLook * offsetToUseIdle;
 			}
 			else
 			{
 				Quaternion offsetToUseRun = legsOffset;
-				modelRoot.rotation = legsLook * offsetToUseRun;
+				pelvis.rotation = legsLook * offsetToUseRun;
 			}
 		}
 
@@ -663,6 +675,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			}
 
 		}
+
+		if(isCrouching){
+			if (modelRoot != null)
+			{
+				//Debug.Log($"modelRoot position while crouching: {modelRoot.position}");
+			}
+		}
+
 	}
 
 
