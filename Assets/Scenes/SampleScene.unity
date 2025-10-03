@@ -915,6 +915,9 @@ MonoBehaviour:
   footstepSoundVolume: 1
   enableLandingSounds: 1
   enableFootstepSounds: 1
+  footstepIntervalMin: 0.22
+  footstepIntervalMax: 0.5
+  footstepFramesInterval: 12
   testAlternativeAccelaration: 0
 --- !u!1 &386076204 stripped
 GameObject:

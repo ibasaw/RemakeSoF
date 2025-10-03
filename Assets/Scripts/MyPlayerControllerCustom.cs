@@ -181,6 +181,12 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private AudioSource landingSoundSource;
 	private AudioSource footstepSoundSource;
 
+	// Footstep playback control
+	private Dictionary<string, int> footstepNextIndexByMaterial = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+	// Alternative cadence: play every X frames (fixed per Update cadence)
+	[SerializeField] private int footstepFramesInterval = 12;
+	private int footstepFrameCounter = 0;
+
 	// Sound cache for different surface materials
 	private Dictionary<string, MaterialInfo> materialInfos = new Dictionary<string, MaterialInfo>(StringComparer.OrdinalIgnoreCase);
 	private Dictionary<string, AudioClip> landingSounds = new Dictionary<string, AudioClip>();
@@ -499,8 +505,26 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		animator?.SetFloat("Horizontal", animHorizontal);
 		animator?.SetFloat("Vertical", animVertical);
 
+
 		// Set walking state based on input (like SoF2)
 		isWalking = isGrounded && (Mathf.Abs(moveInput.x) > 0.1f || Mathf.Abs(moveInput.y) > 0.1f);
+
+		// Footstep cadence: every X frames while grounded and walking
+		if (enableFootstepSounds && soundsLoaded && isWalking && footstepSoundSource != null)
+		{
+			footstepFrameCounter++;
+			if (footstepFrameCounter >= Mathf.Max(1, footstepFramesInterval))
+			{
+				string materialType = GetGroundMaterialType(lastGroundHit);
+				PlayFootstepSound(materialType);
+				footstepFrameCounter = 0;
+			}
+		}
+		else
+		{
+			// Reset counter when not walking to avoid burst on resume
+			footstepFrameCounter = 0;
+		}
 	}
 
 	private void LateUpdate()
@@ -1587,6 +1611,43 @@ private AudioClip TryLoadLandingClipFromCandidates(string soundName)
 			landingSoundSource.PlayOneShot(clip, landingSoundVolume);
 		}
 	}
+
+/// <summary>
+/// Play footstep sound cycling through step clips per material
+/// </summary>
+private void PlayFootstepSound(string materialType)
+{
+	if (!enableFootstepSounds || !soundsLoaded || footstepSoundSource == null)
+		return;
+
+	if (!footstepSounds.TryGetValue(materialType, out AudioClip[] clips) || clips == null || clips.Length == 0)
+		return;
+
+	if (!footstepNextIndexByMaterial.TryGetValue(materialType, out int nextIndex))
+		nextIndex = 0;
+
+	int safeIndex = 0;
+	if (clips.Length > 0)
+	{
+		safeIndex = Mathf.Abs(nextIndex) % clips.Length;
+	}
+
+	AudioClip clip = clips[safeIndex];
+	if (clip == null) return;
+
+	// Set mixer group if available
+	if (sfxGroup != null)
+	{
+		footstepSoundSource.outputAudioMixerGroup = sfxGroup;
+	}
+	else
+	{
+		footstepSoundSource.outputAudioMixerGroup = null;
+	}
+
+	footstepSoundSource.PlayOneShot(clip, footstepSoundVolume);
+	footstepNextIndexByMaterial[materialType] = safeIndex + 1;
+}
 
 	private void OnGUI()
 	{
