@@ -4,5 +4,5 @@ Library
 Logs
 Temp
 *.meta
-Assets/uQuake
+Assets/Resources
 *.fbx
