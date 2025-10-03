@@ -78,6 +78,11 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private bool isGrounded = false;                   // Grounded state
 	private bool isWalking = false;                    // Ground walking state
 	private bool isJumping = false;                    // Jumping state
+	private bool landedThisGround = false;             // Ensures landing sound/log fire once per ground contact
+	private bool wasGroundedPrev = false;              // Previous grounded state for transitions
+	private float nonJumpAirTime = 0f;                 // Airtime when falling without an explicit jump
+	private Vector3 nonJumpStartPosition = Vector3.zero; // Start position when leaving ground (no jump)
+	private float nonJumpStartY = 0f;                  // Start height when leaving ground (no jump)
 	private bool isSwimming = false;                   // Swimming state
 	private bool isCrouching = false;                  // Crouching state
 	private float jumpDebounce = 0f;                   // Jump debounce timer (starts after landing)
@@ -432,8 +437,21 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			HandleAutoJump();
 		}
 
-
+		bool wasGrounded = wasGroundedPrev;
 		isGrounded = CheckGrounded();
+		// Start/track non-jump airtime immediately when leaving ground (no jump)
+		if (!isGrounded)
+		{
+			if (wasGrounded && !isJumping)
+			{
+				nonJumpAirTime = 0f;
+				nonJumpStartPosition = transform.position;
+				nonJumpStartY = transform.position.y;
+				landedThisGround = false;
+			}
+			nonJumpAirTime += Time.deltaTime;
+		}
+		wasGroundedPrev = isGrounded;
 		animator?.SetBool("IsGrounded", isGrounded);
 		if (isGrounded) PM_WalkMove();
 		else PM_AirMove();
@@ -904,6 +922,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (!isGrounded)
 		{
 			velocity.y -= pm_gravity * Time.deltaTime;
+			// We are airborne again -> allow next landing trigger
+			landedThisGround = false;
 			// Track airtime, distance and height while in air
 			if (isJumping)
 			{
@@ -924,7 +944,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		{
 			// emulate ground stick like SoF2: small negative to keep contact
 			if (velocity.y < 0f) velocity.y = -2f;
-			// Reset jumping state when grounded AND falling (landed)
+			// Jump landing: play once and log, then reset jump
 			if (isJumping && velocity.y <= 0f)
 			{
 				float totalAirTime = Time.time - lastJumpTime;
@@ -935,21 +955,23 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				float finalJumpHeight = jumpHeight; // Use the maximum height reached
 				Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
 
-				// Play landing sound based on ground material
-				if (enableLandingSounds && soundsLoaded)
+				// Play landing sound based on ground material (once)
+				if (!landedThisGround && enableLandingSounds && soundsLoaded)
 				{
 					string materialType = GetGroundMaterialType(lastGroundHit);
 					PlayLandingSound(materialType);
 				}
 
+				if (!landedThisGround)
+				{
+					Debug.Log($"Landing detected (jump) - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u");
+					landedThisGround = true;
+				}
+
 				// Debug suspicious landings
 				if (totalAirTime < 0.1f || finalJumpHeight < 10f)
 				{
-					Debug.LogWarning($"SUSPICIOUS LANDING - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}, Y-vel: {velocity.y:F2}");
-				}
-				else
-				{
-					Debug.Log($"Landing detected - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}");
+					Debug.LogWarning($"SUSPICIOUS LANDING - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}");
 				}
 
 				// Reset jumping state
@@ -961,6 +983,23 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				// Start debounce timer AFTER landing
 				jumpDebounce = jumpDebounceAfterMs;
 				isDebounceActive = true;
+			}
+			else{
+				// Non-jump landing: fire once per ground contact
+				if (!landedThisGround && !isJumping && enableLandingSounds && soundsLoaded)
+				{
+					string materialType = GetGroundMaterialType(lastGroundHit);
+					PlayLandingSound(materialType);
+					// Log with non-jump airtime/distance/height
+					Vector3 currentPos = transform.position;
+					Vector3 horizontalDiff = new Vector3(currentPos.x - nonJumpStartPosition.x, 0f, currentPos.z - nonJumpStartPosition.z);
+					float finalDistance = horizontalDiff.magnitude;
+					float finalHeight = Mathf.Max(0f, nonJumpStartY - currentPos.y);
+					Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
+					Debug.Log($"Landing detected (no jump) - Airtime: {nonJumpAirTime:F3}s, Distance: {finalDistance:F2}u, Height: {finalHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u");
+					nonJumpAirTime = 0f;
+					landedThisGround = true;
+				}
 			}
 		}
 	}
