@@ -184,7 +184,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	// Sound cache for different surface materials
 	private Dictionary<string, MaterialInfo> materialInfos = new Dictionary<string, MaterialInfo>(StringComparer.OrdinalIgnoreCase);
 	private Dictionary<string, AudioClip> landingSounds = new Dictionary<string, AudioClip>();
-	private Dictionary<string, AudioClip> footstepSounds = new Dictionary<string, AudioClip>();
+	private Dictionary<string, AudioClip[]> footstepSounds = new Dictionary<string, AudioClip[]>();
 
 	[Serializable]
 	public class MaterialInfo
@@ -1386,33 +1386,52 @@ private void LoadSounds()
                 footstepSound = sndTok.ToString();
             }
         }
-        TryLoadClipForMaterial(materialName, landSound, landingSounds, "land");
-		TryLoadClipForMaterial(materialName, footstepSound, footstepSounds, "footstep");
+        TryLoadLandingAudioClip(materialName, landSound);
+		TryLoadFootstepAudioClip(materialName, footstepSound);
     }
 	soundsLoaded = true;
-    Debug.Log($"[LoadSounds] geladen: {landingSounds.Count} land-sounds {footstepSounds.Count} footstep-sounds, materialInfos: {materialInfos.Count}");
+    Debug.Log($"[LoadSounds] {landingSounds.Count} land-sounds, {footstepSounds.Count} footstep-sounds, materialInfos: {materialInfos.Count}");
+}
+
+private void TryLoadFootstepAudioClip(string materialName, string soundName)
+{
+	AudioClip[] clips = null;
+	if (!string.IsNullOrEmpty(soundName))
+    {
+        clips = TryLoadFootstepClipsFromCandidates(soundName);
+    }
+
+    if (clips != null)
+    {
+		footstepSounds[materialName] = clips;
+        //Debug.Log($"[LoadFootstepAudioClip] Loaded '{materialName}' -> {clips}");
+    }
+    else
+    {
+        // optional: nur warnen, nicht spammen
+        //Debug.LogWarning($"[LoadFootstepAudioClip] Kein Clip für '{materialName}' gefunden (soundName='{soundName}')");
+    }
 }
 
 // --- Hilfsmethoden ---
-
-private void TryLoadClipForMaterial(string materialName, string soundName, Dictionary<string, AudioClip> container, string soundType)
+private void TryLoadLandingAudioClip(string materialName, string soundName)
 {
     AudioClip clip = null;
 
     if (!string.IsNullOrEmpty(soundName))
     {
-        clip = TryLoadClipFromCandidates(soundName, soundType);
+        clip = TryLoadLandingClipFromCandidates(soundName);
     }
 
     if (clip != null)
     {
-		container[materialName] = clip;
-        Debug.Log($"[LoadSounds] Loaded '{materialName}' -> {clip.name}");
+		landingSounds[materialName] = clip;
+        //Debug.Log($"[LoadLandingAudioClip] Loaded '{materialName}' -> {clip.name}");
     }
     else
     {
         // optional: nur warnen, nicht spammen
-        // Debug.LogWarning($"[LoadSounds] Kein Clip für '{materialName}' gefunden (landSound='{landSound}')");
+        // Debug.LogWarning($"[LoadLandingAudioClip] Kein Clip für '{materialName}' gefunden (soundName='{soundName}')");
     }
 }
 
@@ -1445,16 +1464,64 @@ private double? TryGetDouble(JObject obj, string key)
     return null;
 }
 
-private AudioClip TryLoadClipFromCandidates(string soundName, string soundType)
+private AudioClip[] TryLoadFootstepClipsFromCandidates(string soundName){
+	if (string.IsNullOrEmpty(soundName)) return null;
+
+	// Baue Kandidaten-Basisnamen analog zur Landing-Variante
+	var baseCandidates = new List<string>
+	{
+		"uQuake/" + soundName
+	};
+
+	var collected = new List<AudioClip>();
+	const int maxPerBase = 3; // Sicherheitslimit max 3 footstep sounds pro Basis
+
+	foreach (var baseName in baseCandidates)
+	{
+		if (string.IsNullOrEmpty(baseName)) continue;
+
+		// Lade alle Clips im Zielordner und filtere per Prefix (z.B. "gravel")
+		string candidate = baseName.TrimStart('/', '\\');
+		candidate = Path.ChangeExtension(candidate, null).Replace('\\', '/');
+		string directoryPath = Path.GetDirectoryName(candidate)?.Replace('\\', '/');
+		string prefix = Path.GetFileName(candidate);
+		if (string.IsNullOrEmpty(directoryPath) || string.IsNullOrEmpty(prefix)) continue;
+
+		var allInFolder = Resources.LoadAll<AudioClip>(directoryPath) ?? Array.Empty<AudioClip>();
+		if (allInFolder.Length == 0) continue;
+
+		// Filtere alle, die mit Prefix beginnen und eine numerische Endung besitzen (prefix + number)
+		var matching = new List<(AudioClip clip, int index)>();
+		foreach (var c in allInFolder)
+		{
+			if (c == null || string.IsNullOrEmpty(c.name)) continue;
+			if (!c.name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+			string suffix = c.name.Substring(prefix.Length);
+			if (int.TryParse(suffix, out int idx))
+			{
+				matching.Add((c, idx));
+			}
+		}
+
+		if (matching.Count == 0) continue;
+
+		// Sortiere nach Index und begrenze auf maxPerBase
+		matching.Sort((a, b) => a.index.CompareTo(b.index));
+		for (int i = 0; i < matching.Count && i < maxPerBase; i++)
+		{
+			collected.Add(matching[i].clip);
+		}
+	}
+
+	return collected.Count > 0 ? collected.ToArray() : null;
+}
+
+private AudioClip TryLoadLandingClipFromCandidates(string soundName)
 {
     // Kandidatenliste — passe an deine Projektstruktur an
     var candidates = new List<string>
     {
-        soundName,                                       // exakt wie in JSON, z.B. "sound/player/jumps/dirt"
-        "uQuake/" + soundName,                           // z.B. "uQuake/sound/player/jumps/dirt"
-        Path.GetFileName(soundName),                     // nur Dateiname ohne Pfad
-        Path.Combine("uQuake", "sound", Path.GetFileName(soundName)).Replace('\\','/'),
-        soundName.Replace("sound/", ""),                 // evtl. alternative kürzere Pfade
+        "uQuake/" + soundName
     };
 
     foreach (var c in candidates)
