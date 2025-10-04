@@ -11,6 +11,7 @@ using System.IO;
 public class MyPlayerControllerCustom : MonoBehaviour
 {
 	private Animator animator;
+
 	// CharacterController removed - use capsule-based manual movement
 	[Header("Capsule Settings (CharacterController SoF2 values)")]
 	[SerializeField] private float capsuleRadius = 0f;  
@@ -124,6 +125,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private float jumpDistance = 0f;                   // Horizontal distance traveled during jump
 	private float jumpHeight = 0f;                     // Maximum height reached during jump
 	private float jumpStartY = 0f;                     // Y position when jump started
+	private float landingY = 0f;                       // Y position when landing
+	[SerializeField] private float stepUpHeightThreshold = 5.0f; // Minimum height difference to consider as step-up
 	[SerializeField] private float jumpDebounceAfterMs = 0.25f; // 250ms debounce like SoF2
 	[SerializeField] private bool autoJump = false; // Auto jump when grounded and space is pressed
 
@@ -226,6 +229,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private bool enableLandingSounds = true;
 	[SerializeField] private bool enableFootstepSounds = true;
 	[SerializeField] private bool enableWeaponSounds = true;
+	[SerializeField] private float firstFootstepDelayMs = 100f; // delay to play first footstep sound when moving started
+	
 	private AudioSource landingSoundSource;
 	private AudioSource footstepSoundSource;
 	private AudioSource weaponSoundSource;
@@ -237,6 +242,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private bool isFootstepSoundPlaying = false;
 	private float lastFootstepSoundTime = 0f;
 	private float currentFootstepSoundDuration = 0f;
+	private float movementStartTime = 0f; // Time when movement started
+	private bool hasPlayedFirstFootstep = false; // Track if first footstep after movement start has been played
 
 	// Weapon sound playback control
 	private bool isWeaponSoundPlaying = false;
@@ -1197,19 +1204,26 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	{
 		if (!justLanded) return;
 		
+		// Get current landing position
+		Vector3 currentColliderPos = GetColliderBottomPosition();
+		landingY = currentColliderPos.y;
+		
 		// Jump landing: use edge detection for more robust landing detection
 		if (isJumping)
 		{
 			float totalAirTime = Time.time - lastJumpTime;
 			// Calculate final jump distance and height using collider position
-			Vector3 currentColliderPos = GetColliderBottomPosition();
 			Vector3 horizontalDiff = new Vector3(currentColliderPos.x - jumpStartPosition.x, 0f, currentColliderPos.z - jumpStartPosition.z);
 			float finalJumpDistance = horizontalDiff.magnitude;
 			float finalJumpHeight = jumpHeight; // Use the maximum height reached
 			Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
 
-			// Play landing sound based on ground material (once)
-			if (!landedThisGround && enableLandingSounds && soundsLoaded)
+			// Check if we landed significantly higher than we started (step-up successful)
+			float heightDifference = landingY - jumpStartY;
+			bool landedHigher = heightDifference > stepUpHeightThreshold;
+			
+			// Play landing sound based on ground material (once) - only if not higher
+			if (!landedThisGround && enableLandingSounds && soundsLoaded && !landedHigher)
 			{
 				string materialType = GetGroundMaterialType(lastGroundHit);
 				PlayLandingSound(materialType);
@@ -1217,7 +1231,20 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 			if (!landedThisGround)
 			{
-				Debug.Log($"Landing detected (jump) - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u");
+				if (landedHigher)
+				{
+					Debug.Log($"Step-up successful! Landed significantly higher than start - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Start Y: {jumpStartY:F2}, Landing Y: {landingY:F2}, Height Diff: {heightDifference:F3} (Threshold: {stepUpHeightThreshold:F1})");
+					// Reset jump debounce immediately for step-up success
+					jumpDebounce = 0f;
+					isDebounceActive = false;
+				}
+				else
+				{
+					Debug.Log($"Landing detected (jump) - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u, Start Y: {jumpStartY:F2}, Landing Y: {landingY:F2}, Height Diff: {heightDifference:F3} (Threshold: {stepUpHeightThreshold:F1})");
+					// Start debounce timer AFTER landing (only if not higher)
+					jumpDebounce = jumpDebounceAfterMs;
+					isDebounceActive = true;
+				}
 				landedThisGround = true;
 			}
 
@@ -1231,11 +1258,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			isJumping = false;
 			airTime = 0f;
 			jumpDistance = finalJumpDistance; // Keep final distance for UI display
-											  // jumpHeight is kept for UI display until next jump
-
-			// Start debounce timer AFTER landing
-			jumpDebounce = jumpDebounceAfterMs;
-			isDebounceActive = true;
+										  // jumpHeight is kept for UI display until next jump
 		}
 		else
 		{
@@ -1245,12 +1268,11 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				string materialType = GetGroundMaterialType(lastGroundHit);
 				PlayLandingSound(materialType);
 				// Log with non-jump airtime/distance/height using collider position
-				Vector3 currentColliderPos = GetColliderBottomPosition();
 				Vector3 horizontalDiff = new Vector3(currentColliderPos.x - nonJumpStartPosition.x, 0f, currentColliderPos.z - nonJumpStartPosition.z);
 				float finalDistance = horizontalDiff.magnitude;
 				float finalHeight = Mathf.Max(0f, nonJumpStartY - currentColliderPos.y);
 				Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
-				Debug.Log($"Landing detected (no jump) - Airtime: {nonJumpAirTime:F3}s, Distance: {finalDistance:F2}u, Height: {finalHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u");
+				Debug.Log($"Landing detected (no jump) - Airtime: {nonJumpAirTime:F3}s, Distance: {finalDistance:F2}u, Height: {finalHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u, Start Y: {nonJumpStartY:F2}, Landing Y: {landingY:F2}, Height Diff: {landingY - nonJumpStartY:F3}");
 				nonJumpAirTime = 0f;
 				landedThisGround = true;
 			}
@@ -1262,16 +1284,48 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	/// </summary>
 	private void HandleSoundEvents()
 	{
+		// Track movement start time
+		if (isWalking && !hasPlayedFirstFootstep)
+		{
+			if (movementStartTime == 0f)
+			{
+				movementStartTime = Time.time;
+			}
+		}
+		else if (!isWalking)
+		{
+			// Reset movement tracking when not walking
+			movementStartTime = 0f;
+			hasPlayedFirstFootstep = false;
+		}
+
 		// Footstep sound - play next sound when current one finishes
 		if (enableFootstepSounds && soundsLoaded && isWalking && footstepSoundSource != null)
 		{
 			// Check if we need to start a new footstep sound
 			if (!isFootstepSoundPlaying)
 			{
-				string materialType = GetGroundMaterialType(lastGroundHit);
-				currentFootstepSoundDuration = PlayFootstepSoundWithDuration(materialType);
-				isFootstepSoundPlaying = true;
-				lastFootstepSoundTime = Time.time;
+				// For the first footstep, check if enough delay has passed
+				if (!hasPlayedFirstFootstep)
+				{
+					float delayInSeconds = firstFootstepDelayMs / 1000f;
+					if (Time.time - movementStartTime >= delayInSeconds)
+					{
+						string materialType = GetGroundMaterialType(lastGroundHit);
+						currentFootstepSoundDuration = PlayFootstepSoundWithDuration(materialType);
+						isFootstepSoundPlaying = true;
+						lastFootstepSoundTime = Time.time;
+						hasPlayedFirstFootstep = true;
+					}
+				}
+				else
+				{
+					// For subsequent footsteps, play immediately
+					string materialType = GetGroundMaterialType(lastGroundHit);
+					currentFootstepSoundDuration = PlayFootstepSoundWithDuration(materialType);
+					isFootstepSoundPlaying = true;
+					lastFootstepSoundTime = Time.time;
+				}
 			}
 			else
 			{
@@ -1495,6 +1549,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Step-up is possible
 		stepUpPos = stepUpTarget;
 		Debug.Log($"Step-up successful! Height: {obstacleHeight:F2}, Target: {stepUpTarget}");
+		// Note: Step-up successful sound is handled in HandleLandingEvents based on height comparison
 		return true;
 	}
 
@@ -2345,6 +2400,23 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 			heightStyle.normal.textColor = Color.magenta; // Magenta for last recorded height
 		}
 		GUI.Label(new Rect(x, y, 600, line), $"Jump Height: {jumpHeight:F2} units", heightStyle); y += line;
+		
+		// Landing height display
+		GUIStyle landingStyle = new GUIStyle(valueStyle);
+		float heightDiff = landingY - jumpStartY;
+		if (heightDiff > stepUpHeightThreshold)
+		{
+			landingStyle.normal.textColor = Color.green; // Green when landed significantly higher
+		}
+		else if (heightDiff > 0f)
+		{
+			landingStyle.normal.textColor = Color.yellow; // Yellow when slightly higher (below threshold)
+		}
+		else
+		{
+			landingStyle.normal.textColor = Color.white; // White when normal landing
+		}
+		GUI.Label(new Rect(x, y, 600, line), $"Landing Y: {landingY:F2} (Start: {jumpStartY:F2}, Diff: {heightDiff:F3}, Threshold: {stepUpHeightThreshold:F1})", landingStyle); y += line;
 
 		// Jump debounce display with color coding
 		GUIStyle debounceStyle = new GUIStyle(valueStyle);
@@ -2405,6 +2477,7 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 		GUI.Label(new Rect(x, y, 600, line), $"SFX Group: {(sfxGroup != null ? sfxGroup.name : "None")}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Landing enabled: {enableLandingSounds} Footstep enabled: {enableFootstepSounds}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Landing Volume: {landingSoundVolume:F2} Footstep Volume: {footstepSoundVolume:F2}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Footstep Delay: {firstFootstepDelayMs}ms (First played: {hasPlayedFirstFootstep})", valueStyle); y += line;
 		if (lastGroundHit.collider != null)
 			GUI.Label(new Rect(x, y, 600, line), $"Last Ground Material: {GetGroundMaterialType(lastGroundHit)}", valueStyle); y += line;
 		y += line * 0.5f; // Spacing
