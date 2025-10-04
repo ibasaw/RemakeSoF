@@ -123,7 +123,7 @@ public class MyPlayerController : MonoBehaviour
         GUI.Label(new Rect(x, y, 800, lineHeight), $"Acceleration: {acceleration}   Mass: {rb.mass}   Drag: {rb.linearDamping}", valueStyle); y += lineHeight;
 
         // Input
-        GUI.Label(new Rect(x, y, 800, lineHeight), $"MoveInput: {moveInput}   Sprint: {inputActions.Player.Sprint.ReadValue<float>()}", valueStyle); y += lineHeight;
+        GUI.Label(new Rect(x, y, 800, lineHeight), $"MoveInput: {moveInput}   Sprint: {inputActions.Player.Walk.ReadValue<float>()}", valueStyle); y += lineHeight;
 
         // Bunnyhop-Distanz (NEU!)
         GUI.color = Color.yellow;
@@ -349,7 +349,7 @@ public class MyPlayerController : MonoBehaviour
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, -2f, rb.linearVelocity.z);
 
         // Input & gewünschte Geschwindigkeit
-        float speed = (inputActions.Player.Sprint.ReadValue<float>() > 0) ? runSpeed : walkSpeed;
+        float speed = (inputActions.Player.Walk.ReadValue<float>() > 0) ? runSpeed : walkSpeed;
 
         Vector3 forward = (isAiming || isNPC) ? transform.forward : cameraTransform.forward;
         Vector3 right = (isAiming || isNPC) ? transform.right : cameraTransform.right;

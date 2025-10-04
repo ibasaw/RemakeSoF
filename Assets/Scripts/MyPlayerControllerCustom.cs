@@ -12,10 +12,15 @@ public class MyPlayerControllerCustom : MonoBehaviour
 {
 	private Animator animator;
 	// CharacterController removed - use capsule-based manual movement
-	[Header("Capsule Settings (replaces CharacterController)")]
-	[SerializeField] private float capsuleRadius = 0.5f;
-	[SerializeField] private float capsuleHeight = 2.0f;
-	[SerializeField] private Vector3 capsuleCenter = Vector3.zero;
+	[Header("Capsule Settings (CharacterController SoF2 values)")]
+	[SerializeField] private float capsuleRadius = 5f;  
+	[SerializeField] private float capsuleHeight = 100f;
+	[SerializeField] private Vector3 capsuleCenter = new Vector3(0, 50f, 0);  // Center at half height
+	
+	[Header("Visual Collider Debug")]
+	[SerializeField] private bool showVisualCollider = true;
+	[SerializeField] private Color colliderColor = new Color(0, 1, 0, 0.3f);  // Semi-transparent green
+	[SerializeField] private Material colliderMaterial;
 
 	// Input System
 	private AvatarActions inputActions;
@@ -36,7 +41,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float pm_maxstep = 18.0f;          // Maximum step height
 	[SerializeField] private float pm_stepsize = 18.0f;         // Step size
 	[SerializeField] private float pm_maxbarrier = 32.0f;       // maximum barrier height
-	[SerializeField] private float pm_maxwaterjump = 19.0f;        // max water jump height
 
 	[Header("Physics Constants")]
 	[SerializeField] private float pm_accelerate = 6.0f;        // Ground acceleration
@@ -90,6 +94,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private Vector3 velocity = Vector3.zero;           // Current velocity (x, y, z)
 	private bool isGrounded = false;                   // Grounded state
 	private bool isWalking = false;                    // Ground walking state
+	private bool isWalkingPressed = false;              // Ground walking pressed state (shift-button at default)
 	private bool isJumping = false;                    // Jumping state
 	private bool isAttacking = false;				   // Attacking state
 	private bool landedThisGround = false;             // Ensures landing sound/log fire once per ground contact
@@ -175,6 +180,11 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	// Movement-based idle offset
 	private float currentMovementIdleOffset = 0f;
+	
+	// Visual collider components
+	private GameObject visualColliderObject;
+	private MeshRenderer visualColliderRenderer;
+	private MeshFilter visualColliderMeshFilter;
 
 	// Mouse speed detection for dynamic pelvisTarget follow (using Input System)
 	private Vector2 lookInput = Vector2.zero;
@@ -199,6 +209,11 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	// Alternative cadence: play every X frames (fixed per Update cadence)
 	[SerializeField] private int footstepFramesInterval = 12;
 	private int footstepFrameCounter = 0;
+
+	// Footstep sound completion tracking
+	private bool isFootstepSoundPlaying = false;
+	private float lastFootstepSoundTime = 0f;
+	private float currentFootstepSoundDuration = 0f;
 
 	// Weapon sound playback control
 	private bool isWeaponSoundPlaying = false;
@@ -240,6 +255,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Attach start weapon to right hand bolt when player spawns
 		AttachStartWeapon();
+		
+		// Initialize visual collider
+		InitializeVisualCollider();
 	}
 
 	private void OnEnable()
@@ -248,6 +266,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		inputActions.Enable();
 		inputActions.Player.Move.performed += OnMovePerformed;
 		inputActions.Player.Move.canceled += OnMoveCanceled;
+		inputActions.Player.Walk.performed += OnWalkPressed;
+		inputActions.Player.Walk.canceled += OnWalkCanceled;
 		inputActions.Player.Jump.performed += OnJumpPerformed;
 		inputActions.Player.Crouch.performed += OnCrouchPerformed;
 		inputActions.Player.Crouch.canceled += OnCrouchCanceled;
@@ -266,6 +286,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (isNPC) return;
 		inputActions.Player.Move.performed -= OnMovePerformed;
 		inputActions.Player.Move.canceled -= OnMoveCanceled;
+		inputActions.Player.Walk.performed -= OnWalkPressed;
+		inputActions.Player.Walk.canceled -= OnWalkCanceled;
 		inputActions.Player.Jump.performed -= OnJumpPerformed;
 		inputActions.Player.Look.performed -= OnLookPerformed;
 		inputActions.Player.Look.canceled -= OnLookCanceled;
@@ -278,6 +300,20 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		inputActions.Player.Attack.performed -= OnAttack;
 		inputActions.Player.Attack.canceled -= OnCancelAttack;
 		inputActions.Disable();
+	}
+
+	private void OnWalkPressed(InputAction.CallbackContext ctx)
+	{
+		Debug.Log("Walk Pressed");
+		isWalkingPressed = true;
+		animator?.SetBool("IsWalking", true); //change to walking animation state default is always running
+	}
+
+	private void OnWalkCanceled(InputAction.CallbackContext ctx)
+	{
+		Debug.Log("Walk Released");
+		isWalkingPressed = false;
+		animator?.SetBool("IsWalking", false); //change to walking animation state default is always running
 	}
 
 	private void OnAttack(InputAction.CallbackContext ctx)
@@ -572,6 +608,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Rotate toward aim/camera/move
 		HandleRotation();
+		
+		// Update visual collider
+		UpdateVisualCollider();
 
 		// Animator locomotion values
 		Vector3 horizontalVel = new Vector3(velocity.x, 0f, velocity.z);
@@ -588,21 +627,30 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Set walking state based on input (like SoF2)
 		isWalking = isGrounded && (Mathf.Abs(moveInput.x) > 0.1f || Mathf.Abs(moveInput.y) > 0.1f);
 
-		// Footstep cadence: every X frames while grounded and walking
+		// Footstep sound - play next sound when current one finishes
 		if (enableFootstepSounds && soundsLoaded && isWalking && footstepSoundSource != null)
 		{
-			footstepFrameCounter++;
-			if (footstepFrameCounter >= Mathf.Max(1, footstepFramesInterval))
+			// Check if we need to start a new footstep sound
+			if (!isFootstepSoundPlaying)
 			{
 				string materialType = GetGroundMaterialType(lastGroundHit);
-				PlayFootstepSound(materialType);
-				footstepFrameCounter = 0;
+				currentFootstepSoundDuration = PlayFootstepSoundWithDuration(materialType);
+				isFootstepSoundPlaying = true;
+				lastFootstepSoundTime = Time.time;
+			}
+			else
+			{
+				// Check if enough time has passed for the sound to finish
+				if (Time.time - lastFootstepSoundTime >= currentFootstepSoundDuration)
+				{
+					isFootstepSoundPlaying = false;
+				}
 			}
 		}
 		else
 		{
-			// Reset counter when not walking to avoid burst on resume
-			footstepFrameCounter = 0;
+			// Reset when not walking
+			isFootstepSoundPlaying = false;
 		}
 	}
 
@@ -1493,7 +1541,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			if (audioClips.Count > 0)
 			{
 				weaponSounds[dictionaryKey] = audioClips.ToArray();
-				Debug.Log($"[LoadWeaponSounds] Loaded {audioClips.Count} sounds for {dictionaryKey}");
+				//Debug.Log($"[LoadWeaponSounds] Loaded {audioClips.Count} sounds for {dictionaryKey}");
 			}
 			else
 			{
@@ -1501,7 +1549,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			}
 		}
 
-		Debug.Log($"[LoadWeaponSounds] Completed loading sounds for weapon '{weaponName}'");
+		Debug.Log($"[LoadWeaponSounds] Loaded {weaponSounds.Count} sound types for weapon '{weaponName}'.");
 	}
 
 	/// <summary>
@@ -1932,6 +1980,49 @@ private void PlayFootstepSound(string materialType)
 }
 
 /// <summary>
+/// Play footstep sound and return the duration of the played sound
+/// </summary>
+private float PlayFootstepSoundWithDuration(string materialType)
+{
+	if (!enableFootstepSounds || !soundsLoaded || footstepSoundSource == null)
+		return 0f;
+
+	if (!footstepSounds.TryGetValue(materialType, out AudioClip[] clips) || clips == null || clips.Length == 0)
+	{
+		Debug.LogWarning($"[PlayFootstepSoundWithDuration] No footstep sounds found for material '{materialType}'");
+		return 0f;
+	}
+
+	if (!footstepNextIndexByMaterial.TryGetValue(materialType, out int nextIndex))
+		nextIndex = 0;
+
+	int safeIndex = 0;
+	if (clips.Length > 0)
+	{
+		safeIndex = Mathf.Abs(nextIndex) % clips.Length;
+	}
+
+	AudioClip clip = clips[safeIndex];
+	if (clip == null) return 0f;
+
+	// Set mixer group if available
+	if (sfxGroup != null)
+	{
+		footstepSoundSource.outputAudioMixerGroup = sfxGroup;
+	}
+	else
+	{
+		footstepSoundSource.outputAudioMixerGroup = null;
+	}
+
+	footstepSoundSource.PlayOneShot(clip, footstepSoundVolume);
+	footstepNextIndexByMaterial[materialType] = safeIndex + 1;
+	
+	Debug.Log($"[PlayFootstepSoundWithDuration] Playing footstep for '{materialType}' - {clip.name} (Duration: {clip.length:F2}s)");
+	return clip.length; // Return the actual duration of the sound
+}
+
+/// <summary>
 /// Play weapon sound cycling through sound clips for the specified weapon and sound type
 /// </summary>
 private void PlayWeaponSound(string weaponName, string soundType)
@@ -2130,5 +2221,187 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 
 		// Physics Settings
 		GUI.Label(new Rect(x, y, 600, line), $"Accel: {pm_accelerate}  AirAccel: {pm_airaccelerate}  Friction: {pm_friction}", valueStyle); y += line;
+		
+		// Capsule Settings
+		GUI.Label(new Rect(x, y, 600, line), $"Capsule Radius: {capsuleRadius:F2} Height: {capsuleHeight:F2}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Capsule Center: {capsuleCenter}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Visual Collider: {(showVisualCollider ? "ON" : "OFF")}", valueStyle); y += line;
+	}
+	
+	/// <summary>
+	/// Initialize the visual collider representation
+	/// </summary>
+	private void InitializeVisualCollider()
+	{
+		if (!showVisualCollider) return;
+		
+		// Create visual collider object
+		visualColliderObject = new GameObject("VisualCollider");
+		visualColliderObject.transform.SetParent(transform);
+		visualColliderObject.transform.localPosition = Vector3.zero;
+		visualColliderObject.transform.localRotation = Quaternion.identity;
+		visualColliderObject.transform.localScale = Vector3.one;
+		
+		// Add mesh components
+		visualColliderMeshFilter = visualColliderObject.AddComponent<MeshFilter>();
+		visualColliderRenderer = visualColliderObject.AddComponent<MeshRenderer>();
+		
+		// Create capsule mesh
+		visualColliderMeshFilter.mesh = CreateCapsuleMesh();
+		
+		// Set up material
+		if (colliderMaterial == null)
+		{
+			// Create a simple unlit material
+			colliderMaterial = new Material(Shader.Find("Unlit/Color"));
+			colliderMaterial.color = colliderColor;
+		}
+		visualColliderRenderer.material = colliderMaterial;
+		
+		// Make sure it renders on top
+		visualColliderRenderer.sortingOrder = 1000;
+	}
+	
+	/// <summary>
+	/// Create a capsule mesh for visual representation
+	/// </summary>
+	private Mesh CreateCapsuleMesh()
+	{
+		Mesh mesh = new Mesh();
+		mesh.name = "CapsuleVisual";
+		
+		// Capsule parameters
+		int segments = 16;
+		int rings = 8;
+		float radius = capsuleRadius;
+		float height = capsuleHeight;
+		
+		// Calculate vertices
+		List<Vector3> vertices = new List<Vector3>();
+		List<Vector2> uvs = new List<Vector2>();
+		List<int> triangles = new List<int>();
+		
+		// Generate vertices for the capsule
+		// Top hemisphere
+		for (int ring = 0; ring <= rings / 2; ring++)
+		{
+			float v = (float)ring / (rings / 2);
+			float phi = v * Mathf.PI / 2;
+			
+			for (int seg = 0; seg <= segments; seg++)
+			{
+				float u = (float)seg / segments;
+				float theta = u * Mathf.PI * 2;
+				
+				float x = Mathf.Cos(theta) * Mathf.Sin(phi) * radius;
+				float y = Mathf.Cos(phi) * radius + height * 0.5f;
+				float z = Mathf.Sin(theta) * Mathf.Sin(phi) * radius;
+				
+				vertices.Add(new Vector3(x, y, z));
+				uvs.Add(new Vector2(u, v));
+			}
+		}
+		
+		// Cylinder part
+		for (int ring = 1; ring < rings; ring++)
+		{
+			float v = (float)ring / rings;
+			float y = height * 0.5f - (v - 0.5f) * height;
+			
+			for (int seg = 0; seg <= segments; seg++)
+			{
+				float u = (float)seg / segments;
+				float theta = u * Mathf.PI * 2;
+				
+				float x = Mathf.Cos(theta) * radius;
+				float z = Mathf.Sin(theta) * radius;
+				
+				vertices.Add(new Vector3(x, y, z));
+				uvs.Add(new Vector2(u, v));
+			}
+		}
+		
+		// Bottom hemisphere
+		for (int ring = rings / 2; ring <= rings; ring++)
+		{
+			float v = (float)ring / rings;
+			float phi = (v - 0.5f) * Mathf.PI;
+			
+			for (int seg = 0; seg <= segments; seg++)
+			{
+				float u = (float)seg / segments;
+				float theta = u * Mathf.PI * 2;
+				
+				float x = Mathf.Cos(theta) * Mathf.Sin(phi) * radius;
+				float y = Mathf.Cos(phi) * radius - height * 0.5f;
+				float z = Mathf.Sin(theta) * Mathf.Sin(phi) * radius;
+				
+				vertices.Add(new Vector3(x, y, z));
+				uvs.Add(new Vector2(u, v));
+			}
+		}
+		
+		// Generate triangles
+		for (int ring = 0; ring < rings; ring++)
+		{
+			for (int seg = 0; seg < segments; seg++)
+			{
+				int current = ring * (segments + 1) + seg;
+				int next = current + segments + 1;
+				
+				// First triangle
+				triangles.Add(current);
+				triangles.Add(next);
+				triangles.Add(current + 1);
+				
+				// Second triangle
+				triangles.Add(current + 1);
+				triangles.Add(next);
+				triangles.Add(next + 1);
+			}
+		}
+		
+		mesh.vertices = vertices.ToArray();
+		mesh.uv = uvs.ToArray();
+		mesh.triangles = triangles.ToArray();
+		mesh.RecalculateNormals();
+		mesh.RecalculateBounds();
+		
+		return mesh;
+	}
+	
+	/// <summary>
+	/// Update the visual collider position and visibility
+	/// </summary>
+	private void UpdateVisualCollider()
+	{
+		if (visualColliderObject == null) return;
+		
+		// Update visibility
+		visualColliderObject.SetActive(showVisualCollider);
+		
+		if (!showVisualCollider) return;
+		
+		// Update position to match capsule center
+		visualColliderObject.transform.localPosition = capsuleCenter;
+		
+		// Update color based on grounded state
+		if (visualColliderRenderer != null && visualColliderRenderer.material != null)
+		{
+			Color currentColor = isGrounded ? Color.green : Color.red;
+			currentColor.a = colliderColor.a; // Keep original alpha
+			visualColliderRenderer.material.color = currentColor;
+		}
+	}
+	
+	/// <summary>
+	/// Clean up visual collider when destroyed
+	/// </summary>
+	private void OnDestroy()
+	{
+		if (visualColliderObject != null)
+		{
+			DestroyImmediate(visualColliderObject);
+		}
 	}
 }
