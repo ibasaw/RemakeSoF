@@ -21,7 +21,7 @@ public class ServiceHelper : MonoBehaviour
 
     private void StartAuthServer()
     {
-        if (FindObjectOfType<AuthServer>() == null)
+        if (FindAnyObjectByType<AuthServer>() == null)
         {
             GameObject authObj = new GameObject("AuthServer");
             authObj.AddComponent<AuthServer>();
@@ -31,7 +31,7 @@ public class ServiceHelper : MonoBehaviour
 
     private void StartGameServer()
     {
-        if (FindObjectOfType<GameServer>() == null)
+        if (FindAnyObjectByType<GameServer>() == null)
         {
             if (NetworkManager.Singleton == null)
             {
@@ -53,8 +53,8 @@ public class ServiceHelper : MonoBehaviour
         // Warten, bis beide Server existieren
         while (auth == null || game == null)
         {
-            auth = FindObjectOfType<AuthServer>();
-            game = FindObjectOfType<GameServer>();
+            auth = FindAnyObjectByType<AuthServer>();
+            game = FindAnyObjectByType<GameServer>();
             yield return null;
         }
 

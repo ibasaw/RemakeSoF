@@ -40,9 +40,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	[Header("Speed Scales")]
 	[SerializeField] private float pm_duckScale = 0.25f;        // Speed scale when ducking
-	[SerializeField] private float pm_swimScale = 0.50f;        // Speed scale when swimming
-	[SerializeField] private float pm_wadeScale = 0.70f;        // Speed scale when wading
-	[SerializeField] private float pm_ladderScale = 0.5f;
+	//[SerializeField] private float pm_swimScale = 0.50f;        // Speed scale when swimming
+	//[SerializeField] private float pm_wadeScale = 0.70f;        // Speed scale when wading
+	//[SerializeField] private float pm_ladderScale = 0.5f;
 
 	[Header("SoF2 Movement Settings")]
 	[SerializeField] public LayerMask groundMask = ~0;    // All layers or just "Ground" layer
@@ -57,21 +57,21 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[Header("Physics Constants")]
 	[SerializeField] private float pm_accelerate = 6.0f;        // Ground acceleration
 	[SerializeField] private float pm_airaccelerate = 1.0f;     // Air acceleration  
-	[SerializeField] private float pm_wateraccelerate = 4.0f;  // Water acceleration
+	//[SerializeField] private float pm_wateraccelerate = 4.0f;  // Water acceleration
 
 	[SerializeField] private float pm_friction = 6.0f;          // Ground friction
-	[SerializeField] private float pm_waterfriction = 3.0f;     // Water friction
-	[SerializeField] private float pm_ladderfriction = 6.0f;    // Ladder friction
-	[SerializeField] private float pm_headfriction = 0.0f;      // Friction when on someone's head
-	[SerializeField] private float pm_spectatorfriction = 5.0f;  // Spectator friction
+	//[SerializeField] private float pm_waterfriction = 3.0f;     // Water friction
+	//[SerializeField] private float pm_ladderfriction = 6.0f;    // Ladder friction
+	//[SerializeField] private float pm_headfriction = 0.0f;      // Friction when on someone's head
+	//[SerializeField] private float pm_spectatorfriction = 5.0f;  // Spectator friction
 
 	[SerializeField] private float pm_stopspeed = 100.0f;       // Stop speed threshold
 	[SerializeField] private float pm_maxspeed = 280.0f;        // Maximum speed / max velocity g_speed
-	[SerializeField] private float pm_maxswimspeed = 150.0f;   // Water max swim velocity
+	//[SerializeField] private float pm_maxswimspeed = 150.0f;   // Water max swim velocity
 	[SerializeField] private float pm_maxcrouchspeed = 100.0f;  // Maximum run speed / max velocity
 
 	[SerializeField] private float pm_gravity = 800.0f;         // Gravity value g_gravity
-	[SerializeField] private float pm_watergravity = 400.0f; // Water acceleration
+	//[SerializeField] private float pm_watergravity = 400.0f; // Water acceleration
 
 	[SerializeField] private float jumpVelocity = 270.0f;       // Jump velocity (from phys_jumpvel)
 	[SerializeField] private float rotationSpeed = 10f;         // Rotation speed for character
@@ -232,9 +232,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	// Footstep playback control
 	private Dictionary<string, int> footstepNextIndexByMaterial = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-	// Alternative cadence: play every X frames (fixed per Update cadence)
-	[SerializeField] private int footstepFramesInterval = 12;
-	private int footstepFrameCounter = 0;
 
 	// Footstep sound completion tracking
 	private bool isFootstepSoundPlaying = false;
@@ -341,35 +338,35 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	{
 		Debug.Log("Walk Pressed");
 		isWalkingPressed = true;
-		animator?.SetBool("IsWalking", true); //change to walking animation state default is always running
+		// Animator parameter will be set in Update() for consistent timing
 	}
 
 	private void OnWalkCanceled(InputAction.CallbackContext ctx)
 	{
 		Debug.Log("Walk Released");
 		isWalkingPressed = false;
-		animator?.SetBool("IsWalking", false); //change to walking animation state default is always running
+		// Animator parameter will be set in Update() for consistent timing
 	}
 
 	private void OnAttack(InputAction.CallbackContext ctx)
 	{
 		Debug.Log("Attack Pressed");
 		isAttacking = true;
-		animator?.SetBool("IsAttacking", true);
+		// Animator parameter will be set in Update() for consistent timing
 	}
 
 	private void OnCancelAttack(InputAction.CallbackContext ctx)
 	{
 		Debug.Log("Attack Released");
 		isAttacking = false;
-		animator?.SetBool("IsAttacking", false);
+		// Animator parameter will be set in Update() for consistent timing
 	}
 
 	private void OnCrouchPerformed(InputAction.CallbackContext ctx)
 	{
 		Debug.Log("C Pressed");
 		isCrouching = true;
-		animator?.SetBool("IsCrouching", isCrouching);
+		// Animator parameter will be set in Update() for consistent timing
 		if (yawTarget != null)
 		{
 			Vector3 localPos = yawTarget.localPosition;
@@ -384,7 +381,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	{
 		Debug.Log("C Released");
 		isCrouching = false;
-		animator?.SetBool("IsCrouching", isCrouching);
+		// Animator parameter will be set in Update() for consistent timing
 		if (yawTarget != null)
 		{
 			Vector3 localPos = yawTarget.localPosition;
@@ -656,37 +653,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			isWeaponSoundPlaying = false;
 		}
 
-		bool wasGrounded = wasGroundedPrev;
-		isGrounded = CheckGrounded();
-		// Start/track non-jump airtime immediately when leaving ground (no jump)
-		if (!isGrounded)
-		{
-			if (wasGrounded && !isJumping)
-			{
-				nonJumpAirTime = 0f;
-				nonJumpStartPosition = GetColliderBottomPosition();
-				nonJumpStartY = nonJumpStartPosition.y;
-				landedThisGround = false;
-			}
-			nonJumpAirTime += Time.deltaTime;
-		}
-		
-		// Edge detection for landings (more robust than velocity.y <= 0f)
-		bool justLanded = !wasGroundedPrev && isGrounded;
-		
-		wasGroundedPrev = isGrounded;
-		animator?.SetBool("IsGrounded", isGrounded);
-		if (isGrounded) PM_WalkMove();
-		else PM_AirMove();
-
 		// Check for swimming (simple water detection)
 		isSwimming = transform.position.y < 0f; // Assuming water level is at y=0
-
-		// Apply gravity
-		ApplyGravity(justLanded);
-
-		// Move character
-		MoveCharacter();
 
 		// Rotate toward aim/camera/move
 		HandleRotation();
@@ -697,46 +665,58 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Update visual ground check
 		UpdateVisualGroundCheck();
 
-		// Animator values
-		Vector3 horizontalVel = new Vector3(velocity.x, 0f, velocity.z);
-		bool isMoving = horizontalVel.sqrMagnitude > 0.001f;
-		animator?.SetBool("IsMoving", isMoving);
-		animator?.SetFloat("Speed", horizontalVel.magnitude);
-		// Smooth animator parameters for better transition blending
-		float animT = Mathf.Clamp01(animParamSmooth * Time.deltaTime);
-		animHorizontal = Mathf.Lerp(animHorizontal, moveInput.x, animT);
-		animVertical = Mathf.Lerp(animVertical, moveInput.y, animT);
-		animator?.SetFloat("Horizontal", animHorizontal);
-		animator?.SetFloat("Vertical", animVertical);
-
-		// Set walking state based on input (like SoF2)
-		isWalking = isGrounded && (Mathf.Abs(moveInput.x) > 0.1f || Mathf.Abs(moveInput.y) > 0.1f);
-
-		// Footstep sound - play next sound when current one finishes
-		if (enableFootstepSounds && soundsLoaded && isWalking && footstepSoundSource != null)
+		// Update all animator parameters centrally for consistent timing
+		UpdateAnimatorParameters();
+	}
+	
+	/// <summary>
+	/// FixedUpdate for physics operations - called at consistent intervals
+	/// </summary>
+	private void FixedUpdate()
+	{
+		// Store previous grounded state for edge detection
+		bool wasGrounded = wasGroundedPrev;
+		
+		// Start/track non-jump airtime immediately when leaving ground (no jump)
+		if (!isGrounded)
 		{
-			// Check if we need to start a new footstep sound
-			if (!isFootstepSoundPlaying)
+			if (wasGrounded && !isJumping)
 			{
-				string materialType = GetGroundMaterialType(lastGroundHit);
-				currentFootstepSoundDuration = PlayFootstepSoundWithDuration(materialType);
-				isFootstepSoundPlaying = true;
-				lastFootstepSoundTime = Time.time;
+				nonJumpAirTime = 0f;
+				nonJumpStartPosition = GetColliderBottomPosition();
+				nonJumpStartY = nonJumpStartPosition.y;
+				landedThisGround = false;
 			}
-			else
-			{
-				// Check if enough time has passed for the sound to finish
-				if (Time.time - lastFootstepSoundTime >= currentFootstepSoundDuration)
-				{
-					isFootstepSoundPlaying = false;
-				}
-			}
+			nonJumpAirTime += Time.fixedDeltaTime;
 		}
-		else
-		{
-			// Reset when not walking
-			isFootstepSoundPlaying = false;
-		}
+		
+		// Apply gravity (pure physics)
+		ApplyGravity();
+		
+		// Move character (physics-based movement)
+		MoveCharacter();
+		
+		// Check grounded state AFTER movement for accurate detection
+		isGrounded = CheckGrounded();
+		
+		// Edge detection for landings (more robust than velocity.y <= 0f)
+		bool justLanded = !wasGrounded && isGrounded;
+		
+		// Update grounded state
+		wasGroundedPrev = isGrounded;
+		
+		// Set animator grounded state AFTER final ground check
+		animator?.SetBool("IsGrounded", isGrounded);
+		
+		// Choose movement mode based on grounded state
+		if (isGrounded) PM_WalkMove();
+		else PM_AirMove();
+		
+		// Handle landing events AFTER movement and ground check
+		HandleLandingEvents(justLanded);
+		
+		// Handle sound events AFTER movement (uses final ground state)
+		HandleSoundEvents();
 	}
 
 	private void LateUpdate()
@@ -1178,9 +1158,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Apply gravity to velocity
+	/// Apply gravity to velocity (pure physics, no landing logic)
 	/// </summary>
-	private void ApplyGravity(bool justLanded)
+	private void ApplyGravity()
 	{
 		if (!isGrounded)
 		{
@@ -1207,64 +1187,138 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		{
 			// emulate ground stick like SoF2: small negative to keep contact
 			if (velocity.y < 0f) velocity.y = -2f;
-			// Jump landing: use edge detection for more robust landing detection
-			if (isJumping && justLanded)
+		}
+	}
+	
+	/// <summary>
+	/// Handle landing events and state transitions (called after movement)
+	/// </summary>
+	private void HandleLandingEvents(bool justLanded)
+	{
+		if (!justLanded) return;
+		
+		// Jump landing: use edge detection for more robust landing detection
+		if (isJumping)
+		{
+			float totalAirTime = Time.time - lastJumpTime;
+			// Calculate final jump distance and height using collider position
+			Vector3 currentColliderPos = GetColliderBottomPosition();
+			Vector3 horizontalDiff = new Vector3(currentColliderPos.x - jumpStartPosition.x, 0f, currentColliderPos.z - jumpStartPosition.z);
+			float finalJumpDistance = horizontalDiff.magnitude;
+			float finalJumpHeight = jumpHeight; // Use the maximum height reached
+			Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
+
+			// Play landing sound based on ground material (once)
+			if (!landedThisGround && enableLandingSounds && soundsLoaded)
 			{
-				float totalAirTime = Time.time - lastJumpTime;
-				// Calculate final jump distance and height using collider position
-				Vector3 currentColliderPos = GetColliderBottomPosition();
-				Vector3 horizontalDiff = new Vector3(currentColliderPos.x - jumpStartPosition.x, 0f, currentColliderPos.z - jumpStartPosition.z);
-				float finalJumpDistance = horizontalDiff.magnitude;
-				float finalJumpHeight = jumpHeight; // Use the maximum height reached
-				Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
-
-				// Play landing sound based on ground material (once)
-				if (!landedThisGround && enableLandingSounds && soundsLoaded)
-				{
-					string materialType = GetGroundMaterialType(lastGroundHit);
-					PlayLandingSound(materialType);
-				}
-
-				if (!landedThisGround)
-				{
-					Debug.Log($"Landing detected (jump) - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u");
-					landedThisGround = true;
-				}
-
-				// Debug suspicious landings
-				if (totalAirTime < 0.1f || finalJumpHeight < 10f)
-				{
-					Debug.LogWarning($"SUSPICIOUS LANDING - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}, Vertical Speed: {velocity.y:F2}u");
-				}
-
-				// Reset jumping state
-				isJumping = false;
-				airTime = 0f;
-				jumpDistance = finalJumpDistance; // Keep final distance for UI display
-												  // jumpHeight is kept for UI display until next jump
-
-				// Start debounce timer AFTER landing
-				jumpDebounce = jumpDebounceAfterMs;
-				isDebounceActive = true;
+				string materialType = GetGroundMaterialType(lastGroundHit);
+				PlayLandingSound(materialType);
 			}
-			else{
-				// Non-jump landing: use edge detection for more robust landing detection
-				if (!landedThisGround && !isJumping && justLanded && enableLandingSounds && soundsLoaded)
+
+			if (!landedThisGround)
+			{
+				Debug.Log($"Landing detected (jump) - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u");
+				landedThisGround = true;
+			}
+
+			// Debug suspicious landings
+			if (totalAirTime < 0.1f || finalJumpHeight < 10f)
+			{
+				Debug.LogWarning($"SUSPICIOUS LANDING - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}, Vertical Speed: {velocity.y:F2}u");
+			}
+
+			// Reset jumping state
+			isJumping = false;
+			airTime = 0f;
+			jumpDistance = finalJumpDistance; // Keep final distance for UI display
+											  // jumpHeight is kept for UI display until next jump
+
+			// Start debounce timer AFTER landing
+			jumpDebounce = jumpDebounceAfterMs;
+			isDebounceActive = true;
+		}
+		else
+		{
+			// Non-jump landing: use edge detection for more robust landing detection
+			if (!landedThisGround && enableLandingSounds && soundsLoaded)
+			{
+				string materialType = GetGroundMaterialType(lastGroundHit);
+				PlayLandingSound(materialType);
+				// Log with non-jump airtime/distance/height using collider position
+				Vector3 currentColliderPos = GetColliderBottomPosition();
+				Vector3 horizontalDiff = new Vector3(currentColliderPos.x - nonJumpStartPosition.x, 0f, currentColliderPos.z - nonJumpStartPosition.z);
+				float finalDistance = horizontalDiff.magnitude;
+				float finalHeight = Mathf.Max(0f, nonJumpStartY - currentColliderPos.y);
+				Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
+				Debug.Log($"Landing detected (no jump) - Airtime: {nonJumpAirTime:F3}s, Distance: {finalDistance:F2}u, Height: {finalHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u");
+				nonJumpAirTime = 0f;
+				landedThisGround = true;
+			}
+		}
+	}
+	
+	/// <summary>
+	/// Handle sound events after movement (called after MoveCharacter)
+	/// </summary>
+	private void HandleSoundEvents()
+	{
+		// Footstep sound - play next sound when current one finishes
+		if (enableFootstepSounds && soundsLoaded && isWalking && footstepSoundSource != null)
+		{
+			// Check if we need to start a new footstep sound
+			if (!isFootstepSoundPlaying)
+			{
+				string materialType = GetGroundMaterialType(lastGroundHit);
+				currentFootstepSoundDuration = PlayFootstepSoundWithDuration(materialType);
+				isFootstepSoundPlaying = true;
+				lastFootstepSoundTime = Time.time;
+			}
+			else
+			{
+				// Check if enough time has passed for the sound to finish
+				if (Time.time - lastFootstepSoundTime >= currentFootstepSoundDuration)
 				{
-					string materialType = GetGroundMaterialType(lastGroundHit);
-					PlayLandingSound(materialType);
-					// Log with non-jump airtime/distance/height using collider position
-					Vector3 currentColliderPos = GetColliderBottomPosition();
-					Vector3 horizontalDiff = new Vector3(currentColliderPos.x - nonJumpStartPosition.x, 0f, currentColliderPos.z - nonJumpStartPosition.z);
-					float finalDistance = horizontalDiff.magnitude;
-					float finalHeight = Mathf.Max(0f, nonJumpStartY - currentColliderPos.y);
-					Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
-					Debug.Log($"Landing detected (no jump) - Airtime: {nonJumpAirTime:F3}s, Distance: {finalDistance:F2}u, Height: {finalHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u");
-					nonJumpAirTime = 0f;
-					landedThisGround = true;
+					isFootstepSoundPlaying = false;
 				}
 			}
 		}
+		else
+		{
+			// Reset when not walking
+			isFootstepSoundPlaying = false;
+		}
+	}
+	
+	/// <summary>
+	/// Update all animator parameters centrally for consistent timing
+	/// </summary>
+	private void UpdateAnimatorParameters()
+	{
+		if (animator == null) return;
+		
+		// Movement-based parameters
+		Vector3 horizontalVel = new Vector3(velocity.x, 0f, velocity.z);
+		bool isMoving = horizontalVel.sqrMagnitude > 0.001f;
+		animator.SetBool("IsMoving", isMoving);
+		animator.SetFloat("Speed", horizontalVel.magnitude);
+		
+		// Input-based parameters with smoothing
+		float animT = Mathf.Clamp01(animParamSmooth * Time.deltaTime);
+		animHorizontal = Mathf.Lerp(animHorizontal, moveInput.x, animT);
+		animVertical = Mathf.Lerp(animVertical, moveInput.y, animT);
+		animator.SetFloat("Horizontal", animHorizontal);
+		animator.SetFloat("Vertical", animVertical);
+		
+		// State-based parameters
+		animator.SetBool("IsWalking", isWalkingPressed);
+		animator.SetBool("IsAttacking", isAttacking);
+		animator.SetBool("IsCrouching", isCrouching);
+		
+		// Ground state (set in FixedUpdate after final ground check)
+		// animator.SetBool("IsGrounded", isGrounded); // Already set in FixedUpdate
+		
+		// Set walking state based on input (like SoF2)
+		isWalking = isGrounded && (Mathf.Abs(moveInput.x) > 0.1f || Mathf.Abs(moveInput.y) > 0.1f);
 	}
 
 	/// <summary>
@@ -1291,7 +1345,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	}
 
 	/// <summary>
-	/// SoF2 PM_StepSlideMove equivalent - handles collision sliding
+	/// SoF2 PM_StepSlideMove equivalent - handles collision sliding with step-up detection
 	/// </summary>
 	private void PM_StepSlideMove(bool gravity)
 	{
@@ -1335,6 +1389,19 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				{
 					touchedObjects.Add(hit.collider.name);
 				}
+				
+				// Check if this is a step-up opportunity
+				if (TryStepUp(currentPos, hit, out Vector3 stepUpPos))
+				{
+					// Successfully stepped up
+					currentPos = stepUpPos;
+					// Continue with original movement after step-up
+					Vector3 remainingMovement = vel * Time.deltaTime * time_left;
+					remainingMovement.y = 0f; // Don't apply vertical velocity after step-up
+					currentPos += remainingMovement;
+					break;
+				}
+				
 				// Bewege nur bis kurz vor den Hit (skin width), damit wir nicht "in" die Geometrie landen
 				float moveDist = Mathf.Max(hit.distance - SKIN_WIDTH, 0f);
 				currentPos += castDirNorm * moveDist;
@@ -1369,6 +1436,66 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		isGrounded = CheckGroundedAtPosition(currentPos, out RaycastHit downHit);
 		if (isGrounded && velocity.y < 0)
 			velocity.y = -2f; // stick to ground
+	}
+	
+	/// <summary>
+	/// Try to step up over an obstacle (SoF2 step-up logic)
+	/// </summary>
+	private bool TryStepUp(Vector3 currentPos, RaycastHit hit, out Vector3 stepUpPos)
+	{
+		stepUpPos = currentPos;
+		
+		// Only try step-up if we're grounded and moving horizontally
+		if (!isGrounded || Mathf.Abs(velocity.y) > 10f)
+			return false;
+			
+		// Check if the hit normal is roughly horizontal (not a ceiling)
+		if (Vector3.Dot(hit.normal, Vector3.up) < 0.1f)
+			return false;
+			
+		// Check if the obstacle height is within step-up range
+		float obstacleHeight = hit.point.y - currentPos.y;
+		if (obstacleHeight > pm_maxstep || obstacleHeight < 0.1f)
+			return false;
+			
+		// Calculate step-up position
+		Vector3 stepUpTarget = currentPos + Vector3.up * (obstacleHeight + pm_stepsize);
+		
+		// Check if there's space above the step
+		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
+		Vector3 worldCenter = GetWorldCenterAtPosition(stepUpTarget);
+		Vector3 top = worldCenter + transform.up * halfHeight;
+		Vector3 bottom = worldCenter - transform.up * halfHeight;
+		
+		// Check for ceiling collision at step-up position
+		if (Physics.CapsuleCast(bottom, top, capsuleRadius, Vector3.up, out RaycastHit ceilingHit, pm_stepsize, ~0, QueryTriggerInteraction.Ignore))
+		{
+			// Not enough headroom
+			return false;
+		}
+		
+		// Check if the step-up position is clear
+		Vector3 stepUpCenter = GetWorldCenterAtPosition(stepUpTarget);
+		Vector3 stepUpTop = stepUpCenter + transform.up * halfHeight;
+		Vector3 stepUpBottom = stepUpCenter - transform.up * halfHeight;
+		
+		// Check for horizontal obstacles at step-up position
+		Vector3 horizontalCheck = stepUpTarget - currentPos;
+		horizontalCheck.y = 0f;
+		if (horizontalCheck.magnitude > 0.1f)
+		{
+			Vector3 horizontalDir = horizontalCheck.normalized;
+			if (Physics.CapsuleCast(stepUpBottom, stepUpTop, capsuleRadius, horizontalDir, out RaycastHit horizontalHit, horizontalCheck.magnitude, ~0, QueryTriggerInteraction.Ignore))
+			{
+				// There's still an obstacle at the step-up position
+				return false;
+			}
+		}
+		
+		// Step-up is possible
+		stepUpPos = stepUpTarget;
+		Debug.Log($"Step-up successful! Height: {obstacleHeight:F2}, Target: {stepUpTarget}");
+		return true;
 	}
 
 	/// <summary>
@@ -2284,6 +2411,7 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 
 		// Physics Settings
 		GUI.Label(new Rect(x, y, 600, line), $"Accel: {pm_accelerate}  AirAccel: {pm_airaccelerate}  Friction: {pm_friction}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Step: Max={pm_maxstep}  Size={pm_stepsize}  Barrier={pm_maxbarrier}", valueStyle); y += line;
 		
 		// Capsule Settings
 		GUI.Label(new Rect(x, y, 600, line), $"Capsule Radius: {capsuleRadius:F2} Height: {capsuleHeight:F2}", valueStyle); y += line;

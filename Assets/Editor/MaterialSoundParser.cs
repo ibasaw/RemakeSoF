@@ -385,7 +385,7 @@ internal static class JsonUtil
         private readonly StringBuilder sb;
         private readonly bool pretty;
         private int indent = 0;
-        private bool newLine = false;
+        //private bool newLine = false;
         public JsonWriter(StringBuilder sb, bool pretty)
         {
             this.sb = sb; this.pretty = pretty;

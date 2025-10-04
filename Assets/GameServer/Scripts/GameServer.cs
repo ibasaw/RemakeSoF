@@ -9,7 +9,12 @@ public class GameServer : MonoBehaviour
 
     void Awake()
     {
-        if (FindObjectsOfType<GameServer>().Length > 1)
+        var servers = FindObjectsByType<GameServer>(
+            FindObjectsInactive.Exclude, 
+            FindObjectsSortMode.None
+        );
+
+        if (servers.Length > 1)
         {
             Destroy(gameObject);
             return;
@@ -19,6 +24,7 @@ public class GameServer : MonoBehaviour
 
         // Server starten im Start() statt Awake(), um NetworkManager.Singleton sicher zu haben
     }
+
 
     void Start()
     {

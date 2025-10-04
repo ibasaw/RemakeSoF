@@ -709,9 +709,6 @@ MonoBehaviour:
   colliderColor: {r: 0, g: 1, b: 0, a: 0.3}
   colliderMaterial: {fileID: 0}
   pm_duckScale: 0.25
-  pm_swimScale: 0.5
-  pm_wadeScale: 0.7
-  pm_ladderScale: 0.5
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -722,18 +719,11 @@ MonoBehaviour:
   pm_maxbarrier: 32
   pm_accelerate: 6
   pm_airaccelerate: 1
-  pm_wateraccelerate: 4
   pm_friction: 6
-  pm_waterfriction: 10
-  pm_ladderfriction: 6
-  pm_headfriction: 0
-  pm_spectatorfriction: 5
   pm_stopspeed: 100
   pm_maxspeed: 280
-  pm_maxswimspeed: 150
   pm_maxcrouchspeed: 100
   pm_gravity: 800
-  pm_watergravity: 400
   jumpVelocity: 270
   rotationSpeed: 14
   yawTarget: {fileID: 26258238}
@@ -791,7 +781,6 @@ MonoBehaviour:
   enableLandingSounds: 1
   enableFootstepSounds: 1
   enableWeaponSounds: 1
-  footstepFramesInterval: 12
   testAlternativeAccelaration: 0
 --- !u!1 &377181573 stripped
 GameObject:
