@@ -543,18 +543,19 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			return false;
 		}
 
-		// Calculate capsule points at the given position
+		// Calculate capsule points at the given position using unified world center calculation
 		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
-		Vector3 center = position + transform.rotation * capsuleCenter;
+		Vector3 center = GetWorldCenterAtPosition(position);
 		Vector3 top = center + transform.up * halfHeight;
 		Vector3 bottom = center - transform.up * halfHeight;
 
-		// Check by casting slightly down from current position
-		float castDistance = groundCheckDistance + 0.01f;
-		if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit hit, castDistance, groundMask, QueryTriggerInteraction.Ignore))
+		// Check by casting slightly down from current position with dynamic distance
+		float dynamicCastDistance = groundCheckDistance + 0.01f + Mathf.Abs(velocity.y) * Time.deltaTime;
+		if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit hit, dynamicCastDistance, groundMask, QueryTriggerInteraction.Ignore))
 		{
-			// Consider grounded if the normal is reasonably upwards
-			if (Vector3.Dot(hit.normal, Vector3.up) > pm_maxsteepness)
+			// Consider grounded if the normal is reasonably upwards (handle both cos and angle values)
+			float slopeThreshold = pm_maxsteepness > 1f ? Mathf.Cos(pm_maxsteepness * Mathf.Deg2Rad) : pm_maxsteepness;
+			if (Vector3.Dot(hit.normal, Vector3.up) > slopeThreshold)
 			{
 				// Debug unexpected ground detection during jumping
 				if (isJumping && velocity.y > 10f) // Still going up
@@ -581,12 +582,23 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	}
 	
 	/// <summary>
+	/// Get world center position at given position (handles scale correctly)
+	/// </summary>
+	private Vector3 GetWorldCenterAtPosition(Vector3 position)
+	{
+		// Use TransformPoint to handle scale correctly, then adjust for position delta
+		Vector3 baseCenter = transform.TransformPoint(capsuleCenter);
+		Vector3 positionDelta = position - transform.position;
+		return baseCenter + positionDelta;
+	}
+	
+	/// <summary>
 	/// Get the current collider bottom position for accurate calculations
 	/// </summary>
 	private Vector3 GetColliderBottomPosition()
 	{
 		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
-		Vector3 center = transform.TransformPoint(capsuleCenter);
+		Vector3 center = GetWorldCenterAtPosition(transform.position);
 		return center - transform.up * halfHeight;
 	}
 
@@ -658,6 +670,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			}
 			nonJumpAirTime += Time.deltaTime;
 		}
+		
+		// Edge detection for landings (more robust than velocity.y <= 0f)
+		bool justLanded = !wasGroundedPrev && isGrounded;
+		
 		wasGroundedPrev = isGrounded;
 		animator?.SetBool("IsGrounded", isGrounded);
 		if (isGrounded) PM_WalkMove();
@@ -667,7 +683,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		isSwimming = transform.position.y < 0f; // Assuming water level is at y=0
 
 		// Apply gravity
-		ApplyGravity();
+		ApplyGravity(justLanded);
 
 		// Move character
 		MoveCharacter();
@@ -1164,7 +1180,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	/// <summary>
 	/// Apply gravity to velocity
 	/// </summary>
-	private void ApplyGravity()
+	private void ApplyGravity(bool justLanded)
 	{
 		if (!isGrounded)
 		{
@@ -1191,8 +1207,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		{
 			// emulate ground stick like SoF2: small negative to keep contact
 			if (velocity.y < 0f) velocity.y = -2f;
-			// Jump landing: play once and log, then reset jump
-			if (isJumping && velocity.y <= 0f)
+			// Jump landing: use edge detection for more robust landing detection
+			if (isJumping && justLanded)
 			{
 				float totalAirTime = Time.time - lastJumpTime;
 				// Calculate final jump distance and height using collider position
@@ -1232,8 +1248,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				isDebounceActive = true;
 			}
 			else{
-				// Non-jump landing: fire once per ground contact
-				if (!landedThisGround && !isJumping && enableLandingSounds && soundsLoaded)
+				// Non-jump landing: use edge detection for more robust landing detection
+				if (!landedThisGround && !isJumping && justLanded && enableLandingSounds && soundsLoaded)
 				{
 					string materialType = GetGroundMaterialType(lastGroundHit);
 					PlayLandingSound(materialType);
@@ -1296,7 +1312,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		for (int bump = 0; bump < numbumps; bump++)
 		{
 			// Berechne world-space center / top / bottom basierend auf currentPos (wichtig!)
-			Vector3 worldCenter = currentPos + transform.rotation * capsuleCenter;
+			Vector3 worldCenter = GetWorldCenterAtPosition(currentPos);
 			Vector3 top = worldCenter + transform.up * halfHeightLocal;
 			Vector3 bottom = worldCenter - transform.up * halfHeightLocal;
 
@@ -2272,7 +2288,9 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 		// Capsule Settings
 		GUI.Label(new Rect(x, y, 600, line), $"Capsule Radius: {capsuleRadius:F2} Height: {capsuleHeight:F2}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Capsule Center: {capsuleCenter}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Ground Check Distance: {groundCheckDistance:F2}", valueStyle); y += line;
+		// Ground check distance with dynamic calculation
+		float dynamicCastDistance = groundCheckDistance + 0.01f + Mathf.Abs(velocity.y) * Time.deltaTime;
+		GUI.Label(new Rect(x, y, 600, line), $"Ground Check Distance: {groundCheckDistance:F2} (Dynamic: {dynamicCastDistance:F2})", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Visual Collider: {(showVisualCollider ? "ON" : "OFF")}", valueStyle); y += line;
 		
 		// Auto Sizing Info
