@@ -47,10 +47,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	[Header("SoF2 Movement Settings")]
 	[SerializeField] public LayerMask groundMask = ~0;    // All layers or just "Ground" layer
-	[SerializeField] private float groundCheckDistance = 5f;  // Distance to check for ground
+	[SerializeField] private float groundCheckDistance = 1f;  // Distance to check for ground 1 ist perfekt erstmal.
 
 	[Header("Movement Limits")]
-	[SerializeField] private float pm_maxsteepness = 0.7f;      // maximum floor steepness
+	[SerializeField] private float pm_maxsteepness = 0.7f;      // maximum floor steepness (lower = steeper slopes allowed)
 	[SerializeField] private float pm_maxstep = 18.0f;          // Maximum step height
 	[SerializeField] private float pm_stepsize = 18.0f;         // Step size
 	[SerializeField] private float pm_maxbarrier = 32.0f;       // maximum barrier height
@@ -115,6 +115,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private float nonJumpAirTime = 0f;                 // Airtime when falling without an explicit jump
 	private Vector3 nonJumpStartPosition = Vector3.zero; // Start position when leaving ground (no jump)
 	private float nonJumpStartY = 0f;                  // Start height when leaving ground (no jump)
+	private Vector3 lastGroundedPosition = Vector3.zero; // Last known grounded position
+	private bool hasValidGroundedPosition = false; // Track if we have a valid grounded position
+	private float lastStepUpTime = 0f; // Time when last step-up occurred
 	private bool isSwimming = false;                   // Swimming state
 	private bool isCrouching = false;                  // Crouching state
 	private float jumpDebounce = 0f;                   // Jump debounce timer (starts after landing)
@@ -297,6 +300,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		{
 			CalculateAutoCapsuleSize();
 		}
+		
+		// Initialize grounded position
+		lastGroundedPosition = GetColliderBottomPosition();
+		hasValidGroundedPosition = true;
 	}
 
 	private void OnEnable()
@@ -684,19 +691,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Store previous grounded state for edge detection
 		bool wasGrounded = wasGroundedPrev;
 		
-		// Start/track non-jump airtime immediately when leaving ground (no jump)
-		if (!isGrounded)
-		{
-			if (wasGrounded && !isJumping)
-			{
-				nonJumpAirTime = 0f;
-				nonJumpStartPosition = GetColliderBottomPosition();
-				nonJumpStartY = nonJumpStartPosition.y;
-				landedThisGround = false;
-			}
-			nonJumpAirTime += Time.fixedDeltaTime;
-		}
-		
 		// Apply gravity (pure physics)
 		ApplyGravity();
 		
@@ -705,6 +699,60 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		
 		// Check grounded state AFTER movement for accurate detection
 		isGrounded = CheckGrounded();
+		
+		// Additional ground check for better detection on slopes
+		if (!isGrounded)
+		{
+			// Try a more aggressive ground check for slopes
+			float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
+			Vector3 center = GetWorldCenterAtPosition(transform.position);
+			Vector3 top = center + transform.up * halfHeight;
+			Vector3 bottom = center - transform.up * halfHeight;
+			
+			// Check with larger distance for slopes
+			float slopeCheckDistance = groundCheckDistance * 2f;
+			if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit slopeHit, slopeCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
+			{
+				float slopeThreshold = pm_maxsteepness > 1f ? Mathf.Cos(pm_maxsteepness * Mathf.Deg2Rad) : pm_maxsteepness;
+				if (Vector3.Dot(slopeHit.normal, Vector3.up) > slopeThreshold)
+				{
+					isGrounded = true;
+					lastGroundHit = slopeHit;
+				}
+			}
+		}
+		
+		// Update grounded position AFTER ground check
+		if (isGrounded)
+		{
+			lastGroundedPosition = GetColliderBottomPosition();
+			hasValidGroundedPosition = true;
+		}
+		
+		// NOW handle non-jump airtime with CORRECT grounded state
+		if (!isGrounded)
+		{
+			if (wasGrounded && !isJumping)
+			{
+				nonJumpAirTime = 0f;
+				// Use the last known grounded position if available, otherwise use current position
+				if (hasValidGroundedPosition)
+				{
+					nonJumpStartPosition = lastGroundedPosition;
+					nonJumpStartY = nonJumpStartPosition.y;
+				}
+				else
+				{
+					// Fallback: use current position
+					nonJumpStartPosition = GetColliderBottomPosition();
+					nonJumpStartY = nonJumpStartPosition.y;
+				}
+				// Debug the start position
+				Debug.Log($"Non-jump airtime started - Start Y: {nonJumpStartY:F2}, Position: {nonJumpStartPosition}, Valid: {hasValidGroundedPosition}");
+				landedThisGround = false;
+			}
+			nonJumpAirTime += Time.fixedDeltaTime;
+		}
 		
 		// Edge detection for landings (more robust than velocity.y <= 0f)
 		bool justLanded = !wasGrounded && isGrounded;
@@ -905,6 +953,22 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				// (We could add a knockback flag if needed)
 				float control = speed < pm_stopspeed ? pm_stopspeed : speed;
 				drop += control * pm_friction * Time.fixedDeltaTime;
+				
+				// Additional friction for slopes to prevent sliding
+				if (lastGroundHit.collider != null)
+				{
+					float slopeDot = Vector3.Dot(lastGroundHit.normal, Vector3.up);
+					if (slopeDot < 0.9f) // On any slope
+					{
+						drop += control * pm_friction * 1.0f * Time.fixedDeltaTime; // Extra friction on slopes
+						
+						// Even more friction on steep slopes
+						if (slopeDot < 0.7f) // Steep slope
+						{
+							drop += control * pm_friction * 1.5f * Time.fixedDeltaTime; // Heavy friction on steep slopes
+						}
+					}
+				}
 			}
 		}
 
@@ -988,32 +1052,30 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Get movement input
 		Vector3 forward = (isAiming || isNPC) ? transform.forward : (cameraTransform != null ? cameraTransform.forward : transform.forward);
 		Vector3 right = (isAiming || isNPC) ? transform.right : (cameraTransform != null ? cameraTransform.right : transform.right);
-		// derive a ground normal via a short down cast to project movement like SoF2
+		
+		// Get ground normal for slope movement
 		Vector3 groundNormal = Vector3.up;
+		if (lastGroundHit.collider != null && Vector3.Dot(lastGroundHit.normal, Vector3.up) > pm_maxsteepness)
 		{
-			float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
-			Vector3 center = transform.TransformPoint(capsuleCenter);
-			Vector3 top = center + Vector3.up * halfHeight;
-			Vector3 bottom = center - Vector3.up * halfHeight;
-			if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit groundHit, groundCheckDistance + 0.05f, groundMask))
-			{
-				if (Vector3.Dot(groundHit.normal, Vector3.up) > pm_maxsteepness)
-					groundNormal = groundHit.normal;
-			}
+			groundNormal = lastGroundHit.normal;
+			// Debug ground normal for diagonal movement (reduced spam)
+			//if (moveInput.sqrMagnitude > 0.1f && Time.time % 1f < 0.1f) // Only log once per second
+			//{
+			//	Debug.Log($"Ground Normal: {groundNormal}, Dot: {Vector3.Dot(lastGroundHit.normal, Vector3.up):F3}, MoveInput: {moveInput}");
+			//}
 		}
-		// project forward/right onto ground plane (like PM_ClipVelocity on directions)
-		forward = Vector3.ProjectOnPlane(forward, Vector3.up); // start flat
-		right = Vector3.ProjectOnPlane(right, Vector3.up);
-		if (groundNormal != Vector3.up)
-		{
-			forward = Vector3.ProjectOnPlane(forward, Vector3.Cross(groundNormal, Vector3.Cross(forward, groundNormal))).normalized;
-			right = Vector3.ProjectOnPlane(right, Vector3.Cross(groundNormal, Vector3.Cross(right, groundNormal))).normalized;
-		}
-		forward.y = 0f; right.y = 0f; forward.Normalize(); right.Normalize();
+		
+		// Project movement directions onto ground plane (simplified and more reliable)
+		forward = Vector3.ProjectOnPlane(forward, groundNormal).normalized;
+		right = Vector3.ProjectOnPlane(right, groundNormal).normalized;
 
 		// Calculate movement direction
 		Vector3 wishvel = forward * moveInput.y + right * moveInput.x;
-		wishvel.y = 0f; // No vertical movement in walk move
+		// Only project onto ground plane if we have significant input
+		if (wishvel.sqrMagnitude > 0.01f)
+		{
+			wishvel = Vector3.ProjectOnPlane(wishvel, groundNormal);
+		}
 
 		// Get movement scale
 		float scale = PM_CmdScale();
@@ -1233,14 +1295,15 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			{
 				if (landedHigher)
 				{
-					Debug.Log($"Step-up successful! Landed significantly higher than start - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Start Y: {jumpStartY:F2}, Landing Y: {landingY:F2}, Height Diff: {heightDifference:F3} (Threshold: {stepUpHeightThreshold:F1})");
+					Debug.Log($"Landing detected (jump) [UP] - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Start Y: {jumpStartY:F2}, Landing Y: {landingY:F2}, Height Diff: {heightDifference:F3} (Threshold: {stepUpHeightThreshold:F1})");
 					// Reset jump debounce immediately for step-up success
 					jumpDebounce = 0f;
 					isDebounceActive = false;
 				}
 				else
 				{
-					Debug.Log($"Landing detected (jump) - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u, Start Y: {jumpStartY:F2}, Landing Y: {landingY:F2}, Height Diff: {heightDifference:F3} (Threshold: {stepUpHeightThreshold:F1})");
+					string heightChange = heightDifference > 0 ? "UP" : heightDifference < 0 ? "DOWN" : "SAME";
+					Debug.Log($"Landing detected (jump) [{heightChange}] - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u, Start Y: {jumpStartY:F2}, Landing Y: {landingY:F2}, Height Diff: {heightDifference:F3} (Threshold: {stepUpHeightThreshold:F1})");
 					// Start debounce timer AFTER landing (only if not higher)
 					jumpDebounce = jumpDebounceAfterMs;
 					isDebounceActive = true;
@@ -1263,18 +1326,28 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		else
 		{
 			// Non-jump landing: use edge detection for more robust landing detection
-			if (!landedThisGround && enableLandingSounds && soundsLoaded)
+			// Only process if we have a valid start position (not 0,0,0) and no recent step-up
+			bool recentStepUp = (Time.time - lastStepUpTime) < 0.5f; // Ignore landings within 0.5s of step-up
+			if (!landedThisGround && enableLandingSounds && soundsLoaded && nonJumpStartY != 0f && !recentStepUp)
 			{
 				string materialType = GetGroundMaterialType(lastGroundHit);
 				PlayLandingSound(materialType);
 				// Log with non-jump airtime/distance/height using collider position
 				Vector3 horizontalDiff = new Vector3(currentColliderPos.x - nonJumpStartPosition.x, 0f, currentColliderPos.z - nonJumpStartPosition.z);
 				float finalDistance = horizontalDiff.magnitude;
-				float finalHeight = Mathf.Max(0f, nonJumpStartY - currentColliderPos.y);
+				float heightDifference = landingY - nonJumpStartY; // Correct height difference calculation
+				float finalHeight = Mathf.Abs(heightDifference); // Absolute height for display
 				Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
-				Debug.Log($"Landing detected (no jump) - Airtime: {nonJumpAirTime:F3}s, Distance: {finalDistance:F2}u, Height: {finalHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u, Start Y: {nonJumpStartY:F2}, Landing Y: {landingY:F2}, Height Diff: {landingY - nonJumpStartY:F3}");
+				string heightChange = heightDifference > 0 ? "UP" : heightDifference < 0 ? "DOWN" : "SAME";
+				Debug.Log($"Landing detected (no jump) [{heightChange}] - Airtime: {nonJumpAirTime:F3}s, Distance: {finalDistance:F2}u, Height: {finalHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u, Start Y: {nonJumpStartY:F2}, Landing Y: {landingY:F2}, Height Diff: {heightDifference:F3} (Threshold: {stepUpHeightThreshold:F1})");
 				nonJumpAirTime = 0f;
 				landedThisGround = true;
+			}
+			else if (nonJumpStartY == 0f || recentStepUp)
+			{
+				// Debug why we're not processing this landing
+				string reason = nonJumpStartY == 0f ? "Start Y is 0" : "Recent step-up";
+				Debug.Log($"Skipping no-jump landing - {reason}, Valid: {hasValidGroundedPosition}, Position: {lastGroundedPosition}, Step-up time: {(Time.time - lastStepUpTime):F2}s");
 			}
 		}
 	}
@@ -1489,7 +1562,30 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// --- Finaler Ground-Check: verwende einheitliche CheckGroundedAtPosition Methode ---
 		isGrounded = CheckGroundedAtPosition(currentPos, out RaycastHit downHit);
 		if (isGrounded && velocity.y < 0)
+		{
+			// Strong ground stick - prevent falling through and sliding
 			velocity.y = -2f; // stick to ground
+			
+			// Enhanced ground stick for slopes - prevent sliding down
+			if (downHit.collider != null)
+			{
+				float slopeDot = Vector3.Dot(downHit.normal, Vector3.up);
+				if (slopeDot < 0.95f) // On any slope
+				{
+					// Project velocity onto ground plane to prevent sliding
+					Vector3 groundProjectedVel = Vector3.ProjectOnPlane(velocity, downHit.normal);
+					velocity = groundProjectedVel;
+					velocity.y = -2f; // Keep ground stick
+					
+					// Additional velocity dampening on steep slopes
+					if (slopeDot < 0.7f) // Steep slope
+					{
+						velocity *= 0.8f; // Reduce velocity by 20% on steep slopes
+						velocity.y = -2f; // Keep ground stick
+					}
+				}
+			}
+		}
 	}
 	
 	/// <summary>
@@ -1548,6 +1644,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		
 		// Step-up is possible
 		stepUpPos = stepUpTarget;
+		lastStepUpTime = Time.time;
 		Debug.Log($"Step-up successful! Height: {obstacleHeight:F2}, Target: {stepUpTarget}");
 		// Note: Step-up successful sound is handled in HandleLandingEvents based on height comparison
 		return true;
@@ -2947,3 +3044,4 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 		}
 	}
 }
+
