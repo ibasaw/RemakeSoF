@@ -1069,8 +1069,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		forward = Vector3.ProjectOnPlane(forward, groundNormal).normalized;
 		right = Vector3.ProjectOnPlane(right, groundNormal).normalized;
 
-		// Calculate movement direction
-		Vector3 wishvel = forward * moveInput.y + right * moveInput.x;
+		// Calculate movement direction using SoF2-style input scaling (like PM_AirMove)
+		float fmove = moveInput.y * 127f;
+		float smove = moveInput.x * 127f;
+		Vector3 wishvel = forward * fmove + right * smove;
 		// Only project onto ground plane if we have significant input
 		if (wishvel.sqrMagnitude > 0.01f)
 		{
@@ -1090,7 +1092,13 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			wishspeed = pm_maxspeed;
 		}
 
-		// Accelerate
+		// Debug movement for consistency check
+		if (moveInput.sqrMagnitude > 0.1f && Time.time % 1f < 0.1f) // Log once per second
+		{
+			Debug.Log($"Movement Debug - Input: {moveInput}, Scale: {scale:F3}, WishSpeed: {wishspeed:F2}, WishDir: {wishdir}");
+		}
+		
+		// Accelerate with consistent acceleration
 		PM_Accelerate(wishdir, wishspeed, pm_accelerate);
 	}
 
@@ -1165,18 +1173,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	/// </summary>
 	private float PM_CmdScale()
 	{
-		// Emulate SoF2 PM_CmdScale with inputs in [-1..1] by mapping to [-127..127]
-		float forwardmove = moveInput.y * 127f;
-		float rightmove = moveInput.x * 127f;
-		float upmove = 0f;
-		float max = Mathf.Max(Mathf.Abs(forwardmove), Mathf.Abs(rightmove));
-		max = Mathf.Max(max, Mathf.Abs(upmove));
-		if (max <= 0.0f)
+		// Simplified scale calculation for consistent acceleration
+		// Use input magnitude directly instead of complex SoF2 scaling
+		float inputMagnitude = moveInput.magnitude;
+		if (inputMagnitude <= 0.0f)
 			return 0.0f;
-		float total = Mathf.Sqrt(forwardmove * forwardmove + rightmove * rightmove + upmove * upmove);
-		// Use (like pm->ps->speed in original SoF2)
-		float scale = pm_maxspeed * max / (127.0f * total);
-		return scale;
+		
+		// Return normalized scale (0.0 to 1.0) for consistent acceleration
+		return Mathf.Clamp01(inputMagnitude);
 	}
 
 	// Compute movementDir (0..7) like SoF2 PM_SetMovementDir based on move input
@@ -2360,7 +2364,7 @@ private float PlayFootstepSoundWithDuration(string materialType)
 	footstepSoundSource.PlayOneShot(clip, footstepSoundVolume);
 	footstepNextIndexByMaterial[materialType] = safeIndex + 1;
 	
-	Debug.Log($"[PlayFootstepSoundWithDuration] Playing footstep for '{materialType}' - {clip.name} (Duration: {clip.length:F2}s)");
+	//Debug.Log($"[PlayFootstepSoundWithDuration] Playing footstep for '{materialType}' - {clip.name} (Duration: {clip.length:F2}s)");
 	return clip.length; // Return the actual duration of the sound
 }
 
@@ -2395,7 +2399,7 @@ private void PlayWeaponSound(string weaponName, string soundType)
 	}
 
 	weaponSoundSource.PlayOneShot(clip, weaponSoundVolume);
-	Debug.Log($"[PlayWeaponSound] Playing {soundKey} - {clip.name}");
+	//Debug.Log($"[PlayWeaponSound] Playing {soundKey} - {clip.name}");
 }
 
 /// <summary>
@@ -2429,7 +2433,7 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 	}
 
 	weaponSoundSource.PlayOneShot(clip, weaponSoundVolume);
-	Debug.Log($"[PlayWeaponSoundWithDuration] Playing {soundKey} - {clip.name} (Duration: {clip.length:F2}s)");
+	//Debug.Log($"[PlayWeaponSoundWithDuration] Playing {soundKey} - {clip.name} (Duration: {clip.length:F2}s)");
 	
 	return clip.length; // Return the actual duration of the sound
 }
