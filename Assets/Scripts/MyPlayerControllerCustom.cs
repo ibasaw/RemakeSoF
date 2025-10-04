@@ -13,9 +13,21 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private Animator animator;
 	// CharacterController removed - use capsule-based manual movement
 	[Header("Capsule Settings (CharacterController SoF2 values)")]
-	[SerializeField] private float capsuleRadius = 5f;  
-	[SerializeField] private float capsuleHeight = 100f;
-	[SerializeField] private Vector3 capsuleCenter = new Vector3(0, 50f, 0);  // Center at half height
+	[SerializeField] private float capsuleRadius = 0f;  
+	[SerializeField] private float capsuleHeight = 0f;
+	[SerializeField] private Vector3 capsuleCenter = new Vector3(0, 0, 0);  // Center at half height
+	
+	//Berechnet die Capsule-Größe basierend auf den Charakter-Bones (Cranium ↔ Pelvis)
+	[Header("Auto Capsule Sizing")]
+	[SerializeField] private bool autoSizeCapsule = true;
+	[SerializeField] private float capsuleRadiusMultiplier = 0.4f;  // Multiplier for character width
+	[SerializeField] private float capsuleHeightOffset = 10f;      // Additional height offset
+	[SerializeField] private float minCapsuleRadius = 3f;          // Minimum radius
+	[SerializeField] private float maxCapsuleRadius = 15f;         // Maximum radius
+	[SerializeField] private float minCapsuleHeight = 50f;         // Minimum height
+	[SerializeField] private float maxCapsuleHeight = 100f;        // Maximum height
+	[SerializeField] private float crouchHeightMultiplier = 0.6f;  // Height multiplier when crouching
+	[SerializeField] private bool dynamicCapsuleSizing = true;     // Adjust capsule size when crouching
 	
 	[Header("Visual Collider Debug")]
 	[SerializeField] private bool showVisualCollider = true;
@@ -34,7 +46,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	[Header("SoF2 Movement Settings")]
 	[SerializeField] public LayerMask groundMask = ~0;    // All layers or just "Ground" layer
-	[SerializeField] private float groundCheckDistance = 0.1f;  // Distance to check for ground
+	[SerializeField] private float groundCheckDistance = 5f;  // Distance to check for ground
 
 	[Header("Movement Limits")]
 	[SerializeField] private float pm_maxsteepness = 0.7f;      // maximum floor steepness
@@ -185,6 +197,20 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private GameObject visualColliderObject;
 	private MeshRenderer visualColliderRenderer;
 	private MeshFilter visualColliderMeshFilter;
+	
+	// Visual ground check components
+	private GameObject visualGroundCheckObject;
+	private MeshRenderer visualGroundCheckRenderer;
+	private MeshFilter visualGroundCheckMeshFilter;
+	
+	// Auto-sizing cache
+	private float baseCapsuleHeight;
+	private float baseCapsuleRadius;
+	private Vector3 baseCapsuleCenter;
+	
+	// Collider position tracking for accurate airtime/height calculations
+	private Vector3 lastColliderBottomPosition;
+	private Vector3 jumpStartColliderPosition;
 
 	// Mouse speed detection for dynamic pelvisTarget follow (using Input System)
 	private Vector2 lookInput = Vector2.zero;
@@ -258,6 +284,15 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		
 		// Initialize visual collider
 		InitializeVisualCollider();
+		
+		// Initialize visual ground check
+		InitializeVisualGroundCheck();
+		
+		// Auto-size capsule if enabled
+		if (autoSizeCapsule)
+		{
+			CalculateAutoCapsuleSize();
+		}
 	}
 
 	private void OnEnable()
@@ -341,6 +376,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			localPos.y = crouchYawTargetY;
 			yawTarget.localPosition = localPos;
 		}
+		
+		// Update capsule size for crouching
+		UpdateCapsuleSizeForState();
 	}
 	private void OnCrouchCanceled(InputAction.CallbackContext ctx)
 	{
@@ -353,6 +391,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			localPos.y = standYawTargetY;
 			yawTarget.localPosition = localPos;
 		}
+		
+		// Update capsule size for standing
+		UpdateCapsuleSizeForState();
 	}
 	private void OnLeanLeftPerformed(InputAction.CallbackContext ctx)
 	{
@@ -470,8 +511,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		velocity.y = jumpVelocity;
 		lastJumpTime = Time.time;
 		airTime = 0f;
-		jumpStartPosition = transform.position;
-		jumpStartY = transform.position.y;
+		jumpStartColliderPosition = GetColliderBottomPosition();
+		jumpStartPosition = jumpStartColliderPosition;
+		jumpStartY = jumpStartColliderPosition.y;
 		jumpDistance = 0f;
 		jumpHeight = 0f;
 
@@ -482,8 +524,13 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	private RaycastHit lastGroundHit; // Store ground hit info for sound system
 
-	private bool CheckGrounded()
+	/// <summary>
+	/// Unified ground check method used by both CheckGrounded and PM_StepSlideMove
+	/// </summary>
+	private bool CheckGroundedAtPosition(Vector3 position, out RaycastHit groundHit)
 	{
+		groundHit = new RaycastHit();
+		
 		// Jump grace period - don't detect ground for a short time after jumping
 		if (isJumping && (Time.time - lastJumpTime) < 0.1f)
 		{
@@ -496,15 +543,15 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			return false;
 		}
 
-		// Capsule bottom and top in world space
+		// Calculate capsule points at the given position
 		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
-		Vector3 center = transform.TransformPoint(capsuleCenter);
-		Vector3 top = center + Vector3.up * halfHeight;
-		Vector3 bottom = center - Vector3.up * halfHeight;
+		Vector3 center = position + transform.rotation * capsuleCenter;
+		Vector3 top = center + transform.up * halfHeight;
+		Vector3 bottom = center - transform.up * halfHeight;
 
 		// Check by casting slightly down from current position
 		float castDistance = groundCheckDistance + 0.01f;
-		if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit hit, castDistance, groundMask))
+		if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit hit, castDistance, groundMask, QueryTriggerInteraction.Ignore))
 		{
 			// Consider grounded if the normal is reasonably upwards
 			if (Vector3.Dot(hit.normal, Vector3.up) > pm_maxsteepness)
@@ -516,12 +563,31 @@ public class MyPlayerControllerCustom : MonoBehaviour
 					return false;
 				}
 				// Store ground hit for sound system
+				groundHit = hit;
 				lastGroundHit = hit;
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/// <summary>
+	/// Check if grounded at current transform position
+	/// </summary>
+	private bool CheckGrounded()
+	{
+		return CheckGroundedAtPosition(transform.position, out RaycastHit hit);
+	}
+	
+	/// <summary>
+	/// Get the current collider bottom position for accurate calculations
+	/// </summary>
+	private Vector3 GetColliderBottomPosition()
+	{
+		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
+		Vector3 center = transform.TransformPoint(capsuleCenter);
+		return center - transform.up * halfHeight;
 	}
 
 	private void Update()
@@ -586,8 +652,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			if (wasGrounded && !isJumping)
 			{
 				nonJumpAirTime = 0f;
-				nonJumpStartPosition = transform.position;
-				nonJumpStartY = transform.position.y;
+				nonJumpStartPosition = GetColliderBottomPosition();
+				nonJumpStartY = nonJumpStartPosition.y;
 				landedThisGround = false;
 			}
 			nonJumpAirTime += Time.deltaTime;
@@ -611,8 +677,11 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		
 		// Update visual collider
 		UpdateVisualCollider();
+		
+		// Update visual ground check
+		UpdateVisualGroundCheck();
 
-		// Animator locomotion values
+		// Animator values
 		Vector3 horizontalVel = new Vector3(velocity.x, 0f, velocity.z);
 		bool isMoving = horizontalVel.sqrMagnitude > 0.001f;
 		animator?.SetBool("IsMoving", isMoving);
@@ -1106,12 +1175,12 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			if (isJumping)
 			{
 				airTime = Time.time - lastJumpTime;
-				// Calculate horizontal distance from jump start position
-				Vector3 currentPos = transform.position;
-				Vector3 horizontalDiff = new Vector3(currentPos.x - jumpStartPosition.x, 0f, currentPos.z - jumpStartPosition.z);
+				// Calculate horizontal distance from jump start position using collider position
+				Vector3 currentColliderPos = GetColliderBottomPosition();
+				Vector3 horizontalDiff = new Vector3(currentColliderPos.x - jumpStartPosition.x, 0f, currentColliderPos.z - jumpStartPosition.z);
 				jumpDistance = horizontalDiff.magnitude;
-				// Track maximum height reached
-				float currentHeight = currentPos.y - jumpStartY;
+				// Track maximum height reached using collider position
+				float currentHeight = currentColliderPos.y - jumpStartY;
 				if (currentHeight > jumpHeight)
 				{
 					jumpHeight = currentHeight;
@@ -1126,9 +1195,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			if (isJumping && velocity.y <= 0f)
 			{
 				float totalAirTime = Time.time - lastJumpTime;
-				// Calculate final jump distance and height
-				Vector3 currentPos = transform.position;
-				Vector3 horizontalDiff = new Vector3(currentPos.x - jumpStartPosition.x, 0f, currentPos.z - jumpStartPosition.z);
+				// Calculate final jump distance and height using collider position
+				Vector3 currentColliderPos = GetColliderBottomPosition();
+				Vector3 horizontalDiff = new Vector3(currentColliderPos.x - jumpStartPosition.x, 0f, currentColliderPos.z - jumpStartPosition.z);
 				float finalJumpDistance = horizontalDiff.magnitude;
 				float finalJumpHeight = jumpHeight; // Use the maximum height reached
 				Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
@@ -1168,11 +1237,11 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				{
 					string materialType = GetGroundMaterialType(lastGroundHit);
 					PlayLandingSound(materialType);
-					// Log with non-jump airtime/distance/height
-					Vector3 currentPos = transform.position;
-					Vector3 horizontalDiff = new Vector3(currentPos.x - nonJumpStartPosition.x, 0f, currentPos.z - nonJumpStartPosition.z);
+					// Log with non-jump airtime/distance/height using collider position
+					Vector3 currentColliderPos = GetColliderBottomPosition();
+					Vector3 horizontalDiff = new Vector3(currentColliderPos.x - nonJumpStartPosition.x, 0f, currentColliderPos.z - nonJumpStartPosition.z);
 					float finalDistance = horizontalDiff.magnitude;
-					float finalHeight = Mathf.Max(0f, nonJumpStartY - currentPos.y);
+					float finalHeight = Mathf.Max(0f, nonJumpStartY - currentColliderPos.y);
 					Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
 					Debug.Log($"Landing detected (no jump) - Airtime: {nonJumpAirTime:F3}s, Distance: {finalDistance:F2}u, Height: {finalHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u");
 					nonJumpAirTime = 0f;
@@ -1210,7 +1279,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	/// </summary>
 	private void PM_StepSlideMove(bool gravity)
 	{
-		//touchedObjects.Clear();
+		touchedObjects.Clear();
 		const float SKIN_WIDTH = 0.01f; // Abstand vor der Oberfläche
 		Vector3 desired = velocity * Time.deltaTime;
 
@@ -1280,33 +1349,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Endposition setzen
 		transform.position = currentPos;
 
-		// --- Finaler Ground-Check: endpoints anhand der finalen Pos aktualisieren ---
-		Vector3 finalWorldCenter = currentPos + transform.rotation * capsuleCenter;
-		Vector3 finalTop = finalWorldCenter + transform.up * halfHeightLocal;
-		Vector3 finalBottom = finalWorldCenter - transform.up * halfHeightLocal;
-
-		float groundCheckDist = groundCheckDistance + SKIN_WIDTH;
-
-		if (Physics.CapsuleCast(finalTop, finalBottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit downHit, groundCheckDist, groundMask, QueryTriggerInteraction.Ignore))
-		{
-			isGrounded = Vector3.Dot(downHit.normal, Vector3.up) > 0.5f;
-			if (isGrounded && velocity.y < 0)
-				velocity.y = -2f; // stick to ground
-								  //Debug.Log($"Final Grounded on {downHit.collider.name} at distance {downHit.distance:F3}");
-		}
-		else
-		{
-			isGrounded = false;
-
-			// Extra Debug: prüfen, ob die Kapsel mit irgendwas overlapped (Penetration)
-			Collider[] overlaps = Physics.OverlapCapsule(finalTop, finalBottom, capsuleRadius * 0.9f, groundMask, QueryTriggerInteraction.Ignore);
-			if (overlaps != null && overlaps.Length > 0)
-			{
-				string names = "";
-				foreach (var c in overlaps) names += c.name + ", ";
-				Debug.LogWarning($"No ground detected but OverlapCapsule found {overlaps.Length} colliders: {names}. Possibly stuck inside geometry.");
-			}
-		}
+		// --- Finaler Ground-Check: verwende einheitliche CheckGroundedAtPosition Methode ---
+		isGrounded = CheckGroundedAtPosition(currentPos, out RaycastHit downHit);
+		if (isGrounded && velocity.y < 0)
+			velocity.y = -2f; // stick to ground
 	}
 
 	/// <summary>
@@ -1370,6 +1416,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		Vector3 top = centerWorld + up * halfHeightWorld;
 		Vector3 bottom = centerWorld - up * halfHeightWorld;
 
+		// Draw capsule collider
 		Gizmos.color = isGrounded ? Color.green : Color.red;
 		Gizmos.DrawWireSphere(top, worldRadius);
 		Gizmos.DrawWireSphere(bottom, worldRadius);
@@ -2225,7 +2272,19 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 		// Capsule Settings
 		GUI.Label(new Rect(x, y, 600, line), $"Capsule Radius: {capsuleRadius:F2} Height: {capsuleHeight:F2}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Capsule Center: {capsuleCenter}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"Ground Check Distance: {groundCheckDistance:F2}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"Visual Collider: {(showVisualCollider ? "ON" : "OFF")}", valueStyle); y += line;
+		
+		// Auto Sizing Info
+		if (autoSizeCapsule)
+		{
+			GUI.Label(new Rect(x, y, 600, line), $"Auto Sizing: ON (Base: {baseCapsuleHeight:F2}x{baseCapsuleRadius:F2})", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Dynamic Sizing: {(dynamicCapsuleSizing ? "ON" : "OFF")} Crouch: {(isCrouching ? "ON" : "OFF")}", valueStyle); y += line;
+		}
+		else
+		{
+			GUI.Label(new Rect(x, y, 600, line), "Auto Sizing: OFF", valueStyle); y += line;
+		}
 	}
 	
 	/// <summary>
@@ -2260,6 +2319,36 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 		
 		// Make sure it renders on top
 		visualColliderRenderer.sortingOrder = 1000;
+	}
+	
+	/// <summary>
+	/// Initialize the visual ground check representation
+	/// </summary>
+	private void InitializeVisualGroundCheck()
+	{
+		if (!showVisualCollider) return;
+		
+		// Create visual ground check object
+		visualGroundCheckObject = new GameObject("VisualGroundCheck");
+		visualGroundCheckObject.transform.SetParent(transform);
+		visualGroundCheckObject.transform.localPosition = Vector3.zero;
+		visualGroundCheckObject.transform.localRotation = Quaternion.identity;
+		visualGroundCheckObject.transform.localScale = Vector3.one;
+		
+		// Add mesh components
+		visualGroundCheckMeshFilter = visualGroundCheckObject.AddComponent<MeshFilter>();
+		visualGroundCheckRenderer = visualGroundCheckObject.AddComponent<MeshRenderer>();
+		
+		// Create ground check mesh
+		visualGroundCheckMeshFilter.mesh = CreateGroundCheckMesh();
+		
+		// Set up material for ground check (yellow/cyan)
+		Material groundCheckMaterial = new Material(Shader.Find("Unlit/Color"));
+		groundCheckMaterial.color = new Color(1f, 1f, 0f, 0.5f); // Semi-transparent yellow
+		visualGroundCheckRenderer.material = groundCheckMaterial;
+		
+		// Make sure it renders on top
+		visualGroundCheckRenderer.sortingOrder = 999;
 	}
 	
 	/// <summary>
@@ -2371,6 +2460,83 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 	}
 	
 	/// <summary>
+	/// Create a ground check mesh for visual representation
+	/// </summary>
+	private Mesh CreateGroundCheckMesh()
+	{
+		Mesh mesh = new Mesh();
+		mesh.name = "GroundCheckVisual";
+		
+		// Ground check parameters
+		int segments = 16;
+		float radius = capsuleRadius * 0.9f; // Slightly smaller than capsule
+		float height = groundCheckDistance;
+		
+		// Calculate vertices for a cylinder representing the ground check
+		List<Vector3> vertices = new List<Vector3>();
+		List<Vector2> uvs = new List<Vector2>();
+		List<int> triangles = new List<int>();
+		
+		// Generate vertices for the ground check cylinder
+		for (int ring = 0; ring <= 1; ring++) // Top and bottom rings
+		{
+			float y = ring == 0 ? 0f : -height; // Top at 0, bottom at -height
+			
+			for (int seg = 0; seg <= segments; seg++)
+			{
+				float u = (float)seg / segments;
+				float theta = u * Mathf.PI * 2;
+				
+				float x = Mathf.Cos(theta) * radius;
+				float z = Mathf.Sin(theta) * radius;
+				
+				vertices.Add(new Vector3(x, y, z));
+				uvs.Add(new Vector2(u, ring));
+			}
+		}
+		
+		// Generate triangles for the cylinder sides
+		for (int seg = 0; seg < segments; seg++)
+		{
+			int current = seg;
+			int next = current + segments + 1;
+			
+			// First triangle
+			triangles.Add(current);
+			triangles.Add(next);
+			triangles.Add(current + 1);
+			
+			// Second triangle
+			triangles.Add(current + 1);
+			triangles.Add(next);
+			triangles.Add(next + 1);
+		}
+		
+		// Add bottom cap (circle)
+		int centerIndex = vertices.Count;
+		vertices.Add(new Vector3(0, -height, 0)); // Center of bottom
+		uvs.Add(new Vector2(0.5f, 0.5f));
+		
+		for (int seg = 0; seg < segments; seg++)
+		{
+			int current = segments + 1 + seg;
+			int next = segments + 1 + ((seg + 1) % segments);
+			
+			triangles.Add(centerIndex);
+			triangles.Add(next);
+			triangles.Add(current);
+		}
+		
+		mesh.vertices = vertices.ToArray();
+		mesh.uv = uvs.ToArray();
+		mesh.triangles = triangles.ToArray();
+		mesh.RecalculateNormals();
+		mesh.RecalculateBounds();
+		
+		return mesh;
+	}
+	
+	/// <summary>
 	/// Update the visual collider position and visibility
 	/// </summary>
 	private void UpdateVisualCollider()
@@ -2395,6 +2561,158 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 	}
 	
 	/// <summary>
+	/// Update the visual ground check position and visibility
+	/// </summary>
+	private void UpdateVisualGroundCheck()
+	{
+		if (visualGroundCheckObject == null) return;
+		
+		// Update visibility
+		visualGroundCheckObject.SetActive(showVisualCollider);
+		
+		if (!showVisualCollider) return;
+		
+		// Update position to match capsule bottom
+		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
+		Vector3 groundCheckPosition = new Vector3(0, -halfHeight, 0);
+		visualGroundCheckObject.transform.localPosition = groundCheckPosition;
+		
+		// Update color based on grounded state
+		if (visualGroundCheckRenderer != null && visualGroundCheckRenderer.material != null)
+		{
+			Color currentColor = isGrounded ? Color.green : Color.yellow;
+			currentColor.a = 0.5f; // Semi-transparent
+			visualGroundCheckRenderer.material.color = currentColor;
+		}
+		
+		// Update mesh if ground check distance changed
+		if (visualGroundCheckMeshFilter != null)
+		{
+			visualGroundCheckMeshFilter.mesh = CreateGroundCheckMesh();
+		}
+	}
+	
+	/// <summary>
+	/// Calculate capsule size automatically based on character bones
+	/// </summary>
+	private void CalculateAutoCapsuleSize()
+	{
+		if (cranium == null || pelvis == null)
+		{
+			Debug.LogWarning("[CalculateAutoCapsuleSize] Cranium or Pelvis bone not assigned! Using default capsule size.");
+			return;
+		}
+		
+		// Calculate character height from pelvis to cranium
+		float characterHeight = Vector3.Distance(pelvis.position, cranium.position);
+		
+		// Calculate character width using shoulder bones or model bounds
+		float characterWidth = CalculateCharacterWidth();
+		
+		// Calculate new capsule dimensions
+		float newHeight = characterHeight + capsuleHeightOffset;
+		float newRadius = characterWidth * capsuleRadiusMultiplier;
+		
+		// Apply min/max constraints
+		newHeight = Mathf.Clamp(newHeight, minCapsuleHeight, maxCapsuleHeight);
+		newRadius = Mathf.Clamp(newRadius, minCapsuleRadius, maxCapsuleRadius);
+		
+		// Store base values for dynamic sizing
+		baseCapsuleHeight = newHeight;
+		baseCapsuleRadius = newRadius;
+		baseCapsuleCenter = new Vector3(0, newHeight * 0.5f, 0);
+		
+		// Update capsule values
+		capsuleHeight = newHeight;
+		capsuleRadius = newRadius;
+		capsuleCenter = baseCapsuleCenter;
+		
+		// Update visual collider if it exists
+		if (visualColliderObject != null)
+		{
+			UpdateVisualColliderMesh();
+		}
+		
+		Debug.Log($"[CalculateAutoCapsuleSize] Auto-sized capsule - Height: {newHeight:F2}, Radius: {newRadius:F2}, Center: {capsuleCenter}");
+	}
+	
+	/// <summary>
+	/// Calculate character width for capsule radius
+	/// </summary>
+	private float CalculateCharacterWidth()
+	{
+		// Try to use shoulder bones if available
+		if (leftHandBolt != null && rightHandBolt != null)
+		{
+			float shoulderWidth = Vector3.Distance(leftHandBolt.position, rightHandBolt.position);
+			return shoulderWidth * 0.6f; // Use 60% of shoulder width for capsule radius
+		}
+		
+		// Fallback: use model bounds
+		Renderer[] renderers = GetComponentsInChildren<Renderer>();
+		if (renderers.Length > 0)
+		{
+			Bounds combinedBounds = renderers[0].bounds;
+			foreach (Renderer renderer in renderers)
+			{
+				combinedBounds.Encapsulate(renderer.bounds);
+			}
+			
+			// Use the wider of X or Z dimensions
+			float width = Mathf.Max(combinedBounds.size.x, combinedBounds.size.z);
+			return width * 0.5f; // Convert to radius
+		}
+		
+		// Ultimate fallback: use default radius
+		Debug.LogWarning("[CalculateCharacterWidth] Could not determine character width, using default radius");
+		return capsuleRadius;
+	}
+	
+	/// <summary>
+	/// Update visual collider mesh with new dimensions
+	/// </summary>
+	private void UpdateVisualColliderMesh()
+	{
+		if (visualColliderMeshFilter != null)
+		{
+			visualColliderMeshFilter.mesh = CreateCapsuleMesh();
+		}
+		
+		// Also update ground check mesh
+		if (visualGroundCheckMeshFilter != null)
+		{
+			visualGroundCheckMeshFilter.mesh = CreateGroundCheckMesh();
+		}
+	}
+	
+	/// <summary>
+	/// Update capsule size based on current state (crouching/standing)
+	/// </summary>
+	private void UpdateCapsuleSizeForState()
+	{
+		if (!dynamicCapsuleSizing || !autoSizeCapsule) return;
+		
+		if (isCrouching)
+		{
+			// Use crouched dimensions
+			capsuleHeight = baseCapsuleHeight * crouchHeightMultiplier;
+			capsuleCenter = new Vector3(0, capsuleHeight * 0.5f, 0);
+		}
+		else
+		{
+			// Use standing dimensions
+			capsuleHeight = baseCapsuleHeight;
+			capsuleCenter = baseCapsuleCenter;
+		}
+		
+		// Update visual collider if it exists
+		if (visualColliderObject != null)
+		{
+			UpdateVisualColliderMesh();
+		}
+	}
+	
+	/// <summary>
 	/// Clean up visual collider when destroyed
 	/// </summary>
 	private void OnDestroy()
@@ -2402,6 +2720,11 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 		if (visualColliderObject != null)
 		{
 			DestroyImmediate(visualColliderObject);
+		}
+		
+		if (visualGroundCheckObject != null)
+		{
+			DestroyImmediate(visualGroundCheckObject);
 		}
 	}
 }
