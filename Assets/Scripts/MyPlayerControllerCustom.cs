@@ -547,7 +547,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		Vector3 bottom = center - transform.up * halfHeight;
 
 		// Check by casting slightly down from current position with dynamic distance
-		float dynamicCastDistance = groundCheckDistance + 0.01f + Mathf.Abs(velocity.y) * Time.deltaTime;
+		float dynamicCastDistance = groundCheckDistance + 0.01f + Mathf.Abs(velocity.y) * Time.fixedDeltaTime;
 		if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit hit, dynamicCastDistance, groundMask, QueryTriggerInteraction.Ignore))
 		{
 			// Consider grounded if the normal is reasonably upwards (handle both cos and angle values)
@@ -897,14 +897,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				// if getting knocked back, no friction
 				// (We could add a knockback flag if needed)
 				float control = speed < pm_stopspeed ? pm_stopspeed : speed;
-				drop += control * pm_friction * Time.deltaTime;
+				drop += control * pm_friction * Time.fixedDeltaTime;
 			}
 		}
 
 		// apply water friction even if just wading
 		if (isSwimming)
 		{
-			drop += speed * 3.0f * Time.deltaTime;  // pm_waterfriction = 3.0f
+			drop += speed * 3.0f * Time.fixedDeltaTime;  // pm_waterfriction = 3.0f
 		}
 
 		// Apply the friction
@@ -939,7 +939,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			if (addspeed <= 0)
 				return;
 
-			float accelspeed = accel * Time.deltaTime * wishspeed;
+			float accelspeed = accel * Time.fixedDeltaTime * wishspeed;
 			if (accelspeed > addspeed)
 				accelspeed = addspeed;
 
@@ -957,7 +957,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			if (pushLen > 0.0001f)  // Avoid division by zero
 				pushDir /= pushLen;  // Normalize
 
-			float canPush = accel * Time.deltaTime * wishspeed;
+			float canPush = accel * Time.fixedDeltaTime * wishspeed;
 			if (canPush > pushLen)
 				canPush = pushLen;
 
@@ -1164,7 +1164,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	{
 		if (!isGrounded)
 		{
-			velocity.y -= pm_gravity * Time.deltaTime;
+			velocity.y -= pm_gravity * Time.fixedDeltaTime;
 			// We are airborne again -> allow next landing trigger
 			landedThisGround = false;
 			// Track airtime, distance and height while in air
@@ -1351,7 +1351,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	{
 		touchedObjects.Clear();
 		const float SKIN_WIDTH = 0.01f; // Abstand vor der Oberfläche
-		Vector3 desired = velocity * Time.deltaTime;
+		Vector3 desired = velocity * Time.fixedDeltaTime;	
 
 		int numbumps = 4;
 		Vector3 primal_velocity = velocity;
@@ -1370,7 +1370,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			Vector3 top = worldCenter + transform.up * halfHeightLocal;
 			Vector3 bottom = worldCenter - transform.up * halfHeightLocal;
 
-			Vector3 end = currentPos + vel * Time.deltaTime * time_left;
+			Vector3 end = currentPos + vel * Time.fixedDeltaTime * time_left;
 			Vector3 castDir = end - currentPos;
 			float castDist = castDir.magnitude;
 
@@ -1396,7 +1396,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 					// Successfully stepped up
 					currentPos = stepUpPos;
 					// Continue with original movement after step-up
-					Vector3 remainingMovement = vel * Time.deltaTime * time_left;
+					Vector3 remainingMovement = vel * Time.fixedDeltaTime * time_left;
 					remainingMovement.y = 0f; // Don't apply vertical velocity after step-up
 					currentPos += remainingMovement;
 					break;
