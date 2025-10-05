@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\MeshVisibilityLogger.cs" />
     <Compile Include="Assets\Scripts\AimCameraController.cs" />
     <Compile Include="Assets\Scripts\Models\NPCParsing.cs" />
+    <Compile Include="Assets\Scripts\Player\MyPlayerBoltOnSystem.cs" />
     <Compile Include="Assets\Scripts\Models\Enums\Rank.cs" />
     <Compile Include="Assets\Scripts\CameraSwitcher.cs" />
     <Compile Include="Assets\Scripts\ServiceHelper.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Assets\GameServer\Scripts\GameServer.cs" />
     <Compile Include="Assets\Scripts\Player\MyPlayerSoundSystem.cs" />
     <Compile Include="Assets\Scripts\BGPlayer.cs" />
+    <Compile Include="Assets\Scripts\Utils\JsonDataReader.cs" />
     <Compile Include="Assets\Scripts\LoginController.cs" />
     <Compile Include="Assets\Scripts\AutoBoundsAdjuster.cs" />
     <Compile Include="Assets\Scripts\Models\BoundsProfile.cs" />
@@ -90,6 +92,7 @@
     <Compile Include="Assets\AuthServer\Models\User.cs" />
     <Compile Include="Assets\Scripts\Models\Enums\Occupation.cs" />
     <Compile Include="Assets\Scripts\Models\Inventory.cs" />
+    <Compile Include="Assets\Scripts\Player\MyPlayerWeaponSystem.cs" />
     <Compile Include="Assets\Scripts\Models\Stance.cs" />
     <Compile Include="Assets\Scripts\AvatarActions.cs" />
     <Compile Include="Assets\Scripts\Models\CharacterTemplate.cs" />

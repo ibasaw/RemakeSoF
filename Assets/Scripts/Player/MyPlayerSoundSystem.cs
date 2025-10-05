@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.IO;
+using Utils;
 
 [DisallowMultipleComponent]
 public class PlayerSoundSystem : MonoBehaviour
@@ -494,7 +495,7 @@ public class PlayerSoundSystem : MonoBehaviour
 			return;
 		}
 
-		string json = TryLoadJsonText("SoF2_Weapons");
+        string json = JsonDataReader.TryLoadJsonText("SoF2_Weapons");
 		if (string.IsNullOrEmpty(json))
 		{
 			Debug.Log("[LoadWeaponSounds] Keine SoF2_Weapons.json gefunden!");
@@ -653,7 +654,7 @@ public class PlayerSoundSystem : MonoBehaviour
         weaponSounds.Clear(); //weapons will be loaded after in LoadWeaponSounds
         materialInfos.Clear();
 
-        string json = TryLoadJsonText("SoF2_sounds_per_surface");
+        string json = JsonDataReader.TryLoadJsonText("SoF2_sounds_per_surface");
         if (string.IsNullOrEmpty(json))
         {
             Debug.Log("[LoadSounds] Keine JSON-Datei für Sounds gefunden!");
@@ -758,21 +759,7 @@ public class PlayerSoundSystem : MonoBehaviour
         Debug.Log($"[LoadSounds] {landingSounds.Count} land-sounds, {footstepSounds.Count} footstep-sounds, materialInfos: {materialInfos.Count}");
     }
     
-    /// <summary>
-    /// Load a JSON file from the Data folder
-    /// </summary>
-    private string TryLoadJsonText(string fileName)
-    {
-        // 1) Resources/Data/ (TextAsset)
-        TextAsset ta = Resources.Load<TextAsset>("Data/" + fileName);
-        if (ta != null) return ta.text;
-
-        // 2) Assets/Data/ (Editor & Standalone)
-        string path = Path.Combine(Application.dataPath, "Data", fileName + ".json");
-        if (File.Exists(path)) return File.ReadAllText(path);
-
-        return null;
-    }
+    // JSON loading moved to Utils.JsonDataReader
 
     /// <summary>
     /// Try to get a double value from a JObject

@@ -58,6 +58,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private Transform cameraTransform;
 	[SerializeField] private float standYawTargetY = 85f;
 	[SerializeField] private float crouchYawTargetY = 45f;
+	//npc specific
 	[SerializeField] public bool isAiming = false;
 	[SerializeField] public bool isNPC = false;
 
@@ -65,15 +66,12 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private Transform lowerLumbar;
 	[SerializeField] private Transform upperLumbar;
 	[SerializeField] private Transform cranium;
-	[SerializeField] private Transform modelRoot;
 	[SerializeField] private Transform pelvis;
-
+	[SerializeField] private Transform modelRoot;
 	[SerializeField] private Transform rightHandBolt;
 	[SerializeField] private Transform leftHandBolt;
+	[Header("BGPlayer Weapon")]
 	[SerializeField] private GameObject startWeaponPrefab;
-	[SerializeField] private float startWeaponZOverride = -90f;
-	[SerializeField] private float startWeaponScaleOverride = 0.01f;
-
 
 	// SoF2 Movement State
 	private Vector3 velocity = Vector3.zero;           // Current velocity (x, y, z)
@@ -101,6 +99,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private float jumpHeight = 0f;                     // Maximum height reached during jump
 	private float jumpStartY = 0f;                     // Y position when jump started
 	private float landingY = 0f;                       // Y position when landing
+
 	[SerializeField] private float stepUpHeightThreshold = 5.0f; // Minimum height difference to consider as step-up
 	[SerializeField] private float jumpDebounceAfterMs = 0.25f; // 250ms debounce like SoF2
 	[SerializeField] private bool autoJump = false; // Auto jump when grounded and space is pressed
@@ -112,6 +111,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	[Header("legs Idle Facing Offsets (by movement dir 0..7)")]
 	[SerializeField] private float[] idleYawByDir = new float[8] { 112f, 45f, 68f, 68f, 112f, 180f, 180f, 90f };
+
+	[Header("Movement Direction upperLumbar Idle Offsets")]
+	[SerializeField] private int[] movementOffsets = new int[8] { 0, 22, 45, -22, 0, 22, -45, -22 }; //evtl. erst mal alle 0
+	[SerializeField] private float movementOffsetSmooth = 6f;     // Smoothing speed for movement-based offsets
 
 	[Header("Animator Smoothing")]
 	[SerializeField] private float animParamSmooth = 10f; // higher = faster response
@@ -127,10 +130,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float upperLumbarPitchOffset = 0f;    // Upper lumbar pitch offset in degrees (forward/backward)
 	[SerializeField] private float lowerLumbarPitchOffset = 0f;   // Lower lumbar pitch offset in degrees (forward/backward)
 	[SerializeField] private float lumbarPitchSmooth = 8f;        // Smoothing speed for lumbar pitch changes
-
-	[Header("Movement Direction upperLumbar Idle Offsets")]
-	[SerializeField] private int[] movementOffsets = new int[8] { 0, 22, 45, -22, 0, 22, -45, -22 }; //evtl. erst mal alle 0
-	[SerializeField] private float movementOffsetSmooth = 6f;     // Smoothing speed for movement-based offsets
 
 	[Header("Torso-Legs Follow")]
 	[SerializeField] private float torsoFollowYawInfluence = 65f; // legs yaw catch-up when torso twists
@@ -150,7 +149,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private bool isLeaningLeft = false;
 	private bool isLeaningRight = false;
 	private int leanOffset = 0; // -30 for left, +30 for right, 0 for none
-	private List<string> touchedObjects = new List<string>();
+	private List<string> touchedObjects = new List<string>(); // touched objects on movement-collide / jump
 
 	[Header("Lean Settings")]
 	[SerializeField] private bool debugInputInfo = false;
@@ -186,6 +185,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private RaycastHit lastGroundHit; // Store last ground hit info for sound system
 
 	private MyPlayerColliderSystem colliderSystem;
+	private MyPlayerWeaponSystem weaponSystem;
 
 	private void Awake()
 	{
@@ -200,6 +200,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (colliderSystem == null)
 			colliderSystem = gameObject.AddComponent<MyPlayerColliderSystem>();
 
+		weaponSystem = GetComponent<MyPlayerWeaponSystem>();
+		if (weaponSystem == null)
+			weaponSystem = gameObject.AddComponent<MyPlayerWeaponSystem>();
+
 		// Initialize smoothed legs forward with current facing
 		Vector3 initialForward = transform.forward;
 		initialForward.y = 0f;
@@ -211,7 +215,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		soundSystem.InitializeSoundSystem();
 
 		// Attach start weapon to right hand bolt when player spawns
-		AttachStartWeapon();
+		weaponSystem.AttachWeapon(startWeaponPrefab, rightHandBolt);
 		
 		colliderSystem.InitializeVisualCollider();
 		colliderSystem.InitializeVisualGroundCheck();
@@ -1638,35 +1642,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
             Transform rotTarget = modelRoot != null ? modelRoot : transform;
             rotTarget.rotation = Quaternion.Slerp(rotTarget.rotation, targetRot, rotationSpeed * Time.deltaTime);
         }
-	}
-
-	/// <summary>
-	/// Attach the start weapon to the right hand bolt when player spawns
-	/// </summary>
-	private void AttachStartWeapon()
-	{
-		if (rightHandBolt == null)
-		{
-			Debug.LogWarning("Right hand bolt is not assigned in the inspector!");
-			return;
-		}
-
-		// Instantiate from prefab (no existing Transform reference)
-		if (startWeaponPrefab != null)
-		{
-			GameObject weaponInstance = Instantiate(startWeaponPrefab, rightHandBolt);
-			Transform weaponTransform = weaponInstance.transform;
-			weaponTransform.localPosition = Vector3.zero;
-			// Apply Z rotation override to fix SoF2 weapon axis issues
-			weaponTransform.localRotation = Quaternion.Euler(0f, 0f, startWeaponZOverride);
-			// Apply scale override to fix SoF2 weapon size issues
-			weaponTransform.localScale = Vector3.one * startWeaponScaleOverride;
-			Debug.Log($"Instantiated and attached start weapon prefab '{startWeaponPrefab.name}' to right hand bolt '{rightHandBolt.name}' with Z-rotation: {startWeaponZOverride}° and scale: {startWeaponScaleOverride}");
-		}
-		else
-		{
-			Debug.LogWarning("No startWeaponPrefab set in the inspector!");
-		}
 	}
 
 	private void OnGUI()
