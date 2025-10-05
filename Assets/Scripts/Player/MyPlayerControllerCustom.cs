@@ -7,7 +7,6 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.IO;
 
-
 public class MyPlayerControllerCustom : MonoBehaviour
 {
 	private Animator animator;
