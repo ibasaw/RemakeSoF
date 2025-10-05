@@ -562,8 +562,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Check for swimming (simple water detection)
 		isSwimming = transform.position.y < 0f; // Assuming water level is at y=0
 
-		// Rotate toward aim/camera/move
-		HandleRotation();
+        // Rotate is handled in LateUpdate for consistency with final physics state
 		
 		// Update visual collider
 		colliderSystem.UpdateVisualCollider(isGrounded);
@@ -670,7 +669,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		soundSystem.HandleFootstepSoundEvents(isWalking, lastGroundHit);
 	}
 
-	private void LateUpdate()
+    private void LateUpdate()
 	{
 		// The skeleton has an offset rotation.
 		// We apply a counter-rotation to correct the orientation.
@@ -679,7 +678,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		Quaternion legsOffset = Quaternion.Euler(0, legsYawOffsetDegrees, 0);
 	
 		// Rotate pelvisTarget (legs) to face movement input direction (W/A/S/D)
-		if (pelvis != null)
+        if (pelvis != null)
 		{
 			Vector3 fwd = cameraTransform != null ? cameraTransform.forward : transform.forward;
 			Vector3 rgt = cameraTransform != null ? cameraTransform.right : transform.right;
@@ -739,6 +738,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				pelvis.rotation = legsLook * offsetToUseRun;
 			}
 		}
+
+        // Apply character root rotation after physics and before GUI
+        HandleRotation();
 
 		if (yawTarget != null)
 		{
@@ -1611,24 +1613,31 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 		else
 		{
-			Vector3 horizontalVel = new Vector3(velocity.x, 0f, velocity.z);
-			if (horizontalVel.sqrMagnitude > 0.001f)
-			{
-				targetRot = Quaternion.LookRotation(horizontalVel, Vector3.up);
-			}
-			else
-			{
-				Vector3 camForward = cameraTransform != null ? cameraTransform.forward : transform.forward;
-				camForward.y = 0f;
-				if (camForward.sqrMagnitude > 0.01f)
-					targetRot = Quaternion.LookRotation(camForward, Vector3.up);
-			}
+            // Prefer input-driven desired direction to avoid physics timing jitter
+            bool hasInput = moveInput.sqrMagnitude > 0.0001f;
+            if (hasInput)
+            {
+                Vector3 desired = lastMoveDirection;
+                desired.y = 0f;
+                if (desired.sqrMagnitude > 0.0001f)
+                    targetRot = Quaternion.LookRotation(desired.normalized, Vector3.up);
+            }
+            else
+            {
+                // When no input, align to camera forward
+                Vector3 camForward = cameraTransform != null ? cameraTransform.forward : transform.forward;
+                camForward.y = 0f;
+                if (camForward.sqrMagnitude > 0.01f)
+                    targetRot = Quaternion.LookRotation(camForward.normalized, Vector3.up);
+            }
 		}
 
-		if (targetRot != Quaternion.identity)
-		{
-			transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
-		}
+        if (targetRot != Quaternion.identity)
+        {
+            // Rotate only the visual model to avoid dragging the camera (yaw/pitch) with player facing
+            Transform rotTarget = modelRoot != null ? modelRoot : transform;
+            rotTarget.rotation = Quaternion.Slerp(rotTarget.rotation, targetRot, rotationSpeed * Time.deltaTime);
+        }
 	}
 
 	/// <summary>
