@@ -5,4 +5,6 @@ Logs
 Temp
 *.meta
 Assets/Resources/uQuake
+Assets/Packages
 *.fbx
+*.csproj
