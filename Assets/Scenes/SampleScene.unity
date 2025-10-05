@@ -949,6 +949,7 @@ GameObject:
   - component: {fileID: 338497859}
   - component: {fileID: 338497860}
   - component: {fileID: 338497861}
+  - component: {fileID: 338497862}
   m_Layer: 7
   m_Name: MyPlayer
   m_TagString: Player
@@ -1040,13 +1041,10 @@ MonoBehaviour:
   lowerLumbar: {fileID: 2130230966}
   upperLumbar: {fileID: 1059636000}
   cranium: {fileID: 315445059}
-  modelRoot: {fileID: 1816034122}
   pelvis: {fileID: 130603829}
+  modelRoot: {fileID: 1816034122}
   rightHandBolt: {fileID: 205635425}
   leftHandBolt: {fileID: 1674721778}
-  startWeaponPrefab: {fileID: 919132149155446097, guid: e4105317ebb1d854da6a2869d5b35a68, type: 3}
-  startWeaponZOverride: -90
-  startWeaponScaleOverride: 0.01
   stepUpHeightThreshold: 5
   jumpDebounceAfterMs: 0.25
   autoJump: 0
@@ -1061,6 +1059,8 @@ MonoBehaviour:
   - 180
   - 160
   - 90
+  movementOffsets: 0000000000000000000000000000000000000000000000000000000000000000
+  movementOffsetSmooth: 6
   animParamSmooth: 10
   upperLumbarYawOffset: -5
   lowerLumbarYawOffset: 0
@@ -1068,8 +1068,6 @@ MonoBehaviour:
   upperLumbarPitchOffset: 0
   lowerLumbarPitchOffset: 0
   lumbarPitchSmooth: 8
-  movementOffsets: 0000000000000000000000000000000000000000000000000000000000000000
-  movementOffsetSmooth: 6
   torsoFollowYawInfluence: 65
   strafeYawDegrees: 12
   baseLegsRotationSmooth: 8
@@ -1130,6 +1128,27 @@ MonoBehaviour:
   minCapsuleHeight: 50
   maxCapsuleHeight: 100
   crouchHeightMultiplier: 0.6
+--- !u!114 &338497862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 338497851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 967a615b34f523746a4dba40faf859b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MyPlayerWeaponSystem
+  attachedWeaponZOverride: -90
+  attachedWeaponScaleOverride: 0.01
+  showVisualCollider: 1
+  hitColor: {r: 0, g: 1, b: 0, a: 0.3}
+  hitMaterial: {fileID: 0}
+  hitMarkerSize: 0.06
+  hitMarkerDuration: 0.35
+  WorldHitmarkerContainer: {fileID: 475877861}
+  availableWeaponNames: []
 --- !u!1 &377181573 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -5161800087126053317, guid: 5c6851317eb7fd640ae0c7fa19424875, type: 3}
@@ -1386,6 +1405,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 80, y: 8, z: 0}
   m_Center: {x: 128, y: 28, z: -896}
+--- !u!1 &475877861
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 475877862}
+  m_Layer: 0
+  m_Name: WorldHitmarker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &475877862
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 475877861}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &544807000 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -1001674214711009314, guid: 5c6851317eb7fd640ae0c7fa19424875, type: 3}
@@ -3910,4 +3960,5 @@ SceneRoots:
   - {fileID: 1371969178}
   - {fileID: 1148120368}
   - {fileID: 338497852}
+  - {fileID: 475877862}
   - {fileID: 2081715319}

@@ -70,8 +70,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private Transform modelRoot;
 	[SerializeField] private Transform rightHandBolt;
 	[SerializeField] private Transform leftHandBolt;
-	[Header("BGPlayer Weapon")]
-	[SerializeField] private GameObject startWeaponPrefab;
 
 	// SoF2 Movement State
 	private Vector3 velocity = Vector3.zero;           // Current velocity (x, y, z)
@@ -214,8 +212,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Initialize landing sound system
 		soundSystem.InitializeSoundSystem();
 
+		weaponSystem.InitializeWeaponSystem();
 		// Attach start weapon to right hand bolt when player spawns
-		weaponSystem.AttachWeapon(startWeaponPrefab, rightHandBolt);
+		weaponSystem.AttachWeapon("Knife", rightHandBolt);
 		
 		colliderSystem.InitializeVisualCollider();
 		colliderSystem.InitializeVisualGroundCheck();
@@ -1722,6 +1721,11 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			landingStyle.normal.textColor = Color.white; // White when normal landing
 		}
 		GUI.Label(new Rect(x, y, 600, line), $"Landing Y: {landingY:F2} (Start: {jumpStartY:F2}, Diff: {heightDiff:F3}, Threshold: {stepUpHeightThreshold:F1})", landingStyle); y += line;
+		// Show current position
+		GUIStyle posStyle = new GUIStyle(valueStyle);
+		posStyle.normal.textColor = Color.white;
+		Vector3 pos = transform.position;
+		GUI.Label(new Rect(x, y, 600, line), $"Position: X={pos.x:F2} Y={pos.y:F2} Z={pos.z:F2}", posStyle); y += line;
 
 		// Jump debounce display with color coding
 		GUIStyle debounceStyle = new GUIStyle(valueStyle);

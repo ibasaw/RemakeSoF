@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.IO;
-using Utils;
+
+using SoF2Remake.Utils;
 
 [DisallowMultipleComponent]
 public class PlayerSoundSystem : MonoBehaviour
@@ -58,13 +59,6 @@ public class PlayerSoundSystem : MonoBehaviour
 		public double? damage;
 	}
 	private bool soundsLoaded = false;
-
-    private void Awake()
-	{
-        Debug.Log("[PlayerSoundSystem] Awake Initializing...");
-        // Initialize sound system
-		InitializeSoundSystem();
-    }
 
     private void OnGUI()
     {
