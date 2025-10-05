@@ -1787,6 +1787,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			GUI.Label(new Rect(x, y, 600, line), $"Last Ground Material Hit: {soundSystem.GetGroundMaterialType(lastGroundHit)}", valueStyle); y += line;
 			y += line * 0.5f; // Spacing
 		}
+		weaponSystem?.OnGUICustom();
 
 		// Physics Settings
 		if (drawPhysicsDebugGUI)

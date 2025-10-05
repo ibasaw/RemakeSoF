@@ -1145,8 +1145,8 @@ MonoBehaviour:
   showVisualCollider: 1
   hitColor: {r: 0, g: 1, b: 0, a: 0.3}
   hitMaterial: {fileID: 0}
-  hitMarkerSize: 0.06
-  hitMarkerDuration: 0.35
+  hitMarkerSize: 4
+  hitMarkerDuration: 10
   WorldHitmarkerContainer: {fileID: 475877861}
   availableWeaponNames: []
 --- !u!1 &377181573 stripped

@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using System.IO;
 
 using SoF2Remake.Utils;
+using SoF2Remake.Data;
 
 [DisallowMultipleComponent]
 public class PlayerSoundSystem : MonoBehaviour
@@ -49,18 +50,9 @@ public class PlayerSoundSystem : MonoBehaviour
 	private Dictionary<string, AudioClip[]> footstepSounds = new Dictionary<string, AudioClip[]>();
 	private Dictionary<string, AudioClip[]> weaponSounds = new Dictionary<string, AudioClip[]>();
 
-	[Serializable]
-	public class MaterialInfo
-	{
-		public double? loudness;
-		public double? density;
-		public double? projectileBounce;
-		public double? friction;
-		public double? damage;
-	}
 	private bool soundsLoaded = false;
 
-    private void OnGUI()
+    private void OnGUICustom()
     {
 		if (drawSoundSystemDebugGUI && landingSoundSource != null && footstepSoundSource != null && weaponSoundSource != null)
 		{

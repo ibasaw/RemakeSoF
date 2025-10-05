@@ -109,7 +109,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	}
 
 
-	private void OnGUI(){
+	private void OnGUICustom(){
 		float scaleFactor = Screen.height / 1080f;
 		GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scaleFactor, scaleFactor, 1f));
 
