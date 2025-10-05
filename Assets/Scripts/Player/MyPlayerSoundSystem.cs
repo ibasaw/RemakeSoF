@@ -637,7 +637,7 @@ public class PlayerSoundSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// Load all sounds from Data/SoF2_sounds_per_surface.json (falls vorhanden), 
+    /// Load all sounds from Data/SoF2_data_per_surface.json (falls vorhanden), 
     /// ansonsten fallback auf uQuake/sound/player/jumps/{material} uQuake/sound/player/steps/{material}
     /// Zusätzlich werden optionale Material-Eigenschaften (loudness, density, projectileBounce, friction, damage) eingelesen.
     /// </summary>
@@ -648,7 +648,7 @@ public class PlayerSoundSystem : MonoBehaviour
         weaponSounds.Clear(); //weapons will be loaded after in LoadWeaponSounds
         materialInfos.Clear();
 
-        string json = JsonDataReader.TryLoadJsonText("SoF2_sounds_per_surface");
+        string json = JsonDataReader.TryLoadJsonText("SoF2_data_per_surface");
         if (string.IsNullOrEmpty(json))
         {
             Debug.Log("[LoadSounds] Keine JSON-Datei für Sounds gefunden!");

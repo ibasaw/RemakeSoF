@@ -16,8 +16,8 @@ public class MyPlayerWeaponSystem : MonoBehaviour
 	[SerializeField] private bool showVisualCollider = true;
 	[SerializeField] private Color hitColor = new Color(0, 1, 0, 0.3f);  // Semi-transparent green
 	[SerializeField] private Material hitMaterial;
-	[SerializeField] private float hitMarkerSize = 0.06f;
-	[SerializeField] private float hitMarkerDuration = 0.35f;
+	[SerializeField] private float hitMarkerSize = 4f;
+	[SerializeField] private float hitMarkerDuration = 3f;
     private int hitMarkerCounter = 0;
 	[SerializeField] private GameObject WorldHitmarkerContainer;
 
