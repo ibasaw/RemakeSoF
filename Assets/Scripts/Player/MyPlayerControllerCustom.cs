@@ -14,6 +14,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	// CharacterController removed - use capsule-based manual movement
 	[Header("Capsule Settings (CharacterController SoF2 values)")]
+	[SerializeField] private bool drawCapsuleDebugGUI = false;
 	[SerializeField] private float capsuleRadius = 0f;  
 	[SerializeField] private float capsuleHeight = 0f;
 	[SerializeField] private Vector3 capsuleCenter = new Vector3(0, 0, 0);  // Center at half height
@@ -39,43 +40,38 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private AvatarActions inputActions;
 	private Vector2 moveInput;
 
-	[Header("Speed Scales")]
-	[SerializeField] private float pm_duckScale = 0.25f;        // Speed scale when ducking
-	//[SerializeField] private float pm_swimScale = 0.50f;        // Speed scale when swimming
-	//[SerializeField] private float pm_wadeScale = 0.70f;        // Speed scale when wading
-	//[SerializeField] private float pm_ladderScale = 0.5f;
-
 	[Header("SoF2 Movement Settings")]
+	[SerializeField] private bool testAlternativeAccelaration = false;  // Flag to test alternative acceleration method
 	[SerializeField] public LayerMask groundMask = ~0;    // All layers or just "Ground" layer
 	[SerializeField] private float groundCheckDistance = 1f;  // Distance to check for ground 1 ist perfekt erstmal.
 
 	[Header("Movement Limits")]
+	[SerializeField] private bool drawPhysicsDebugGUI = false;
 	[SerializeField] private float pm_maxsteepness = 0.7f;      // maximum floor steepness (lower = steeper slopes allowed)
 	[SerializeField] private float pm_maxstep = 18.0f;          // Maximum step height
 	[SerializeField] private float pm_stepsize = 18.0f;         // Step size
 	[SerializeField] private float pm_maxbarrier = 32.0f;       // maximum barrier height
 
+	[Header("Speed Scales")]
+	[SerializeField] private float pm_duckScale = 0.25f;        // Speed scale when ducking
+
 	[Header("Physics Constants")]
-	[SerializeField] private float pm_accelerate = 6.0f;        // Ground acceleration
+	[SerializeField] private float pm_accelerate = 6.0f;       // Ground acceleration (SoF2 default)
 	[SerializeField] private float pm_airaccelerate = 1.0f;     // Air acceleration  
-	//[SerializeField] private float pm_wateraccelerate = 4.0f;  // Water acceleration
 
 	[SerializeField] private float pm_friction = 6.0f;          // Ground friction
-	//[SerializeField] private float pm_waterfriction = 3.0f;     // Water friction
-	//[SerializeField] private float pm_ladderfriction = 6.0f;    // Ladder friction
-	//[SerializeField] private float pm_headfriction = 0.0f;      // Friction when on someone's head
-	//[SerializeField] private float pm_spectatorfriction = 5.0f;  // Spectator friction
-
 	[SerializeField] private float pm_stopspeed = 100.0f;       // Stop speed threshold
-	[SerializeField] private float pm_maxspeed = 280.0f;        // Maximum speed / max velocity g_speed
-	//[SerializeField] private float pm_maxswimspeed = 150.0f;   // Water max swim velocity
-	[SerializeField] private float pm_maxcrouchspeed = 100.0f;  // Maximum run speed / max velocity
+	[SerializeField] private float pm_maxspeed = 280.0f;        // Maximum speed / g_speed
 
+	[SerializeField] private float phys_maxvelocity = 320;  // Maximum overall horizontal velocity (SoF2 default)
+	[SerializeField] private float phys_maxwalkvelocity = 320;  // Maximum walk horizontal velocity (SoF2 default) 
+	[SerializeField] private float phys_maxcrouchvelocity = 100.0f;  // Maximum crouch horizontal velocity
+	
 	[SerializeField] private float pm_gravity = 800.0f;         // Gravity value g_gravity
-	//[SerializeField] private float pm_watergravity = 400.0f; // Water acceleration
 
 	[SerializeField] private float jumpVelocity = 270.0f;       // Jump velocity (from phys_jumpvel)
-	[SerializeField] private float rotationSpeed = 10f;         // Rotation speed for character
+	[SerializeField] private float rotationSpeed = 14f;         // Rotation speed for character
+	[SerializeField] private float totalAirTimeGlitchSuspicion = 0.05f; // reduced to from 0.1 to 0.05f
 
 	// SoF2 Physics Constants
 	private const float OVERCLIP = 1.001f;                     // Overclip constant for sliding
@@ -135,7 +131,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	// class fields
 	private Vector3 lastMoveDirection = Vector3.forward; // merkt sich die letzte NonZero-Richtung
-	public float standCameraInfluence = 0.0f; // 0 = in Stand niemals zur Kamera drehen, 0.05-0.2 = langsam nachziehen
+	[SerializeField] public float standCameraInfluence = 0.0f; // 0 = in Stand niemals zur Kamera drehen, 0.05-0.2 = langsam nachziehen
 	[SerializeField] private float legsYawOffsetDegrees = 90f; // legs offset so left foot leads slightly
 
 	[Header("legs Idle Facing Offsets (by movement dir 0..7)")]
@@ -147,7 +143,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private float animVertical = 0f;
 
 	[Header("Lumbar Yaw Offsets")]
-	[SerializeField] private float upperLumbarYawOffset = 0f;    // Upper lumbar yaw offset in degrees
+	[SerializeField] private float upperLumbarYawOffset = -5f;    // Upper lumbar yaw offset in degrees
 	[SerializeField] private float lowerLumbarYawOffset = 0f;    // Lower lumbar yaw offset in degrees
 	[SerializeField] private float lumbarYawSmooth = 8f;          // Smoothing speed for lumbar yaw changes
 
@@ -157,11 +153,11 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float lumbarPitchSmooth = 8f;        // Smoothing speed for lumbar pitch changes
 
 	[Header("Movement Direction upperLumbar Idle Offsets")]
-	[SerializeField] private int[] movementOffsets = new int[8] { 0, 22, 45, -22, 0, 22, -45, -22 };
+	[SerializeField] private int[] movementOffsets = new int[8] { 0, 22, 45, -22, 0, 22, -45, -22 }; //evtl. erst mal alle 0
 	[SerializeField] private float movementOffsetSmooth = 6f;     // Smoothing speed for movement-based offsets
 
 	[Header("Torso-Legs Follow")]
-	[SerializeField] private float torsoFollowYawInfluence = 4f; // legs yaw catch-up when torso twists
+	[SerializeField] private float torsoFollowYawInfluence = 65f; // legs yaw catch-up when torso twists
 	[SerializeField] private float strafeYawDegrees = 12f; // strafe yaw twist magnitude
 	[SerializeField] private float baseLegsRotationSmooth = 8f;   // Base smoothing speed for legs rotation
 
@@ -181,9 +177,10 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private List<string> touchedObjects = new List<string>();
 
 	[Header("Lean Settings")]
-	[SerializeField] private float rollLeanDegrees = 15f;  // left/right roll lean magnitude
-	[SerializeField] private float pitchLeanDegrees = 12f; // forward/backward pitch lean magnitude
-	[SerializeField] private float leanSmooth = 8f;        // smoothing speed for lean interpolation
+	[SerializeField] private bool debugInputInfo = false;
+	[SerializeField] private float rollLeanDegrees = 25;  	// left/right roll lean magnitude
+	[SerializeField] private float pitchLeanDegrees = 20; 	// forward/backward pitch lean magnitude
+	[SerializeField] private float leanSmooth = 8f;        	// smoothing speed for lean interpolation
 
 	// Smoothed lean state
 	private Vector2 currentLeanAngles = Vector2.zero; // x = roll, y = pitch
@@ -224,57 +221,18 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private float smoothedMouseSpeed = 0f;
 	private float dynamicLegsRotationSmooth = 8f;
 
-	[Header("Sound System")]
-	[SerializeField] private AudioMixerGroup sfxGroup; // <-- MixerGroup für SFX
-	[SerializeField] private float landingSoundVolume = 1f;
-	[SerializeField] private float footstepSoundVolume = 1f;
-	[SerializeField] private float weaponSoundVolume = 1f;
-	[SerializeField] private bool enableLandingSounds = true;
-	[SerializeField] private bool enableFootstepSounds = true;
-	[SerializeField] private bool enableWeaponSounds = true;
-	[SerializeField] private float firstFootstepDelayMs = 100f; // delay to play first footstep sound when moving started
-	
-	private AudioSource landingSoundSource;
-	private AudioSource footstepSoundSource;
-	private AudioSource weaponSoundSource;
-
-	// Footstep playback control
-	private Dictionary<string, int> footstepNextIndexByMaterial = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-
-	// Footstep sound completion tracking
-	private bool isFootstepSoundPlaying = false;
-	private float lastFootstepSoundTime = 0f;
-	private float currentFootstepSoundDuration = 0f;
-	private float movementStartTime = 0f; // Time when movement started
-	private bool hasPlayedFirstFootstep = false; // Track if first footstep after movement start has been played
-
-	// Weapon sound playback control
-	private bool isWeaponSoundPlaying = false;
-	private float lastWeaponSoundTime = 0f;
-	private float currentSoundDuration = 0f;
-
-	// Sound cache for different surface materials
-	private Dictionary<string, MaterialInfo> materialInfos = new Dictionary<string, MaterialInfo>(StringComparer.OrdinalIgnoreCase);
-	private Dictionary<string, AudioClip> landingSounds = new Dictionary<string, AudioClip>();
-	private Dictionary<string, AudioClip[]> footstepSounds = new Dictionary<string, AudioClip[]>();
-	private Dictionary<string, AudioClip[]> weaponSounds = new Dictionary<string, AudioClip[]>();
-
-	[Serializable]
-	public class MaterialInfo
-	{
-		public double? loudness;
-		public double? density;
-		public double? projectileBounce;
-		public double? friction;
-		public double? damage;
-	}
-	private bool soundsLoaded = false;
+	// Sound system
+	private PlayerSoundSystem soundSystem;
+	private RaycastHit lastGroundHit; // Store last ground hit info for sound system
 
 	private void Awake()
 	{
-		// no CharacterController - using capsule-based physics
-		animator = GetComponentInChildren<Animator>();
+		// no CharacterController - using custom capsule-based physics
 		inputActions = new AvatarActions();
+		animator = GetComponentInChildren<Animator>();
+		soundSystem = GetComponent<PlayerSoundSystem>();
+		if (soundSystem == null)
+			soundSystem = gameObject.AddComponent<PlayerSoundSystem>();
 
 		// Initialize smoothed legs forward with current facing
 		Vector3 initialForward = transform.forward;
@@ -284,7 +242,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		smoothedLegsForward = initialForward.normalized;
 
 		// Initialize landing sound system
-		InitializeSoundSystem();
+		soundSystem.InitializeSoundSystem();
 
 		// Attach start weapon to right hand bolt when player spawns
 		AttachStartWeapon();
@@ -350,14 +308,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	private void OnWalkPressed(InputAction.CallbackContext ctx)
 	{
-		Debug.Log("Walk Pressed");
+		Debug.Log("shift-Walk Pressed");
 		isWalkingPressed = true;
 		// Animator parameter will be set in Update() for consistent timing
 	}
 
 	private void OnWalkCanceled(InputAction.CallbackContext ctx)
 	{
-		Debug.Log("Walk Released");
+		Debug.Log("shift-Walk Released");
 		isWalkingPressed = false;
 		// Animator parameter will be set in Update() for consistent timing
 	}
@@ -533,8 +491,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		//Debug.Log("Jump performed - Starting airtime, distance and height tracking");
 	}
 
-	private RaycastHit lastGroundHit; // Store ground hit info for sound system
-
 	/// <summary>
 	/// Unified ground check method used by both CheckGrounded and PM_StepSlideMove
 	/// </summary>
@@ -642,30 +598,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			HandleAutoJump();
 		}
 
-		// Weapon sound - play next sound when current one finishes
-		if (isAttacking && enableWeaponSounds)
-		{
-			// Check if we need to start a new sound
-			if (!isWeaponSoundPlaying)
-			{
-				currentSoundDuration = PlayWeaponSoundWithDuration("Knife", "swing");
-				isWeaponSoundPlaying = true;
-				lastWeaponSoundTime = Time.time;
-			}
-			else
-			{
-				// Check if enough time has passed for the sound to finish
-				if (Time.time - lastWeaponSoundTime >= currentSoundDuration)
-				{
-					isWeaponSoundPlaying = false;
-				}
-			}
-		}
-		else
-		{
-			// Reset when not attacking
-			isWeaponSoundPlaying = false;
-		}
+		// Play weapon swing sounds - play next sound when current one finishes
+		soundSystem.HandleWeaponSoundEvents(isAttacking, "Knife", "swing");
 
 		// Check for swimming (simple water detection)
 		isSwimming = transform.position.y < 0f; // Assuming water level is at y=0
@@ -734,22 +668,26 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		{
 			if (wasGrounded && !isJumping)
 			{
-				nonJumpAirTime = 0f;
-				// Use the last known grounded position if available, otherwise use current position
-				if (hasValidGroundedPosition)
+				// Add a small grace period to prevent false airtime detection after landing
+				// This helps with the issue where ground detection briefly fails after landing on elevated surfaces
+				if (nonJumpAirTime == 0f) // Only start airtime tracking if not already started
 				{
-					nonJumpStartPosition = lastGroundedPosition;
-					nonJumpStartY = nonJumpStartPosition.y;
+					// Use the last known grounded position if available, otherwise use current position
+					if (hasValidGroundedPosition)
+					{
+						nonJumpStartPosition = lastGroundedPosition;
+						nonJumpStartY = nonJumpStartPosition.y;
+					}
+					else
+					{
+						// Fallback: use current position
+						nonJumpStartPosition = GetColliderBottomPosition();
+						nonJumpStartY = nonJumpStartPosition.y;
+					}
+					// Debug the start position
+					Debug.Log($"Non-jump airtime started - Start Y: {nonJumpStartY:F2}, Position: {nonJumpStartPosition}, Valid: {hasValidGroundedPosition}");
+					landedThisGround = false;
 				}
-				else
-				{
-					// Fallback: use current position
-					nonJumpStartPosition = GetColliderBottomPosition();
-					nonJumpStartY = nonJumpStartPosition.y;
-				}
-				// Debug the start position
-				Debug.Log($"Non-jump airtime started - Start Y: {nonJumpStartY:F2}, Position: {nonJumpStartPosition}, Valid: {hasValidGroundedPosition}");
-				landedThisGround = false;
 			}
 			nonJumpAirTime += Time.fixedDeltaTime;
 		}
@@ -770,8 +708,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Handle landing events AFTER movement and ground check
 		HandleLandingEvents(justLanded);
 		
-		// Handle sound events AFTER movement (uses final ground state)
-		HandleSoundEvents();
+		// Handle footstep sound events AFTER movement (uses final ground state)
+		soundSystem.HandleFootstepSoundEvents(isWalking, lastGroundHit);
 	}
 
 	private void LateUpdate()
@@ -994,8 +932,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 	}
 
-	[SerializeField] private bool testAlternativeAccelaration = false;  // Flag to test alternative acceleration method
-
 	/// <summary>
 	/// SoF2 PM_Accelerate equivalent - handles movement acceleration (exact from bg_pmove.c)
 	/// </summary>
@@ -1033,6 +969,37 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				canPush = pushLen;
 
 			velocity += pushDir * canPush;
+		}
+	}
+
+	/// <summary>
+	/// Apply SoF2-style velocity limits (phys_maxvelocity, phys_maxwalkvelocity)
+	/// </summary>
+	private void ApplyVelocityLimits()
+	{
+		// Get horizontal velocity
+		Vector3 horizontalVel = new Vector3(velocity.x, 0f, velocity.z);
+		float horizontalSpeed = horizontalVel.magnitude;
+		
+		// Determine max velocity based on state
+		float maxVelocity;
+		if (isGrounded)
+		{
+			// Use walk velocity limit when grounded
+			maxVelocity = phys_maxwalkvelocity;
+		}
+		else
+		{
+			// Use overall velocity limit when in air
+			maxVelocity = phys_maxvelocity;
+		}
+		
+		// Apply horizontal velocity limit
+		if (horizontalSpeed > maxVelocity)
+		{
+			float scale = maxVelocity / horizontalSpeed;
+			velocity.x *= scale;
+			velocity.z *= scale;
 		}
 	}
 
@@ -1093,13 +1060,16 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 
 		// Debug movement for consistency check
-		if (moveInput.sqrMagnitude > 0.1f && Time.time % 1f < 0.1f) // Log once per second
-		{
-			Debug.Log($"Movement Debug - Input: {moveInput}, Scale: {scale:F3}, WishSpeed: {wishspeed:F2}, WishDir: {wishdir}");
-		}
+		//if (moveInput.sqrMagnitude > 0.1f && Time.time % 1f < 0.1f) // Log once per second
+		//{
+		//	Debug.Log($"Movement Debug - Input: {moveInput}, Scale: {scale:F3}, WishSpeed: {wishspeed:F2}, WishDir: {wishdir}");
+		//}
 		
 		// Accelerate with consistent acceleration
 		PM_Accelerate(wishdir, wishspeed, pm_accelerate);
+		
+		// Apply SoF2-style velocity limits
+		ApplyVelocityLimits();
 	}
 
 	/// <summary>
@@ -1149,6 +1119,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 		// Accelerate with air acceleration
 		PM_Accelerate(wishdir, wishspeed, pm_airaccelerate);
+		
+		// Apply SoF2-style velocity limits
+		ApplyVelocityLimits();
 	}
 
 	/// <summary>
@@ -1268,35 +1241,36 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	/// </summary>
 	private void HandleLandingEvents(bool justLanded)
 	{
-		if (!justLanded) return;
-		
 		// Get current landing position
 		Vector3 currentColliderPos = GetColliderBottomPosition();
 		landingY = currentColliderPos.y;
 		
-		// Jump landing: use edge detection for more robust landing detection
-		if (isJumping)
+		// PRIORITY 1: Handle jump landings first (explicit jumps take precedence)
+		if (isJumping && isGrounded)
 		{
 			float totalAirTime = Time.time - lastJumpTime;
-			// Calculate final jump distance and height using collider position
+			
+			// Calculate final jump distance using collider position
 			Vector3 horizontalDiff = new Vector3(currentColliderPos.x - jumpStartPosition.x, 0f, currentColliderPos.z - jumpStartPosition.z);
 			float finalJumpDistance = horizontalDiff.magnitude;
-			float finalJumpHeight = jumpHeight; // Use the maximum height reached
+			
+			// Calculate final jump height - use the maximum of tracked height or current height difference
+			float currentHeightFromStart = currentColliderPos.y - jumpStartY;
+			float finalJumpHeight = Mathf.Max(jumpHeight, currentHeightFromStart);
+			
 			Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
-
-			// Check if we landed significantly higher than we started (step-up successful)
 			float heightDifference = landingY - jumpStartY;
 			bool landedHigher = heightDifference > stepUpHeightThreshold;
 			
-			// Play landing sound based on ground material (once) - only if not higher
-			if (!landedThisGround && enableLandingSounds && soundsLoaded && !landedHigher)
-			{
-				string materialType = GetGroundMaterialType(lastGroundHit);
-				PlayLandingSound(materialType);
-			}
-
+			// Only process if we haven't already processed this landing
 			if (!landedThisGround)
 			{
+				// Play landing sound only if not higher
+				if (!landedHigher)
+				{
+					soundSystem.PlayLandingSound(lastGroundHit);
+				}
+
 				if (landedHigher)
 				{
 					Debug.Log($"Landing detected (jump) [UP] - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2}u, Height: {finalJumpHeight:F2}u, Start Y: {jumpStartY:F2}, Landing Y: {landingY:F2}, Height Diff: {heightDifference:F3} (Threshold: {stepUpHeightThreshold:F1})");
@@ -1315,108 +1289,70 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				landedThisGround = true;
 			}
 
-			// Debug suspicious landings
-			if (totalAirTime < 0.1f || finalJumpHeight < 10f)
+			// Only warn about suspicious landings for very short airtime (likely glitches)
+			if (totalAirTime < totalAirTimeGlitchSuspicion)
 			{
-				Debug.LogWarning($"SUSPICIOUS LANDING - Airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}, Vertical Speed: {velocity.y:F2}u");
+				Debug.LogWarning($"SUSPICIOUS LANDING - Very short airtime: {totalAirTime:F3}s, Distance: {finalJumpDistance:F2} units, Height: {finalJumpHeight:F2} units. Horiz Speed: {horiz.magnitude:F2}, Vertical Speed: {velocity.y:F2}u");
 			}
 
-			// Reset jumping state
+			// Reset jumping state and update UI values
 			isJumping = false;
 			airTime = 0f;
-			jumpDistance = finalJumpDistance; // Keep final distance for UI display
-										  // jumpHeight is kept for UI display until next jump
+			jumpDistance = finalJumpDistance;
+			jumpHeight = finalJumpHeight; // Update with final calculated height
+			
+			// Reset non-jump tracking since we processed a jump landing
+			nonJumpAirTime = 0f;
+			nonJumpStartY = 0f;
+			nonJumpStartPosition = Vector3.zero;
 		}
-		else
+		// PRIORITY 2: Handle non-jump landings (falls, drops, etc.) - only if not jumping
+		else if (isGrounded && nonJumpAirTime > 0f && !landedThisGround && !isJumping)
 		{
 			// Non-jump landing: use edge detection for more robust landing detection
 			// Only process if we have a valid start position (not 0,0,0) and no recent step-up
 			bool recentStepUp = (Time.time - lastStepUpTime) < 0.5f; // Ignore landings within 0.5s of step-up
-			if (!landedThisGround && enableLandingSounds && soundsLoaded && nonJumpStartY != 0f && !recentStepUp)
+			// Ignore very short airtime periods that are likely caused by ground detection glitches
+			bool significantAirtime = nonJumpAirTime > 0.1f; // Back to 0.1f for proper tracking
+			
+			if (nonJumpStartY != 0f && !recentStepUp && significantAirtime)
 			{
-				string materialType = GetGroundMaterialType(lastGroundHit);
-				PlayLandingSound(materialType);
+				// Calculate height difference
+				float heightDifference = landingY - nonJumpStartY;
+				
+				// Only play landing sound if we landed lower (fell down)
+				if (heightDifference < 0f)
+				{
+					soundSystem.PlayLandingSound(lastGroundHit);
+				}
+				
 				// Log with non-jump airtime/distance/height using collider position
 				Vector3 horizontalDiff = new Vector3(currentColliderPos.x - nonJumpStartPosition.x, 0f, currentColliderPos.z - nonJumpStartPosition.z);
 				float finalDistance = horizontalDiff.magnitude;
-				float heightDifference = landingY - nonJumpStartY; // Correct height difference calculation
 				float finalHeight = Mathf.Abs(heightDifference); // Absolute height for display
 				Vector3 horiz = new Vector3(velocity.x, 0f, velocity.z);
 				string heightChange = heightDifference > 0 ? "UP" : heightDifference < 0 ? "DOWN" : "SAME";
 				Debug.Log($"Landing detected (no jump) [{heightChange}] - Airtime: {nonJumpAirTime:F3}s, Distance: {finalDistance:F2}u, Height: {finalHeight:F2}u, Horiz Speed: {horiz.magnitude:F2}u, Vertical Speed: {velocity.y:F2}u, Start Y: {nonJumpStartY:F2}, Landing Y: {landingY:F2}, Height Diff: {heightDifference:F3} (Threshold: {stepUpHeightThreshold:F1})");
+				
+				// Reset non-jump tracking
 				nonJumpAirTime = 0f;
+				nonJumpStartY = 0f;
+				nonJumpStartPosition = Vector3.zero;
 				landedThisGround = true;
-			}
-			else if (nonJumpStartY == 0f || recentStepUp)
-			{
-				// Debug why we're not processing this landing
-				string reason = nonJumpStartY == 0f ? "Start Y is 0" : "Recent step-up";
-				Debug.Log($"Skipping no-jump landing - {reason}, Valid: {hasValidGroundedPosition}, Position: {lastGroundedPosition}, Step-up time: {(Time.time - lastStepUpTime):F2}s");
-			}
-		}
-	}
-	
-	/// <summary>
-	/// Handle sound events after movement (called after MoveCharacter)
-	/// </summary>
-	private void HandleSoundEvents()
-	{
-		// Track movement start time
-		if (isWalking && !hasPlayedFirstFootstep)
-		{
-			if (movementStartTime == 0f)
-			{
-				movementStartTime = Time.time;
-			}
-		}
-		else if (!isWalking)
-		{
-			// Reset movement tracking when not walking
-			movementStartTime = 0f;
-			hasPlayedFirstFootstep = false;
-		}
-
-		// Footstep sound - play next sound when current one finishes
-		if (enableFootstepSounds && soundsLoaded && isWalking && footstepSoundSource != null)
-		{
-			// Check if we need to start a new footstep sound
-			if (!isFootstepSoundPlaying)
-			{
-				// For the first footstep, check if enough delay has passed
-				if (!hasPlayedFirstFootstep)
-				{
-					float delayInSeconds = firstFootstepDelayMs / 1000f;
-					if (Time.time - movementStartTime >= delayInSeconds)
-					{
-						string materialType = GetGroundMaterialType(lastGroundHit);
-						currentFootstepSoundDuration = PlayFootstepSoundWithDuration(materialType);
-						isFootstepSoundPlaying = true;
-						lastFootstepSoundTime = Time.time;
-						hasPlayedFirstFootstep = true;
-					}
-				}
-				else
-				{
-					// For subsequent footsteps, play immediately
-					string materialType = GetGroundMaterialType(lastGroundHit);
-					currentFootstepSoundDuration = PlayFootstepSoundWithDuration(materialType);
-					isFootstepSoundPlaying = true;
-					lastFootstepSoundTime = Time.time;
-				}
 			}
 			else
 			{
-				// Check if enough time has passed for the sound to finish
-				if (Time.time - lastFootstepSoundTime >= currentFootstepSoundDuration)
-				{
-					isFootstepSoundPlaying = false;
-				}
+				// Debug why we're not processing this landing
+				string reason = nonJumpStartY == 0f ? "Start Y is 0" : 
+								recentStepUp ? "Recent step-up" : 
+								"Airtime too short";
+				Debug.Log($"Skipping no-jump landing - {reason}, Valid: {hasValidGroundedPosition}, Position: {lastGroundedPosition}, Step-up time: {(Time.time - lastStepUpTime):F2}s, Airtime: {nonJumpAirTime:F3}s");
+				
+				// Reset tracking even when skipping to prepare for next fall
+				nonJumpAirTime = 0f;
+				nonJumpStartY = 0f;
+				nonJumpStartPosition = Vector3.zero;
 			}
-		}
-		else
-		{
-			// Reset when not walking
-			isFootstepSoundPlaying = false;
 		}
 	}
 	
@@ -1513,7 +1449,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 			Vector3 castDirNorm = castDir / castDist;
 
-			// Bewegungscast (alle Layer prüfen -> ~0). Falls du Layer filtern willst, ersetze ~0 durch passende Maske.
+			// Bewegungscast - use all layers for collision detection to prevent falling through
 			if (Physics.CapsuleCast(top, bottom, capsuleRadius, castDirNorm, out RaycastHit hit, castDist + SKIN_WIDTH, ~0, QueryTriggerInteraction.Ignore))
 			{
 				if (!touchedObjects.Contains(hit.collider.name))
@@ -1521,17 +1457,17 @@ public class MyPlayerControllerCustom : MonoBehaviour
 					touchedObjects.Add(hit.collider.name);
 				}
 				
-				// Check if this is a step-up opportunity
-				if (TryStepUp(currentPos, hit, out Vector3 stepUpPos))
-				{
-					// Successfully stepped up
-					currentPos = stepUpPos;
-					// Continue with original movement after step-up
-					Vector3 remainingMovement = vel * Time.fixedDeltaTime * time_left;
-					remainingMovement.y = 0f; // Don't apply vertical velocity after step-up
-					currentPos += remainingMovement;
-					break;
-				}
+		// Check if this is a step-up opportunity (only for horizontal obstacles, not slopes)
+		if (TryStepUp(currentPos, hit, out Vector3 stepUpPos))
+		{
+			// Successfully stepped up
+			currentPos = stepUpPos;
+			// Continue with original movement after step-up
+			Vector3 remainingMovement = vel * Time.fixedDeltaTime * time_left;
+			remainingMovement.y = 0f; // Don't apply vertical velocity after step-up
+			currentPos += remainingMovement;
+			break;
+		}
 				
 				// Bewege nur bis kurz vor den Hit (skin width), damit wir nicht "in" die Geometrie landen
 				float moveDist = Mathf.Max(hit.distance - SKIN_WIDTH, 0f);
@@ -1564,7 +1500,39 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		transform.position = currentPos;
 
 		// --- Finaler Ground-Check: verwende einheitliche CheckGroundedAtPosition Methode ---
-		isGrounded = CheckGroundedAtPosition(currentPos, out RaycastHit downHit);
+		// Store the previous grounded state to avoid overriding a correct ground detection
+		bool wasGroundedBeforeMove = isGrounded;
+		bool newGroundCheck = CheckGroundedAtPosition(currentPos, out RaycastHit downHit);
+		
+		// Enhanced ground detection for slopes and diagonal surfaces
+		if (!newGroundCheck && wasGroundedBeforeMove)
+		{
+			// Try a more aggressive ground check for slopes
+			float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
+			Vector3 center = GetWorldCenterAtPosition(currentPos);
+			Vector3 top = center + transform.up * halfHeight;
+			Vector3 bottom = center - transform.up * halfHeight;
+			
+			// Check with larger distance for slopes
+			float slopeCheckDistance = groundCheckDistance * 3f; // Increased from 2f to 3f
+			if (Physics.CapsuleCast(top, bottom, capsuleRadius * 0.9f, Vector3.down, out RaycastHit slopeHit, slopeCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
+			{
+				float slopeThreshold = pm_maxsteepness > 1f ? Mathf.Cos(pm_maxsteepness * Mathf.Deg2Rad) : pm_maxsteepness;
+				if (Vector3.Dot(slopeHit.normal, Vector3.up) > slopeThreshold)
+				{
+					newGroundCheck = true;
+					downHit = slopeHit;
+				}
+			}
+		}
+		
+		// Only update isGrounded if we weren't already grounded, or if the new check confirms we're grounded
+		// This prevents overriding a correct ground detection with a false negative
+		if (!wasGroundedBeforeMove || newGroundCheck)
+		{
+			isGrounded = newGroundCheck;
+		}
+		
 		if (isGrounded && velocity.y < 0)
 		{
 			// Strong ground stick - prevent falling through and sliding
@@ -1590,6 +1558,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				}
 			}
 		}
+		// Note: Non-jump airtime tracking is handled in the main FixedUpdate loop
+		// to avoid conflicts and ensure proper initialization
 	}
 	
 	/// <summary>
@@ -1603,8 +1573,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (!isGrounded || Mathf.Abs(velocity.y) > 10f)
 			return false;
 			
-		// Check if the hit normal is roughly horizontal (not a ceiling)
-		if (Vector3.Dot(hit.normal, Vector3.up) < 0.1f)
+		// Check if the hit normal is roughly horizontal (not a ceiling or slope)
+		// For slopes, we want to slide along them, not step up
+		if (Vector3.Dot(hit.normal, Vector3.up) < 0.3f)
+			return false;
+			
+		// Check if this is actually a vertical obstacle, not a slope
+		// If the normal is too close to vertical, it's likely a slope, not a step
+		if (Vector3.Dot(hit.normal, Vector3.up) > 0.7f)
 			return false;
 			
 		// Check if the obstacle height is within step-up range
@@ -1622,7 +1598,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		Vector3 bottom = worldCenter - transform.up * halfHeight;
 		
 		// Check for ceiling collision at step-up position
-		if (Physics.CapsuleCast(bottom, top, capsuleRadius, Vector3.up, out RaycastHit ceilingHit, pm_stepsize, ~0, QueryTriggerInteraction.Ignore))
+		if (Physics.CapsuleCast(bottom, top, capsuleRadius, Vector3.up, out RaycastHit ceilingHit, pm_stepsize, groundMask, QueryTriggerInteraction.Ignore))
 		{
 			// Not enough headroom
 			return false;
@@ -1639,7 +1615,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (horizontalCheck.magnitude > 0.1f)
 		{
 			Vector3 horizontalDir = horizontalCheck.normalized;
-			if (Physics.CapsuleCast(stepUpBottom, stepUpTop, capsuleRadius, horizontalDir, out RaycastHit horizontalHit, horizontalCheck.magnitude, ~0, QueryTriggerInteraction.Ignore))
+			if (Physics.CapsuleCast(stepUpBottom, stepUpTop, capsuleRadius, horizontalDir, out RaycastHit horizontalHit, horizontalCheck.magnitude, groundMask, QueryTriggerInteraction.Ignore))
 			{
 				// There's still an obstacle at the step-up position
 				return false;
@@ -1727,178 +1703,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	#endif
 
 	/// <summary>
-	/// Initialize the sound system
-	/// </summary>
-	private void InitializeSoundSystem()
-	{
-		if (!enableLandingSounds) return;
-
-		// Create AudioSource if not assigned
-		if (landingSoundSource == null)
-		{
-			landingSoundSource = gameObject.GetComponent<AudioSource>();
-			if (landingSoundSource == null)
-			{
-				landingSoundSource = gameObject.AddComponent<AudioSource>();
-			}
-		}
-
-		if (footstepSoundSource == null)
-		{
-			footstepSoundSource = gameObject.GetComponent<AudioSource>();
-			if (footstepSoundSource == null)
-			{
-				footstepSoundSource = gameObject.AddComponent<AudioSource>();
-			}
-		}
-
-		if (weaponSoundSource == null)
-		{
-			weaponSoundSource = gameObject.GetComponent<AudioSource>();
-			if (weaponSoundSource == null)
-			{
-				weaponSoundSource = gameObject.AddComponent<AudioSource>();
-			}
-		}
-
-		// Configure AudioSource for MAXIMUM compatibility
-		/*landingSoundSource.volume = 1.0f; // Full volume
-		landingSoundSource.pitch = 1.0f;
-		landingSoundSource.spatialBlend = 0.0f; // 2D sound (always audible)
-		landingSoundSource.rolloffMode = AudioRolloffMode.Logarithmic;
-		landingSoundSource.minDistance = 1f;
-		landingSoundSource.maxDistance = 500f;
-		landingSoundSource.playOnAwake = false;
-		landingSoundSource.loop = false;
-		landingSoundSource.mute = false;
-		landingSoundSource.enabled = true;
-		landingSoundSource.priority = 128;*/
-
-
-		// Set MixerGroup if assigned
-		if (sfxGroup != null)
-		{
-			landingSoundSource.outputAudioMixerGroup = sfxGroup;
-			footstepSoundSource.outputAudioMixerGroup = sfxGroup;
-			weaponSoundSource.outputAudioMixerGroup = sfxGroup;
-		}
-
-		LoadPlayerSounds();
-	}
-
-	/// <summary>
-	/// Load all landing sounds from the uQuake/sound/player/jumps/ directory
-	/// </summary>
-	private void LoadPlayerSounds()
-	{
-		LoadSounds();
-		LoadWeaponSounds("Knife"); // Load Knife sounds as example
-	}
-
-	private void LoadWeaponSounds(string weaponName)
-	{
-		if (string.IsNullOrEmpty(weaponName))
-		{
-			Debug.LogWarning("[LoadWeaponSounds] Weapon name is null or empty!");
-			return;
-		}
-
-		string json = TryLoadJsonText("SoF2_Weapons");
-		if (string.IsNullOrEmpty(json))
-		{
-			Debug.Log("[LoadWeaponSounds] Keine SoF2_Weapons.json gefunden!");
-			return;
-		}
-
-		JArray weaponsArray;
-		try
-		{
-			weaponsArray = JArray.Parse(json);
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("[LoadWeaponSounds] JSON Parse Error: " + ex);
-			return;
-		}
-
-		// Find the specific weapon
-		JObject targetWeapon = null;
-		foreach (JObject weaponObj in weaponsArray)
-		{
-			string currentWeaponName = weaponObj.Value<string>("name");
-			if (string.Equals(currentWeaponName, weaponName, StringComparison.OrdinalIgnoreCase))
-			{
-				targetWeapon = weaponObj;
-				break;
-			}
-		}
-
-		if (targetWeapon == null)
-		{
-			Debug.LogWarning($"[LoadWeaponSounds] Weapon '{weaponName}' not found in SoF2_Weapons.json!");
-			return;
-		}
-
-		JObject soundsObj = targetWeapon.Value<JObject>("sounds");
-		if (soundsObj == null)
-		{
-			Debug.LogWarning($"[LoadWeaponSounds] No sounds block found for weapon '{weaponName}'!");
-			return;
-		}
-
-		// Load sounds for each key in the sounds block (ready, swing, toss, etc.)
-		foreach (var soundKeyProp in soundsObj.Properties())
-		{
-			string soundKey = soundKeyProp.Name; // e.g., "ready", "swing", "toss"
-			JObject soundKeyObj = soundKeyProp.Value as JObject;
-			if (soundKeyObj == null) continue;
-
-			// Create dictionary key: "weaponName_soundKey"
-			string dictionaryKey = $"{weaponName}_{soundKey}";
-			
-			// Collect all sound files for this key (sound1, sound2, sound3, etc.)
-			var soundFiles = new List<string>();
-			foreach (var soundProp in soundKeyObj.Properties())
-			{
-				if (soundProp.Value.Type == JTokenType.String)
-				{
-					string soundPath = soundProp.Value.ToString();
-					soundFiles.Add(soundPath);
-				}
-			}
-
-			if (soundFiles.Count == 0)
-			{
-				Debug.LogWarning($"[LoadWeaponSounds] No sound files found for {dictionaryKey}");
-				continue;
-			}
-
-			// Load AudioClips for each sound file
-			var audioClips = new List<AudioClip>();
-			foreach (string soundFile in soundFiles)
-			{
-				AudioClip clip = TryLoadWeaponSoundClip(soundFile);
-				if (clip != null)
-				{
-					audioClips.Add(clip);
-				}
-			}
-
-			if (audioClips.Count > 0)
-			{
-				weaponSounds[dictionaryKey] = audioClips.ToArray();
-				//Debug.Log($"[LoadWeaponSounds] Loaded {audioClips.Count} sounds for {dictionaryKey}");
-			}
-			else
-			{
-				Debug.LogWarning($"[LoadWeaponSounds] No valid AudioClips found for {dictionaryKey}");
-			}
-		}
-
-		Debug.Log($"[LoadWeaponSounds] Loaded {weaponSounds.Count} sound types for weapon '{weaponName}'.");
-	}
-
-	/// <summary>
 	/// Attach the start weapon to the right hand bolt when player spawns
 	/// </summary>
 	private void AttachStartWeapon()
@@ -1927,517 +1731,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 	}
 
-	/// <summary>
-/// Load all landing sounds from Data/my_export.json (falls vorhanden), ansonsten fallback auf uQuake/sound/player/jumps/{material}
-/// Zusätzlich werden optionale Material-Eigenschaften (loudness, density, projectileBounce, friction, damage) eingelesen.
-/// </summary>
-private void LoadSounds()
-{
-    landingSounds.Clear();
-    materialInfos.Clear();
-
-    string json = TryLoadJsonText("SoF2_sounds_per_surface");
-    if (string.IsNullOrEmpty(json))
-    {
-        Debug.Log("[LoadSounds] Keine JSON-Datei für Sounds gefunden!");
-        return;
-    }
-
-    JObject root;
-    try
-    {
-        root = JObject.Parse(json);
-    }
-    catch (Exception ex)
-    {
-        Debug.LogError("[LoadSounds] JSON Parse Error: " + ex);
-        return;
-    }
-
-    foreach (var prop in root.Properties())
-    {
-        string materialName = prop.Name;
-        JObject matObj = prop.Value as JObject;
-        if (matObj == null)
-        {
-            // falls Wert kein Objekt ist, überspringen
-            continue;
-        }
-
-        var info = new MaterialInfo
-        {
-            loudness = TryGetDouble(matObj, "loudness"),
-            density = TryGetDouble(matObj, "density"),
-            projectileBounce = TryGetDouble(matObj, "projectileBounce"),
-            friction = TryGetDouble(matObj, "friction"),
-            damage = TryGetDouble(matObj, "damage")
-        };
-        materialInfos[materialName] = info;
-
-        // land.sound extrahieren (flexibel)
-        string landSound = null;
-        JObject land = matObj.Value<JObject>("land");
-        if (land != null)
-        {
-            JToken soundTok;
-            if (land.TryGetValue("sound", StringComparison.OrdinalIgnoreCase, out soundTok) && soundTok.Type == JTokenType.String)
-            {
-                landSound = soundTok.ToString();
-            }
-            else
-            {
-                // fallback: nimm das erste string-Feld in land (manche Exporte haben unkonventionelle Struktur)
-                foreach (var lp in land.Properties())
-                {
-                    if (lp.Value.Type == JTokenType.String)
-                    {
-                        landSound = lp.Value.ToString();
-                        break;
-                    }
-                }
-            }
-        }
-		string footstepSound = null;
-		JObject footstep = matObj.Value<JObject>("footstep");
-		if (footstep != null)
-		{
-            JToken soundTok;
-            if (footstep.TryGetValue("sound", StringComparison.OrdinalIgnoreCase, out soundTok) && soundTok.Type == JTokenType.String)
-            {
-                footstepSound = soundTok.ToString();
-            }
-            else
-            {
-                // fallback: nimm das erste string-Feld in land (manche Exporte haben unkonventionelle Struktur)
-                foreach (var lp in footstep.Properties())
-                {
-                    if (lp.Value.Type == JTokenType.String)
-                    {
-                        footstepSound = lp.Value.ToString();
-                        break;
-                    }
-                }
-            }
-        }
-        // manchmal steht sound direkt auf oberer Ebene
-        if (string.IsNullOrEmpty(landSound))
-        {
-            if (matObj.TryGetValue("sound", StringComparison.OrdinalIgnoreCase, out JToken sndTok) && sndTok.Type == JTokenType.String)
-            {
-                landSound = sndTok.ToString();
-            }
-        }
-		if (string.IsNullOrEmpty(footstepSound))
-        {
-            if (matObj.TryGetValue("sound", StringComparison.OrdinalIgnoreCase, out JToken sndTok) && sndTok.Type == JTokenType.String)
-            {
-                footstepSound = sndTok.ToString();
-            }
-        }
-        TryLoadLandingAudioClip(materialName, landSound);
-		TryLoadFootstepAudioClip(materialName, footstepSound);
-    }
-	soundsLoaded = true;
-    Debug.Log($"[LoadSounds] {landingSounds.Count} land-sounds, {footstepSounds.Count} footstep-sounds, materialInfos: {materialInfos.Count}");
-}
-
-private void TryLoadFootstepAudioClip(string materialName, string soundName)
-{
-	AudioClip[] clips = null;
-	if (!string.IsNullOrEmpty(soundName))
-    {
-        clips = TryLoadFootstepClipsFromCandidates(soundName);
-    }
-
-    if (clips != null)
-    {
-		footstepSounds[materialName] = clips;
-        //Debug.Log($"[LoadFootstepAudioClip] Loaded '{materialName}' -> {clips}");
-    }
-    else
-    {
-        // optional: nur warnen, nicht spammen
-        //Debug.LogWarning($"[LoadFootstepAudioClip] Kein Clip für '{materialName}' gefunden (soundName='{soundName}')");
-    }
-}
-
-// --- Hilfsmethoden ---
-private void TryLoadLandingAudioClip(string materialName, string soundName)
-{
-    AudioClip clip = null;
-
-    if (!string.IsNullOrEmpty(soundName))
-    {
-        clip = TryLoadLandingClipFromCandidates(soundName);
-    }
-
-    if (clip != null)
-    {
-		landingSounds[materialName] = clip;
-        //Debug.Log($"[LoadLandingAudioClip] Loaded '{materialName}' -> {clip.name}");
-    }
-    else
-    {
-        // optional: nur warnen, nicht spammen
-        // Debug.LogWarning($"[LoadLandingAudioClip] Kein Clip für '{materialName}' gefunden (soundName='{soundName}')");
-    }
-}
-
-private string TryLoadJsonText(string fileName = "SoF2_sounds_per_surface")
-{
-    // 1) Resources/Data/ (TextAsset)
-    TextAsset ta = Resources.Load<TextAsset>("Data/" + fileName);
-    if (ta != null) return ta.text;
-
-    // 2) Assets/Data/ (Editor & Standalone)
-    string path = Path.Combine(Application.dataPath, "Data", fileName + ".json");
-    if (File.Exists(path)) return File.ReadAllText(path);
-
-    return null;
-}
-
-private double? TryGetDouble(JObject obj, string key)
-{
-    if (obj == null) return null;
-    if (obj.TryGetValue(key, StringComparison.OrdinalIgnoreCase, out JToken tok))
-    {
-        if (tok.Type == JTokenType.Float || tok.Type == JTokenType.Integer)
-            return tok.Value<double>();
-        if (tok.Type == JTokenType.String)
-        {
-            if (double.TryParse(tok.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double v))
-                return v;
-        }
-    }
-    return null;
-}
-
-private AudioClip[] TryLoadFootstepClipsFromCandidates(string soundName){
-	if (string.IsNullOrEmpty(soundName)) return null;
-
-	// Baue Kandidaten-Basisnamen analog zur Landing-Variante
-	var baseCandidates = new List<string>
-	{
-		"uQuake/" + soundName
-	};
-
-	var collected = new List<AudioClip>();
-	const int maxPerBase = 3; // Sicherheitslimit max 3 footstep sounds pro Basis
-
-	foreach (var baseName in baseCandidates)
-	{
-		if (string.IsNullOrEmpty(baseName)) continue;
-
-		// Lade alle Clips im Zielordner und filtere per Prefix (z.B. "gravel")
-		string candidate = baseName.TrimStart('/', '\\');
-		candidate = Path.ChangeExtension(candidate, null).Replace('\\', '/');
-		string directoryPath = Path.GetDirectoryName(candidate)?.Replace('\\', '/');
-		string prefix = Path.GetFileName(candidate);
-		if (string.IsNullOrEmpty(directoryPath) || string.IsNullOrEmpty(prefix)) continue;
-
-		var allInFolder = Resources.LoadAll<AudioClip>(directoryPath) ?? Array.Empty<AudioClip>();
-		if (allInFolder.Length == 0) continue;
-
-		// Filtere alle, die mit Prefix beginnen und eine numerische Endung besitzen (prefix + number)
-		var matching = new List<(AudioClip clip, int index)>();
-		foreach (var c in allInFolder)
-		{
-			if (c == null || string.IsNullOrEmpty(c.name)) continue;
-			if (!c.name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
-			string suffix = c.name.Substring(prefix.Length);
-			if (int.TryParse(suffix, out int idx))
-			{
-				matching.Add((c, idx));
-			}
-		}
-
-		if (matching.Count == 0) continue;
-
-		// Sortiere nach Index und begrenze auf maxPerBase
-		matching.Sort((a, b) => a.index.CompareTo(b.index));
-		for (int i = 0; i < matching.Count && i < maxPerBase; i++)
-		{
-			collected.Add(matching[i].clip);
-		}
-	}
-
-	return collected.Count > 0 ? collected.ToArray() : null;
-}
-
-private AudioClip TryLoadLandingClipFromCandidates(string soundName)
-{
-    // Kandidatenliste — passe an deine Projektstruktur an
-    var candidates = new List<string>
-    {
-        "uQuake/" + soundName
-    };
-
-    foreach (var c in candidates)
-    {
-        if (string.IsNullOrEmpty(c)) continue;
-        string resourcePath = c.TrimStart('/', '\\');
-        resourcePath = Path.ChangeExtension(resourcePath, null).Replace('\\', '/');
-        AudioClip clip = Resources.Load<AudioClip>(resourcePath);
-        if (clip != null) return clip;
-    }
-    return null;
-}
-
-private AudioClip TryLoadWeaponSoundClip(string soundName)
-{
-    if (string.IsNullOrEmpty(soundName)) return null;
-
-    // Kandidatenliste für Waffen-Sounds
-    var candidates = new List<string>
-    {
-        "uQuake/" + soundName
-    };
-
-    foreach (var c in candidates)
-    {
-        if (string.IsNullOrEmpty(c)) continue;
-        string resourcePath = c.TrimStart('/', '\\');
-        resourcePath = Path.ChangeExtension(resourcePath, null).Replace('\\', '/');
-        AudioClip clip = Resources.Load<AudioClip>(resourcePath);
-        if (clip != null) return clip;
-    }
-    return null;
-}
-
-private AudioClip[] TryLoadWeaponSoundsFromFolder(string folderPath)
-{
-    if (string.IsNullOrEmpty(folderPath)) return null;
-
-    // Convert folder path to Resources path
-    string resourcePath = folderPath.TrimStart('/', '\\');
-    resourcePath = "uQuake/" + resourcePath;
-    resourcePath = resourcePath.Replace('\\', '/');
-
-    // Load all AudioClips from the folder
-    AudioClip[] allClips = Resources.LoadAll<AudioClip>(resourcePath);
-    if (allClips == null || allClips.Length == 0)
-    {
-        Debug.LogWarning($"[TryLoadWeaponSoundsFromFolder] No AudioClips found in folder '{resourcePath}'");
-        return null;
-    }
-
-    // Filter out null clips and return valid ones
-    var validClips = new List<AudioClip>();
-    foreach (AudioClip clip in allClips)
-    {
-        if (clip != null)
-        {
-            validClips.Add(clip);
-        }
-    }
-
-    Debug.Log($"[TryLoadWeaponSoundsFromFolder] Found {validClips.Count} valid AudioClips in folder '{resourcePath}'");
-    return validClips.Count > 0 ? validClips.ToArray() : null;
-}
-
-	/// <summary>
-	/// Get the material type from the ground mesh's shader_file property
-	/// </summary>
-	private string GetGroundMaterialType(RaycastHit hit)
-	{
-		string detectedMaterial = "concrete"; // Default
-		string detectionMethod = "default";		
-
-		// Try to get Ghoul2Meta component from the hit object
-		if (hit.collider.TryGetComponent<Ghoul2Meta>(out var meta))
-		{
-			// Try to get shader_file property (using new dynamic API)
-			string q3MapMaterialName = meta.Q3MapMaterial; // This uses the convenience property
-			if (!string.IsNullOrEmpty(q3MapMaterialName) && landingSounds.ContainsKey(q3MapMaterialName))
-			{
-				detectedMaterial = q3MapMaterialName;
-				detectionMethod = $"q3MapMaterialName '{q3MapMaterialName}' found in landingSounds";
-			}
-		}
-		else
-		{
-			detectionMethod = $"no Ghoul2Meta, using default for object name: '{hit.collider.gameObject.name}";
-		}
-		//Debug.Log($"Ground material detected as '{detectedMaterial}' via {detectionMethod}");
-		return detectedMaterial;
-	}
-
-	/// <summary>
-	/// Play landing sound based on ground material
-	/// </summary>
-	private void PlayLandingSound(string materialType)
-	{
-		if (!enableLandingSounds || !soundsLoaded || landingSoundSource == null)
-			return;
-
-		if (landingSounds.TryGetValue(materialType, out AudioClip clip))
-		{
-			if (clip == null) return;
-
-			// Set mixer group if available
-			if (sfxGroup != null)
-			{
-				landingSoundSource.outputAudioMixerGroup = sfxGroup;
-			}
-			else
-			{
-				landingSoundSource.outputAudioMixerGroup = null;
-			}
-
-			landingSoundSource.PlayOneShot(clip, landingSoundVolume);
-		}
-	}
-
-/// <summary>
-/// Play footstep sound cycling through step clips per material
-/// </summary>
-private void PlayFootstepSound(string materialType)
-{
-	if (!enableFootstepSounds || !soundsLoaded || footstepSoundSource == null)
-		return;
-
-	if (!footstepSounds.TryGetValue(materialType, out AudioClip[] clips) || clips == null || clips.Length == 0)
-		return;
-
-	if (!footstepNextIndexByMaterial.TryGetValue(materialType, out int nextIndex))
-		nextIndex = 0;
-
-	int safeIndex = 0;
-	if (clips.Length > 0)
-	{
-		safeIndex = Mathf.Abs(nextIndex) % clips.Length;
-	}
-
-	AudioClip clip = clips[safeIndex];
-	if (clip == null) return;
-
-	// Set mixer group if available
-	if (sfxGroup != null)
-	{
-		footstepSoundSource.outputAudioMixerGroup = sfxGroup;
-	}
-	else
-	{
-		footstepSoundSource.outputAudioMixerGroup = null;
-	}
-
-	footstepSoundSource.PlayOneShot(clip, footstepSoundVolume);
-	footstepNextIndexByMaterial[materialType] = safeIndex + 1;
-}
-
-/// <summary>
-/// Play footstep sound and return the duration of the played sound
-/// </summary>
-private float PlayFootstepSoundWithDuration(string materialType)
-{
-	if (!enableFootstepSounds || !soundsLoaded || footstepSoundSource == null)
-		return 0f;
-
-	if (!footstepSounds.TryGetValue(materialType, out AudioClip[] clips) || clips == null || clips.Length == 0)
-	{
-		Debug.LogWarning($"[PlayFootstepSoundWithDuration] No footstep sounds found for material '{materialType}'");
-		return 0f;
-	}
-
-	if (!footstepNextIndexByMaterial.TryGetValue(materialType, out int nextIndex))
-		nextIndex = 0;
-
-	int safeIndex = 0;
-	if (clips.Length > 0)
-	{
-		safeIndex = Mathf.Abs(nextIndex) % clips.Length;
-	}
-
-	AudioClip clip = clips[safeIndex];
-	if (clip == null) return 0f;
-
-	// Set mixer group if available
-	if (sfxGroup != null)
-	{
-		footstepSoundSource.outputAudioMixerGroup = sfxGroup;
-	}
-	else
-	{
-		footstepSoundSource.outputAudioMixerGroup = null;
-	}
-
-	footstepSoundSource.PlayOneShot(clip, footstepSoundVolume);
-	footstepNextIndexByMaterial[materialType] = safeIndex + 1;
-	
-	//Debug.Log($"[PlayFootstepSoundWithDuration] Playing footstep for '{materialType}' - {clip.name} (Duration: {clip.length:F2}s)");
-	return clip.length; // Return the actual duration of the sound
-}
-
-/// <summary>
-/// Play weapon sound cycling through sound clips for the specified weapon and sound type
-/// </summary>
-private void PlayWeaponSound(string weaponName, string soundType)
-{
-	if (!enableWeaponSounds || !soundsLoaded || weaponSoundSource == null)
-		return;
-
-	string soundKey = $"{weaponName}_{soundType}";
-	if (!weaponSounds.TryGetValue(soundKey, out AudioClip[] clips) || clips == null || clips.Length == 0)
-	{
-		Debug.LogWarning($"[PlayWeaponSound] No sounds found for {soundKey}");
-		return;
-	}
-
-	// Play a random sound from the available clips
-	int randomIndex = UnityEngine.Random.Range(0, clips.Length);
-	AudioClip clip = clips[randomIndex];
-	if (clip == null) return;
-
-	// Set mixer group if available
-	if (sfxGroup != null)
-	{
-		weaponSoundSource.outputAudioMixerGroup = sfxGroup;
-	}
-	else
-	{
-		weaponSoundSource.outputAudioMixerGroup = null;
-	}
-
-	weaponSoundSource.PlayOneShot(clip, weaponSoundVolume);
-	//Debug.Log($"[PlayWeaponSound] Playing {soundKey} - {clip.name}");
-}
-
-/// <summary>
-/// Play weapon sound and return the duration of the played sound
-/// </summary>
-private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
-{
-	if (!enableWeaponSounds || !soundsLoaded || weaponSoundSource == null)
-		return 0f;
-
-	string soundKey = $"{weaponName}_{soundType}";
-	if (!weaponSounds.TryGetValue(soundKey, out AudioClip[] clips) || clips == null || clips.Length == 0)
-	{
-		Debug.LogWarning($"[PlayWeaponSoundWithDuration] No sounds found for {soundKey}");
-		return 0f;
-	}
-
-	// Play a random sound from the available clips
-	int randomIndex = UnityEngine.Random.Range(0, clips.Length);
-	AudioClip clip = clips[randomIndex];
-	if (clip == null) return 0f;
-
-	// Set mixer group if available
-	if (sfxGroup != null)
-	{
-		weaponSoundSource.outputAudioMixerGroup = sfxGroup;
-	}
-	else
-	{
-		weaponSoundSource.outputAudioMixerGroup = null;
-	}
-
-	weaponSoundSource.PlayOneShot(clip, weaponSoundVolume);
-	//Debug.Log($"[PlayWeaponSoundWithDuration] Playing {soundKey} - {clip.name} (Duration: {clip.length:F2}s)");
-	
-	return clip.length; // Return the actual duration of the sound
-}
-
 	private void OnGUI()
 	{
 		float scaleFactor = Screen.height / 1080f;
@@ -2461,11 +1754,9 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 
 		// Movement States (vertical layout)
 		GUI.Label(new Rect(x, y, 600, line), $"FPS: {(int)(1f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f))}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"IsGrounded: {isGrounded}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"IsJumping: {isJumping}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"IsSwimming: {isSwimming}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"IsWalking: {isWalking}", valueStyle); y += line;
-
+		GUI.Label(new Rect(x, y, 600, line), $"IsGrounded: {isGrounded}, IsWalking: {isWalking}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"IsJumping: {isJumping}, IsSwimming: {isSwimming}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"IsAttacking: {isAttacking}, IsCrouching: {isCrouching}", valueStyle); y += line;
 		// Airtime display with color coding
 		GUIStyle airtimeStyle = new GUIStyle(valueStyle);
 		if (isJumping)
@@ -2550,13 +1841,15 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 		y += line * 0.5f; // Spacing
 
 		// Input Info
-		GUI.Label(new Rect(x, y, 600, line), $"MoveInput: {moveInput}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Lean: Left={isLeaningLeft} Right={isLeaningRight} Offset={leanOffset}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Lumbar Yaw: Upper={currentUpperLumbarYaw:F1}° Lower={currentLowerLumbarYaw:F1}°", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Lumbar Pitch: Upper={currentUpperLumbarPitch:F1}° Lower={currentLowerLumbarPitch:F1}°", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Movement Dir: {lastMoveDirIndex} Idle Offset: {currentMovementIdleOffset:F1}°", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Look Speed: {smoothedMouseSpeed:F1}°/s Legs Smooth: {dynamicLegsRotationSmooth:F1}", valueStyle); y += line;
-		y += line * 0.5f; // Spacing
+		if(debugInputInfo){
+			GUI.Label(new Rect(x, y, 600, line), $"MoveInput: {moveInput}", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Lean: Left={isLeaningLeft} Right={isLeaningRight} Offset={leanOffset}", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Lumbar Yaw: Upper={currentUpperLumbarYaw:F1}° Lower={currentLowerLumbarYaw:F1}°", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Lumbar Pitch: Upper={currentUpperLumbarPitch:F1}° Lower={currentLowerLumbarPitch:F1}°", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Movement Dir: {lastMoveDirIndex} Idle Offset: {currentMovementIdleOffset:F1}°", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Look Speed: {smoothedMouseSpeed:F1}°/s Legs Smooth: {dynamicLegsRotationSmooth:F1}", valueStyle); y += line;
+			y += line * 0.5f; // Spacing
+		}
 
 		// Touched Objects Debug
 		GUI.Label(new Rect(x, y, 600, line), "Last Touched Objects:", headerStyle); y += line * 1.2f;
@@ -2573,37 +1866,38 @@ private float PlayWeaponSoundWithDuration(string weaponName, string soundType)
 		}
 		y += line * 0.5f; // Spacing
 
-		// Landing Sound Info
-		GUI.Label(new Rect(x, y, 600, line), $"Sound System Loaded: {soundsLoaded}", headerStyle); y += line * 1.2f;
-		GUI.Label(new Rect(x, y, 600, line), $"SFX Group: {(sfxGroup != null ? sfxGroup.name : "None")}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Landing enabled: {enableLandingSounds} Footstep enabled: {enableFootstepSounds}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Landing Volume: {landingSoundVolume:F2} Footstep Volume: {footstepSoundVolume:F2}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Footstep Delay: {firstFootstepDelayMs}ms (First played: {hasPlayedFirstFootstep})", valueStyle); y += line;
-		if (lastGroundHit.collider != null)
-			GUI.Label(new Rect(x, y, 600, line), $"Last Ground Material: {GetGroundMaterialType(lastGroundHit)}", valueStyle); y += line;
-		y += line * 0.5f; // Spacing
+		if (lastGroundHit.collider != null && soundSystem != null){
+			GUI.Label(new Rect(x, y, 600, line), $"Last Ground Material Hit: {soundSystem.GetGroundMaterialType(lastGroundHit)}", valueStyle); y += line;
+			y += line * 0.5f; // Spacing
+		}
 
 		// Physics Settings
-		GUI.Label(new Rect(x, y, 600, line), $"Accel: {pm_accelerate}  AirAccel: {pm_airaccelerate}  Friction: {pm_friction}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Step: Max={pm_maxstep}  Size={pm_stepsize}  Barrier={pm_maxbarrier}", valueStyle); y += line;
+		if (drawPhysicsDebugGUI)
+		{
+			GUI.Label(new Rect(x, y, 600, line), $"Accel: {pm_accelerate}  AirAccel: {pm_airaccelerate}  Friction: {pm_friction}", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Step: Max={pm_maxstep}  Size={pm_stepsize}  Barrier={pm_maxbarrier}", valueStyle); y += line;
+		}
 		
 		// Capsule Settings
-		GUI.Label(new Rect(x, y, 600, line), $"Capsule Radius: {capsuleRadius:F2} Height: {capsuleHeight:F2}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Capsule Center: {capsuleCenter}", valueStyle); y += line;
-		// Ground check distance with dynamic calculation
-		float dynamicCastDistance = groundCheckDistance + 0.01f + Mathf.Abs(velocity.y) * Time.deltaTime;
-		GUI.Label(new Rect(x, y, 600, line), $"Ground Check Distance: {groundCheckDistance:F2} (Dynamic: {dynamicCastDistance:F2})", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"Visual Collider: {(showVisualCollider ? "ON" : "OFF")}", valueStyle); y += line;
-		
-		// Auto Sizing Info
-		if (autoSizeCapsule)
+		if (drawCapsuleDebugGUI)
 		{
-			GUI.Label(new Rect(x, y, 600, line), $"Auto Sizing: ON (Base: {baseCapsuleHeight:F2}x{baseCapsuleRadius:F2})", valueStyle); y += line;
-			GUI.Label(new Rect(x, y, 600, line), $"Dynamic Sizing: {(dynamicCapsuleSizing ? "ON" : "OFF")} Crouch: {(isCrouching ? "ON" : "OFF")}", valueStyle); y += line;
-		}
-		else
-		{
-			GUI.Label(new Rect(x, y, 600, line), "Auto Sizing: OFF", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Capsule Radius: {capsuleRadius:F2} Height: {capsuleHeight:F2}", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Capsule Center: {capsuleCenter}", valueStyle); y += line;
+			// Ground check distance with dynamic calculation
+			float dynamicCastDistance = groundCheckDistance + 0.01f + Mathf.Abs(velocity.y) * Time.deltaTime;
+			GUI.Label(new Rect(x, y, 600, line), $"Ground Check Distance: {groundCheckDistance:F2} (Dynamic: {dynamicCastDistance:F2})", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Visual Collider: {(showVisualCollider ? "ON" : "OFF")}", valueStyle); y += line;
+			
+			// Auto Sizing Info
+			if (autoSizeCapsule)
+			{
+				GUI.Label(new Rect(x, y, 600, line), $"Auto Sizing: ON (Base: {baseCapsuleHeight:F2}x{baseCapsuleRadius:F2})", valueStyle); y += line;
+				GUI.Label(new Rect(x, y, 600, line), $"Dynamic Sizing: {(dynamicCapsuleSizing ? "ON" : "OFF")} Crouch: {(isCrouching ? "ON" : "OFF")}", valueStyle); y += line;
+			}
+			else
+			{
+				GUI.Label(new Rect(x, y, 600, line), "Auto Sizing: OFF", valueStyle); y += line;
+			}
 		}
 	}
 	

@@ -895,7 +895,6 @@ GameObject:
   - component: {fileID: 338497852}
   - component: {fileID: 338497856}
   - component: {fileID: 338497859}
-  - component: {fileID: 338497860}
   m_Layer: 7
   m_Name: MyPlayer
   m_TagString: Player
@@ -971,7 +970,6 @@ MonoBehaviour:
   showVisualCollider: 1
   colliderColor: {r: 0, g: 1, b: 0, a: 0.3}
   colliderMaterial: {fileID: 0}
-  testAlternativeAccelaration: 0
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -993,7 +991,6 @@ MonoBehaviour:
   pm_gravity: 800
   jumpVelocity: 270
   rotationSpeed: 14
-  totalAirTimeGlitchSuspicion: 0.05
   yawTarget: {fileID: 26258238}
   pitchTarget: {fileID: 18061825}
   cameraTransform: {fileID: 330585546}
@@ -1044,18 +1041,6 @@ MonoBehaviour:
   rollLeanDegrees: 25
   pitchLeanDegrees: 20
   leanSmooth: 8
---- !u!114 &338497860
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 338497851}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54098ebc836394f4ab732631e979ed4c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerSoundSystem
   drawSoundSystemDebugGUI: 0
   sfxGroup: {fileID: -8391317239010869263, guid: 35b35eacbfe2fac489c15d963aba1963, type: 2}
   landingSoundVolume: 1
@@ -1065,6 +1050,7 @@ MonoBehaviour:
   enableFootstepSounds: 1
   enableWeaponSounds: 1
   firstFootstepDelayMs: 100
+  testAlternativeAccelaration: 0
 --- !u!1 &377181573 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -5161800087126053317, guid: 5c6851317eb7fd640ae0c7fa19424875, type: 3}
