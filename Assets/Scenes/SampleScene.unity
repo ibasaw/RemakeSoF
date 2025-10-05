@@ -896,6 +896,7 @@ GameObject:
   - component: {fileID: 338497856}
   - component: {fileID: 338497859}
   - component: {fileID: 338497860}
+  - component: {fileID: 338497861}
   m_Layer: 7
   m_Name: MyPlayer
   m_TagString: Player
@@ -955,27 +956,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f42a7bfbd09bad047b46f2781bb13c7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MyPlayerControllerCustom
-  drawCapsuleDebugGUI: 0
-  capsuleRadius: 0
-  capsuleHeight: 0
-  capsuleCenter: {x: 0, y: 0, z: 0}
-  autoSizeCapsule: 1
-  capsuleRadiusMultiplier: 0.4
-  capsuleHeightOffset: 10
-  minCapsuleRadius: 3
-  maxCapsuleRadius: 15
-  minCapsuleHeight: 50
-  maxCapsuleHeight: 100
-  crouchHeightMultiplier: 0.6
-  dynamicCapsuleSizing: 1
-  showVisualCollider: 1
-  colliderColor: {r: 0, g: 1, b: 0, a: 0.3}
-  colliderMaterial: {fileID: 0}
   testAlternativeAccelaration: 0
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  groundCheckDistance: 1
   drawPhysicsDebugGUI: 0
   pm_maxsteepness: 0.7
   pm_maxstep: 18
@@ -1040,7 +1024,7 @@ MonoBehaviour:
   maxLegsRotationSmooth: 20
   mouseSpeedMultiplier: 2
   mouseSpeedSmooth: 10
-  debugInputInfo: 0
+  debugInputInfo: 1
   rollLeanDegrees: 25
   pitchLeanDegrees: 20
   leanSmooth: 8
@@ -1065,6 +1049,35 @@ MonoBehaviour:
   enableFootstepSounds: 1
   enableWeaponSounds: 1
   firstFootstepDelayMs: 100
+--- !u!114 &338497861
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 338497851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 165913f278f857448ab5f7fb39f70457, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MyPlayerColliderSystem
+  drawCapsuleDebugGUI: 0
+  capsuleRadius: 0
+  capsuleHeight: 0
+  capsuleCenter: {x: 0, y: 0, z: 0}
+  groundCheckDistance: 1
+  showVisualCollider: 1
+  colliderColor: {r: 0, g: 1, b: 0, a: 0.3}
+  colliderMaterial: {fileID: 0}
+  autoSizeCapsule: 1
+  dynamicCapsuleSizing: 1
+  capsuleRadiusMultiplier: 0.4
+  capsuleHeightOffset: 10
+  minCapsuleRadius: 3
+  maxCapsuleRadius: 15
+  minCapsuleHeight: 50
+  maxCapsuleHeight: 100
+  crouchHeightMultiplier: 0.6
 --- !u!1 &377181573 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -5161800087126053317, guid: 5c6851317eb7fd640ae0c7fa19424875, type: 3}

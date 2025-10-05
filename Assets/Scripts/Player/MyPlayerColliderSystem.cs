@@ -15,8 +15,15 @@ using System.IO;
 [DisallowMultipleComponent]
 public class MyPlayerColliderSystem : MonoBehaviour
 {
-    [Header("Visual Collider Debug")]
+	// CharacterController removed - use capsule-based manual movement
+	[Header("Capsule Settings (CharacterController SoF2 values)")]
 	[SerializeField] private bool drawCapsuleDebugGUI = false;
+	[SerializeField] private float capsuleRadius = 0f;  
+	[SerializeField] private float capsuleHeight = 0f;
+	[SerializeField] private Vector3 capsuleCenter = new Vector3(0, 0, 0);  // Center at half height
+	[SerializeField] private float groundCheckDistance = 1f;  // Distance to check for ground 1 ist perfekt erstmal.
+
+    [Header("Visual Collider Debug")]
 	[SerializeField] private bool showVisualCollider = true;
 	[SerializeField] private Color colliderColor = new Color(0, 1, 0, 0.3f);  // Semi-transparent green
 	[SerializeField] private Material colliderMaterial;
@@ -48,6 +55,60 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	private float baseCapsuleRadius;
 	private Vector3 baseCapsuleCenter;
 
+	// --- Public simple getters (geben die aktuellen internen Werte zurück) ---
+	public float GetCurrentCapsuleRadius()
+	{
+		return capsuleRadius;
+	}
+
+	public float GetCurrentCapsuleHeight()
+	{
+		return capsuleHeight;
+	}
+
+	public Vector3 GetCurrentCapsuleCenter()
+	{
+		return capsuleCenter;
+	}
+
+	public float GetCurrentGroundCheckDistance()
+	{
+		return groundCheckDistance;
+	}
+
+	// --- Helper: berechnete/predicted Werte berücksichtigen AutoSizing / Crouch (ohne internen State zu ändern) ---
+	/// <summary>
+	/// Liefert die effektiven Capsule-Werte, wie sie aktuell gelten würden.
+	/// Wenn autoSizeCapsule aktiv ist, verwendet die Methode die gespeicherten baseCapsule*-Werte.
+	/// Optional kannst du isCrouching=true setzen, um die crouch-Variation zu bekommen.
+	/// </summary>
+	public void GetPredictedCapsule(out float outHeight, out float outRadius, out Vector3 outCenter, bool isCrouching = false)
+	{
+		// Standard: aktuelle Werte
+		outHeight = capsuleHeight;
+		outRadius = capsuleRadius;
+		outCenter = capsuleCenter;
+
+		// Wenn Auto-Sizing aktiv ist, benutze die berechneten base-Werte (falls vorhanden)
+		if (autoSizeCapsule)
+		{
+			// Falls baseCapsuleHeight/-Radius noch 0 (nicht berechnet), benutze die vorhandenen Werte als Fallback
+			float baseH = (baseCapsuleHeight > 0f) ? baseCapsuleHeight : outHeight;
+			float baseR = (baseCapsuleRadius > 0f) ? baseCapsuleRadius : outRadius;
+
+			outHeight = baseH;
+			outRadius = baseR;
+			outCenter = new Vector3(0f, outHeight * 0.5f, 0f);
+
+			if (dynamicCapsuleSizing && isCrouching)
+			{
+				outHeight = outHeight * crouchHeightMultiplier;
+				outCenter = new Vector3(0f, outHeight * 0.5f, 0f);
+			}
+		}
+	}
+
+
 	private void OnGUI(){
 		float scaleFactor = Screen.height / 1080f;
 		GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scaleFactor, scaleFactor, 1f));
@@ -68,6 +129,11 @@ public class MyPlayerColliderSystem : MonoBehaviour
 		// Capsule Settings
 		if (drawCapsuleDebugGUI)
 		{
+			GUI.Label(new Rect(x, y, 600, line), $"Capsule Radius: {capsuleRadius:F2} Height: {capsuleHeight:F2}", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Capsule Center: {capsuleCenter}", valueStyle); y += line;
+			GUI.Label(new Rect(x, y, 600, line), $"Current Position: {transform.position}", valueStyle); y += line;
+			//float dynamicCastDistance = groundCheckDistance + 0.01f + Mathf.Abs(velocity.y) * Time.deltaTime;
+			GUI.Label(new Rect(x, y, 600, line), $"Ground Check Distance: {groundCheckDistance:F2}", valueStyle); y += line; // (Dynamic: {dynamicCastDistance:F2})
 			GUI.Label(new Rect(x, y, 600, line), $"Visual Collider: {(showVisualCollider ? "ON" : "OFF")}", valueStyle); y += line;
 			// Auto Sizing Info
 			if (autoSizeCapsule)
@@ -85,7 +151,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
     /// <summary>
 	/// Initialize the visual collider representation
 	/// </summary>
-	public void InitializeVisualCollider(float radius, float height)
+	public void InitializeVisualCollider()
 	{
 		if (!showVisualCollider) return;
 		
@@ -101,7 +167,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 		visualColliderRenderer = visualColliderObject.AddComponent<MeshRenderer>();
 		
 		// Create capsule mesh
-		visualColliderMeshFilter.mesh = CreateCapsuleMesh(radius, height);
+		visualColliderMeshFilter.mesh = CreateCapsuleMesh();
 		
 		// Set up material
 		if (colliderMaterial == null)
@@ -119,7 +185,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	/// <summary>
 	/// Initialize the visual ground check representation
 	/// </summary>
-	public void InitializeVisualGroundCheck(float capsuleRadius, float groundCheckDistance)
+	public void InitializeVisualGroundCheck()
 	{
 		if (!showVisualCollider) return;
 		
@@ -135,7 +201,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 		visualGroundCheckRenderer = visualGroundCheckObject.AddComponent<MeshRenderer>();
 		
 		// Create ground check mesh
-		visualGroundCheckMeshFilter.mesh = CreateGroundCheckMesh(capsuleRadius, groundCheckDistance);
+		visualGroundCheckMeshFilter.mesh = CreateGroundCheckMesh();
 		
 		// Set up material for ground check (yellow/cyan)
 		Material groundCheckMaterial = new Material(Shader.Find("Unlit/Color"));
@@ -149,11 +215,17 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	/// <summary>
 	/// Create a capsule mesh for visual representation
 	/// </summary>
-	private Mesh CreateCapsuleMesh(float radius, float height, int segments = 16, int rings = 8)
+	private Mesh CreateCapsuleMesh()
 	{
 		Mesh mesh = new Mesh();
 		mesh.name = "CapsuleVisual";
-		
+
+		// Capsule parameters
+		int segments = 16;
+		int rings = 8;
+		float radius = capsuleRadius;
+		float height = capsuleHeight;
+
 		// Calculate vertices
 		List<Vector3> vertices = new List<Vector3>();
 		List<Vector2> uvs = new List<Vector2>();
@@ -251,13 +323,13 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	/// <summary>
 	/// Create a ground check mesh for visual representation
 	/// </summary>
-	private Mesh CreateGroundCheckMesh(float capsuleRadius, float groundCheckDistance, int capsuleSegments = 16)
+	private Mesh CreateGroundCheckMesh()
 	{
 		Mesh mesh = new Mesh();
 		mesh.name = "GroundCheckVisual";
 		
 		// Ground check parameters
-		int segments = capsuleSegments;
+		int segments = 16;
 		float radius = capsuleRadius * 0.9f; // Slightly smaller than capsule
 		float height = groundCheckDistance;
 		
@@ -328,7 +400,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	/// <summary>
 	/// Update the visual collider position and visibility
 	/// </summary>
-	public void UpdateVisualCollider(bool isGrounded, Vector3 capsuleCenter)
+	public void UpdateVisualCollider(bool isGrounded)
 	{
 		if (visualColliderObject == null) return;
 		
@@ -352,7 +424,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	/// <summary>
 	/// Update the visual ground check position and visibility
 	/// </summary>
-	public void UpdateVisualGroundCheck(bool isGrounded, float capsuleHeight, float capsuleRadius)
+	public void UpdateVisualGroundCheck(bool isGrounded)
 	{
 		if (visualGroundCheckObject == null) return;
 		
@@ -377,15 +449,14 @@ public class MyPlayerColliderSystem : MonoBehaviour
 		// Update mesh if ground check distance changed
 		if (visualGroundCheckMeshFilter != null)
 		{
-			visualGroundCheckMeshFilter.mesh = CreateGroundCheckMesh(capsuleRadius, capsuleHeight);
+			visualGroundCheckMeshFilter.mesh = CreateGroundCheckMesh();
 		}
 	}
 	
 	/// <summary>
 	/// Calculate capsule size automatically based on character bones
 	/// </summary>
-	public void CalculateAutoCapsuleSize(Transform cranium, Transform pelvis, Transform leftHandBolt, Transform rightHandBolt,
-	float capsuleHeight, float capsuleRadius, Vector3 capsuleCenter)
+	public void CalculateAutoCapsuleSize(Transform cranium, Transform pelvis, Transform leftHandBolt, Transform rightHandBolt)
 	{
 		// Auto-size capsule if enabled
 		if (autoSizeCapsule)
@@ -400,7 +471,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 			float characterHeight = Vector3.Distance(pelvis.position, cranium.position);
 			
 			// Calculate character width using shoulder bones or model bounds
-			float characterWidth = CalculateCharacterWidth(leftHandBolt, rightHandBolt, capsuleRadius);
+			float characterWidth = CalculateCharacterWidth(leftHandBolt, rightHandBolt);
 			
 			// Calculate new capsule dimensions
 			float newHeight = characterHeight + capsuleHeightOffset;
@@ -423,7 +494,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 			// Update visual collider if it exists
 			if (visualColliderObject != null)
 			{
-				UpdateVisualColliderMesh(capsuleRadius, capsuleHeight);
+				UpdateVisualColliderMesh();
 			}
 			
 			Debug.Log($"[CalculateAutoCapsuleSize] Auto-sized capsule - Height: {newHeight:F2}, Radius: {newRadius:F2}, Center: {capsuleCenter}");
@@ -433,13 +504,13 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	/// <summary>
 	/// Calculate character width for capsule radius
 	/// </summary>
-	private float CalculateCharacterWidth(Transform leftHandBolt, Transform rightHandBolt , float capsuleRadius, float shoulderWidthScale = 0.6f)
+	private float CalculateCharacterWidth(Transform leftHandBolt, Transform rightHandBolt)
 	{
 		// Try to use shoulder bones if available
 		if (leftHandBolt != null && rightHandBolt != null)
 		{
 			float shoulderWidth = Vector3.Distance(leftHandBolt.position, rightHandBolt.position);
-			return shoulderWidth * shoulderWidthScale; // Use 60% of shoulder width for capsule radius
+			return shoulderWidth * 0.6f; // Use 60% of shoulder width for capsule radius
 		}
 		
 		// Fallback: use model bounds
@@ -465,24 +536,24 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	/// <summary>
 	/// Update visual collider mesh with new dimensions
 	/// </summary>
-	private void UpdateVisualColliderMesh(float radius, float height)
+	private void UpdateVisualColliderMesh()
 	{
 		if (visualColliderMeshFilter != null)
 		{
-			visualColliderMeshFilter.mesh = CreateCapsuleMesh(radius, height);
+			visualColliderMeshFilter.mesh = CreateCapsuleMesh();
 		}
 		
 		// Also update ground check mesh
 		if (visualGroundCheckMeshFilter != null)
 		{
-			visualGroundCheckMeshFilter.mesh = CreateGroundCheckMesh(radius, height);
+			visualGroundCheckMeshFilter.mesh = CreateGroundCheckMesh();
 		}
 	}
 	
 	/// <summary>
 	/// Update capsule size based on current state (crouching/standing)
 	/// </summary>
-	public void UpdateCapsuleSizeForState(bool isCrouching, float capsuleHeight, float capsuleRadius, Vector3 capsuleCenter)
+	public void UpdateCapsuleSizeForState(bool isCrouching)
 	{
 		if (!dynamicCapsuleSizing || !autoSizeCapsule) return;
 		
@@ -502,7 +573,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 		// Update visual collider if it exists
 		if (visualColliderObject != null)
 		{
-			UpdateVisualColliderMesh(capsuleRadius, capsuleHeight);
+			UpdateVisualColliderMesh();
 		}
 	}
 	
