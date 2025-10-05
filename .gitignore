@@ -8,3 +8,8 @@ Assets/Resources/uQuake
 Assets/Packages
 *.fbx
 *.csproj
+*.sln
+*.config
+Packages
+ProjectSettings
+UserSettings
