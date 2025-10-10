@@ -10,7 +10,7 @@ public class GameServer : MonoBehaviour
     void Awake()
     {
         var servers = FindObjectsByType<GameServer>(
-            FindObjectsInactive.Exclude, 
+            FindObjectsInactive.Exclude,
             FindObjectsSortMode.None
         );
 
@@ -42,7 +42,17 @@ public class GameServer : MonoBehaviour
         }
 
         // Starte Netcode Server
-        NetworkManager.Singleton.StartServer();
+        var args = System.Environment.GetCommandLineArgs();
+        foreach (var a in args)
+        {
+            if (a == "-role=server") { NetworkManager.Singleton.StartServer(); return; }
+            if (a == "-role=host") { NetworkManager.Singleton.StartHost(); return; }
+            if (a == "-role=client") { NetworkManager.Singleton.StartClient(); return; }
+        }
+// default: Editor host for convenience
+#if UNITY_EDITOR
+        NetworkManager.Singleton.StartHost();
+#endif
         isRunning = true;
         Debug.Log("[GameServer] NetworkManager Server gestartet!");
         // IP und Port aus Transport auslesen (Unity Transport)

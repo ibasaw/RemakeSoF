@@ -65,47 +65,104 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Player\MyPlayerColliderSystem.cs" />
     <Compile Include="Assets\Scripts\Models\VoiceProfile.cs" />
-    <Compile Include="Assets\Scripts\MeshVisibilityLogger.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Core\BaseApplication.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Characters\ICharacter.cs" />
     <Compile Include="Assets\Scripts\AimCameraController.cs" />
-    <Compile Include="Assets\Scripts\Serializable\AmmoData.cs" />
+    <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\ClientConnectedState.cs" />
     <Compile Include="Assets\Scripts\Models\NPCParsing.cs" />
-    <Compile Include="Assets\Scripts\Player\MyPlayerBoltOnSystem.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ServerPlayerCharacter.cs" />
     <Compile Include="Assets\Scripts\Models\Enums\Rank.cs" />
     <Compile Include="Assets\Scripts\CameraSwitcher.cs" />
-    <Compile Include="Assets\Scripts\Serializable\FootstepData.cs" />
-    <Compile Include="Assets\Scripts\ServiceHelper.cs" />
-    <Compile Include="Assets\Scripts\Models\Enums\VoiceReport.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\ServerAISpawner.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Controllers\MatchController.cs" />
     <Compile Include="Assets\Scripts\MyPlayerController.cs" />
-    <Compile Include="Assets\Scripts\IMyPlayerStatus.cs" />
     <Compile Include="Assets\Scripts\Ghoul2Meta.cs" />
-    <Compile Include="Assets\GameServer\Scripts\GameServer.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Views\GameMenuView.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Views\MatchRecapView.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Core\Element.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\MainMenuView.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Models\ClientConnectingModel.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\ClientConnectingView.cs" />
     <Compile Include="Assets\Scripts\Player\MyPlayerSoundSystem.cs" />
-    <Compile Include="Assets\Scripts\BGPlayer.cs" />
-    <Compile Include="Assets\Scripts\Utils\JsonDataReader.cs" />
-    <Compile Include="Assets\Scripts\LoginController.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ClientPlayerColor.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\ClientConnectingController.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\NetworkedAICharacter.cs" />
     <Compile Include="Assets\Scripts\AutoBoundsAdjuster.cs" />
     <Compile Include="Assets\Scripts\Models\BoundsProfile.cs" />
     <Compile Include="Assets\Scripts\UI\UIToolkitCrosshair.cs" />
     <Compile Include="Assets\Scripts\SetUpdateWhenOffscreenEditor.cs" />
-    <Compile Include="Assets\Scripts\BgPublic.cs" />
-    <Compile Include="Assets\Scripts\MeasureRootMotionSpeed.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\GameplayObjects\SwitchedDoor.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\NetcodeHooks.cs" />
     <Compile Include="Assets\Scripts\SkinnedBoundsSafeApplier.cs" />
-    <Compile Include="Assets\AuthServer\AuthServerManager.cs" />
-    <Compile Include="Assets\AuthServer\Models\User.cs" />
-    <Compile Include="Assets\Scripts\Models\Enums\Occupation.cs" />
+    <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionEvents.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Core\Controller.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\DirectIPController.cs" />
     <Compile Include="Assets\Scripts\Models\Inventory.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\GameApplication.cs" />
     <Compile Include="Assets\Scripts\Player\MyPlayerWeaponSystem.cs" />
-    <Compile Include="Assets\Scripts\Models\Stance.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\MainMenuController.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\LoginView.cs" />
     <Compile Include="Assets\Scripts\AvatarActions.cs" />
-    <Compile Include="Assets\Scripts\Models\CharacterTemplate.cs" />
-    <Compile Include="Assets\Scripts\AddMeshColliders.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Core\View.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\MetagameController.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Views\MatchView.cs" />
+    <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\ServerListeningState.cs" />
     <Compile Include="Assets\Scripts\Models\SkinProfile.cs" />
     <Compile Include="Assets\Scripts\Serializable\LandingData.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\NetworkedGameState.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Models\MetagameModel.cs" />
     <Compile Include="Assets\Scripts\Player\MyPlayerControllerCustom.cs" />
     <Compile Include="Assets\Scripts\AddAndCombimeMeshColliders.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Controllers\GameController.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\GameEvents.cs" />
+    <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\StartingServerState.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\LoginController.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Shared\ConfigurationManager.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Controllers\MatchRecapController.cs" />
+    <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionManager.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Views\GameView.cs" />
+    <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\ClientConnectingState.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\MatchmakerController.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Shared\CommandLineArgumentsParser.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\Patrol.cs" />
+    <Compile Include="Assets\Scripts\MeshVisibilityLogger.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Models\GameModel.cs" />
+    <Compile Include="Assets\Scripts\Serializable\AmmoData.cs" />
+    <Compile Include="Assets\Scripts\Player\MyPlayerBoltOnSystem.cs" />
+    <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\OnlineState.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\ServerAICharacter.cs" />
+    <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\OfflineState.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Core\Model.cs" />
+    <Compile Include="Assets\Scripts\Serializable\FootstepData.cs" />
+    <Compile Include="Assets\Scripts\Models\Enums\VoiceReport.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ServerPlayerSpawnPoints.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\NetworkedPlayerCharacter.cs" />
+    <Compile Include="Assets\Scripts\IMyPlayerStatus.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\ClientAICharacter.cs" />
+    <Compile Include="Assets\GameServer\Scripts\GameServer.cs" />
+    <Compile Include="Assets\Scripts\BGPlayer.cs" />
+    <Compile Include="Assets\Scripts\Utils\JsonDataReader.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\MetagameApplication.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ClientPlayerCharacter.cs" />
+    <Compile Include="Assets\Scripts\BgPublic.cs" />
+    <Compile Include="Assets\Scripts\MeasureRootMotionSpeed.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\MetagameView.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\MetagameEvents.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Shared\CoroutinesHelper.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\RegisterController.cs" />
+    <Compile Include="Assets\Scripts\Models\Enums\Occupation.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\DirectIPView.cs" />
+    <Compile Include="Assets\Scripts\Models\Stance.cs" />
+    <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\ConnectionState.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Shared\ProfileManager.cs" />
+    <Compile Include="Assets\Scripts\Models\CharacterTemplate.cs" />
+    <Compile Include="Assets\Scripts\AddMeshColliders.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Core\EventManager.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Game\Controllers\GameMenuController.cs" />
+    <Compile Include="Assets\Scripts\Runtime\ApplicationLifecycle\ApplicationEntryPoint.cs" />
     <Compile Include="Assets\Scripts\Models\NPCStats.cs" />
     <Compile Include="Assets\Scripts\Serializable\MaterialInfo.cs" />
-    <Compile Include="Assets\AuthServer\MongoUserStore.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\MatchmakerView.cs" />
     <Compile Include="Assets\Scripts\SkeletonConfig.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -134,16 +191,19 @@
     <None Include="Assets\Resources\uQuake\shaders\metashader.shader" />
     <None Include="Assets\Packages\System.Security.Cryptography.Cng.4.5.0\THIRD-PARTY-NOTICES.TXT" />
     <None Include="Assets\Packages\System.Diagnostics.DiagnosticSource.6.0.2\lib\netstandard2.0\System.Diagnostics.DiagnosticSource.xml" />
+    <None Include="Assets\UI Toolkit\UnityStyleSheet.uss" />
     <None Include="Assets\Packages\System.IdentityModel.Tokens.Jwt.8.14.0\lib\netstandard2.0\System.IdentityModel.Tokens.Jwt.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\de\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\ko\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Resources\uQuake\shaders\fat.shader" />
     <None Include="Assets\Packages\System.IdentityModel.Tokens.Jwt.8.14.0\lib\netstandard2.0\System.IdentityModel.Tokens.Jwt.xml" />
+    <None Include="Assets\UI Toolkit\ClientConnectingView\ClientConnectingView.uxml" />
     <None Include="Assets\Resources\uQuake\shaders\finca.shader" />
     <None Include="Assets\Packages\System.Runtime.CompilerServices.Unsafe.6.0.0\THIRD-PARTY-NOTICES.TXT" />
     <None Include="Assets\Packages\SharpCompress.0.30.1\lib\netstandard2.1\SharpCompress.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\it\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\ja\System.Text.Json.SourceGeneration.resources.dll" />
+    <None Include="Assets\UI Toolkit\LoginView\LoginView.uxml" />
     <None Include="Assets\Resources\uQuake\scripts\kam6\ambush_one.txt" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.4\cs\tr\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Resources\uQuake\shaders\female_armor.shader" />
@@ -195,6 +255,7 @@
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\zh-Hant\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.4\cs\es\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\UI\Uss\LoginUI.uss" />
+    <None Include="Assets\UI Toolkit\MatchView\MatchView.uxml" />
     <None Include="Assets\Packages\System.Security.Principal.Windows.5.0.0\lib\netstandard2.0\System.Security.Principal.Windows.dll" />
     <None Include="Assets\Resources\uQuake\ext_data\outfitting\temp_airport.txt" />
     <None Include="Assets\Resources\uQuake\scripts\kam6\el_downb.txt" />
@@ -213,6 +274,7 @@
     <None Include="Assets\Packages\System.Text.Encodings.Web.8.0.0\useSharedDesignerContext.txt" />
     <None Include="Assets\Packages\Snappier.1.0.0\lib\netstandard2.1\Snappier.xml" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\THIRD-PARTY-NOTICES.TXT" />
+    <None Include="Assets\UI Toolkit\MatchRecapView\MatchRecapView.uxml" />
     <None Include="Assets\Packages\Microsoft.Bcl.AsyncInterfaces.8.0.0\lib\netstandard2.1\Microsoft.Bcl.AsyncInterfaces.dll" />
     <None Include="Assets\Resources\uQuake\shaders\snow.shader" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\fr\System.Text.Json.SourceGeneration.resources.dll" />
@@ -221,8 +283,8 @@
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\pt-BR\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Packages\Microsoft.Bcl.AsyncInterfaces.8.0.0\LICENSE.TXT" />
     <None Include="Assets\Resources\uQuake\shaders\weapons.shader" />
-    <None Include="Assets\UI\LoginUI.uxml" />
     <None Include="Assets\Resources\uQuake\ext_data\outfitting\liner1.txt" />
+    <None Include="Assets\UI Toolkit\DirectIPView\DirectIPView.uxml" />
     <None Include="Assets\Packages\Microsoft.IdentityModel.JsonWebTokens.8.14.0\lib\netstandard2.0\Microsoft.IdentityModel.JsonWebTokens.xml" />
     <None Include="Assets\Resources\uQuake\shaders\prague.shader" />
     <None Include="Assets\Resources\uQuake\ui\hud.txt" />
@@ -241,6 +303,7 @@
     <None Include="Assets\Resources\uQuake\shaders\sprites.shader" />
     <None Include="Assets\Packages\Microsoft.Extensions.Logging.Abstractions.2.1.0\lib\netstandard2.0\Microsoft.Extensions.Logging.Abstractions.xml" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\fr\System.Text.Json.SourceGeneration.resources.dll" />
+    <None Include="Assets\UI Toolkit\MatchmakerView\MatchmakerView.uxml" />
     <None Include="Assets\Resources\uQuake\ext_data\outfitting\shop5.txt" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\es\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Packages\System.Security.Principal.Windows.5.0.0\lib\netstandard2.0\System.Security.Principal.Windows.xml" />
@@ -274,6 +337,7 @@
     <None Include="Assets\Packages\Microsoft.Bcl.TimeProvider.8.0.1\lib\netstandard2.0\Microsoft.Bcl.TimeProvider.xml" />
     <None Include="Assets\Resources\uQuake\shaders\airport_models.shader" />
     <None Include="Assets\Resources\uQuake\scripts\kam6\door_ambush.txt" />
+    <None Include="Assets\UI Toolkit\RegisterView\RegisterView.uxml" />
     <None Include="Assets\Resources\uQuake\shaders\menu.shader" />
     <None Include="Assets\Resources\uQuake\ext_data\outfitting\temp_kamchatka.txt" />
     <None Include="Assets\Packages\Microsoft.IdentityModel.Tokens.8.14.0\lib\netstandard2.0\Microsoft.IdentityModel.Tokens.xml" />
@@ -282,6 +346,7 @@
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.4\cs\pl\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Resources\uQuake\shaders\jordan_models.shader" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\pt-BR\System.Text.Json.SourceGeneration.resources.dll" />
+    <None Include="Assets\UI Toolkit\MainMenuView\MainMenuView.uxml" />
     <None Include="Assets\Resources\uQuake\shaders\skingore.shader" />
     <None Include="Assets\Packages\System.Security.Principal.Windows.5.0.0\THIRD-PARTY-NOTICES.TXT" />
     <None Include="Assets\Resources\uQuake\shaders\colombia_models.shader" />
@@ -330,6 +395,8 @@
     <None Include="Assets\Packages\Microsoft.Bcl.TimeProvider.8.0.1\lib\netstandard2.0\Microsoft.Bcl.TimeProvider.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.4\cs\cs\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Packages\System.Text.Encoding.CodePages.5.0.0\lib\netstandard2.0\System.Text.Encoding.CodePages.dll" />
+    <None Include="Assets\UI Toolkit\GameMenuView\GameMenuView.uxml" />
+    <None Include="Assets\UI Toolkit\GameplayObjects\InteractiveDoor.uxml" />
     <None Include="Assets\Resources\uQuake\shaders\chunks.shader" />
     <None Include="Assets\UI\Uss\MyToolkitCrosshair.uss" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\ko\System.Text.Json.SourceGeneration.resources.dll" />
@@ -1451,6 +1518,10 @@
       <HintPath>Library\ScriptAssemblies\Unity.AI.Navigation.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.DedicatedServer.MultiplayerRoles">
+      <HintPath>Library\ScriptAssemblies\Unity.DedicatedServer.MultiplayerRoles.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Networking.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Networking.Editor.dll</HintPath>
       <Private>False</Private>
@@ -1463,8 +1534,16 @@
       <HintPath>Library\ScriptAssemblies\Unity.Cinemachine.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.ShaderGraph.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.ShaderGraph.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Timeline">
       <HintPath>Library\ScriptAssemblies\Unity.Timeline.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.PlasticSCM.Editor">
@@ -1479,8 +1558,16 @@
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.Tools.NetStats.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.RenderPipelines.GPUDriven.Runtime">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.GPUDriven.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Services.Authentication.PlayerAccounts">
       <HintPath>Library\ScriptAssemblies\Unity.Services.Authentication.PlayerAccounts.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PPv2URPConverters">
+      <HintPath>Library\ScriptAssemblies\PPv2URPConverters.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Multiplayer.Playmode">
@@ -1495,8 +1582,16 @@
       <HintPath>Library\ScriptAssemblies\Unity.Services.Authentication.Editor.Shared.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Config.Runtime">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Config.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Splines.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Splines.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Multiplayer.PlayMode.Configurations.Editor">
@@ -1513,6 +1608,10 @@
     </Reference>
     <Reference Include="Unity.Profiling.Core">
       <HintPath>Library\ScriptAssemblies\Unity.Profiling.Core.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.VisualScripting.Shared.Editor">
@@ -1563,6 +1662,10 @@
       <HintPath>Library\ScriptAssemblies\Unity.Settings.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Runtime">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Multiplayer.Tools.NetVis.Editor.Visualization">
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.Tools.NetVis.Editor.Visualization.dll</HintPath>
       <Private>False</Private>
@@ -1587,6 +1690,10 @@
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.Tools.MetricEvents.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Runtime">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Multiplayer.Tools.NetworkSolutionInterface">
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.Tools.NetworkSolutionInterface.dll</HintPath>
       <Private>False</Private>
@@ -1597,6 +1704,10 @@
     </Reference>
     <Reference Include="Unity.Services.QoS">
       <HintPath>Library\ScriptAssemblies\Unity.Services.QoS.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.2D.Runtime">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.2D.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Multiplayer.Tools.Editor">
@@ -1615,6 +1726,10 @@
       <HintPath>Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.Searcher.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.Searcher.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Rider.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Rider.Editor.dll</HintPath>
       <Private>False</Private>
@@ -1631,12 +1746,24 @@
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.Tools.Common.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.DedicatedServer.MultiplayerRoles.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.DedicatedServer.MultiplayerRoles.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Netcode.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Netcode.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Services.Multiplayer">
       <HintPath>Library\ScriptAssemblies\Unity.Services.Multiplayer.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipeline.Universal.ShaderLibrary">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipeline.Universal.ShaderLibrary.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Shaders">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Shaders.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Multiplayer.Tools.NetStatsMonitor.Component">
@@ -1647,8 +1774,16 @@
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Scenarios.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Runtime.Shared">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Runtime.Shared.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Timeline.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Editor.Shared">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.Shared.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
@@ -1691,6 +1826,10 @@
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.Tools.NetworkSimulator.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.Rendering.LightTransport.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.Rendering.LightTransport.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Multiplayer.Tools.NetworkProfiler.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.Tools.NetworkProfiler.Editor.dll</HintPath>
       <Private>False</Private>
@@ -1729,6 +1868,10 @@
     </Reference>
     <Reference Include="Unity.Networking.Transport">
       <HintPath>Library\ScriptAssemblies\Unity.Networking.Transport.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Multiplayer.Tools.NetVis.Configuration">
@@ -1783,12 +1926,17 @@
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.Tools.MetricTypes.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.Rendering.LightTransport.Runtime">
+      <HintPath>Library\ScriptAssemblies\Unity.Rendering.LightTransport.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.InputSystem">
       <HintPath>Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="com.unity.sample.dedicated-server.shared.csproj" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>

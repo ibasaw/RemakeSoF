@@ -360,8 +360,8 @@ MonoBehaviour:
     - rid: 8630334263149199367
       type: {class: VrsRenderPipelineRuntimeResources, ns: UnityEngine.Rendering, asm: Unity.RenderPipelines.Core.Runtime}
       data:
-        m_TextureComputeShader: {fileID: 7200000, guid: cacb30de6c40c7444bbc78cb0a81fd2a, type: 3}
-        m_VisualizationShader: {fileID: 4800000, guid: 620b55b8040a88d468e94abe55bed5ba, type: 3}
+        m_TextureComputeShader: {instanceID: 128620}
+        m_VisualizationShader: {instanceID: 518}
         m_VisualizationLookupTable:
           m_Data:
           - {r: 1, g: 0, b: 0, a: 1}
