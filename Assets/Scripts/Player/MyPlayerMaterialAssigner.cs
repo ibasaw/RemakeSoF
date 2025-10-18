@@ -16,8 +16,12 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
     [Header("URP Shader (Fallback)")]
     public string urpShaderName = "Universal Render Pipeline/Lit";
 
-    [Header("Optional: load a JSON from Resources on Start (TextAsset)")]
-    public TextAsset loadResourceOnStart = null;
+    [Header("Skin Selection")]
+    [Tooltip("Select a skin from available average_sleeves models")]
+    public string selectedSkinName = "";
+
+    [Header("Available Skins (Read-only)")]
+    [SerializeField] private string[] availableSkins = new string[0];
 
     [Header("Surface definition JSON (mydefinition.json)")]
     public TextAsset surfaceDefinition = null;
@@ -35,21 +39,21 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
 
     #region JSON-Modelle
     [Serializable]
-    private class RootJson
+    public class RootJson
     {
         public Prefs prefs;
         public List<MaterialDef> materials;
     }
     [Serializable]
-    private class Prefs { public Dictionary<string, string> models; public Dictionary<string, string> surfaces_on; public Dictionary<string, string> surfaces_off; }
+    public class Prefs { public Dictionary<string, string> models; public Dictionary<string, string> surfaces_on; public Dictionary<string, string> surfaces_off; }
     [Serializable]
-    private class MaterialDef
+    public class MaterialDef
     {
         public string name;
         public List<Group> groups;
     }
     [Serializable]
-    private class Group
+    public class Group
     {
         public string name;
         public string texture1;
@@ -74,13 +78,13 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
 
     private void Start()
     {
-        // Load shader definition from Resources
-        LoadShaderDefinitionFromResources("Data/shaders/average_sleeves");
+        // Load available skins on start
+        LoadAvailableSkins();
 
-        // falls materials.json definierter TextAsset im Inspector gesetzt ist -> lade
-        if (loadResourceOnStart != null)
+        // If a skin is selected, load it
+        if (!string.IsNullOrEmpty(selectedSkinName))
         {
-            CreateMaterialsFromJson(loadResourceOnStart.name, loadResourceOnStart.text);
+            LoadSelectedSkin();
         }
 
         // falls surfaceDefinition zugewiesen -> parse
@@ -89,10 +93,10 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
             ParseSurfaceDefinition(surfaceDefinition.text);
         }
 
-        // Wenn beides gesetzt ist, wende automatisch 'default' Variante auf dieses GameObject an
-        if (loadResourceOnStart != null && surfaceDefinition != null)
+        // Wenn ein Skin geladen wurde und surfaceDefinition gesetzt ist, wende automatisch Varianten an
+        if (!string.IsNullOrEmpty(selectedSkinName) && surfaceDefinition != null)
         {
-            string fileKey = loadResourceOnStart.name;
+            string fileKey = selectedSkinName;
 
             Debug.Log($"[MyPlayerMaterialAssigner] === Starting material application for '{fileKey}' ===");
 
@@ -106,18 +110,205 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
                 Debug.LogWarning("[MyPlayerMaterialAssigner] Keine 'default' Variante in surfaceDefinition gefunden.");
             }
 
-            if (definitions.ContainsKey("average_sleeves"))
+            // Try to apply the model-specific variant (e.g., "average_sleeves")
+            string modelsSafe = GetModelForSkin(selectedSkinName);
+            if (!string.IsNullOrEmpty(modelsSafe) && definitions.ContainsKey(modelsSafe))
             {
-                Debug.Log("[MyPlayerMaterialAssigner] Applying 'average_sleeves' variant...");
-                ApplyMaterialsFromDefinition(fileKey, "average_sleeves", this.gameObject);
+                Debug.Log("[MyPlayerMaterialAssigner] Applying '" + modelsSafe + "' variant...");
+                ApplyMaterialsFromDefinition(fileKey, modelsSafe, this.gameObject);
             }
-            else
+            else if (!string.IsNullOrEmpty(modelsSafe))
             {
-                Debug.LogWarning("[MyPlayerMaterialAssigner] Keine 'average_sleeves' Variante in surfaceDefinition gefunden.");
+                Debug.LogWarning("[MyPlayerMaterialAssigner] Keine '" + modelsSafe + "' Variante in surfaceDefinition gefunden.");
             }
 
             Debug.Log($"[MyPlayerMaterialAssigner] === Finished material application for '{fileKey}' ===");
         }
+    }
+
+    /// <summary>
+    /// Loads all available skins that use the "average_sleeves" model
+    /// </summary>
+    private void LoadAvailableSkins()
+    {
+        var skinFiles = new List<string>();
+
+        // Get all JSON files from skin_data directory
+        var allSkinFiles = Resources.LoadAll<TextAsset>("Data/skin_data");
+
+        foreach (var skinFile in allSkinFiles)
+        {
+            try
+            {
+                var rootJson = JsonConvert.DeserializeObject<RootJson>(skinFile.text);
+                if (rootJson?.prefs?.models != null &&
+                    rootJson.prefs.models.TryGetValue("1", out string model) &&
+                    model == "average_sleeves")
+                {
+                    skinFiles.Add(skinFile.name);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[MyPlayerMaterialAssigner] Error parsing skin file {skinFile.name}: {ex.Message}");
+            }
+        }
+
+        availableSkins = skinFiles.ToArray();
+        Debug.Log($"[MyPlayerMaterialAssigner] Found {availableSkins.Length} skins with average_sleeves model: {string.Join(", ", availableSkins)}");
+    }
+
+    /// <summary>
+    /// Loads the currently selected skin
+    /// </summary>
+    private void LoadSelectedSkin()
+    {
+        if (string.IsNullOrEmpty(selectedSkinName))
+        {
+            Debug.LogWarning("[MyPlayerMaterialAssigner] No skin selected");
+            return;
+        }
+
+        // Load the skin JSON from Resources
+        string resourcePath = $"Data/skin_data/{selectedSkinName}";
+        TextAsset skinAsset = Resources.Load<TextAsset>(resourcePath);
+
+        if (skinAsset == null)
+        {
+            Debug.LogError($"[MyPlayerMaterialAssigner] Skin not found: {resourcePath}");
+            return;
+        }
+
+        try
+        {
+            // Parse the skin JSON
+            RootJson rootJson = JsonConvert.DeserializeObject<RootJson>(skinAsset.text);
+            string modelsSafe = null;
+
+            if (rootJson?.prefs?.models != null)
+            {
+                rootJson.prefs.models.TryGetValue("1", out modelsSafe);
+            }
+
+            if (modelsSafe != null)
+            {
+                LoadShaderDefinitionFromResources("Data/shaders/" + modelsSafe);
+                CreateMaterialsFromJson(selectedSkinName, skinAsset.text);
+                Debug.Log($"[MyPlayerMaterialAssigner] Successfully loaded skin: {selectedSkinName} with model: {modelsSafe}");
+            }
+            else
+            {
+                Debug.LogError($"[MyPlayerMaterialAssigner] No model found in skin: {selectedSkinName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[MyPlayerMaterialAssigner] Error loading skin {selectedSkinName}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Gets the model type for a given skin name
+    /// </summary>
+    private string GetModelForSkin(string skinName)
+    {
+        if (string.IsNullOrEmpty(skinName)) return null;
+
+        string resourcePath = $"Data/skin_data/{skinName}";
+        TextAsset skinAsset = Resources.Load<TextAsset>(resourcePath);
+
+        if (skinAsset == null) return null;
+
+        try
+        {
+            var rootJson = JsonConvert.DeserializeObject<RootJson>(skinAsset.text);
+            if (rootJson?.prefs?.models != null)
+            {
+                rootJson.prefs.models.TryGetValue("1", out string model);
+                return model;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[MyPlayerMaterialAssigner] Error getting model for skin {skinName}: {ex.Message}");
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Public method to change skin at runtime
+    /// </summary>
+    public void ChangeSkin(string newSkinName)
+    {
+        if (string.IsNullOrEmpty(newSkinName))
+        {
+            Debug.LogWarning("[MyPlayerMaterialAssigner] Cannot change to empty skin name");
+            return;
+        }
+
+        // Check if the skin is available
+        if (!availableSkins.Contains(newSkinName))
+        {
+            Debug.LogError($"[MyPlayerMaterialAssigner] Skin '{newSkinName}' is not available. Available skins: {string.Join(", ", availableSkins)}");
+            return;
+        }
+
+        // Reset all GameObjects to active before changing skin
+        ResetAllGameObjectsToActive();
+
+        selectedSkinName = newSkinName;
+        LoadSelectedSkin();
+
+        // Reapply materials if surface definition is available
+        if (surfaceDefinition != null)
+        {
+            string fileKey = selectedSkinName;
+            string modelsSafe = GetModelForSkin(selectedSkinName);
+
+            Debug.Log($"[MyPlayerMaterialAssigner] === Changing skin to '{fileKey}' ===");
+
+            if (definitions.ContainsKey("default"))
+            {
+                ApplyMaterialsFromDefinition(fileKey, "default", this.gameObject);
+            }
+
+            if (!string.IsNullOrEmpty(modelsSafe) && definitions.ContainsKey(modelsSafe))
+            {
+                ApplyMaterialsFromDefinition(fileKey, modelsSafe, this.gameObject);
+            }
+
+            Debug.Log($"[MyPlayerMaterialAssigner] === Skin changed to '{fileKey}' ===");
+        }
+    }
+
+    /// <summary>
+    /// Resets all GameObjects under this transform to active (true)
+    /// </summary>
+    private void ResetAllGameObjectsToActive()
+    {
+        // Get all renderers under this GameObject
+        var allRenderers = this.gameObject.GetComponentsInChildren<Renderer>(true);
+
+        int activatedCount = 0;
+        foreach (var renderer in allRenderers)
+        {
+            if (!renderer.gameObject.activeSelf)
+            {
+                renderer.gameObject.SetActive(true);
+                activatedCount++;
+            }
+        }
+
+        Debug.Log($"[MyPlayerMaterialAssigner] Reset {activatedCount} GameObjects to active before skin change");
+    }
+
+    /// <summary>
+    /// Public method to manually reset all GameObjects to active
+    /// </summary>
+    public void ResetAllGameObjectsToActivePublic()
+    {
+        ResetAllGameObjectsToActive();
     }
 
     #region Loading / Creating Materials (unchanged core)
@@ -143,7 +334,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
 
     public void LoadShaderDefinitionFromResources(string resourcePath)
     {
-        // Erwartet z. B. "Data/shaders/average_sleeves"
+        // Erwartet z. B. "Data/shaders/modelsSafe"
         string fullPath = Path.Combine(Application.dataPath, "Resources", resourcePath + ".shader");
 
         if (!File.Exists(fullPath))
@@ -205,11 +396,34 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
                     list.Add(cached);
                     continue;
                 }
+                else
+                {
+                    //TODO: Create material based on cacheKey
+                    //analog ähnlich in CreateMaterialFromShaderEntry()
+                    Shader shader = Shader.Find(urpShaderName);
+                    var material = new Material(shader) { name = $"{partName}_{cacheKey}" };
+                    // Load texture
+                    var texture = LoadTextureCached(partName, g.texture1);
+                    if (texture != null)
+                    {
+                        if (material.HasProperty("_BaseMap"))
+                            material.SetTexture("_BaseMap", texture);
+                        else
+                            material.mainTexture = texture;
+                    }
+                    // Set two-sided if shader1 indicates it (simple heuristic)
+                    if (!string.IsNullOrEmpty(g.shader1) && g.shader1.IndexOf("noshadow", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        SetTwoSidedURP(material, true);
+                    }
+                    materialCache[cacheKey] = material;
+                    list.Add(material);
+                }
             }
         }
 
         MaterialsByFile[fileKey] = map;
-        Debug.Log($"[MyPlayerMaterialAssigner] Zugewiesene Materialien für '{fileKey}': {map.Count} parts.");
+        Debug.Log($"[MyPlayerMaterialAssigner] Zugewiesene Materialien für '{fileKey}': {map.Count} parts. Keys: {string.Join(", ", map.Keys)}");
     }
 
     private Texture2D LoadTextureCached(string partName, string resourcePathWithoutExt)
@@ -277,6 +491,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
             // Create material for this shader entry
             CreateMaterialFromShaderEntry(entry.Key, entry.Value);
         }
+        Debug.Log($"[MyPlayerMaterialAssigner] Erzeugte {shaderEntries.Count} Materialien für Shader Definition.");
     }
 
     private class ShaderEntry
@@ -498,7 +713,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
                 }
                 definitions[kv.Key] = variant;
             }
-            Debug.Log($"[MyPlayerMaterialAssigner] surfaceDefinition parsed. Variants: {definitions.Count}");
+            Debug.Log($"[MyPlayerMaterialAssigner] surfaceDefinition parsed. Variants: {definitions.Count}. Keys: {string.Join(", ", definitions.Keys)}");
         }
         catch (Exception ex)
         {
@@ -545,8 +760,8 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
         }
 
         Debug.Log($"[MyPlayerMaterialAssigner] === Applying variant '{variantKey}' to '{root.name}' ===");
-        Debug.Log($"[MyPlayerMaterialAssigner] Available materials for '{fileKey}': {string.Join(", ", partToMats.Keys)}");
-        Debug.Log($"[MyPlayerMaterialAssigner] Required parts for '{variantKey}': {string.Join(", ", variant.parts.Keys)}");
+        Debug.Log($"[MyPlayerMaterialAssigner] Required materials for '{fileKey}': {string.Join(", ", partToMats.Keys)}");
+        Debug.Log($"[MyPlayerMaterialAssigner] Available parts for '{variantKey}': {string.Join(", ", variant.parts.Keys)}");
 
         // For quick renderer lookup, get all renderers under root
         var allRenderers = root.GetComponentsInChildren<Renderer>(true);
@@ -580,7 +795,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
             else
             {
                 Debug.LogWarning($"[MyPlayerMaterialAssigner] [{variantKey}] No materials found for part '{partName}', hiding all surfaces. Available parts: {string.Join(", ", partToMats.Keys)}");
-                
+
                 // Hide all surfaces for this part by setting them inactive
                 foreach (string surfaceName in surfaces)
                 {

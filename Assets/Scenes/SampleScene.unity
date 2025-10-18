@@ -3471,7 +3471,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   urpShaderName: Universal Render Pipeline/Lit
-  loadResourceOnStart: {fileID: 4900000, guid: 38a2871dd10fbb845ad8ec4edc343c54, type: 3}
+  selectedSkinName: marine
+  availableSkins:
+  - col_rebel_h1
+  - col_rebel_h2
+  - col_rebel_h3
+  - col_rebel_h4
+  - col_rebel_h5
+  - czech_sergeant_w1
+  - czech_soldier_w1
+  - czech_soldier_w2
+  - deadmeat2
+  - marine
+  - marine_butch
+  - marine_camo1
+  - marine_camo2
+  - marine_camo3
+  - marine_jack
+  - marine_sarge
+  - marine_washington
+  - mullins_jungle
+  - mullins_urban
+  - prometheus_guard
+  - prometheus_guard_b2
+  - prometheus_guard_w2
+  - prometheus_guard_w3
+  - prometheus_tech
+  - sam_gladstone
+  - sam_gladstone_hurt
+  - woopy
   surfaceDefinition: {fileID: 4900000, guid: d967d5e16f754cc4aa677b40d4d9466c, type: 3}
 --- !u!1 &2050427579 stripped
 GameObject:

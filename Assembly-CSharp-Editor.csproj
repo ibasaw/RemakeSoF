@@ -66,6 +66,7 @@
     <Compile Include="Assets\Editor\Ghoul2PropsInspector.cs" />
     <Compile Include="Assets\Editor\MaterialSoundParser.cs" />
     <Compile Include="Assets\Editor\FBXMapGeneratorWindow.cs" />
+    <Compile Include="Assets\Scripts\Editor\MyPlayerMaterialAssignerEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\NPCLoader.cs" />
   </ItemGroup>
   <ItemGroup>

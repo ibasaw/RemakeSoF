@@ -880,7 +880,7 @@
             }
         }
     },
-    "rottweiler": {
+    "dog": {
         "description": "Dog model definition.",
         "parts": {
             "body": {
