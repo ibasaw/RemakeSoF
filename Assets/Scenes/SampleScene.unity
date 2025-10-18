@@ -1118,7 +1118,7 @@ MonoBehaviour:
   capsuleHeight: 0
   capsuleCenter: {x: 0, y: 0, z: 0}
   groundCheckDistance: 1
-  showVisualCollider: 1
+  showVisualCollider: 0
   colliderColor: {r: 0, g: 1, b: 0, a: 0.3}
   colliderMaterial: {fileID: 0}
   autoSizeCapsule: 1
