@@ -22,7 +22,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
     internal class ChangeToRegisterEvent : AppEvent { }
     
     /// <summary>
-    /// Called when the user clicks the "Login" button on the registration view to switch back to the login view
+    /// Called when the user clicks the "Back" button on the registration view to switch back to the login view
     /// </summary>
     internal class ChangeToLoginEvent : AppEvent { }
 
@@ -38,7 +38,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
     /// Called when a match is entered (I.E: after matchmaking finds enough players)
     /// </summary>
     internal class MatchEnteredEvent : AppEvent { }
-    
+
     /// <summary>
     /// Called when the user clicks the "Login" button on the login view
     /// </summary>
@@ -46,6 +46,17 @@ namespace Unity.DedicatedGameServerSample.Runtime
     {
         public string username;
         public string password;
+    }
+    
+    /// <summary>
+    /// Called when the user clicks the "Register" button on the registration view
+    /// </summary>
+    internal class PlayerRegisterEvent : AppEvent
+    {
+        public string username;
+        public string password;
+        public string confirmPassword;
+        public string email;
     }
     
     internal class PlayerSignedIn : AppEvent

@@ -69,6 +69,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private Transform modelRoot;
 	[SerializeField] private Transform rightHandBolt;
 	[SerializeField] private Transform leftHandBolt;
+	[SerializeField] private Transform leftFoot;
+	[SerializeField] private Transform rightFoot;
 
 	// SoF2 Movement State
 	private Vector3 velocity = Vector3.zero;           // Current velocity (x, y, z)

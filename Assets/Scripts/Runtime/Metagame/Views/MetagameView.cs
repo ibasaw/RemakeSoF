@@ -31,5 +31,10 @@ namespace Unity.DedicatedGameServerSample.Runtime
         LoginView m_LoginView;
 
         internal LoginView LoginView => m_LoginView;
+
+        [SerializeField]
+        RegisterView m_RegisterView;
+
+        internal RegisterView RegisterView => m_RegisterView;
     }
 }

@@ -1,0 +1,908 @@
+{
+    "default": {
+        "description": "Default Parent-NPC model definition.",
+        "parts": {
+            "arms": {
+                "naming": "a_xxx",
+                "description": "Arms shader. (all models)",
+                "required": true,
+                "material": [
+                    "arm_lwr_l",
+                    "arm_lwr_r",
+                    "arm_uppr_l",
+                    "arm_uppr_r",
+                    "fingers_l",
+                    "fingers_r",
+                    "hand_l",
+                    "hand_r",
+                    "mitten_l_off",
+                    "mitten_r_off",
+                    "sleeves_r",
+                    "sleeves_l"
+                ]
+            },
+            "body": {
+                "naming": "b_xxx",
+                "description": "Body shader. (all models)",
+                "required": true,
+                "material": [
+                    "foot_l",
+                    "foot_r",
+                    "hip_l",
+                    "hip_r",
+                    "leg_lwr_l",
+                    "leg_lwr_r",
+                    "leg_uppr_l",
+                    "leg_uppr_r",
+                    "torso_l",
+                    "torso_r",
+                    "labcollar_r_off",
+                    "labcollar_l_off",
+                    "trenchcollar_r_off",
+                    "trenchcollar_l_off",
+                    "skirt_frnt_r",
+                    "skirt_frnt_l",
+                    "skirt_bck_l",
+                    "skirt_bck_r",
+                    "fcollar_l_off",
+                    "fcollar_r_off",
+                    "mcollar_l",
+                    "mcollar_r"
+                ]
+            },
+            "face": {
+                "naming": "f_xxx",
+                "description": "These images are all found in models/characters/average_face or models/characters/female_face. The end of the name will have a race designation so skin tone organization is easier. The race designation is:  A = Asian  B = Black H = Hispanic W = White (all models)",
+                "required": true,
+                "material": [
+                    "ear_l",
+                    "ear_r",
+                    "eyeball_l",
+                    "eyeball_r",
+                    "head_frnt_lwr_l",
+                    "head_frnt_lwr_r",
+                    "head_frnt_mid_l",
+                    "head_frnt_mid_r",
+                    "head_frnt_uppr_l",
+                    "head_frnt_uppra_l_off",
+                    "head_frnt_uppr_r",
+                    "head_frnt_uppra_r_off",
+                    "mouth_l",
+                    "mouth_r",
+                    "head_frnt_mida_r_off",
+                    "head_frnt_mida_l_off",
+                    "beardhead_frnt_mid_l_off",
+                    "beardhead_frnt_mid_r_off",
+                    "beardhead_frnt_lwr_l_off",
+                    "beardhead_frnt_lwr_r_off"
+                ]
+            },
+            "caps": {
+                "naming": "caps",
+                "description": "Shared gore cap shader. very model uses the same gore cap shader and texture. models/characters/caps/caps",
+                "required": true,
+                "material": [
+                    "cap_arm_lwr_l_hand_off",
+                    "cap_arm_lwr_l_uppr_off",
+                    "cap_arm_lwr_r_hand_off",
+                    "cap_arm_lwr_r_uppr_off",
+                    "cap_arm_uppr_l_lwr_off",
+                    "cap_arm_uppr_l_torso_off",
+                    "cap_arm_uppr_r_lwr_off",
+                    "cap_arm_uppr_r_torso_off",
+                    "cap_foot_l_off",
+                    "cap_foot_r_off",
+                    "cap_hand_l_off",
+                    "cap_hand_r_off",
+                    "cap_head_bck_lwr_l_off",
+                    "cap_head_bck_lwr_r_off",
+                    "cap_head_bck_uppr_l_off",
+                    "cap_head_bck_uppr_r_off",
+                    "cap_head_frnt_lwr_l_off",
+                    "cap_head_frnt_lwr_r_off",
+                    "cap_head_frnt_mid_l_off",
+                    "cap_head_frnt_mid_r_off",
+                    "cap_head_frnt_uppr_l_off",
+                    "cap_head_frnt_uppr_r_off",
+                    "cap_head_side_l_off",
+                    "cap_head_side_r_off",
+                    "cap_hip_l_off",
+                    "cap_hip_r_off",
+                    "cap_leg_lwr_l_foot_off",
+                    "cap_leg_lwr_l_uppr_off",
+                    "cap_leg_lwr_r_foot_off",
+                    "cap_leg_lwr_r_uppr_off",
+                    "cap_leg_uppr_l_hip_off",
+                    "cap_leg_uppr_l_lwr_off",
+                    "cap_leg_uppr_r_hip_off",
+                    "cap_leg_uppr_r_lwr_off",
+                    "cap_torso_l_arm_off",
+                    "cap_torso_l_off",
+                    "cap_torso_r_arm_off",
+                    "cap_torso_r_off",
+                    "cap_fhead_bck_lwr_l_off",
+                    "cap_fhead_bck_lwr_r_off",
+                    "cap_fhead_bck_uppr_l_off",
+                    "cap_fhead_bck_uppr_r_off",
+                    "cap_fhead_frnt_lwr_l_off",
+                    "cap_fhead_frnt_lwr_r_off",
+                    "cap_fhead_frnt_mid_l_off",
+                    "cap_fhead_frnt_mid_r_off",
+                    "cap_fhead_frnt_uppr_l_off",
+                    "cap_fhead_frnt_uppr_r_off",
+                    "cap_fhead_side_l_off",
+                    "cap_fhead_side_r_off",
+                    "cap_beardhead_mid_l_off",
+                    "cap_beardhead_mid_r_off",
+                    "cap_beardhead_frnt_lwr_l_off",
+                    "cap_beardhead_frnt_lwr_r_off"
+                ]
+            },
+            "head": {
+                "naming": "h_xxx",
+                "description": "These images are found in models/characters/average_face ormodels/characters/female_face. Hairstyles are also included in the naming convention, but the head group refers solely to bald heads.. (all models)",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l",
+                    "head_bck_lwr_r",
+                    "head_bck_uppr_l",
+                    "head_bck_uppr_r",
+                    "head_side_l",
+                    "head_side_r"
+                ]
+            }
+        }
+    },
+    "average_sleeves": {
+        "description": "Male, military fatigues silhouette with short sleeves.",
+        "parts": {
+            "body_2sided": {
+                "naming": "b2_xxx",
+                "description": "Double-sided shader (z. B. Kragen). Nutzt gleiche Map wie body, cull disabled.",
+                "required": true,
+                "material": [
+                    "collar_l",
+                    "collar_r"
+                ]
+            },
+            "face_2sided": {
+                "naming": "f2_xxx",
+                "description": "Two-sided face shader für Zähne/Mund; cull disabled.",
+                "required": true,
+                "material": [
+                    "teeth_l",
+                    "teeth_r"
+                ]
+            },
+            "avmed": {
+                "naming": "h_avmed_xxx",
+                "description": "Male medium length hairstyle (avmed). Texturen in models/characters/average_face.",
+                "required": false,
+                "material": [
+                    "avmedbangs_l_off",
+                    "avmedbangs_r_off",
+                    "head_bck_lwr_l_avmed_off",
+                    "head_bck_lwr_r_avmed_off",
+                    "head_bck_uppr_l_avmed_off",
+                    "head_bck_uppr_r_avmed_off",
+                    "head_side_l_avmed_off",
+                    "head_side_r_avmed_off"
+                ]
+            },
+            "avmedhat": {
+                "naming": "h_avmedhat_xxx",
+                "description": "Male medium hairstyle mit kahlem Oberkopf (für Hüte).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_avmedhat_off",
+                    "head_bck_lwr_r_avmedhat_off",
+                    "head_bck_uppr_l_avmedhat_off",
+                    "head_bck_uppr_r_avmedhat_off",
+                    "head_side_l_avmedhat_off",
+                    "head_side_r_avmedhat_off",
+                    "beardhead_frnt_lwr_l_off",
+                    "beardhead_frnt_lwr_r_off",
+                    "beardhead_frnt_mid_l_off",
+                    "beardhead_frnt_mid_r_off"
+                ]
+            },
+            "avmst": {
+                "naming": "h_avmst_xxx",
+                "description": "Mustache surface group (selten verwendet, aber vorhanden).",
+                "required": false,
+                "material": [
+                    "avmst_l_off",
+                    "avmst_r_off"
+                ]
+            },
+            "backpack_lrg": {
+                "naming": "backpack_xxx",
+                "description": "Militärischer großer Rucksack (Texture: models/characters/average_sleeves/backpack_lrg).",
+                "required": false,
+                "material": [
+                    "backpack_lrg_off"
+                ]
+            },
+            "helmet_chin_strap": {
+                "naming": "helmet_chin_strap",
+                "description": "Kinnriemen/Helm-Detail (wenn vorhanden).",
+                "required": false,
+                "material": [
+                    "helmet_chin_strap_off"
+                ]
+            },
+            "scarf": {
+                "naming": "scarf_xxx",
+                "description": "Schal shader (optional). only used on the average_sleeves model",
+                "required": false,
+                "material": [
+                    "scarf_off"
+                ]
+            }
+        }
+    },
+    "average_armor": {
+        "description": "Male, armored, military fatigues silhouette.",
+        "parts": {
+            "face_2sided": {
+                "naming": "f2_xxx",
+                "description": "Two-sided face shader (Zähne/Mund). models/characters/average_face culling is disabled Females dont use this",
+                "required": true,
+                "material": [
+                    "teeth_l",
+                    "teeth_r"
+                ]
+            },
+            "avmed": {
+                "naming": "h_avmed_xxx",
+                "description": "Medium length male hair. models/characters/average_face",
+                "required": false,
+                "material": [
+                    "avmedbangs_l_off",
+                    "avmedbangs_r_off",
+                    "head_bck_lwr_l_avmed_off",
+                    "head_bck_lwr_r_avmed_off",
+                    "head_bck_uppr_l_avmed_off",
+                    "head_bck_uppr_r_avmed_off",
+                    "head_side_l_avmed_off",
+                    "head_side_r_avmed_off"
+                ]
+            },
+            "avmedhat": {
+                "naming": "h_avmedhat_xxx",
+                "description": "This is the shader for the male medium length hat hairstyle. The top is bald to fit a hat bolt-on (hat variant).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_avmedhat_off",
+                    "head_bck_lwr_r_avmedhat_off",
+                    "head_bck_uppr_l_avmedhat_off",
+                    "head_bck_uppr_r_avmedhat_off",
+                    "head_side_l_avmedhat_off",
+                    "head_side_r_avmedhat_off",
+                    "beardhead_frnt_lwr_l_off",
+                    "beardhead_frnt_lwr_r_off",
+                    "beardhead_frnt_mid_l_off",
+                    "beardhead_frnt_mid_r_off"
+                ]
+            },
+            "avmst": {
+                "naming": "h_avmst_xxx",
+                "description": "Mustache group.",
+                "required": false,
+                "material": [
+                    "avmst_l_off",
+                    "avmst_r_off"
+                ]
+            },
+            "helmet_chin_strap": {
+                "naming": "helmet_chin_strap",
+                "description": "Helm Kinnriemen (optional).",
+                "required": false,
+                "material": [
+                    "helmet_chin_strap_off"
+                ]
+            }
+        }
+    },
+    "chem_suit": {
+        "description": "Chemical suit silhouette (Anzug mit Helm/Faceplate).",
+        "parts": {
+            "face_2sided": {
+                "naming": "f2_xxx",
+                "description": "This is a two sided shader needed for the teeth and mouth of the character. These images are all found in models/characters/average_face. Each male character has a two sided face shader that uses the same color map as the face shader. The only change in the shader from the matching “f_” is its culling is disabled. Females don’t use this, using eye_2sided instead.",
+                "required": true,
+                "material": [
+                    "teeth_l",
+                    "teeth_r"
+                ]
+            },
+            "eye_2sided": {
+                "naming": "f2_xxx",
+                "description": "Two-sided eye/face shader (females use eye_2sided; chem_suit verwendet f2_xxx too).",
+                "required": true,
+                "material": [
+                    "teeth_l",
+                    "teeth_r",
+                    "eyelash_l",
+                    "eyelash_r",
+                    "eyelasha_l_off",
+                    "eyelasha_r_off",
+                    "fteeth_l_off",
+                    "fteeth_r_off"
+                ]
+            },
+            "chem": {
+                "naming": "hood_chem_xxx",
+                "description": "Hood shader für chem suit (cull disabled).",
+                "required": false,
+                "material": [
+                    "hood"
+                ]
+            },
+            "chem_2sided": {
+                "naming": "fplate_chem",
+                "description": "This is the shader for the chemical suit faceplate. All images are found in models/characters/chem_suit. This shader is translucent and all SoF2 chem_suit characters use the same shader, models/characters/chem_suit/fplate_chem.",
+                "required": false,
+                "material": [
+                    "clear"
+                ]
+            },
+            "fface": {
+                "naming": "f_xxx",
+                "description": "This is the shader for a female face on a chem suit body. These images are all found in models/characters/female_face.",
+                "required": false,
+                "material": [
+                    "feyeball_l_off",
+                    "feyeball_r_off",
+                    "fhead_bck_lwr_l_off",
+                    "fhead_bck_lwr_r_off",
+                    "fhead_bck_uppr_l_off",
+                    "fhead_bck_uppr_r_off",
+                    "fhead_frnt_lwr_l_off",
+                    "fhead_frnt_lwr_r_off",
+                    "fhead_frnt_mid_l_off",
+                    "fhead_frnt_mid_r_off",
+                    "fhead_frnt_uppr_l_off",
+                    "fhead_frnt_uppr_r_off",
+                    "fhead_side_l_off",
+                    "fhead_side_r_off",
+                    "fmouth_l_off",
+                    "fmouth_r_off"
+                ]
+            },
+            "fhead": {
+                "naming": "h_xxx",
+                "description": "This is the shader for a female head on a chem suit body. These images are all found in models/characters/female_face.",
+                "required": false,
+                "material": [
+                    "fhead_bck_lwr_l_off",
+                    "fhead_bck_lwr_r_off",
+                    "fhead_bck_uppr_l_off",
+                    "fhead_bck_uppr_r_off",
+                    "fhead_side_l_off",
+                    "fhead_side_r_off"
+                ]
+            }
+        }
+    },
+    "fat": {
+        "description": "Male, heavy set silhouette.",
+        "parts": {
+            "face_2sided": {
+                "naming": "f2_xxx",
+                "description": "Two-sided face shader (Teeth/Mouth).",
+                "required": true,
+                "material": [
+                    "teeth_l",
+                    "teeth_r"
+                ]
+            },
+            "avmed": {
+                "naming": "h_avmed_xxx",
+                "description": "Medium male hair where supported.",
+                "required": false,
+                "material": [
+                    "avmedbangs_l_off",
+                    "avmedbangs_r_off",
+                    "head_bck_lwr_l_avmed_off",
+                    "head_bck_lwr_r_avmed_off",
+                    "head_bck_uppr_l_avmed_off",
+                    "head_bck_uppr_r_avmed_off",
+                    "head_side_l_avmed_off",
+                    "head_side_r_avmed_off"
+                ]
+            },
+            "avmedhat": {
+                "naming": "h_avmedhat_xxx",
+                "description": "Medium male hair (hat variant).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_avmedhat_off",
+                    "head_bck_lwr_r_avmedhat_off",
+                    "head_bck_uppr_l_avmedhat_off",
+                    "head_bck_uppr_r_avmedhat_off",
+                    "head_side_l_avmedhat_off",
+                    "head_side_r_avmedhat_off",
+                    "beardhead_frnt_lwr_l_off",
+                    "beardhead_frnt_lwr_r_off",
+                    "beardhead_frnt_mid_l_off",
+                    "beardhead_frnt_mid_r_off"
+                ]
+            },
+            "avmst": {
+                "naming": "h_avmst_xxx",
+                "description": "Mustache surface (optional).",
+                "required": false,
+                "material": [
+                    "avmst_l_off",
+                    "avmst_r_off"
+                ]
+            }
+        }
+    },
+    "female_armor": {
+        "description": "Female, armored, military fatigues silhouette.",
+        "parts": {
+            "eye_2sided": {
+                "naming": "f2_xxx",
+                "description": "Double-sided face/eye shader für eyelashes/teeth bei Female models.",
+                "required": true,
+                "material": [
+                    "teeth_l",
+                    "teeth_r",
+                    "eyelash_l",
+                    "eyelash_r",
+                    "eyelasha_l_off",
+                    "eyelasha_r_off",
+                    "fteeth_l_off",
+                    "fteeth_r_off"
+                ]
+            },
+            "fshort": {
+                "naming": "h_xxx_fshort",
+                "description": "Short female hairstyle.",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_fshort_off",
+                    "head_bck_lwr_r_fshort_off",
+                    "head_bck_uppr_l_fshort_off",
+                    "head_bck_uppr_r_fshort_off",
+                    "head_side_l_fshort_off",
+                    "head_side_r_fshort_off"
+                ]
+            },
+            "flong": {
+                "naming": "h_xxx_flong",
+                "description": "Long female hairstyle.",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_flong_off",
+                    "head_bck_lwr_r_flong_off",
+                    "head_bck_uppr_l_flong_off",
+                    "head_bck_uppr_r_flong_off",
+                    "head_side_l_flong_off",
+                    "head_side_r_flong_off"
+                ]
+            },
+            "bun": {
+                "naming": "h_xxx_bun",
+                "description": "Bun hairstyle (female).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_bun_off",
+                    "head_bck_lwr_r_bun_off",
+                    "head_bck_uppr_l_bun_off",
+                    "head_bck_uppr_r_bun_off",
+                    "head_side_l_bun_off",
+                    "bun_off"
+                ]
+            },
+            "pony": {
+                "naming": "h_xxx_pony",
+                "description": "Ponytail/ponytail hairstyle (female) (naming convention uses _pony).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_pony_off",
+                    "head_bck_lwr_r_pony_off",
+                    "head_bck_uppr_l_pony_off",
+                    "head_bck_uppr_r_pony_off",
+                    "head_side_l_pony_off",
+                    "head_side_r_pony_off",
+                    "ponytail_off"
+                ]
+            },
+            "helmet_chin_strap": {
+                "naming": "helmet_chin_strap",
+                "description": "Chin strap (if used).",
+                "required": false,
+                "material": [
+                    "helmet_chin_strap_off"
+                ]
+            }
+        }
+    },
+    "female_pants": {
+        "description": "Female, short sleeves, long pants silhouette.",
+        "parts": {
+            "eye_2sided": {
+                "naming": "f2_xxx",
+                "description": "Double-sided eye/face shader for females.",
+                "required": true,
+                "material": [
+                    "teeth_l",
+                    "teeth_r",
+                    "eyelash_l",
+                    "eyelash_r",
+                    "eyelasha_l_off",
+                    "eyelasha_r_off",
+                    "fteeth_l_off",
+                    "fteeth_r_off"
+                ]
+            },
+            "fshort": {
+                "naming": "h_xxx_fshort",
+                "description": "Short female hairstyle.",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_fshort_off",
+                    "head_bck_lwr_r_fshort_off",
+                    "head_bck_uppr_l_fshort_off",
+                    "head_bck_uppr_r_fshort_off",
+                    "head_side_l_fshort_off",
+                    "head_side_r_fshort_off"
+                ]
+            },
+            "flong": {
+                "naming": "h_xxx_flong",
+                "description": "Long female hairstyle.",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_flong_off",
+                    "head_bck_lwr_r_flong_off",
+                    "head_bck_uppr_l_flong_off",
+                    "head_bck_uppr_r_flong_off",
+                    "head_side_l_flong_off",
+                    "head_side_r_flong_off"
+                ]
+            },
+            "bun": {
+                "naming": "h_xxx_bun",
+                "description": "Bun hairstyle (optional).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_bun_off",
+                    "head_bck_lwr_r_bun_off",
+                    "head_bck_uppr_l_bun_off",
+                    "head_bck_uppr_r_bun_off",
+                    "head_side_l_bun_off",
+                    "bun_off"
+                ]
+            },
+            "pony": {
+                "naming": "h_xxx_pony",
+                "description": "Ponytail (optional).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_pony_off",
+                    "head_bck_lwr_r_pony_off",
+                    "head_bck_uppr_l_pony_off",
+                    "head_bck_uppr_r_pony_off",
+                    "head_side_l_pony_off",
+                    "head_side_r_pony_off",
+                    "ponytail_off"
+                ]
+            }
+        }
+    },
+    "female_skirt": {
+        "description": "Female, short sleeves, skirt silhouette.",
+        "parts": {
+            "eye_2sided": {
+                "naming": "f2_xxx",
+                "description": "Double-sided face shader for females (lash/teeth).",
+                "required": true,
+                "material": [
+                    "teeth_l",
+                    "teeth_r",
+                    "eyelash_l",
+                    "eyelash_r",
+                    "eyelasha_l_off",
+                    "eyelasha_r_off",
+                    "fteeth_l_off",
+                    "fteeth_r_off"
+                ]
+            },
+            "flong": {
+                "naming": "h_xxx_flong",
+                "description": "Long female hairstyle.",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_flong_off",
+                    "head_bck_lwr_r_flong_off",
+                    "head_bck_uppr_l_flong_off",
+                    "head_bck_uppr_r_flong_off",
+                    "head_side_l_flong_off",
+                    "head_side_r_flong_off"
+                ]
+            },
+            "fshort": {
+                "naming": "h_xxx_fshort",
+                "description": "Short female hairstyle.",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_fshort_off",
+                    "head_bck_lwr_r_fshort_off",
+                    "head_bck_uppr_l_fshort_off",
+                    "head_bck_uppr_r_fshort_off",
+                    "head_side_l_fshort_off",
+                    "head_side_r_fshort_off"
+                ]
+            },
+            "bun": {
+                "naming": "h_xxx_bun",
+                "description": "Bun hairstyle (optional).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_bun_off",
+                    "head_bck_lwr_r_bun_off",
+                    "head_bck_uppr_l_bun_off",
+                    "head_bck_uppr_r_bun_off",
+                    "head_side_l_bun_off",
+                    "bun_off"
+                ]
+            },
+            "pony": {
+                "naming": "h_xxx_pony",
+                "description": "Ponytail (optional).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_pony_off",
+                    "head_bck_lwr_r_pony_off",
+                    "head_bck_uppr_l_pony_off",
+                    "head_bck_uppr_r_pony_off",
+                    "head_side_l_pony_off",
+                    "head_side_r_pony_off",
+                    "ponytail_off"
+                ]
+            }
+        }
+    },
+    "snow": {
+        "description": "Male, heavy coat / snow silhouette.",
+        "parts": {
+            "face_2sided": {
+                "naming": "f2_xxx",
+                "description": "Two-sided face shader (required).",
+                "required": true,
+                "material": [
+                    "teeth_l",
+                    "teeth_r"
+                ]
+            },
+            "avmed": {
+                "naming": "h_avmed_xxx",
+                "description": "Medium male hair (optional).",
+                "required": false,
+                "material": [
+                    "avmedbangs_l_off",
+                    "avmedbangs_r_off",
+                    "head_bck_lwr_l_avmed_off",
+                    "head_bck_lwr_r_avmed_off",
+                    "head_bck_uppr_l_avmed_off",
+                    "head_bck_uppr_r_avmed_off",
+                    "head_side_l_avmed_off",
+                    "head_side_r_avmed_off"
+                ]
+            },
+            "avmedhat": {
+                "naming": "h_avmedhat_xxx",
+                "description": "Medium hat-variant hair (optional).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_avmedhat_off",
+                    "head_bck_lwr_r_avmedhat_off",
+                    "head_bck_uppr_l_avmedhat_off",
+                    "head_bck_uppr_r_avmedhat_off",
+                    "head_side_l_avmedhat_off",
+                    "head_side_r_avmedhat_off",
+                    "beardhead_frnt_lwr_l_off",
+                    "beardhead_frnt_lwr_r_off",
+                    "beardhead_frnt_mid_l_off",
+                    "beardhead_frnt_mid_r_off"
+                ]
+            },
+            "avlong": {
+                "naming": "h_avlong_xxx",
+                "description": "Long hair (optional).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_avlong_off",
+                    "head_bck_lwr_r_avlong_off",
+                    "head_bck_uppr_l_avlong_off",
+                    "head_bck_uppr_r_avlong_off",
+                    "head_side_l_avlong_off",
+                    "head_side_r_avlong_off"
+                ]
+            },
+            "avmst": {
+                "naming": "h_avmst_xxx",
+                "description": "Mustache (optional).",
+                "required": false,
+                "material": [
+                    "avmst_l_off",
+                    "avmst_r_off"
+                ]
+            },
+            "hood": {
+                "naming": "hood_xxx",
+                "description": "This is a hood for the snow characters and is set up with cull disable. Hoods can have a fur edge or no edge at all. An example image map can be found here: models/characters/snow/hood_snow1.",
+                "required": false,
+                "material": [
+                    "collar_off",
+                    "fur_off",
+                    "hood_down_off",
+                    "hood_up_off"
+                ]
+            }
+        }
+    },
+    "suit_long_coat": {
+        "description": "Male, long coat silhouette (long sleeves).",
+        "parts": {
+            "coat_long": {
+                "naming": "lab_xxx / suit_xxx / trench_xxx",
+                "description": "Double-sided coat shader (cull disabled). Textures in models/characters/suit_long_coat.",
+                "required": false,
+                "material": [
+                    "labcoat_r_off",
+                    "labcoat_l_off",
+                    "trenchcoat_r_off",
+                    "trenchcoat_l_off"
+                ]
+            },
+            "face_2sided": {
+                "naming": "f2_xxx",
+                "description": "Two-sided face shader (required).",
+                "required": true,
+                "material": [
+                    "teeth_l",
+                    "teeth_r"
+                ]
+            },
+            "avlong": {
+                "naming": "h_avlong_xxx",
+                "description": "Long male hair (valid for suit_long_coat).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_avlong_off",
+                    "head_bck_lwr_r_avlong_off",
+                    "head_bck_uppr_l_avlong_off",
+                    "head_bck_uppr_r_avlong_off",
+                    "head_side_l_avlong_off",
+                    "head_side_r_avlong_off"
+                ]
+            },
+            "avmed": {
+                "naming": "h_avmed_xxx",
+                "description": "Medium male hair (optional).",
+                "required": false,
+                "material": [
+                    "avmedbangs_l_off",
+                    "avmedbangs_r_off",
+                    "head_bck_lwr_l_avmed_off",
+                    "head_bck_lwr_r_avmed_off",
+                    "head_bck_uppr_l_avmed_off",
+                    "head_bck_uppr_r_avmed_off",
+                    "head_side_l_avmed_off",
+                    "head_side_r_avmed_off"
+                ]
+            },
+            "avmedhat": {
+                "naming": "h_avmedhat_xxx",
+                "description": "Medium hat-variant hair (optional).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_avmedhat_off",
+                    "head_bck_lwr_r_avmedhat_off",
+                    "head_bck_uppr_l_avmedhat_off",
+                    "head_bck_uppr_r_avmedhat_off",
+                    "head_side_l_avmedhat_off",
+                    "head_side_r_avmedhat_off",
+                    "beardhead_frnt_lwr_l_off",
+                    "beardhead_frnt_lwr_r_off",
+                    "beardhead_frnt_mid_l_off",
+                    "beardhead_frnt_mid_r_off"
+                ]
+            },
+            "avmst": {
+                "naming": "h_avmst_xxx",
+                "description": "Mustache (optional).",
+                "required": false,
+                "material": [
+                    "avmst_l_off",
+                    "avmst_r_off"
+                ]
+            }
+        }
+    },
+    "suit_sleeves": {
+        "description": "Male, short sleeves, long pants silhouette (suit variant).",
+        "parts": {
+            "face_2sided": {
+                "naming": "f2_xxx",
+                "description": "Two-sided face shader (required).",
+                "required": true,
+                "material": [
+                    "teeth_l",
+                    "teeth_r"
+                ]
+            },
+            "avmed": {
+                "naming": "h_avmed_xxx",
+                "description": "Medium male hair (optional).",
+                "required": false,
+                "material": [
+                    "avmedbangs_l_off",
+                    "avmedbangs_r_off",
+                    "head_bck_lwr_l_avmed_off",
+                    "head_bck_lwr_r_avmed_off",
+                    "head_bck_uppr_l_avmed_off",
+                    "head_bck_uppr_r_avmed_off",
+                    "head_side_l_avmed_off",
+                    "head_side_r_avmed_off"
+                ]
+            },
+            "avmedhat": {
+                "naming": "h_avmedhat_xxx",
+                "description": "Medium hat-variant hair (optional).",
+                "required": false,
+                "material": [
+                    "head_bck_lwr_l_avmedhat_off",
+                    "head_bck_lwr_r_avmedhat_off",
+                    "head_bck_uppr_l_avmedhat_off",
+                    "head_bck_uppr_r_avmedhat_off",
+                    "head_side_l_avmedhat_off",
+                    "head_side_r_avmedhat_off",
+                    "beardhead_frnt_lwr_l_off",
+                    "beardhead_frnt_lwr_r_off",
+                    "beardhead_frnt_mid_l_off",
+                    "beardhead_frnt_mid_r_off"
+                ]
+            },
+            "avmst": {
+                "naming": "h_avmst_xxx",
+                "description": "Mustache (optional).",
+                "required": false,
+                "material": [
+                    "avmst_l_off",
+                    "avmst_r_off"
+                ]
+            }
+        }
+    },
+    "rottweiler": {
+        "description": "Dog model definition.",
+        "parts": {
+            "body": {
+                "naming": "b_xxx",
+                "description": "Body shader. (all models)",
+                "required": true,
+                "material": [
+                    "body_l",
+                    "rot_lleg_front",
+                    "body_r",
+                    "rot_rleg_front",
+                    "bottom_jaw",
+                    "fangs",
+                    "head_l",
+                    "head_r",
+                    "hip_l",
+                    "rot_lleg_back",
+                    "tongue",
+                    "torso_r",
+                    "rot_rleg_back"
+                ]
+            }
+        }
+    }
+}

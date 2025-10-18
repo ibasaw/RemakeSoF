@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using UnityEngine.UIElements;
 
 namespace Unity.DedicatedGameServerSample.Runtime
@@ -10,6 +9,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
         Button m_QuitButton;
         TextField m_UsernameTextField;
         TextField m_PasswordTextField;
+        Label m_StatusLabel;
         UIDocument m_UIDocument;
 
         void Awake()
@@ -26,6 +26,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
 
             m_UsernameTextField = root.Q<TextField>("usernameTextField");
             m_PasswordTextField = root.Q<TextField>("passwordTextField");
+            m_StatusLabel = root.Q<Label>("statusLabel");
 
             m_LoginButton.RegisterCallback<ClickEvent>(OnClickLogin);
             m_ChangeToRegisterButton.RegisterCallback<ClickEvent>(OnClickChangeToRegister);
@@ -44,28 +45,11 @@ namespace Unity.DedicatedGameServerSample.Runtime
 
         void OnUsernameChanged(ChangeEvent<string> username)
         {
-            ValidateAndSetUsername(username.newValue);
+           m_UsernameTextField.value = username.newValue;
         }
         void OnPasswordChanged(ChangeEvent<string> password)
         {
-            ValidateAndSetPassword(password.newValue);
-        }
-
-        void ValidateAndSetUsername(string usernameToValidate)
-        {
-            var username = Sanitize(usernameToValidate);
-            m_UsernameTextField.value = username;
-        }
-        void ValidateAndSetPassword(string passwordToValidate)
-        {
-            //var password = Sanitize(passwordToValidate);
-            m_PasswordTextField.value = passwordToValidate;// password;
-        }
-
-        string Sanitize(string input)
-        {
-            // Example sanitization: remove any non-alphanumeric characters except underscores
-            return Regex.Replace(input, @"[^a-zA-Z0-9_]", "");
+           m_PasswordTextField.value = password.newValue;
         }
 
         void OnClickQuit(ClickEvent evt)
@@ -88,6 +72,74 @@ namespace Unity.DedicatedGameServerSample.Runtime
         void OnClickChangeToRegister(ClickEvent evt)
         {
             Broadcast(new ChangeToRegisterEvent());
+        }
+
+        public void SetLoginInProgress(bool inProgress, bool clearStatusMessage = true)
+        {
+            if (inProgress)
+            {
+                m_LoginButton.SetEnabled(false);
+                m_ChangeToRegisterButton.SetEnabled(false);
+                m_QuitButton.SetEnabled(false);
+                m_UsernameTextField.SetEnabled(false);
+                m_PasswordTextField.SetEnabled(false);
+                m_StatusLabel.text = "Logging in...";
+                m_StatusLabel.style.color = new StyleColor(new UnityEngine.Color(0f, 1f, 0f, 1f)); // Green
+            }
+            else
+            {
+                m_LoginButton.SetEnabled(true);
+                m_ChangeToRegisterButton.SetEnabled(true);
+                m_QuitButton.SetEnabled(true);
+                m_UsernameTextField.SetEnabled(true);
+                m_PasswordTextField.SetEnabled(true);
+                
+                // Only clear status message if explicitly requested
+                if (clearStatusMessage)
+                {
+                    m_StatusLabel.text = "";
+                }
+            }
+        }
+
+        public void SetStatusMessage(string message, bool isError = false)
+        {
+            m_StatusLabel.text = message;
+            if (isError)
+            {
+                m_StatusLabel.style.color = new StyleColor(new UnityEngine.Color(1f, 0f, 0f, 1f)); // Red
+            }
+            else
+            {
+                m_StatusLabel.style.color = new StyleColor(new UnityEngine.Color(0f, 1f, 0f, 1f)); // Green
+            }
+        }
+
+        public void ClearStatusMessage()
+        {
+            m_StatusLabel.text = "";
+        }
+
+        public bool ValidateLoginData()
+        {
+            string email = m_UsernameTextField.text.Trim();
+            string password = m_PasswordTextField.text;
+
+            // Validate email
+            if (string.IsNullOrEmpty(email))
+            {
+                SetStatusMessage("Email cannot be empty!", true);
+                return false;
+            }
+
+            // Validate password
+            if (string.IsNullOrEmpty(password))
+            {
+                SetStatusMessage("Password cannot be empty!", true);
+                return false;
+            }
+
+            return true;
         }
     }
 }

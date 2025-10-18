@@ -71,6 +71,7 @@
     <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\ClientConnectedState.cs" />
     <Compile Include="Assets\Scripts\Models\NPCParsing.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ServerPlayerCharacter.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\RegisterView.cs" />
     <Compile Include="Assets\Scripts\Models\Enums\Rank.cs" />
     <Compile Include="Assets\Scripts\CameraSwitcher.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\ServerAISpawner.cs" />
@@ -105,6 +106,7 @@
     <Compile Include="Assets\Scripts\AvatarActions.cs" />
     <Compile Include="Assets\Scripts\Runtime\Core\View.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\MetagameController.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Utils\MyUtils.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Views\MatchView.cs" />
     <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\ServerListeningState.cs" />
     <Compile Include="Assets\Scripts\Models\SkinProfile.cs" />
@@ -139,9 +141,9 @@
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\NetworkedPlayerCharacter.cs" />
     <Compile Include="Assets\Scripts\IMyPlayerStatus.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\ClientAICharacter.cs" />
-    <Compile Include="Assets\GameServer\Scripts\GameServer.cs" />
     <Compile Include="Assets\Scripts\BGPlayer.cs" />
     <Compile Include="Assets\Scripts\Utils\JsonDataReader.cs" />
+    <Compile Include="Assets\Scripts\Player\MyPlayerMaterialAssigner.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\MetagameApplication.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ClientPlayerCharacter.cs" />
     <Compile Include="Assets\Scripts\BgPublic.cs" />

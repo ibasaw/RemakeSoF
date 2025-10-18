@@ -1,10 +1,11 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UI%20Toolkit/UnityStyleSheet.uss?fileID=7433441132597879392&amp;guid=819e6491a1421a14db87a36e0c93b136&amp;type=3#UnityStyleSheet" />
     <ui:VisualElement name="mainMenu" style="justify-content: center; align-self: auto; align-items: center;">
-        <ui:Label text="The Game" name="titleLabel" class="title" style="align-self: center; top: auto; font-size: 140px;" />
+        <ui:VisualElement name="logoImage" style="background-image: resource(&apos;uQuake/gfx/menus/backdrop/pra1_sof2_logo&apos;); width: 500px; height: 300px;" />
         <ui:GroupBox style="align-self: center; height: auto; justify-content: center; width: auto; align-items: center; padding-bottom: 30px;">
             <ui:TextField label="Username" name="usernameTextField" max-length="50" style="flex-direction: column; height: 85px; align-self: center; align-items: flex-start; -unity-text-align: middle-center; max-width: none; -unity-background-scale-mode: stretch-to-fill; align-content: flex-start;" />
             <ui:TextField label="Password" name="passwordTextField" password="true" style="height: 85px; flex-direction: column; align-items: flex-start; align-content: flex-start; -unity-text-align: middle-center;" />
+            <ui:Label name="statusLabel" style="align-self: center; color: rgb(0, 255, 0); font-size: 16px; margin-top: 10px;" />
         </ui:GroupBox>
         <ui:Button text="Login" display-tooltip-when-elided="true" name="loginButton" class="button" />
         <ui:Button text="Register" display-tooltip-when-elided="true" name="registerButton" class="button" style="position: relative; top: 0; left: 0; right: 0; bottom: 0;" />

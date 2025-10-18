@@ -31,15 +31,15 @@ public class FBXGhoul2PropsImporter : AssetPostprocessor
                     if (!go.name.Contains("stupidtriangle_"))
                     {
                         bool isVisible = Convert.ToBoolean(val);
-                        go.SetActive(isVisible);
-                        meta.SetProperty(name, isVisible);
+                        //go.SetActive(isVisible);
+                        //meta.SetProperty(name, isVisible);
                         propertiesSet++;
                     }
                 }
                 else
                 {
                     // Dynamically store all other properties
-                    meta.SetProperty(name, val);
+                    //meta.SetProperty(name, val);
                     propertiesSet++;
                 }
             }
@@ -50,14 +50,14 @@ public class FBXGhoul2PropsImporter : AssetPostprocessor
         }
         
         // Debug log with more detailed info
-        string shaderFile = meta.GetString("shader_file", meta.GetString("g2_prop_shader", ""));
-        Debug.Log($"[FBXPropsImporter] {go.name}: Set {propertiesSet}/{propNames.Length} properties. Shader: '{shaderFile}'");
+        //string shaderFile = meta.GetString("shader_file", meta.GetString("g2_prop_shader", ""));
+        //Debug.Log($"[FBXPropsImporter] {go.name}: Set {propertiesSet}/{propNames.Length} properties. Shader: '{shaderFile}'");
         
         // Log all properties for debugging (only for first few objects to avoid spam)
-        if (propNames.Length > 0)
-        {
-            string propList = string.Join(", ", propNames.Select((name, idx) => $"{name}={values[idx]}"));
-            Debug.Log($"[FBXPropsImporter] All properties on {go.name}: {propList}");
-        }
+        //if (propNames.Length > 0)
+        //{
+            //string propList = string.Join(", ", propNames.Select((name, idx) => $"{name}={values[idx]}"));
+            //Debug.Log($"[FBXPropsImporter] All properties on {go.name}: {propList}");
+        //}
     }
 }
