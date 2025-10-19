@@ -16,9 +16,12 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
     [Header("URP Shader (Fallback)")]
     public string urpShaderName = "Universal Render Pipeline/Lit";
 
+    [Tooltip("Selected default model type for this player (e.g., average_sleeves, suit_long_coat, etc.)")]
+    [SerializeField] private string selectedModelName = "average_sleeves";
+
     [Header("Skin Selection")]
-    [Tooltip("Select a skin from available average_sleeves models")]
-    public string selectedSkinName = "";
+    [Tooltip("Selected skin from available models")]
+    [SerializeField] private string selectedSkinName = "";
 
     [Header("Available Skins (Read-only)")]
     [SerializeField] private string[] availableSkins = new string[0];
@@ -31,8 +34,8 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
         new Dictionary<string, Dictionary<string, List<Material>>>(StringComparer.OrdinalIgnoreCase);
 
     // Caches für Performance
-    private Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
-    private Dictionary<string, Material> materialCache = new Dictionary<string, Material>(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, Texture2D> textureCache = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, Material> materialCache = new(StringComparer.OrdinalIgnoreCase);
 
     // Geparste Definitionen: variantKey -> VariantDef
     private Dictionary<string, VariantDef> definitions = new Dictionary<string, VariantDef>(StringComparer.OrdinalIgnoreCase);
@@ -82,15 +85,50 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
         LoadAvailableSkins();
 
         // If a skin is selected, load it
+        RootJson selectedSkinData = null;
         if (!string.IsNullOrEmpty(selectedSkinName))
         {
-            LoadSelectedSkin();
+            selectedSkinData = LoadSelectedSkin();
         }
 
         // falls surfaceDefinition zugewiesen -> parse
         if (surfaceDefinition != null)
         {
             ParseSurfaceDefinition(surfaceDefinition.text);
+        }
+
+        // For quick renderer lookup, get all renderers under root
+        var allRenderers = this.gameObject.GetComponentsInChildren<Renderer>(true);
+        // Durchlaufe alle Renderers und deaktiviere GameObjects, deren Name "_off" enthält
+        foreach (var renderer in allRenderers)
+        {
+            if (renderer != null && renderer.gameObject != null)
+            {
+                if (renderer.gameObject.name != null && renderer.gameObject.name.ToLower().Contains("_off")
+                && !renderer.gameObject.name.ToLower().Contains("stupidtriangle"))
+                {
+                    renderer.gameObject.SetActive(false);
+                }
+            }
+            if (selectedSkinData != null && selectedSkinData.prefs != null)
+            {
+                string rendererName = renderer.gameObject.name;
+                string cleanRendererName = System.Text.RegularExpressions.Regex.Replace(rendererName, @"_\d+$", "");
+                if (selectedSkinData.prefs.surfaces_on != null)
+                {
+                    if (selectedSkinData.prefs.surfaces_on.ContainsValue(cleanRendererName))
+                    {
+                        renderer.gameObject.SetActive(true);
+                    }
+                }
+                if (selectedSkinData.prefs.surfaces_off != null)
+                {
+                    if (selectedSkinData.prefs.surfaces_off.ContainsValue(cleanRendererName))
+                    {
+                        renderer.gameObject.SetActive(false);
+                    }
+                }
+            }
         }
 
         // Wenn ein Skin geladen wurde und surfaceDefinition gesetzt ist, wende automatisch Varianten an
@@ -110,7 +148,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
                 Debug.LogWarning("[MyPlayerMaterialAssigner] Keine 'default' Variante in surfaceDefinition gefunden.");
             }
 
-            // Try to apply the model-specific variant (e.g., "average_sleeves")
+            // Try to apply the model-specific variant (get the model from the skin JSON)
             string modelsSafe = GetModelForSkin(selectedSkinName);
             if (!string.IsNullOrEmpty(modelsSafe) && definitions.ContainsKey(modelsSafe))
             {
@@ -127,7 +165,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
     }
 
     /// <summary>
-    /// Loads all available skins that use the "average_sleeves" model
+    /// Loads all available skins that use the "selectedModelName" model
     /// </summary>
     private void LoadAvailableSkins()
     {
@@ -141,9 +179,10 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
             try
             {
                 var rootJson = JsonConvert.DeserializeObject<RootJson>(skinFile.text);
+                //TODO: DERZEIT LADE ICH NUR das erste Model (Key "1") - eventuell erweitern für Mehrfach-Modelle
                 if (rootJson?.prefs?.models != null &&
                     rootJson.prefs.models.TryGetValue("1", out string model) &&
-                    model == "average_sleeves")
+                    model == selectedModelName)
                 {
                     skinFiles.Add(skinFile.name);
                 }
@@ -155,18 +194,18 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
         }
 
         availableSkins = skinFiles.ToArray();
-        Debug.Log($"[MyPlayerMaterialAssigner] Found {availableSkins.Length} skins with average_sleeves model: {string.Join(", ", availableSkins)}");
+        Debug.Log($"[MyPlayerMaterialAssigner] Found {availableSkins.Length} skins with '{selectedModelName}' model: {string.Join(", ", availableSkins)}");
     }
 
     /// <summary>
     /// Loads the currently selected skin
     /// </summary>
-    private void LoadSelectedSkin()
+    private RootJson LoadSelectedSkin()
     {
         if (string.IsNullOrEmpty(selectedSkinName))
         {
             Debug.LogWarning("[MyPlayerMaterialAssigner] No skin selected");
-            return;
+            return null;
         }
 
         // Load the skin JSON from Resources
@@ -176,7 +215,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
         if (skinAsset == null)
         {
             Debug.LogError($"[MyPlayerMaterialAssigner] Skin not found: {resourcePath}");
-            return;
+            return null;
         }
 
         try
@@ -194,16 +233,19 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
             {
                 LoadShaderDefinitionFromResources("Data/shaders/" + modelsSafe);
                 CreateMaterialsFromJson(selectedSkinName, skinAsset.text);
-                Debug.Log($"[MyPlayerMaterialAssigner] Successfully loaded skin: {selectedSkinName} with model: {modelsSafe}");
+                Debug.Log($"[MyPlayerMaterialAssigner] Successfully loaded skin: {selectedSkinName}.json with model: {modelsSafe}.shader");
+
             }
             else
             {
                 Debug.LogError($"[MyPlayerMaterialAssigner] No model found in skin: {selectedSkinName}");
             }
+            return rootJson;
         }
         catch (Exception ex)
         {
             Debug.LogError($"[MyPlayerMaterialAssigner] Error loading skin {selectedSkinName}: {ex.Message}");
+            return null;
         }
     }
 
@@ -403,7 +445,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
                     Shader shader = Shader.Find(urpShaderName);
                     var material = new Material(shader) { name = $"{partName}_{cacheKey}" };
                     // Load texture
-                    var texture = LoadTextureCached(partName, g.texture1);
+                    var texture = LoadTextureCached(partName, cacheKey);
                     if (texture != null)
                     {
                         if (material.HasProperty("_BaseMap"))

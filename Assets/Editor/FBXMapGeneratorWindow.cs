@@ -90,7 +90,7 @@ public class FBXMapGeneratorAdvanced : EditorWindow
 
     void ClearGeneratedMapsInScene()
     {
-        var all = GameObject.FindObjectsOfType<GameObject>();
+        var all = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
         int removed = 0;
         foreach (var go in all)
         {
@@ -262,14 +262,14 @@ public class FBXMapGeneratorAdvanced : EditorWindow
     GameObject InstantiatePrototypeObject(GameObject proto)
     {
         GameObject instance = null;
-        #if UNITY_2018_3_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
         if (PrefabUtility.IsPartOfPrefabAsset(proto))
         {
             instance = (GameObject)PrefabUtility.InstantiatePrefab(proto, UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             if (instance == null) instance = (GameObject)PrefabUtility.InstantiatePrefab(proto);
         }
         else
-        #endif
+#endif
         {
             instance = (GameObject)Instantiate(proto);
             instance.name = proto.name;

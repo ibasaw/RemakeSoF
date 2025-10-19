@@ -156,6 +156,17 @@
     "average_sleeves": {
         "description": "Male, military fatigues silhouette with short sleeves.",
         "parts": {
+            "beard": {
+                "naming": "beardhead_xxx",
+                "description": "Beard surface group (optional). Texturen in models/characters/average_face.",
+                "required": false,
+                "material": [
+                    "beardhead_frnt_lwr_l_off",
+                    "beardhead_frnt_lwr_r_off",
+                    "beardhead_frnt_mid_l_off",
+                    "beardhead_frnt_mid_r_off"
+                ]
+            },
             "body_2sided": {
                 "naming": "b2_xxx",
                 "description": "Double-sided shader (z. B. Kragen). Nutzt gleiche Map wie body, cull disabled.",
@@ -199,11 +210,7 @@
                     "head_bck_uppr_l_avmedhat_off",
                     "head_bck_uppr_r_avmedhat_off",
                     "head_side_l_avmedhat_off",
-                    "head_side_r_avmedhat_off",
-                    "beardhead_frnt_lwr_l_off",
-                    "beardhead_frnt_lwr_r_off",
-                    "beardhead_frnt_mid_l_off",
-                    "beardhead_frnt_mid_r_off"
+                    "head_side_r_avmedhat_off"
                 ]
             },
             "avmst": {
@@ -278,11 +285,7 @@
                     "head_bck_uppr_l_avmedhat_off",
                     "head_bck_uppr_r_avmedhat_off",
                     "head_side_l_avmedhat_off",
-                    "head_side_r_avmedhat_off",
-                    "beardhead_frnt_lwr_l_off",
-                    "beardhead_frnt_lwr_r_off",
-                    "beardhead_frnt_mid_l_off",
-                    "beardhead_frnt_mid_r_off"
+                    "head_side_r_avmedhat_off"
                 ]
             },
             "avmst": {
@@ -422,11 +425,7 @@
                     "head_bck_uppr_l_avmedhat_off",
                     "head_bck_uppr_r_avmedhat_off",
                     "head_side_l_avmedhat_off",
-                    "head_side_r_avmedhat_off",
-                    "beardhead_frnt_lwr_l_off",
-                    "beardhead_frnt_lwr_r_off",
-                    "beardhead_frnt_mid_l_off",
-                    "beardhead_frnt_mid_r_off"
+                    "head_side_r_avmedhat_off"
                 ]
             },
             "avmst": {
@@ -704,11 +703,7 @@
                     "head_bck_uppr_l_avmedhat_off",
                     "head_bck_uppr_r_avmedhat_off",
                     "head_side_l_avmedhat_off",
-                    "head_side_r_avmedhat_off",
-                    "beardhead_frnt_lwr_l_off",
-                    "beardhead_frnt_lwr_r_off",
-                    "beardhead_frnt_mid_l_off",
-                    "beardhead_frnt_mid_r_off"
+                    "head_side_r_avmedhat_off"
                 ]
             },
             "avlong": {
@@ -749,6 +744,17 @@
     "suit_long_coat": {
         "description": "Male, long coat silhouette (long sleeves).",
         "parts": {
+            "beard": {
+                "naming": "beardhead_xxx",
+                "description": "Beard surface group (optional). Texturen in models/characters/average_face.",
+                "required": false,
+                "material": [
+                    "beardhead_frnt_lwr_l_off",
+                    "beardhead_frnt_lwr_r_off",
+                    "beardhead_frnt_mid_l_off",
+                    "beardhead_frnt_mid_r_off"
+                ]
+            },
             "coat_long": {
                 "naming": "lab_xxx / suit_xxx / trench_xxx",
                 "description": "Double-sided coat shader (cull disabled). Textures in models/characters/suit_long_coat.",
@@ -757,7 +763,9 @@
                     "labcoat_r_off",
                     "labcoat_l_off",
                     "trenchcoat_r_off",
-                    "trenchcoat_l_off"
+                    "trenchcoat_l_off",
+                    "suitcoat_r_off",
+                    "suitcoat_l_off"
                 ]
             },
             "face_2sided": {
@@ -807,11 +815,7 @@
                     "head_bck_uppr_l_avmedhat_off",
                     "head_bck_uppr_r_avmedhat_off",
                     "head_side_l_avmedhat_off",
-                    "head_side_r_avmedhat_off",
-                    "beardhead_frnt_lwr_l_off",
-                    "beardhead_frnt_lwr_r_off",
-                    "beardhead_frnt_mid_l_off",
-                    "beardhead_frnt_mid_r_off"
+                    "head_side_r_avmedhat_off"
                 ]
             },
             "avmst": {
@@ -862,11 +866,7 @@
                     "head_bck_uppr_l_avmedhat_off",
                     "head_bck_uppr_r_avmedhat_off",
                     "head_side_l_avmedhat_off",
-                    "head_side_r_avmedhat_off",
-                    "beardhead_frnt_lwr_l_off",
-                    "beardhead_frnt_lwr_r_off",
-                    "beardhead_frnt_mid_l_off",
-                    "beardhead_frnt_mid_r_off"
+                    "head_side_r_avmedhat_off"
                 ]
             },
             "avmst": {
