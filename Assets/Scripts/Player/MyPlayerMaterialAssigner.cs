@@ -84,17 +84,23 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
         // Load available skins on start
         LoadAvailableSkins();
 
+        // falls surfaceDefinition zugewiesen -> parse
+        if (surfaceDefinition != null)
+        {
+            ParseSurfaceDefinition(surfaceDefinition.text);
+        }
+
+        if(definitions.Count == 0)
+        {
+            Debug.LogWarning("[MyPlayerMaterialAssigner] Keine surfaceDefinition geladen oder geparst.");
+            return;
+        }
+
         // If a skin is selected, load it
         RootJson selectedSkinData = null;
         if (!string.IsNullOrEmpty(selectedSkinName))
         {
             selectedSkinData = LoadSelectedSkin();
-        }
-
-        // falls surfaceDefinition zugewiesen -> parse
-        if (surfaceDefinition != null)
-        {
-            ParseSurfaceDefinition(surfaceDefinition.text);
         }
 
         // For quick renderer lookup, get all renderers under root
@@ -300,7 +306,41 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
         ResetAllGameObjectsToActive();
 
         selectedSkinName = newSkinName;
-        LoadSelectedSkin();
+        RootJson selectedSkinData = LoadSelectedSkin();
+
+        // For quick renderer lookup, get all renderers under root
+        var allRenderers = this.gameObject.GetComponentsInChildren<Renderer>(true);
+        // Durchlaufe alle Renderers und deaktiviere GameObjects, deren Name "_off" enthält
+        foreach (var renderer in allRenderers)
+        {
+            if (renderer != null && renderer.gameObject != null)
+            {
+                if (renderer.gameObject.name != null && renderer.gameObject.name.ToLower().Contains("_off")
+                && !renderer.gameObject.name.ToLower().Contains("stupidtriangle"))
+                {
+                    renderer.gameObject.SetActive(false);
+                }
+            }
+            if (selectedSkinData != null && selectedSkinData.prefs != null)
+            {
+                string rendererName = renderer.gameObject.name;
+                string cleanRendererName = System.Text.RegularExpressions.Regex.Replace(rendererName, @"_\d+$", "");
+                if (selectedSkinData.prefs.surfaces_on != null)
+                {
+                    if (selectedSkinData.prefs.surfaces_on.ContainsValue(cleanRendererName))
+                    {
+                        renderer.gameObject.SetActive(true);
+                    }
+                }
+                if (selectedSkinData.prefs.surfaces_off != null)
+                {
+                    if (selectedSkinData.prefs.surfaces_off.ContainsValue(cleanRendererName))
+                    {
+                        renderer.gameObject.SetActive(false);
+                    }
+                }
+            }
+        }
 
         // Reapply materials if surface definition is available
         if (surfaceDefinition != null)
@@ -440,6 +480,19 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
                 }
                 else
                 {
+                    /*definitions.TryGetValue("default", out var defaultDefinitionVariant);
+                    definitions.TryGetValue(selectedModelName, out var modelSpecificVariant);
+
+                    PartDef foundPartDef = null;
+                    if (defaultDefinitionVariant != null)
+                    {
+                        defaultDefinitionVariant.parts.TryGetValue(partName, out foundPartDef);
+                    }
+                    if (modelSpecificVariant != null && foundPartDef == null)
+                    {
+                        modelSpecificVariant.parts.TryGetValue(partName, out foundPartDef);
+                    }*/
+
                     //TODO: Create material based on cacheKey
                     //analog ähnlich in CreateMaterialFromShaderEntry()
                     Shader shader = Shader.Find(urpShaderName);
@@ -453,8 +506,11 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
                         else
                             material.mainTexture = texture;
                     }
-                    // Set two-sided if shader1 indicates it (simple heuristic)
-                    if (!string.IsNullOrEmpty(g.shader1) && g.shader1.IndexOf("noshadow", StringComparison.OrdinalIgnoreCase) >= 0)
+                    // Smoothness -> 0.0
+                    if (material.HasProperty("_Smoothness"))
+                        material.SetFloat("_Smoothness", 0.0f);
+                    
+                    if (partName.IndexOf("2sided", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         SetTwoSidedURP(material, true);
                     }
@@ -500,6 +556,12 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
         if (mat == null) return;
         if (mat.HasProperty("_CullMode"))
             mat.SetInt("_CullMode", twoSided ? 0 : 2);
+
+        if (mat.HasProperty("_Cull"))
+            mat.SetFloat("_Cull", 0.0f); // 0 = Both
+
+        // Optional auch Keyword aktivieren, falls Shader es nutzt
+        mat.EnableKeyword("_DOUBLESIDED_ON");
     }
 
     #endregion
@@ -683,18 +745,15 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
 
     private void CreateMaterialFromShaderEntry(string shaderName, ShaderEntry entry)
     {
-        // Extract part name from shader name (e.g., "models/characters/average_face/f_czech_serg_w1" -> "f_czech_serg_w1")
         string partName = Path.GetFileNameWithoutExtension(shaderName);
-
-        // Determine material properties
         bool isTwoSided = entry.CullDisabled;
         string texturePath = !string.IsNullOrEmpty(entry.MainTexture) ? entry.MainTexture : entry.EditorImage;
 
-        // Create material
+        // Shader & Material erzeugen
         Shader shader = Shader.Find(urpShaderName);
-        var material = new Material(shader) { name = $"{partName}" };
+        var material = new Material(shader) { name = partName };
 
-        // Load texture
+        // Textur setzen
         if (!string.IsNullOrEmpty(texturePath))
         {
             var texture = LoadTextureCached(partName, texturePath);
@@ -707,17 +766,26 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
             }
         }
 
-        // Set two-sided if needed
+        // Workflow Mode -> Specular
+        //if (material.HasProperty("_WorkflowMode"))
+        //    material.SetFloat("_WorkflowMode", 1.0f); // 0 = Metallic, 1 = Specular
+
+        // Smoothness -> 0.0
+        if (material.HasProperty("_Smoothness"))
+            material.SetFloat("_Smoothness", 0.0f);
+
+        // Zwei-seitig rendern
         if (isTwoSided)
         {
-            SetTwoSidedURP(material, true);
+            if (material.HasProperty("_Cull"))
+                material.SetFloat("_Cull", 0.0f); // 0 = Both
+
+            // Optional auch Keyword aktivieren, falls Shader es nutzt
+            material.EnableKeyword("_DOUBLESIDED_ON");
         }
 
-        // Store in materials cache
-        string cacheKey = $"{partName}";
+        // In Cache speichern
         materialCache[shaderName] = material;
-
-        //Debug.Log($"[MyPlayerMaterialAssigner] Created material '{material.name}' from shader '{shaderName}' (TwoSided: {isTwoSided})");
     }
 
     #endregion

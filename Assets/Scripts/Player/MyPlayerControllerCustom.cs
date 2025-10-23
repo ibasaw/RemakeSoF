@@ -272,35 +272,35 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	{
 		Debug.Log("shift-Walk Pressed");
 		isWalkingPressed = true;
-		// Animator parameter will be set in Update() for consistent timing
+		
 	}
 
 	private void OnWalkCanceled(InputAction.CallbackContext ctx)
 	{
 		Debug.Log("shift-Walk Released");
 		isWalkingPressed = false;
-		// Animator parameter will be set in Update() for consistent timing
+		
 	}
 
 	private void OnAttack(InputAction.CallbackContext ctx)
 	{
 		Debug.Log("Attack Pressed");
 		isAttacking = true;
-		// Animator parameter will be set in Update() for consistent timing
+		
 	}
 
 	private void OnCancelAttack(InputAction.CallbackContext ctx)
 	{
 		Debug.Log("Attack Released");
 		isAttacking = false;
-		// Animator parameter will be set in Update() for consistent timing
+		
 	}
 
 	private void OnCrouchPerformed(InputAction.CallbackContext ctx)
 	{
 		Debug.Log("C Pressed");
 		isCrouching = true;
-		// Animator parameter will be set in Update() for consistent timing
+		
 		if (yawTarget != null)
 		{
 			Vector3 localPos = yawTarget.localPosition;
@@ -315,7 +315,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	{
 		Debug.Log("C Released");
 		isCrouching = false;
-		// Animator parameter will be set in Update() for consistent timing
+		
 		if (yawTarget != null)
 		{
 			Vector3 localPos = yawTarget.localPosition;
