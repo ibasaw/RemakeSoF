@@ -41,6 +41,9 @@ namespace Unity.DedicatedGameServerSample.Runtime
 
         void OnDisable()
         {
+            m_BackToLoginButton.UnregisterCallback<ClickEvent>(OnClickBackToLogin);
+            m_RegisterButton.UnregisterCallback<ClickEvent>(OnClickRegister);
+            
             m_UsernameTextField.UnregisterValueChangedCallback(OnUsernameChanged);
             m_PasswordTextField.UnregisterValueChangedCallback(OnPasswordChanged);
             m_ConfirmPasswordTextField.UnregisterValueChangedCallback(OnConfirmPasswordChanged);

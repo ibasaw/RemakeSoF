@@ -16,12 +16,12 @@ namespace Unity.DedicatedGameServerSample.Runtime
 
         [SerializeField]
         MatchmakerView m_MatchmakerView;
-        
+
         internal DirectIPView DirectIP => m_DirectIPView;
 
         [SerializeField]
         DirectIPView m_DirectIPView;
-        
+
         internal ClientConnectingView ClientConnecting => m_ClientConnectingView;
 
         [SerializeField]
@@ -36,5 +36,11 @@ namespace Unity.DedicatedGameServerSample.Runtime
         RegisterView m_RegisterView;
 
         internal RegisterView RegisterView => m_RegisterView;
+
+        [SerializeField]
+        ConsoleView m_ConsoleView;
+
+        internal ConsoleView ConsoleView => m_ConsoleView;
+
     }
 }

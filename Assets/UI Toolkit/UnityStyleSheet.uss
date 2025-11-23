@@ -116,7 +116,8 @@
     padding-right: 10px;
     padding-top: 0;
     padding-bottom: 0;
-    background-color: rgba(45, 81, 123, 0.5);
+    background-image: resource("uQuake/gfx/menus/scoreboard/scorelineheader");
+    background-color: rgba(0, 0, 0, 0.5);
     -unity-text-align: middle-left;
     color: rgb(213, 236, 255);
     border-left-width: 0;

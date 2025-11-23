@@ -119,6 +119,70 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &334271747
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 334271748}
+  - component: {fileID: 334271750}
+  - component: {fileID: 334271749}
+  m_Layer: 0
+  m_Name: ConsoleView
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &334271748
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 334271747}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1718550447}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &334271749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 334271747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a4d3399d9d25dc47bc08648d6046820, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &334271750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 334271747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PanelSettings: {fileID: 11400000, guid: e4743dd456817cc448604c853a51767c, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: c563c822d9edf944ea54e52a1eeefb6b, type: 3}
+  m_SortingOrder: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
 --- !u!1 &484840896
 GameObject:
   m_ObjectHideFlags: 0
@@ -212,6 +276,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a7933e93e13c914d9ebfb746111226f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &927500439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 927500430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ddc35244cd3c6447bc581d5b7d1ce87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  toggleConsoleAction: {fileID: -5173144061950963584, guid: f08f4a55f3d8b364cbc3622e499a3ee8, type: 3}
 --- !u!1 &1002095161
 GameObject:
   m_ObjectHideFlags: 0
@@ -486,6 +563,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1425423828}
     - target: {fileID: 7608159501841437823, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
+      propertyPath: m_ConsoleView
+      value: 
+      objectReference: {fileID: 334271749}
+    - target: {fileID: 7608159501841437823, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
       propertyPath: m_RegisterView
       value: 
       objectReference: {fileID: 484840898}
@@ -502,6 +583,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5873813210152660583, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
       insertIndex: 2
       addedObject: {fileID: 484840897}
+    - targetCorrespondingSourceObject: {fileID: 5873813210152660583, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 334271748}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 7866452525617413525, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
       insertIndex: -1
@@ -509,6 +593,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7866452525617413525, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
       insertIndex: -1
       addedObject: {fileID: 927500432}
+    - targetCorrespondingSourceObject: {fileID: 7866452525617413525, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 927500439}
   m_SourcePrefab: {fileID: 100100000, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
 --- !u!4 &1718550447 stripped
 Transform:

@@ -47,6 +47,19 @@ namespace Unity.DedicatedGameServerSample.Runtime
         public string username;
         public string password;
     }
+
+    /// <summary>
+    /// Called when a player hit the toggle console hotkey (default: 'k')
+    /// </summary>
+    internal class ToggleConsoleEvent : AppEvent { }
+    
+    /// <summary>
+    /// Called when the user submits a command in the console
+    /// </summary>
+    internal class SubmitConsoleCommandEvent : AppEvent
+    {
+        public string command;
+    }
     
     /// <summary>
     /// Called when the user clicks the "Register" button on the registration view
