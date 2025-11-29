@@ -22,34 +22,35 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	[Header("Movement Limits")]
 	[SerializeField] private bool drawPhysicsDebugGUI = false;
-	[SerializeField] private float pm_maxsteepness = 0.7f;      // maximum floor steepness (lower = steeper slopes allowed)
-	[SerializeField] private float pm_maxstep = 18.0f;          // Maximum step height
-	[SerializeField] private float pm_stepsize = 18.0f;         // Step size
-	[SerializeField] private float pm_maxbarrier = 32.0f;       // maximum barrier height
+	[SerializeField] private float pm_maxsteepness = 0.07f;      // maximum floor steepness (lower = steeper slopes allowed)
+	[SerializeField] private float pm_maxstep = 1.8f;          // Maximum step height
+	[SerializeField] private float pm_stepsize = 1.8f;         // Step size
+	[SerializeField] private float pm_maxbarrier = 3.2f;       // maximum barrier height
 
 	[Header("Speed Scales")]
-	[SerializeField] private float pm_duckScale = 0.25f;        // Speed scale when ducking
+	[SerializeField] private float pm_duckScale = 0.025f;        // Speed scale when ducking
 
 	[Header("Physics Constants")]
 	[SerializeField] private float pm_accelerate = 6.0f;       // Ground acceleration (SoF2 default)
 	[SerializeField] private float pm_airaccelerate = 1.0f;     // Air acceleration  
 
 	[SerializeField] private float pm_friction = 6.0f;          // Ground friction
-	[SerializeField] private float pm_stopspeed = 100.0f;       // Stop speed threshold
-	[SerializeField] private float pm_maxspeed = 280.0f;        // Maximum speed / g_speed
+	[SerializeField] private float pm_stopspeed = 10.0f;       // Stop speed threshold
+	[SerializeField] private float pm_maxspeed = 28.0f;        // Maximum speed / g_speed
 
-	[SerializeField] private float phys_maxvelocity = 320;  // Maximum overall horizontal velocity (SoF2 default)
-	[SerializeField] private float phys_maxwalkvelocity = 320;  // Maximum walk horizontal velocity (SoF2 default) 
-	[SerializeField] private float phys_maxcrouchvelocity = 100.0f;  // Maximum crouch horizontal velocity
+	[SerializeField] private float phys_maxvelocity = 32f;  // Maximum overall horizontal velocity (SoF2 default)
+	[SerializeField] private float phys_maxwalkvelocity = 32f;  // Maximum walk horizontal velocity (SoF2 default) 
+	[SerializeField] private float phys_maxcrouchvelocity = 10.0f;  // Maximum crouch horizontal velocity
 	
-	[SerializeField] private float pm_gravity = 800.0f;         // Gravity value g_gravity
+	[SerializeField] private float pm_gravity = 80.0f;         // Gravity value g_gravity
 
-	[SerializeField] private float jumpVelocity = 270.0f;       // Jump velocity (from phys_jumpvel)
-	[SerializeField] private float rotationSpeed = 14f;         // Rotation speed for character
-	[SerializeField] private float totalAirTimeGlitchSuspicion = 0.05f; // reduced to from 0.1 to 0.05f
+	[SerializeField] private float jumpVelocity = 27.0f;       // Jump velocity (from phys_jumpvel)
+	[SerializeField] private float rotationSpeed = 1.4f;         // Rotation speed for character
+	[SerializeField] private float totalAirTimeGlitchSuspicion = 0.005f; // reduced to from 0.1 to 0.05f
 
 	// SoF2 Physics Constants
 	private const float OVERCLIP = 1.001f;                     // Overclip constant for sliding
+	private const float SKIN_WIDTH = 0.01f;                    // Distance to keep from surfaces
 
 	[Header("Camera/Rotation")]
 	[SerializeField] private Transform yawTarget;
@@ -57,9 +58,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private Transform cameraTransform;
 	[SerializeField] private float standYawTargetY = 85f;
 	[SerializeField] private float crouchYawTargetY = 45f;
-	//npc specific
-	[SerializeField] public bool isAiming = false;
-	[SerializeField] public bool isNPC = false;
 
 	[Header("BGPlayer Bones")]
 	[SerializeField] private Transform lowerLumbar;
@@ -87,7 +85,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private Vector3 lastGroundedPosition = Vector3.zero; // Last known grounded position
 	private bool hasValidGroundedPosition = false; // Track if we have a valid grounded position
 	private float lastStepUpTime = 0f; // Time when last step-up occurred
-	private bool isSwimming = false;                   // Swimming state
 	private bool isCrouching = false;                  // Crouching state
 	private float jumpDebounce = 0f;                   // Jump debounce timer (starts after landing)
 	private bool isDebounceActive = false;             // Whether debounce is currently active
@@ -219,7 +216,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		
 		colliderSystem.InitializeVisualCollider();
 		colliderSystem.InitializeVisualGroundCheck();
-		colliderSystem.CalculateAutoCapsuleSize(cranium, pelvis, leftHandBolt, rightHandBolt);
+		colliderSystem.CalculateAutoCapsuleSize(cranium, pelvis, leftHandBolt, rightHandBolt,leftFoot,rightFoot);
 		
 		// Initialize grounded position
 		lastGroundedPosition = GetColliderBottomPosition();
@@ -228,7 +225,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	private void OnEnable()
 	{
-		if (isNPC) return;
 		inputActions.Enable();
 		inputActions.Player.Move.performed += OnMovePerformed;
 		inputActions.Player.Move.canceled += OnMoveCanceled;
@@ -249,7 +245,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	private void OnDisable()
 	{
-		if (isNPC) return;
 		inputActions.Player.Move.performed -= OnMovePerformed;
 		inputActions.Player.Move.canceled -= OnMoveCanceled;
 		inputActions.Player.Walk.performed -= OnWalkPressed;
@@ -461,13 +456,13 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		groundHit = new RaycastHit();
 		
 		// Jump grace period - don't detect ground for a short time after jumping
-		if (isJumping && (Time.time - lastJumpTime) < 0.1f)
+		if (isJumping && (Time.time - lastJumpTime) < 0.01f)
 		{
 			return false;
 		}
 
 		// Don't detect ground if still moving upward significantly
-		if (isJumping && velocity.y > 50f)
+		if (isJumping && velocity.y > 5f)
 		{
 			return false;
 		}
@@ -498,7 +493,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				return true;
 			}
 		}
-
 		return false;
 	}
 
@@ -531,9 +525,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		return center - transform.up * halfHeight;
 	}
 
-	private void Update()
-	{
-		// Calculate mouse speed for dynamic pelvisTarget follow using Input System
+	public void UpdateDynamicLegsRotationSmooth(){
 		currentMouseSpeed = lookInput.magnitude / Time.deltaTime; // degrees per second
 
 		// Smooth mouse speed
@@ -543,6 +535,12 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Calculate dynamic legs rotation smooth based on mouse speed
 		float speedFactor = Mathf.Clamp01(smoothedMouseSpeed / 100f); // Normalize to 0-1 range (100 degrees/s = max)
 		dynamicLegsRotationSmooth = Mathf.Lerp(baseLegsRotationSmooth, maxLegsRotationSmooth, speedFactor * mouseSpeedMultiplier);
+	}
+
+	private void Update()
+	{
+		// Calculate mouse speed for dynamic pelvisTarget follow legs rotation using Input System
+		UpdateDynamicLegsRotationSmooth();
 
 		// jump debounce (only runs after landing)
 		if (isDebounceActive && jumpDebounce > 0f)
@@ -555,16 +553,13 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 
 		// Auto-jump for testing debounce system
-		if (autoJump && !isNPC)
+		if (autoJump)
 		{
 			HandleAutoJump();
 		}
 
 		// Play weapon swing sounds - play next sound when current one finishes
 		soundSystem.HandleWeaponSoundEvents(isAttacking, "Knife", "swing");
-
-		// Check for swimming (simple water detection)
-		isSwimming = transform.position.y < 0f; // Assuming water level is at y=0
 
         // Rotate is handled in LateUpdate for consistency with final physics state
 		
@@ -604,7 +599,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			Vector3 top = center + transform.up * halfHeight;
 			Vector3 bottom = center - transform.up * halfHeight;
 			
-			// Check with larger distance for slopes
+			// Check with larger distance for slopes (was 0.2f, now 2f for better detection)
 			float slopeCheckDistance = colliderSystem.GetCurrentGroundCheckDistance() * 2f;
 			if (Physics.CapsuleCast(top, bottom, colliderSystem.GetCurrentCapsuleRadius() * 0.9f, Vector3.down, out RaycastHit slopeHit, slopeCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
 			{
@@ -746,6 +741,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
         // Apply character root rotation after physics and before GUI
         HandleRotation();
 
+		// das ist vermutlich alles bullshit!!
 		if (yawTarget != null)
 		{
 			Vector3 lookAtPoint;
@@ -846,39 +842,30 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			return;
 		}
 
-		// apply ground friction
-		if (!isSwimming)
+		if (isGrounded)
 		{
-			if (isGrounded)
+			// if getting knocked back, no friction
+			// (We could add a knockback flag if needed)
+			float control = speed < pm_stopspeed ? pm_stopspeed : speed;
+			drop += control * pm_friction * Time.fixedDeltaTime;
+			
+			// Additional friction for slopes to prevent sliding
+			if (lastGroundHit.collider != null)
 			{
-				// if getting knocked back, no friction
-				// (We could add a knockback flag if needed)
-				float control = speed < pm_stopspeed ? pm_stopspeed : speed;
-				drop += control * pm_friction * Time.fixedDeltaTime;
-				
-				// Additional friction for slopes to prevent sliding
-				if (lastGroundHit.collider != null)
+				float slopeDot = Vector3.Dot(lastGroundHit.normal, Vector3.up);
+				if (slopeDot < 0.9f) // On any slope
 				{
-					float slopeDot = Vector3.Dot(lastGroundHit.normal, Vector3.up);
-					if (slopeDot < 0.9f) // On any slope
+					drop += control * pm_friction * 1.0f * Time.fixedDeltaTime; // Extra friction on slopes
+					
+					// Even more friction on steep slopes
+					if (slopeDot < 0.7f) // Steep slope
 					{
-						drop += control * pm_friction * 1.0f * Time.fixedDeltaTime; // Extra friction on slopes
-						
-						// Even more friction on steep slopes
-						if (slopeDot < 0.7f) // Steep slope
-						{
-							drop += control * pm_friction * 1.5f * Time.fixedDeltaTime; // Heavy friction on steep slopes
-						}
+						drop += control * pm_friction * 1.5f * Time.fixedDeltaTime; // Heavy friction on steep slopes
 					}
 				}
 			}
 		}
-
-		// apply water friction even if just wading
-		if (isSwimming)
-		{
-			drop += speed * 3.0f * Time.fixedDeltaTime;  // pm_waterfriction = 3.0f
-		}
+	
 
 		// Apply the friction
 		float newspeed = speed - drop;
@@ -981,19 +968,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		PM_Friction();
 
 		// Get movement input
-		Vector3 forward = (isAiming || isNPC) ? transform.forward : (cameraTransform != null ? cameraTransform.forward : transform.forward);
-		Vector3 right = (isAiming || isNPC) ? transform.right : (cameraTransform != null ? cameraTransform.right : transform.right);
+		Vector3 forward =  (cameraTransform != null ? cameraTransform.forward : transform.forward);
+		Vector3 right = (cameraTransform != null ? cameraTransform.right : transform.right);
 		
 		// Get ground normal for slope movement
 		Vector3 groundNormal = Vector3.up;
 		if (lastGroundHit.collider != null && Vector3.Dot(lastGroundHit.normal, Vector3.up) > pm_maxsteepness)
 		{
 			groundNormal = lastGroundHit.normal;
-			// Debug ground normal for diagonal movement (reduced spam)
-			//if (moveInput.sqrMagnitude > 0.1f && Time.time % 1f < 0.1f) // Only log once per second
-			//{
-			//	Debug.Log($"Ground Normal: {groundNormal}, Dot: {Vector3.Dot(lastGroundHit.normal, Vector3.up):F3}, MoveInput: {moveInput}");
-			//}
 		}
 		
 		// Project movement directions onto ground plane (simplified and more reliable)
@@ -1045,8 +1027,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		PM_Friction();
 
 		// Get movement input
-		Vector3 forward = (isAiming || isNPC) ? transform.forward : (cameraTransform != null ? cameraTransform.forward : transform.forward);
-		Vector3 right = (isAiming || isNPC) ? transform.right : (cameraTransform != null ? cameraTransform.right : transform.right);
+		Vector3 forward = (cameraTransform != null ? cameraTransform.forward : transform.forward);
+		Vector3 right = (cameraTransform != null ? cameraTransform.right : transform.right);
 		forward.y = 0f; right.y = 0f; forward.Normalize(); right.Normalize();
 
 		// Use raw input values like SoF2 (fmove, smove are -127 to +127)
@@ -1195,8 +1177,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		}
 		else
 		{
-			// emulate ground stick like SoF2: small negative to keep contact
-			if (velocity.y < 0f) velocity.y = -2f;
+			// When grounded, set vertical velocity to 0 to prevent sinking
+			// Only apply a tiny negative value if we're moving down to maintain contact
+			if (velocity.y < 0f) velocity.y = 0f;
 		}
 	}
 	
@@ -1381,10 +1364,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private void PM_StepSlideMove(bool gravity)
 	{
 		touchedObjects.Clear();
-		const float SKIN_WIDTH = 0.01f; // Abstand vor der Oberfläche
 		Vector3 desired = velocity * Time.fixedDeltaTime;	
 
-		int numbumps = 4;
+		int numbumps = 4; // Increased from 1 to 4 to handle multiple collisions per frame (corners, complex geometry)
 		Vector3 primal_velocity = velocity;
 		Vector3 currentPos = transform.position;
 		float time_left = 1.0f;
@@ -1393,6 +1375,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		float halfHeightLocal = Mathf.Max(0f, (colliderSystem.GetCurrentCapsuleHeight() * 0.5f) - colliderSystem.GetCurrentCapsuleRadius());
 
 		Vector3 vel = velocity;
+		bool stepUpAttempted = false;
 
 		for (int bump = 0; bump < numbumps; bump++)
 		{
@@ -1407,35 +1390,74 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 			if (castDist < 1e-6f)
 			{
-				transform.position = currentPos;
+				// Velocity is too small, check if we're stuck
+				if (vel.magnitude < 0.1f && isGrounded)
+				{
+					// Reduce velocity to prevent getting stuck
+					vel *= 0.5f;
+				}
 				break;
 			}
 
 			Vector3 castDirNorm = castDir / castDist;
 
-			// Bewegungscast - use all layers for collision detection to prevent falling through
-			if (Physics.CapsuleCast(top, bottom, colliderSystem.GetCurrentCapsuleRadius(), castDirNorm, out RaycastHit hit, castDist + SKIN_WIDTH, ~0, QueryTriggerInteraction.Ignore))
+			// Bewegungscast - use groundMask for consistency with ground checks
+			if (Physics.CapsuleCast(top, bottom, colliderSystem.GetCurrentCapsuleRadius(), castDirNorm, out RaycastHit hit, castDist + SKIN_WIDTH, groundMask, QueryTriggerInteraction.Ignore))
 			{
 				if (!touchedObjects.Contains(hit.collider.name))
 				{
 					touchedObjects.Add(hit.collider.name);
 				}
 				
-		// Check if this is a step-up opportunity (only for horizontal obstacles, not slopes)
-		if (TryStepUp(currentPos, hit, out Vector3 stepUpPos))
-		{
-			// Successfully stepped up
-			currentPos = stepUpPos;
-			// Continue with original movement after step-up
-			Vector3 remainingMovement = vel * Time.fixedDeltaTime * time_left;
-			remainingMovement.y = 0f; // Don't apply vertical velocity after step-up
-			currentPos += remainingMovement;
-			break;
-		}
+				// Check if this is a step-up opportunity (only try once per movement)
+				if (!stepUpAttempted && TryStepUp(currentPos, hit, out Vector3 stepUpPos))
+				{
+					// Successfully stepped up
+					currentPos = stepUpPos;
+					stepUpAttempted = true;
+					// Continue with original movement after step-up
+					Vector3 remainingMovement = vel * Time.fixedDeltaTime * time_left;
+					remainingMovement.y = 0f; // Don't apply vertical velocity after step-up
+					// Check if remaining movement is valid
+					if (remainingMovement.magnitude > 0.001f)
+					{
+						Vector3 newEnd = currentPos + remainingMovement;
+						Vector3 newCastDir = newEnd - currentPos;
+						float newCastDist = newCastDir.magnitude;
+						if (newCastDist > 0.001f)
+						{
+							Vector3 newTop = GetWorldCenterAtPosition(currentPos) + transform.up * halfHeightLocal;
+							Vector3 newBottom = GetWorldCenterAtPosition(currentPos) - transform.up * halfHeightLocal;
+							if (!Physics.CapsuleCast(newTop, newBottom, colliderSystem.GetCurrentCapsuleRadius(), newCastDir.normalized, out RaycastHit stepHit, newCastDist + SKIN_WIDTH, groundMask, QueryTriggerInteraction.Ignore))
+							{
+								currentPos = newEnd;
+								break;
+							}
+						}
+					}
+					// If step-up succeeded but can't continue, break to avoid getting stuck
+					break;
+				}
 				
 				// Bewege nur bis kurz vor den Hit (skin width), damit wir nicht "in" die Geometrie landen
 				float moveDist = Mathf.Max(hit.distance - SKIN_WIDTH, 0f);
-				currentPos += castDirNorm * moveDist;
+				if (moveDist < 0.001f)
+				{
+					// We're very close to the surface, check if we're stuck
+					float velMagnitude = vel.magnitude;
+					if (velMagnitude < 0.1f)
+					{
+						// Reduce velocity to prevent infinite loop
+						vel *= 0.3f;
+						break;
+					}
+					// If velocity is significant but we can't move, we're blocked
+					// Clip velocity and continue to next iteration
+				}
+				else
+				{
+					currentPos += castDirNorm * moveDist;
+				}
 
 				// Debug: wer wird getroffen und wie weit waren wir von ihm entfernt
 				//Debug.Log($"Movement Hit: {hit.collider.name}, hitDist={hit.distance:F4}, moveDist={moveDist:F4}, bump={bump}");
@@ -1444,6 +1466,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				Vector3 clipVel;
 				PM_ClipVelocity(vel, hit.normal, out clipVel, OVERCLIP);
 				vel = clipVel;
+
+				// Check if velocity became too small after clipping
+				if (vel.magnitude < 0.01f)
+				{
+					// We're completely blocked, reduce velocity to prevent getting stuck
+					vel *= 0.1f;
+					break;
+				}
 
 				// Zeit reduzieren (proportional zur Strecke)
 				float fraction = (moveDist / castDist);
@@ -1459,6 +1489,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				break;
 			}
 		}
+		
+		// Update velocity with final clipped velocity
+		velocity = vel;
 
 		// Endposition setzen
 		transform.position = currentPos;
@@ -1497,27 +1530,45 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			isGrounded = newGroundCheck;
 		}
 		
-		if (isGrounded && velocity.y < 0)
+		if (isGrounded && velocity.y <= 0)
 		{
-			// Strong ground stick - prevent falling through and sliding
-			velocity.y = -2f; // stick to ground
+			// Set vertical velocity to 0 when grounded to prevent sinking
+			velocity.y = 0f;
 			
-			// Enhanced ground stick for slopes - prevent sliding down
+			// Ensure player is positioned correctly above ground to prevent sinking
 			if (downHit.collider != null)
 			{
+				// Calculate where the bottom of the capsule should be
+				float halfHeight = Mathf.Max(0, (colliderSystem.GetCurrentCapsuleHeight() * 0.5f) - colliderSystem.GetCurrentCapsuleRadius());
+				Vector3 capsuleBottom = GetWorldCenterAtPosition(currentPos) - transform.up * halfHeight;
+				
+				// Calculate desired position: ground hit point + small offset
+				float desiredDistance = colliderSystem.GetCurrentCapsuleRadius() * 0.1f; // Small offset above ground
+				Vector3 desiredBottom = downHit.point + downHit.normal * desiredDistance;
+				
+				// If we're too close to or below the ground, push up
+				float currentDistance = Vector3.Dot(capsuleBottom - downHit.point, downHit.normal);
+				if (currentDistance < desiredDistance)
+				{
+					float correction = desiredDistance - currentDistance;
+					currentPos += downHit.normal * correction;
+					transform.position = currentPos;
+				}
+				
+				// Project velocity onto ground plane for slopes to prevent sliding down
 				float slopeDot = Vector3.Dot(downHit.normal, Vector3.up);
 				if (slopeDot < 0.95f) // On any slope
 				{
 					// Project velocity onto ground plane to prevent sliding
 					Vector3 groundProjectedVel = Vector3.ProjectOnPlane(velocity, downHit.normal);
 					velocity = groundProjectedVel;
-					velocity.y = -2f; // Keep ground stick
+					velocity.y = 0f; // Keep vertical velocity at 0
 					
 					// Additional velocity dampening on steep slopes
 					if (slopeDot < 0.7f) // Steep slope
 					{
 						velocity *= 0.8f; // Reduce velocity by 20% on steep slopes
-						velocity.y = -2f; // Keep ground stick
+						velocity.y = 0f; // Keep vertical velocity at 0
 					}
 				}
 			}
@@ -1537,23 +1588,20 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (!isGrounded || Mathf.Abs(velocity.y) > 10f)
 			return false;
 			
-		// Check if the hit normal is roughly horizontal (not a ceiling or slope)
-		// For slopes, we want to slide along them, not step up
-		if (Vector3.Dot(hit.normal, Vector3.up) < 0.3f)
-			return false;
-			
-		// Check if this is actually a vertical obstacle, not a slope
-		// If the normal is too close to vertical, it's likely a slope, not a step
-		if (Vector3.Dot(hit.normal, Vector3.up) > 0.7f)
+		// Check if the hit normal is roughly horizontal (not a ceiling)
+		// Allow step-up on slopes too (diagonal surfaces) - removed the upper limit check
+		if (Vector3.Dot(hit.normal, Vector3.up) < 0.1f)
 			return false;
 			
 		// Check if the obstacle height is within step-up range
-		float obstacleHeight = hit.point.y - currentPos.y;
-		if (obstacleHeight > pm_maxstep || obstacleHeight < 0.1f)
+		// Calculate obstacle height more accurately using the hit point
+		float obstacleHeight = hit.point.y - (currentPos.y - colliderSystem.GetCurrentCapsuleRadius());
+		if (obstacleHeight > pm_maxstep || obstacleHeight < 0.05f)
 			return false;
 			
-		// Calculate step-up position
-		Vector3 stepUpTarget = currentPos + Vector3.up * (obstacleHeight + pm_stepsize);
+		// Calculate step-up position - step up by obstacle height plus a small margin
+		float stepUpAmount = obstacleHeight + 0.1f; // Small margin to ensure we clear the obstacle
+		Vector3 stepUpTarget = currentPos + Vector3.up * stepUpAmount;
 		
 		// Check if there's space above the step
 		float halfHeight = Mathf.Max(0, (colliderSystem.GetCurrentCapsuleHeight() * 0.5f) - colliderSystem.GetCurrentCapsuleRadius());
@@ -1568,22 +1616,44 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			return false;
 		}
 		
-		// Check if the step-up position is clear
+		// Check if the step-up position is clear - use a small forward movement to test
 		Vector3 stepUpCenter = GetWorldCenterAtPosition(stepUpTarget);
 		Vector3 stepUpTop = stepUpCenter + transform.up * halfHeight;
 		Vector3 stepUpBottom = stepUpCenter - transform.up * halfHeight;
 		
 		// Check for horizontal obstacles at step-up position
-		Vector3 horizontalCheck = stepUpTarget - currentPos;
-		horizontalCheck.y = 0f;
-		if (horizontalCheck.magnitude > 0.1f)
+		// Use velocity direction for forward check, not just position difference
+		Vector3 horizontalVel = new Vector3(velocity.x, 0f, velocity.z);
+		if (horizontalVel.magnitude > 0.1f)
 		{
-			Vector3 horizontalDir = horizontalCheck.normalized;
-			if (Physics.CapsuleCast(stepUpBottom, stepUpTop, colliderSystem.GetCurrentCapsuleRadius(), horizontalDir, out RaycastHit horizontalHit, horizontalCheck.magnitude, groundMask, QueryTriggerInteraction.Ignore))
+			Vector3 horizontalDir = horizontalVel.normalized;
+			float checkDistance = Mathf.Min(horizontalVel.magnitude * Time.fixedDeltaTime, 0.5f);
+			if (Physics.CapsuleCast(stepUpBottom, stepUpTop, colliderSystem.GetCurrentCapsuleRadius(), horizontalDir, out RaycastHit horizontalHit, checkDistance + SKIN_WIDTH, groundMask, QueryTriggerInteraction.Ignore))
 			{
 				// There's still an obstacle at the step-up position
-				return false;
+				// But allow step-up if the obstacle is lower than the original hit
+				if (horizontalHit.point.y <= hit.point.y)
+				{
+					return false;
+				}
 			}
+		}
+		
+		// Additional check: verify we can actually stand on the step
+		// Cast down from step-up position to ensure there's ground
+		float groundCheckDist = stepUpAmount + colliderSystem.GetCurrentGroundCheckDistance();
+		if (!Physics.CapsuleCast(stepUpTop, stepUpBottom, colliderSystem.GetCurrentCapsuleRadius() * 0.9f, Vector3.down, out RaycastHit groundHit, groundCheckDist, groundMask, QueryTriggerInteraction.Ignore))
+		{
+			// No ground below step-up position, don't step up
+			return false;
+		}
+		
+		// Verify the ground is walkable (not too steep)
+		float slopeThreshold = pm_maxsteepness > 1f ? Mathf.Cos(pm_maxsteepness * Mathf.Deg2Rad) : pm_maxsteepness;
+		if (Vector3.Dot(groundHit.normal, Vector3.up) < slopeThreshold)
+		{
+			// Ground is too steep
+			return false;
 		}
 		
 		// Step-up is possible
@@ -1608,32 +1678,23 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private void HandleRotation()
 	{
 		Quaternion targetRot = Quaternion.identity;
-		if (isAiming)
+
+		// Prefer input-driven desired direction to avoid physics timing jitter
+		bool hasInput = moveInput.sqrMagnitude > 0.0001f;
+		if (hasInput)
 		{
-			Vector3 lookDir = yawTarget != null ? yawTarget.forward : transform.forward;
-			lookDir.y = 0f;
-			if (lookDir.sqrMagnitude > 0.01f)
-				targetRot = Quaternion.LookRotation(lookDir);
+			Vector3 desired = lastMoveDirection;
+			desired.y = 0f;
+			if (desired.sqrMagnitude > 0.0001f)
+				targetRot = Quaternion.LookRotation(desired.normalized, Vector3.up);
 		}
 		else
 		{
-            // Prefer input-driven desired direction to avoid physics timing jitter
-            bool hasInput = moveInput.sqrMagnitude > 0.0001f;
-            if (hasInput)
-            {
-                Vector3 desired = lastMoveDirection;
-                desired.y = 0f;
-                if (desired.sqrMagnitude > 0.0001f)
-                    targetRot = Quaternion.LookRotation(desired.normalized, Vector3.up);
-            }
-            else
-            {
-                // When no input, align to camera forward
-                Vector3 camForward = cameraTransform != null ? cameraTransform.forward : transform.forward;
-                camForward.y = 0f;
-                if (camForward.sqrMagnitude > 0.01f)
-                    targetRot = Quaternion.LookRotation(camForward.normalized, Vector3.up);
-            }
+			// When no input, align to camera forward
+			Vector3 camForward = cameraTransform != null ? cameraTransform.forward : transform.forward;
+			camForward.y = 0f;
+			if (camForward.sqrMagnitude > 0.01f)
+				targetRot = Quaternion.LookRotation(camForward.normalized, Vector3.up);
 		}
 
         if (targetRot != Quaternion.identity)
@@ -1668,7 +1729,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Movement States (vertical layout)
 		GUI.Label(new Rect(x, y, 600, line), $"FPS: {(int)(1f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f))}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsGrounded: {isGrounded}, IsWalking: {isWalking}", valueStyle); y += line;
-		GUI.Label(new Rect(x, y, 600, line), $"IsJumping: {isJumping}, IsSwimming: {isSwimming}", valueStyle); y += line;
+		GUI.Label(new Rect(x, y, 600, line), $"IsJumping: {isJumping}", valueStyle); y += line;
 		GUI.Label(new Rect(x, y, 600, line), $"IsAttacking: {isAttacking}, IsCrouching: {isCrouching}", valueStyle); y += line;
 		// Airtime display with color coding
 		GUIStyle airtimeStyle = new GUIStyle(valueStyle);
@@ -1745,7 +1806,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		if (autoJump)
 		{
 			GUIStyle autoJumpStyle = new GUIStyle(valueStyle);
-			bool jumpInputHeld = !isNPC && inputActions.Player.Jump.ReadValue<float>() > 0f;
+			bool jumpInputHeld = inputActions.Player.Jump.ReadValue<float>() > 0f;
 			autoJumpStyle.normal.textColor = jumpInputHeld ? Color.yellow : Color.gray;
 			string autoJumpText = jumpInputHeld ? "Auto-Jump: ACTIVE (Space Held)" : "Auto-Jump: Enabled (Press & Hold Space)";
 			GUI.Label(new Rect(x, y, 600, line), autoJumpText, autoJumpStyle); y += line;

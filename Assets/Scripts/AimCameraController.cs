@@ -25,6 +25,9 @@ public class AimCameraController : MonoBehaviour
     private float yaw;
     private float pitch;
     private float targetCameraSide;
+    
+    // Accumulated look input between FixedUpdate calls
+    private Vector2 accumulatedLookInput = Vector2.zero;
 
     private void Awake()
     {
@@ -59,28 +62,48 @@ public class AimCameraController : MonoBehaviour
         targetCameraSide = aimCam.CameraSide < 0.5f ? 1f : 0f;
     }
 
-    // Update is called once per frame
-    void LateUpdate()
+    // Collect input in Update (runs every frame, captures all input)
+    void Update()
     {
         Vector2 look = lookInput.action.ReadValue<Vector2>();
 
         if (Mouse.current != null && Mouse.current.delta.IsActuated())
         {
-            look *= mouseSensitivity;
+            // Mouse.delta is already a delta value (movement per frame)
+            // Accumulate it directly
+            accumulatedLookInput += look * mouseSensitivity;
         }
         else if (Gamepad.current != null && Gamepad.current.rightStick.IsActuated())
         {
-            look *= gamepadSensitivity;
+            // Gamepad input is typically a rate (per second), so scale by deltaTime
+            accumulatedLookInput += look * gamepadSensitivity * Time.deltaTime;
         }
-
-        yaw += look.x * sensitivity;
-        pitch -= look.y * sensitivity;
-        pitch = Mathf.Clamp(pitch, pitchMin, pitchMax);
-
+        
+        // Update shoulder switch in Update (visual, not physics-critical)
+        aimCam.CameraSide = Mathf.Lerp(aimCam.CameraSide, targetCameraSide, Time.deltaTime * shoulderSwitchSpeed);
+    }
+    
+    // Apply rotation in FixedUpdate to sync with physics movement
+    // This ensures camera rotation happens at the same rate as movement calculations
+    // and prevents stuttering when rotating while moving
+    void FixedUpdate()
+    {
+        // Apply accumulated input
+        if (accumulatedLookInput.sqrMagnitude > 0.0001f)
+        {
+            // Apply rotation with sensitivity
+            yaw += accumulatedLookInput.x * sensitivity;
+            pitch -= accumulatedLookInput.y * sensitivity;
+            pitch = Mathf.Clamp(pitch, pitchMin, pitchMax);
+            
+            // Reset accumulated input
+            accumulatedLookInput = Vector2.zero;
+        }
+        
+        // Always update yawTarget and pitchTarget rotation, even if no input
+        // This ensures the rotation is always current for movement calculations
         yawTarget.rotation = Quaternion.Euler(0f, yaw, 0f);
         pitchTarget.localRotation = Quaternion.Euler(pitch, 0f, 0f);
-
-        aimCam.CameraSide = Mathf.Lerp(aimCam.CameraSide, targetCameraSide, Time.deltaTime * shoulderSwitchSpeed);
     }
 
     public void SetYawPitchFromCameraForward(Transform cameraTransform)

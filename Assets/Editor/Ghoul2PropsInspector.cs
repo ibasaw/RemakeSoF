@@ -16,12 +16,12 @@ public class FBXGhoul2PropsImporter : AssetPostprocessor
         if (meta == null) meta = go.AddComponent<Ghoul2Meta>();
 
         int propertiesSet = 0;
-        
+
         for (int i = 0; i < propNames.Length; i++)
         {
             var name = propNames[i];
             var val = values[i];
-            
+
             try
             {
                 // Handle special cases first
@@ -32,14 +32,14 @@ public class FBXGhoul2PropsImporter : AssetPostprocessor
                     {
                         bool isVisible = Convert.ToBoolean(val);
                         //go.SetActive(isVisible);
-                        //meta.SetProperty(name, isVisible);
+                        meta.SetProperty(name, isVisible);
                         propertiesSet++;
                     }
                 }
                 else
                 {
                     // Dynamically store all other properties
-                    //meta.SetProperty(name, val);
+                    meta.SetProperty(name, val);
                     propertiesSet++;
                 }
             }
@@ -48,16 +48,16 @@ public class FBXGhoul2PropsImporter : AssetPostprocessor
                 Debug.LogWarning($"[FBXPropsImporter] Failed to set property '{name}' = '{val}' on {go.name}: {ex.Message}");
             }
         }
-        
+
         // Debug log with more detailed info
         //string shaderFile = meta.GetString("shader_file", meta.GetString("g2_prop_shader", ""));
         //Debug.Log($"[FBXPropsImporter] {go.name}: Set {propertiesSet}/{propNames.Length} properties. Shader: '{shaderFile}'");
-        
+
         // Log all properties for debugging (only for first few objects to avoid spam)
         //if (propNames.Length > 0)
         //{
-            //string propList = string.Join(", ", propNames.Select((name, idx) => $"{name}={values[idx]}"));
-            //Debug.Log($"[FBXPropsImporter] All properties on {go.name}: {propList}");
+        //string propList = string.Join(", ", propNames.Select((name, idx) => $"{name}={values[idx]}"));
+        //Debug.Log($"[FBXPropsImporter] All properties on {go.name}: {propList}");
         //}
     }
 }

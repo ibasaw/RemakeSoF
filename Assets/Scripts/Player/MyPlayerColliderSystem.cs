@@ -22,6 +22,8 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	[SerializeField] private float capsuleHeight = 0f;
 	[SerializeField] private Vector3 capsuleCenter = new Vector3(0, 0, 0);  // Center at half height
 	[SerializeField] private float groundCheckDistance = 1f;  // Distance to check for ground 1 ist perfekt erstmal.
+	[SerializeField] private float groundCheckRadius = 0.1f;  // Radius of ground check visual (calculated from feet width)
+	[SerializeField] private float groundCheckHeight = 0.1f;  // Height of ground check disk (0.1 or 0 for flat disk)
 
     [Header("Visual Collider Debug")]
 	[SerializeField] private bool showVisualCollider = true;
@@ -32,13 +34,6 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	[Header("Auto Capsule Sizing")]
 	[SerializeField] private bool autoSizeCapsule = true;
 	[SerializeField] private bool dynamicCapsuleSizing = true;     // Adjust capsule size when crouching
-	[SerializeField] private float capsuleRadiusMultiplier = 0.4f;  // Multiplier for character width
-	[SerializeField] private float capsuleHeightOffset = 10f;      // Additional height offset
-	[SerializeField] private float minCapsuleRadius = 3f;          // Minimum radius
-	[SerializeField] private float maxCapsuleRadius = 15f;         // Maximum radius
-	[SerializeField] private float minCapsuleHeight = 50f;         // Minimum height
-	[SerializeField] private float maxCapsuleHeight = 100f;        // Maximum height
-	[SerializeField] private float crouchHeightMultiplier = 0.6f;  // Height multiplier when crouching
 
     // Visual collider components
 	private GameObject visualColliderObject;
@@ -54,6 +49,8 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	private float baseCapsuleHeight;
 	private float baseCapsuleRadius;
 	private Vector3 baseCapsuleCenter;
+	private float feetYLocal; // Local Y position of feet (lowest point) for ground check positioning
+	private float feetWidth; // Width between leftFoot and rightFoot for ground check radius
 
 	// --- Public simple getters (geben die aktuellen internen Werte zurück) ---
 	public float GetCurrentCapsuleRadius()
@@ -81,6 +78,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	/// Liefert die effektiven Capsule-Werte, wie sie aktuell gelten würden.
 	/// Wenn autoSizeCapsule aktiv ist, verwendet die Methode die gespeicherten baseCapsule*-Werte.
 	/// Optional kannst du isCrouching=true setzen, um die crouch-Variation zu bekommen.
+	/// Capsule geht immer von Y=0 bis Y=height, center ist bei height * 0.5f
 	/// </summary>
 	public void GetPredictedCapsule(out float outHeight, out float outRadius, out Vector3 outCenter, bool isCrouching = false)
 	{
@@ -98,11 +96,12 @@ public class MyPlayerColliderSystem : MonoBehaviour
 
 			outHeight = baseH;
 			outRadius = baseR;
+			// Center ist immer bei half height (so dass Capsule von 0 bis height geht)
 			outCenter = new Vector3(0f, outHeight * 0.5f, 0f);
 
 			if (dynamicCapsuleSizing && isCrouching)
 			{
-				outHeight = outHeight * crouchHeightMultiplier;
+				outHeight = outHeight * 0.6f; // 60% height when crouching
 				outCenter = new Vector3(0f, outHeight * 0.5f, 0f);
 			}
 		}
@@ -172,14 +171,32 @@ public class MyPlayerColliderSystem : MonoBehaviour
 		// Set up material
 		if (colliderMaterial == null)
 		{
-			// Create a simple unlit material
-			colliderMaterial = new Material(Shader.Find("Unlit/Color"));
+			// Try to find Unlit/Color shader, fallback to Standard if not found
+			Shader shader = Shader.Find("Unlit/Color");
+			if (shader == null)
+			{
+				shader = Shader.Find("Standard");
+			}
+			colliderMaterial = new Material(shader);
 			colliderMaterial.color = colliderColor;
+			
+			// Enable transparency if using Standard shader
+			if (shader.name == "Standard")
+			{
+				colliderMaterial.SetFloat("_Mode", 3); // Transparent mode
+				colliderMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+				colliderMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+				colliderMaterial.SetInt("_ZWrite", 0);
+				colliderMaterial.DisableKeyword("_ALPHATEST_ON");
+				colliderMaterial.EnableKeyword("_ALPHABLEND_ON");
+				colliderMaterial.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+				colliderMaterial.renderQueue = 3000;
+			}
 		}
 		visualColliderRenderer.material = colliderMaterial;
 		
-		// Make sure it renders on top
-		visualColliderRenderer.sortingOrder = 1000;
+		// Make sure it renders
+		visualColliderRenderer.enabled = true;
 	}
 	
 	/// <summary>
@@ -214,6 +231,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	
 	/// <summary>
 	/// Create a capsule mesh for visual representation
+	/// Capsule goes from Y=0 (feet) to Y=height (cranium), centered at height * 0.5f
 	/// </summary>
 	private Mesh CreateCapsuleMesh()
 	{
@@ -222,29 +240,88 @@ public class MyPlayerColliderSystem : MonoBehaviour
 
 		// Capsule parameters
 		int segments = 16;
-		int rings = 8;
-		float radius = capsuleRadius;
-		float height = capsuleHeight;
+		int hemisphereRings = 8; // Rings for each hemisphere
+		int cylinderRings = 4; // Rings for the cylinder part
+		float radius = Mathf.Max(0.01f, capsuleRadius); // Ensure minimum radius
+		float height = Mathf.Max(0.01f, capsuleHeight); // Ensure minimum height
+		
+		// Validate parameters
+		if (radius <= 0f || height <= 0f)
+		{
+			Debug.LogWarning($"[CreateCapsuleMesh] Invalid capsule dimensions - Radius: {capsuleRadius}, Height: {capsuleHeight}");
+			return mesh; // Return empty mesh
+		}
 
 		// Calculate vertices
 		List<Vector3> vertices = new List<Vector3>();
 		List<Vector2> uvs = new List<Vector2>();
 		List<int> triangles = new List<int>();
 		
-		// Generate vertices for the capsule
-		// Top hemisphere
-		for (int ring = 0; ring <= rings / 2; ring++)
+		// Calculate cylinder height (total height minus the two hemispheres)
+		float cylinderHeight = Mathf.Max(0f, height - radius * 2f);
+		float cylinderBottom = radius;
+		float cylinderTop = height - radius;
+		
+		int vertexOffset = 0;
+		
+		// Generate vertices for TOP hemisphere (from cylinderTop to height)
+		for (int ring = 0; ring <= hemisphereRings; ring++)
 		{
-			float v = (float)ring / (rings / 2);
-			float phi = v * Mathf.PI / 2;
+			float v = (float)ring / hemisphereRings;
+			float phi = v * Mathf.PI / 2f; // From 0 to PI/2
 			
 			for (int seg = 0; seg <= segments; seg++)
 			{
 				float u = (float)seg / segments;
-				float theta = u * Mathf.PI * 2;
+				float theta = u * Mathf.PI * 2f;
 				
 				float x = Mathf.Cos(theta) * Mathf.Sin(phi) * radius;
-				float y = Mathf.Cos(phi) * radius + height * 0.5f;
+				float y = cylinderTop + Mathf.Cos(phi) * radius;
+				float z = Mathf.Sin(theta) * Mathf.Sin(phi) * radius;
+				
+				vertices.Add(new Vector3(x, y, z));
+				uvs.Add(new Vector2(u, v));
+			}
+		}
+		vertexOffset = vertices.Count;
+		
+		// Generate vertices for CYLINDER part (middle section from radius to height - radius)
+		int cylinderVertexOffset = vertices.Count;
+		if (cylinderHeight > 0f)
+		{
+			for (int ring = 0; ring <= cylinderRings; ring++)
+			{
+				float v = (float)ring / cylinderRings;
+				float y = Mathf.Lerp(cylinderBottom, cylinderTop, v);
+				
+				for (int seg = 0; seg <= segments; seg++)
+				{
+					float u = (float)seg / segments;
+					float theta = u * Mathf.PI * 2f;
+					
+					float x = Mathf.Cos(theta) * radius;
+					float z = Mathf.Sin(theta) * radius;
+					
+					vertices.Add(new Vector3(x, y, z));
+					uvs.Add(new Vector2(u, v));
+				}
+			}
+		}
+		
+		// Generate vertices for BOTTOM hemisphere (from 0 to radius)
+		int bottomVertexOffset = vertices.Count; // Set BEFORE adding bottom hemisphere vertices
+		for (int ring = 0; ring <= hemisphereRings; ring++)
+		{
+			float v = (float)ring / hemisphereRings;
+			float phi = (1f - v) * Mathf.PI / 2f; // From PI/2 to 0 (inverted)
+			
+			for (int seg = 0; seg <= segments; seg++)
+			{
+				float u = (float)seg / segments;
+				float theta = u * Mathf.PI * 2f;
+				
+				float x = Mathf.Cos(theta) * Mathf.Sin(phi) * radius;
+				float y = Mathf.Cos(phi) * radius; // Goes from 0 (at phi=PI/2) to radius (at phi=0)
 				float z = Mathf.Sin(theta) * Mathf.Sin(phi) * radius;
 				
 				vertices.Add(new Vector3(x, y, z));
@@ -252,52 +329,20 @@ public class MyPlayerColliderSystem : MonoBehaviour
 			}
 		}
 		
-		// Cylinder part
-		for (int ring = 1; ring < rings; ring++)
-		{
-			float v = (float)ring / rings;
-			float y = height * 0.5f - (v - 0.5f) * height;
-			
-			for (int seg = 0; seg <= segments; seg++)
-			{
-				float u = (float)seg / segments;
-				float theta = u * Mathf.PI * 2;
-				
-				float x = Mathf.Cos(theta) * radius;
-				float z = Mathf.Sin(theta) * radius;
-				
-				vertices.Add(new Vector3(x, y, z));
-				uvs.Add(new Vector2(u, v));
-			}
-		}
-		
-		// Bottom hemisphere
-		for (int ring = rings / 2; ring <= rings; ring++)
-		{
-			float v = (float)ring / rings;
-			float phi = (v - 0.5f) * Mathf.PI;
-			
-			for (int seg = 0; seg <= segments; seg++)
-			{
-				float u = (float)seg / segments;
-				float theta = u * Mathf.PI * 2;
-				
-				float x = Mathf.Cos(theta) * Mathf.Sin(phi) * radius;
-				float y = Mathf.Cos(phi) * radius - height * 0.5f;
-				float z = Mathf.Sin(theta) * Mathf.Sin(phi) * radius;
-				
-				vertices.Add(new Vector3(x, y, z));
-				uvs.Add(new Vector2(u, v));
-			}
-		}
-		
-		// Generate triangles
-		for (int ring = 0; ring < rings; ring++)
+		// Generate triangles for TOP hemisphere
+		for (int ring = 0; ring < hemisphereRings; ring++)
 		{
 			for (int seg = 0; seg < segments; seg++)
 			{
 				int current = ring * (segments + 1) + seg;
-				int next = current + segments + 1;
+				int next = (ring + 1) * (segments + 1) + seg;
+				
+				// Validate indices (seg can be at most segments-1, so current+1 and next+1 are valid)
+				if (current + 1 >= vertices.Count || next + 1 >= vertices.Count)
+				{
+					Debug.LogError($"[CreateCapsuleMesh] Invalid top hemisphere indices - current: {current}, next: {next}, vertexCount: {vertices.Count}");
+					continue;
+				}
 				
 				// First triangle
 				triangles.Add(current);
@@ -311,38 +356,222 @@ public class MyPlayerColliderSystem : MonoBehaviour
 			}
 		}
 		
+		// Generate triangles for CYLINDER part
+		if (cylinderHeight > 0f)
+		{
+			for (int ring = 0; ring < cylinderRings; ring++)
+			{
+				for (int seg = 0; seg < segments; seg++)
+				{
+					int current = cylinderVertexOffset + ring * (segments + 1) + seg;
+					int next = cylinderVertexOffset + (ring + 1) * (segments + 1) + seg;
+					
+					// Validate indices (seg can be at most segments-1, so current+1 and next+1 are valid)
+					if (current + 1 >= vertices.Count || next + 1 >= vertices.Count)
+					{
+						Debug.LogError($"[CreateCapsuleMesh] Invalid cylinder indices - current: {current}, next: {next}, vertexCount: {vertices.Count}");
+						continue;
+					}
+					
+					// First triangle
+					triangles.Add(current);
+					triangles.Add(next);
+					triangles.Add(current + 1);
+					
+					// Second triangle
+					triangles.Add(current + 1);
+					triangles.Add(next);
+					triangles.Add(next + 1);
+				}
+			}
+		}
+		else
+		{
+			// If no cylinder, connect top hemisphere directly to bottom hemisphere
+			// Top hemisphere last ring connects to bottom hemisphere first ring
+			int topLastRing = hemisphereRings;
+			int bottomFirstRing = 0;
+			
+			for (int seg = 0; seg < segments; seg++)
+			{
+				int topCurrent = topLastRing * (segments + 1) + seg;
+				int topNext = topLastRing * (segments + 1) + seg + 1; // seg+1 is valid since seg < segments
+				int bottomCurrent = bottomVertexOffset + bottomFirstRing * (segments + 1) + seg;
+				int bottomNext = bottomVertexOffset + bottomFirstRing * (segments + 1) + seg + 1;
+				
+				// Validate indices
+				if (topCurrent >= vertices.Count || topNext >= vertices.Count || 
+				    bottomCurrent >= vertices.Count || bottomNext >= vertices.Count)
+				{
+					Debug.LogError($"[CreateCapsuleMesh] Invalid connection indices - topCurrent: {topCurrent}, topNext: {topNext}, bottomCurrent: {bottomCurrent}, bottomNext: {bottomNext}, vertexCount: {vertices.Count}");
+					continue;
+				}
+				
+				// Connect top to bottom
+				triangles.Add(topCurrent);
+				triangles.Add(bottomNext);
+				triangles.Add(topNext);
+				
+				triangles.Add(topCurrent);
+				triangles.Add(bottomCurrent);
+				triangles.Add(bottomNext);
+			}
+		}
+		
+		// Generate triangles for BOTTOM hemisphere
+		for (int ring = 0; ring < hemisphereRings; ring++)
+		{
+			for (int seg = 0; seg < segments; seg++)
+			{
+				int current = bottomVertexOffset + ring * (segments + 1) + seg;
+				int next = bottomVertexOffset + (ring + 1) * (segments + 1) + seg;
+				
+				// Validate indices
+				if (current >= vertices.Count || current + 1 >= vertices.Count || 
+				    next >= vertices.Count || next + 1 >= vertices.Count)
+				{
+					Debug.LogError($"[CreateCapsuleMesh] Invalid bottom hemisphere indices - ring: {ring}, seg: {seg}, current: {current}, next: {next}, bottomVertexOffset: {bottomVertexOffset}, vertexCount: {vertices.Count}");
+					continue;
+				}
+				
+				// First triangle (inverted winding for bottom)
+				triangles.Add(current);
+				triangles.Add(current + 1);
+				triangles.Add(next);
+				
+				// Second triangle (inverted winding for bottom)
+				triangles.Add(current + 1);
+				triangles.Add(next + 1);
+				triangles.Add(next);
+			}
+		}
+		
+		// Add bottom cap (flat circle at Y=0)
+		int bottomCapCenterIndex = vertices.Count;
+		vertices.Add(new Vector3(0, 0, 0)); // Center at Y=0
+		uvs.Add(new Vector2(0.5f, 0.5f));
+		
+		// Add bottom cap circle vertices
+		int bottomCapCircleStart = vertices.Count;
+		for (int seg = 0; seg <= segments; seg++)
+		{
+			float u = (float)seg / segments;
+			float theta = u * Mathf.PI * 2f;
+			
+			float x = Mathf.Cos(theta) * radius;
+			float z = Mathf.Sin(theta) * radius;
+			
+			vertices.Add(new Vector3(x, 0, z));
+			uvs.Add(new Vector2(u, 0.5f));
+		}
+		
+		// Generate bottom cap triangles (fan from center)
+		// Note: bottomCapCircleStart is the first circle vertex index
+		// We have segments+1 vertices in the circle (indices bottomCapCircleStart to bottomCapCircleStart + segments)
+		for (int seg = 0; seg < segments; seg++)
+		{
+			int current = bottomCapCircleStart + seg;
+			int next = bottomCapCircleStart + seg + 1; // Next vertex (seg+1, which is <= segments, so it's valid)
+			
+			// Validate indices before adding
+			if (current >= vertices.Count || next >= vertices.Count || bottomCapCenterIndex >= vertices.Count)
+			{
+				Debug.LogError($"[CreateCapsuleMesh] Invalid bottom cap indices - current: {current}, next: {next}, center: {bottomCapCenterIndex}, vertexCount: {vertices.Count}");
+				continue;
+			}
+			
+			triangles.Add(bottomCapCenterIndex);
+			triangles.Add(next);
+			triangles.Add(current);
+		}
+		
+		// Validate mesh data
+		if (vertices.Count == 0)
+		{
+			Debug.LogWarning("[CreateCapsuleMesh] No vertices generated!");
+			return mesh;
+		}
+		
+		if (triangles.Count == 0)
+		{
+			Debug.LogWarning("[CreateCapsuleMesh] No triangles generated!");
+			return mesh;
+		}
+		
+		// Validate triangle indices
+		int maxVertexIndex = vertices.Count - 1;
+		for (int i = 0; i < triangles.Count; i++)
+		{
+			if (triangles[i] < 0 || triangles[i] > maxVertexIndex)
+			{
+				Debug.LogError($"[CreateCapsuleMesh] Invalid triangle index: {triangles[i]} (max: {maxVertexIndex})");
+				return mesh;
+			}
+		}
+		
 		mesh.vertices = vertices.ToArray();
 		mesh.uv = uvs.ToArray();
 		mesh.triangles = triangles.ToArray();
 		mesh.RecalculateNormals();
 		mesh.RecalculateBounds();
 		
+		//Debug.Log($"[CreateCapsuleMesh] Generated mesh - Vertices: {vertices.Count}, Triangles: {triangles.Count / 3}, Radius: {radius:F2}, Height: {height:F2}");
+		
 		return mesh;
 	}
 	
 	/// <summary>
 	/// Create a ground check mesh for visual representation
+	/// Creates a flat disk (or very thin cylinder) positioned directly under the feet
 	/// </summary>
 	private Mesh CreateGroundCheckMesh()
 	{
 		Mesh mesh = new Mesh();
 		mesh.name = "GroundCheckVisual";
 		
-		// Ground check parameters
-		int segments = 16;
-		float radius = capsuleRadius * 0.9f; // Slightly smaller than capsule
-		float height = groundCheckDistance;
+		// Ground check parameters - flat disk
+		int segments = 32; // More segments for smoother circle
+		float radius = groundCheckRadius; // Radius based on feet width
+		float height = groundCheckHeight; // Very thin disk (0.1 or 0)
 		
-		// Calculate vertices for a cylinder representing the ground check
+		// Calculate vertices for a flat disk
 		List<Vector3> vertices = new List<Vector3>();
 		List<Vector2> uvs = new List<Vector2>();
 		List<int> triangles = new List<int>();
 		
-		// Generate vertices for the ground check cylinder
-		for (int ring = 0; ring <= 1; ring++) // Top and bottom rings
+		// Center vertex (top)
+		int centerTopIndex = vertices.Count;
+		vertices.Add(new Vector3(0, height * 0.5f, 0));
+		uvs.Add(new Vector2(0.5f, 0.5f));
+		
+		// Center vertex (bottom) - only if height > 0
+		int centerBottomIndex = -1;
+		if (height > 0f)
 		{
-			float y = ring == 0 ? 0f : -height; // Top at 0, bottom at -height
+			centerBottomIndex = vertices.Count;
+			vertices.Add(new Vector3(0, -height * 0.5f, 0));
+			uvs.Add(new Vector2(0.5f, 0.5f));
+		}
+		
+		// Generate vertices for top circle
+		int topCircleStartIndex = vertices.Count;
+		for (int seg = 0; seg <= segments; seg++)
+		{
+			float u = (float)seg / segments;
+			float theta = u * Mathf.PI * 2;
 			
+			float x = Mathf.Cos(theta) * radius;
+			float z = Mathf.Sin(theta) * radius;
+			
+			vertices.Add(new Vector3(x, height * 0.5f, z));
+			uvs.Add(new Vector2(u, 0.5f));
+		}
+		
+		// Generate vertices for bottom circle (if height > 0)
+		int bottomCircleStartIndex = -1;
+		if (height > 0f && centerBottomIndex >= 0)
+		{
+			bottomCircleStartIndex = vertices.Count;
 			for (int seg = 0; seg <= segments; seg++)
 			{
 				float u = (float)seg / segments;
@@ -351,41 +580,53 @@ public class MyPlayerColliderSystem : MonoBehaviour
 				float x = Mathf.Cos(theta) * radius;
 				float z = Mathf.Sin(theta) * radius;
 				
-				vertices.Add(new Vector3(x, y, z));
-				uvs.Add(new Vector2(u, ring));
+				vertices.Add(new Vector3(x, -height * 0.5f, z));
+				uvs.Add(new Vector2(u, 0.5f));
 			}
 		}
 		
-		// Generate triangles for the cylinder sides
+		// Generate top face triangles (fan from center)
 		for (int seg = 0; seg < segments; seg++)
 		{
-			int current = seg;
-			int next = current + segments + 1;
+			int current = topCircleStartIndex + seg;
+			int next = topCircleStartIndex + ((seg + 1) % (segments + 1));
 			
-			// First triangle
+			triangles.Add(centerTopIndex);
+			triangles.Add(next);
 			triangles.Add(current);
-			triangles.Add(next);
-			triangles.Add(current + 1);
-			
-			// Second triangle
-			triangles.Add(current + 1);
-			triangles.Add(next);
-			triangles.Add(next + 1);
 		}
 		
-		// Add bottom cap (circle)
-		int centerIndex = vertices.Count;
-		vertices.Add(new Vector3(0, -height, 0)); // Center of bottom
-		uvs.Add(new Vector2(0.5f, 0.5f));
-		
-		for (int seg = 0; seg < segments; seg++)
+		// Generate bottom face triangles (if height > 0)
+		if (height > 0f && centerBottomIndex >= 0 && bottomCircleStartIndex >= 0)
 		{
-			int current = segments + 1 + seg;
-			int next = segments + 1 + ((seg + 1) % segments);
+			for (int seg = 0; seg < segments; seg++)
+			{
+				int current = bottomCircleStartIndex + seg;
+				int next = bottomCircleStartIndex + ((seg + 1) % (segments + 1));
+				
+				triangles.Add(centerBottomIndex);
+				triangles.Add(current);
+				triangles.Add(next);
+			}
 			
-			triangles.Add(centerIndex);
-			triangles.Add(next);
-			triangles.Add(current);
+			// Generate side triangles (connecting top and bottom circles)
+			for (int seg = 0; seg < segments; seg++)
+			{
+				int topCurrent = topCircleStartIndex + seg;
+				int topNext = topCircleStartIndex + ((seg + 1) % (segments + 1));
+				int bottomCurrent = bottomCircleStartIndex + seg;
+				int bottomNext = bottomCircleStartIndex + ((seg + 1) % (segments + 1));
+				
+				// First triangle
+				triangles.Add(topCurrent);
+				triangles.Add(bottomNext);
+				triangles.Add(topNext);
+				
+				// Second triangle
+				triangles.Add(topCurrent);
+				triangles.Add(bottomCurrent);
+				triangles.Add(bottomNext);
+			}
 		}
 		
 		mesh.vertices = vertices.ToArray();
@@ -410,11 +651,28 @@ public class MyPlayerColliderSystem : MonoBehaviour
 		if (!showVisualCollider) return;
 		
 		// Update position to match capsule center
-		visualColliderObject.transform.localPosition = capsuleCenter;
+		visualColliderObject.transform.localPosition = Vector3.zero;
+		
+		// Update mesh if dimensions changed
+		if (visualColliderMeshFilter != null)
+		{
+			visualColliderMeshFilter.mesh = CreateCapsuleMesh();
+		}
 		
 		// Update color based on grounded state
-		if (visualColliderRenderer != null && visualColliderRenderer.material != null)
+		if (visualColliderRenderer != null)
 		{
+			if (visualColliderRenderer.material == null)
+			{
+				// Recreate material if it was lost
+				if (colliderMaterial == null)
+				{
+					colliderMaterial = new Material(Shader.Find("Unlit/Color"));
+					colliderMaterial.color = colliderColor;
+				}
+				visualColliderRenderer.material = colliderMaterial;
+			}
+			
 			Color currentColor = isGrounded ? Color.green : Color.red;
 			currentColor.a = colliderColor.a; // Keep original alpha
 			visualColliderRenderer.material.color = currentColor;
@@ -423,6 +681,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	
 	/// <summary>
 	/// Update the visual ground check position and visibility
+	/// Ground check is positioned directly under the feet
 	/// </summary>
 	public void UpdateVisualGroundCheck(bool isGrounded)
 	{
@@ -433,9 +692,9 @@ public class MyPlayerColliderSystem : MonoBehaviour
 		
 		if (!showVisualCollider) return;
 		
-		// Update position to match capsule bottom
-		float halfHeight = Mathf.Max(0, (capsuleHeight * 0.5f) - capsuleRadius);
-		Vector3 groundCheckPosition = new Vector3(0, -halfHeight, 0);
+		// Update position to match feet position (lowestY in local space)
+		// Position directly at feet level (feetYLocal), or slightly below if height > 0
+		Vector3 groundCheckPosition = new Vector3(0, feetYLocal - groundCheckHeight * 0.5f, 0);
 		visualGroundCheckObject.transform.localPosition = groundCheckPosition;
 		
 		// Update color based on grounded state
@@ -446,7 +705,7 @@ public class MyPlayerColliderSystem : MonoBehaviour
 			visualGroundCheckRenderer.material.color = currentColor;
 		}
 		
-		// Update mesh if ground check distance changed
+		// Update mesh if ground check radius changed
 		if (visualGroundCheckMeshFilter != null)
 		{
 			visualGroundCheckMeshFilter.mesh = CreateGroundCheckMesh();
@@ -455,36 +714,85 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	
 	/// <summary>
 	/// Calculate capsule size automatically based on character bones
+	/// Capsule goes from Y=0 (feet) to Y=height (cranium)
+	/// Width is based on leftFoot to rightFoot
 	/// </summary>
-	public void CalculateAutoCapsuleSize(Transform cranium, Transform pelvis, Transform leftHandBolt, Transform rightHandBolt)
+	public void CalculateAutoCapsuleSize(Transform cranium, Transform pelvis, Transform leftHandBolt, Transform rightHandBolt, Transform leftFoot, Transform rightFoot)
 	{
 		// Auto-size capsule if enabled
 		if (autoSizeCapsule)
 		{
-			if (cranium == null || pelvis == null)
+			if (cranium == null)
 			{
-				Debug.LogWarning("[CalculateAutoCapsuleSize] Cranium or Pelvis bone not assigned! Using default capsule size.");
+				Debug.LogWarning("[CalculateAutoCapsuleSize] Cranium bone not assigned! Using default capsule size.");
 				return;
 			}
 			
-			// Calculate character height from pelvis to cranium
-			float characterHeight = Vector3.Distance(pelvis.position, cranium.position);
+			// Convert bone positions to local space relative to this transform
+			Vector3 craniumLocal = transform.InverseTransformPoint(cranium.position);
+			float highestY = craniumLocal.y;
 			
-			// Calculate character width using shoulder bones or model bounds
-			float characterWidth = CalculateCharacterWidth(leftHandBolt, rightHandBolt);
+			// Get lowest Y from feet (should be at Y=0 or close to it)
+			float lowestY = 0f;
+			if (leftFoot != null && rightFoot != null)
+			{
+				Vector3 leftFootLocal = transform.InverseTransformPoint(leftFoot.position);
+				Vector3 rightFootLocal = transform.InverseTransformPoint(rightFoot.position);
+				lowestY = Mathf.Min(leftFootLocal.y, rightFootLocal.y);
+			}
+			else if (leftFoot != null)
+			{
+				Vector3 leftFootLocal = transform.InverseTransformPoint(leftFoot.position);
+				lowestY = leftFootLocal.y;
+			}
+			else if (rightFoot != null)
+			{
+				Vector3 rightFootLocal = transform.InverseTransformPoint(rightFoot.position);
+				lowestY = rightFootLocal.y;
+			}
+			else
+			{
+				Debug.LogWarning("[CalculateAutoCapsuleSize] LeftFoot or RightFoot not assigned! Assuming feet at Y=0.");
+				lowestY = 0f;
+			}
 			
-			// Calculate new capsule dimensions
-			float newHeight = characterHeight + capsuleHeightOffset;
-			float newRadius = characterWidth * capsuleRadiusMultiplier;
+			// Calculate capsule height: from feet (lowestY) to cranium (highestY)
+			// Adjust height so capsule starts at Y=0
+			float newHeight = highestY - lowestY;
 			
-			// Apply min/max constraints
-			newHeight = Mathf.Clamp(newHeight, minCapsuleHeight, maxCapsuleHeight);
-			newRadius = Mathf.Clamp(newRadius, minCapsuleRadius, maxCapsuleRadius);
+			// Calculate character width: from leftFoot to rightFoot (full width, not radius)
+			float characterWidth = CalculateCharacterWidthFromFeet(leftFoot, rightFoot);
+			
+			// Radius: half the width from feet
+			float newRadius = characterWidth * 0.5f;
+			
+			// Calculate capsule center: at half height (so capsule goes from 0 to height)
+			// Since we want capsule from 0 to height, center is at height * 0.5f
+			float centerY = newHeight * 0.5f;
+			baseCapsuleCenter = new Vector3(0, centerY, 0);
+			
+			// Store feet Y position for ground check positioning
+			feetYLocal = lowestY;
+			
+			// Calculate ground check width: from leftFoot to rightFoot
+			if (leftFoot != null && rightFoot != null)
+			{
+				Vector3 leftFootLocal = transform.InverseTransformPoint(leftFoot.position);
+				Vector3 rightFootLocal = transform.InverseTransformPoint(rightFoot.position);
+				Vector3 horizontalDiff = new Vector3(leftFootLocal.x - rightFootLocal.x, 0f, leftFootLocal.z - rightFootLocal.z);
+				feetWidth = horizontalDiff.magnitude;
+				groundCheckRadius = feetWidth * 0.5f; // Radius is half the width
+			}
+			else
+			{
+				// Fallback: use a default radius
+				feetWidth = newRadius * 2f;
+				groundCheckRadius = newRadius;
+			}
 			
 			// Store base values for dynamic sizing
 			baseCapsuleHeight = newHeight;
 			baseCapsuleRadius = newRadius;
-			baseCapsuleCenter = new Vector3(0, newHeight * 0.5f, 0);
 			
 			// Update capsule values
 			capsuleHeight = newHeight;
@@ -497,20 +805,32 @@ public class MyPlayerColliderSystem : MonoBehaviour
 				UpdateVisualColliderMesh();
 			}
 			
-			Debug.Log($"[CalculateAutoCapsuleSize] Auto-sized capsule - Height: {newHeight:F2}, Radius: {newRadius:F2}, Center: {capsuleCenter}");
+			// Update visual ground check if it exists
+			if (visualGroundCheckObject != null)
+			{
+				UpdateVisualGroundCheckMesh();
+			}
+			
+			Debug.Log($"[CalculateAutoCapsuleSize] Auto-sized capsule - Height: {newHeight:F2} (from {lowestY:F2} to {highestY:F2}), Radius: {newRadius:F2}, Center: {capsuleCenter}, GroundCheckRadius: {groundCheckRadius:F2}, FeetWidth: {feetWidth:F2}");
 		}
 	}
 	
 	/// <summary>
-	/// Calculate character width for capsule radius
+	/// Calculate character width for capsule radius using feet
 	/// </summary>
-	private float CalculateCharacterWidth(Transform leftHandBolt, Transform rightHandBolt)
+	private float CalculateCharacterWidthFromFeet(Transform leftFoot, Transform rightFoot)
 	{
-		// Try to use shoulder bones if available
-		if (leftHandBolt != null && rightHandBolt != null)
+		// Use feet width for capsule radius
+		if (leftFoot != null && rightFoot != null)
 		{
-			float shoulderWidth = Vector3.Distance(leftHandBolt.position, rightHandBolt.position);
-			return shoulderWidth * 0.6f; // Use 60% of shoulder width for capsule radius
+			// Calculate horizontal distance (ignore Y difference)
+			Vector3 leftPos = leftFoot.position;
+			Vector3 rightPos = rightFoot.position;
+			Vector3 horizontalDiff = new Vector3(leftPos.x - rightPos.x, 0f, leftPos.z - rightPos.z);
+			float feetWidth = horizontalDiff.magnitude;
+			
+			// Return the full width (will be converted to radius in CalculateAutoCapsuleSize)
+			return feetWidth;
 		}
 		
 		// Fallback: use model bounds
@@ -525,12 +845,12 @@ public class MyPlayerColliderSystem : MonoBehaviour
 			
 			// Use the wider of X or Z dimensions
 			float width = Mathf.Max(combinedBounds.size.x, combinedBounds.size.z);
-			return width * 0.5f; // Convert to radius
+			return width; // Return full width (will be converted to radius in CalculateAutoCapsuleSize)
 		}
 		
 		// Ultimate fallback: use default radius
-		Debug.LogWarning("[CalculateCharacterWidth] Could not determine character width, using default radius");
-		return capsuleRadius;
+		Debug.LogWarning("[CalculateCharacterWidthFromFeet] Could not determine character width, using default radius");
+		return capsuleRadius > 0f ? capsuleRadius * 2f : 10f; // Return width (radius * 2)
 	}
 	
 	/// <summary>
@@ -551,7 +871,19 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	}
 	
 	/// <summary>
+	/// Update visual ground check mesh with new dimensions
+	/// </summary>
+	private void UpdateVisualGroundCheckMesh()
+	{
+		if (visualGroundCheckMeshFilter != null)
+		{
+			visualGroundCheckMeshFilter.mesh = CreateGroundCheckMesh();
+		}
+	}
+	
+	/// <summary>
 	/// Update capsule size based on current state (crouching/standing)
+	/// Capsule always goes from Y=0 to Y=height, center is at height * 0.5f
 	/// </summary>
 	public void UpdateCapsuleSizeForState(bool isCrouching)
 	{
@@ -559,8 +891,9 @@ public class MyPlayerColliderSystem : MonoBehaviour
 		
 		if (isCrouching)
 		{
-			// Use crouched dimensions
-			capsuleHeight = baseCapsuleHeight * crouchHeightMultiplier;
+			// Use crouched dimensions (60% of standing height)
+			capsuleHeight = baseCapsuleHeight * 0.6f;
+			// Center is always at half height (so capsule goes from 0 to height)
 			capsuleCenter = new Vector3(0, capsuleHeight * 0.5f, 0);
 		}
 		else
