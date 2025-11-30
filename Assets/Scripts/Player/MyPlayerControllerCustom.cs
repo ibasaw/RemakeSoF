@@ -22,7 +22,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	[Header("Movement Limits")]
 	[SerializeField] private bool drawPhysicsDebugGUI = false;
-	[SerializeField] private float pm_maxsteepness = 0.07f;      // maximum floor steepness (lower = steeper slopes allowed)
+	[SerializeField] private float pm_maxsteepness = 0f;      // maximum floor steepness (lower = steeper slopes allowed)
 	[SerializeField] private float pm_maxstep = 1.8f;          // Maximum step height
 	[SerializeField] private float pm_stepsize = 1.8f;         // Step size
 	[SerializeField] private float pm_maxbarrier = 3.2f;       // maximum barrier height
@@ -443,7 +443,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		jumpStartPosition = jumpStartColliderPosition;
 		jumpStartY = jumpStartColliderPosition.y;
 		jumpDistance = 0f;
-		jumpHeight = 0f;
+		jumpHeight = 0f; // Reset jump height for new jump
 
 		// Trigger jump animation (Trigger resets automatically after one frame)
 		animator?.SetTrigger("Jump");
@@ -489,7 +489,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			if (Vector3.Dot(hit.normal, Vector3.up) > slopeThreshold)
 			{
 				// Debug unexpected ground detection during jumping
-				if (isJumping && velocity.y > 10f) // Still going up
+				if (isJumping && velocity.y > 1.0f) // Still going up
 				{
 					Debug.LogWarning($"Prevented ground detection! Y-vel: {velocity.y:F2}, Hit distance: {hit.distance:F3}, Time since jump: {(Time.time - lastJumpTime):F3}s");
 					return false;
@@ -1012,9 +1012,14 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		
 		// Get ground normal for slope movement
 		Vector3 groundNormal = Vector3.up;
-		if (lastGroundHit.collider != null && Vector3.Dot(lastGroundHit.normal, Vector3.up) > pm_maxsteepness)
+		if (lastGroundHit.collider != null)
 		{
-			groundNormal = lastGroundHit.normal;
+			// Use consistent slope threshold calculation (same as other ground checks)
+			float slopeThreshold = pm_maxsteepness > 1f ? Mathf.Cos(pm_maxsteepness * Mathf.Deg2Rad) : pm_maxsteepness;
+			if (Vector3.Dot(lastGroundHit.normal, Vector3.up) > slopeThreshold)
+			{
+				groundNormal = lastGroundHit.normal;
+			}
 		}
 		
 		// Project movement directions onto ground plane (simplified and more reliable)
@@ -1624,7 +1629,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		stepUpPos = currentPos;
 		
 		// Only try step-up if we're grounded and moving horizontally
-		if (!isGrounded || Mathf.Abs(velocity.y) > 10f)
+		if (!isGrounded || Mathf.Abs(velocity.y) > 1.0f)
 			return false;
 			
 		// Check if the hit normal is roughly horizontal (not a ceiling)
@@ -1635,11 +1640,18 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Check if the obstacle height is within step-up range
 		// Calculate obstacle height more accurately using the hit point
 		float obstacleHeight = hit.point.y - (currentPos.y - colliderSystem.GetCurrentCapsuleRadius());
-		if (obstacleHeight > pm_maxstep || obstacleHeight < 0.05f)
+		
+		// Use pm_maxbarrier to check if obstacle is too high to step over (absolute maximum)
+		if (obstacleHeight > pm_maxbarrier)
+			return false; // Barrier is too high, cannot step over
+		
+		// Use pm_maxstep to check if obstacle is within normal step-up range
+		if (obstacleHeight > pm_maxstep || obstacleHeight < 0.5f)
 			return false;
 			
 		// Calculate step-up position - step up by obstacle height plus a small margin
-		float stepUpAmount = obstacleHeight + 0.1f; // Small margin to ensure we clear the obstacle
+		// Use pm_stepsize to limit the maximum step-up amount (SoF2 behavior)
+		float stepUpAmount = Mathf.Min(obstacleHeight + 0.1f, pm_stepsize); // Small margin to ensure we clear the obstacle, but limit to pm_stepsize
 		Vector3 stepUpTarget = currentPos + Vector3.up * stepUpAmount;
 		
 		// Check if there's space above the step

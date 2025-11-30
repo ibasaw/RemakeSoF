@@ -48,6 +48,7 @@ public class Ghoul2Meta : MonoBehaviour
     /// </summary>
     public T GetProperty<T>(string name, T defaultValue = default(T))
     {
+        EnsureInitialized();
         if (properties.TryGetValue(name, out object value))
         {
             try
@@ -92,10 +93,22 @@ public class Ghoul2Meta : MonoBehaviour
     }
     
     /// <summary>
+    /// Ensure properties dictionary is initialized (for Editor mode)
+    /// </summary>
+    private void EnsureInitialized()
+    {
+        if (properties.Count == 0 && propertyNames.Count > 0)
+        {
+            RebuildPropertiesDictionary();
+        }
+    }
+    
+    /// <summary>
     /// Check if a property exists
     /// </summary>
     public bool HasProperty(string name)
     {
+        EnsureInitialized();
         return properties.ContainsKey(name);
     }
     
@@ -104,6 +117,7 @@ public class Ghoul2Meta : MonoBehaviour
     /// </summary>
     public string[] GetPropertyNames()
     {
+        EnsureInitialized();
         return properties.Keys.ToArray();
     }
     

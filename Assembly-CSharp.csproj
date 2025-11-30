@@ -112,6 +112,7 @@
     <Compile Include="Assets\Scripts\Runtime\Game\NetworkedGameState.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Models\MetagameModel.cs" />
     <Compile Include="Assets\Scripts\Player\MyPlayerControllerCustom.cs" />
+    <Compile Include="Assets\Scripts\WorldMaterialAssignerEditor.cs" />
     <Compile Include="Assets\Scripts\AddAndCombimeMeshColliders.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Controllers\GameController.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\GameEvents.cs" />
@@ -142,6 +143,7 @@
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\ClientAICharacter.cs" />
     <Compile Include="Assets\Scripts\BGPlayer.cs" />
     <Compile Include="Assets\Scripts\Utils\JsonDataReader.cs" />
+    <Compile Include="Assets\Scripts\WorldMaterialAssigner.cs" />
     <Compile Include="Assets\Scripts\Player\MyPlayerMaterialAssigner.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\MetagameApplication.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ClientPlayerCharacter.cs" />
