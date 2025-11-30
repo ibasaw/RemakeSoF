@@ -46,7 +46,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 
 	[SerializeField] private float jumpVelocity = 27.0f;       // Jump velocity (from phys_jumpvel)
 	[SerializeField] private float rotationSpeed = 1.4f;         // Rotation speed for character
-	[SerializeField] private float totalAirTimeGlitchSuspicion = 0.005f; // reduced to from 0.1 to 0.05f
+	[SerializeField] private float totalAirTimeGlitchSuspicion = 0.05f; // reduced to from 0.1 to 0.05f
 
 	// SoF2 Physics Constants
 	private const float OVERCLIP = 1.001f;                     // Overclip constant for sliding
@@ -85,6 +85,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private Vector3 lastGroundedPosition = Vector3.zero; // Last known grounded position
 	private bool hasValidGroundedPosition = false; // Track if we have a valid grounded position
 	private float lastStepUpTime = 0f; // Time when last step-up occurred
+	private float lastGroundedTime = 0f; // Time when we were last grounded (for grace period)
+	[SerializeField] private float groundGracePeriod = 0.15f; // Grace-Period to prevent false negatives on diagonals (in seconds)
 	private bool isCrouching = false;                  // Crouching state
 	private float jumpDebounce = 0f;                   // Jump debounce timer (starts after landing)
 	private bool isDebounceActive = false;             // Whether debounce is currently active
@@ -96,7 +98,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private float jumpStartY = 0f;                     // Y position when jump started
 	private float landingY = 0f;                       // Y position when landing
 
-	[SerializeField] private float stepUpHeightThreshold = 5.0f; // Minimum height difference to consider as step-up
+	[SerializeField] private float stepUpHeightThreshold = 0.5f; // Minimum height difference to consider as step-up
 	[SerializeField] private float jumpDebounceAfterMs = 0.25f; // 250ms debounce like SoF2
 	[SerializeField] private bool autoJump = false; // Auto jump when grounded and space is pressed
 
@@ -109,7 +111,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float[] idleYawByDir = new float[8] { 112f, 45f, 68f, 68f, 112f, 180f, 180f, 90f };
 
 	[Header("Movement Direction upperLumbar Idle Offsets")]
-	[SerializeField] private int[] movementOffsets = new int[8] { 0, 22, 45, -22, 0, 22, -45, -22 }; //evtl. erst mal alle 0
+	[SerializeField] private int[] movementOffsets = new int[8] {0, 0, 0, 0, 0, 0, 0, 0}; //{ 0, 22, 45, -22, 0, 22, -45, -22 }; //evtl. erst mal alle 0
 	[SerializeField] private float movementOffsetSmooth = 6f;     // Smoothing speed for movement-based offsets
 
 	[Header("Animator Smoothing")]
@@ -474,8 +476,13 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		Vector3 bottom = center - transform.up * halfHeight;
 
 		// Check by casting slightly down from current position with dynamic distance
-		float dynamicCastDistance = colliderSystem.GetCurrentGroundCheckDistance() + 0.01f + Mathf.Abs(velocity.y) * Time.fixedDeltaTime;
-		if (Physics.CapsuleCast(top, bottom, colliderSystem.GetCurrentCapsuleRadius() * 0.9f, Vector3.down, out RaycastHit hit, dynamicCastDistance, groundMask, QueryTriggerInteraction.Ignore))
+		// Berücksichtige horizontale Bewegung auf Schrägen für bessere diagonale Detection
+		float baseDistance = colliderSystem.GetCurrentGroundCheckDistance();
+		float verticalComponent = Mathf.Abs(velocity.y) * Time.fixedDeltaTime;
+		float horizontalComponent = new Vector3(velocity.x, 0, velocity.z).magnitude * Time.fixedDeltaTime;
+		// Für diagonale Flächen brauchen wir mehr Distanz
+		float dynamicCastDistance = baseDistance + 0.01f + verticalComponent + horizontalComponent * 0.5f;
+		if (Physics.CapsuleCast(top, bottom, colliderSystem.GetCurrentCapsuleRadius() * 0.95f, Vector3.down, out RaycastHit hit, dynamicCastDistance, groundMask, QueryTriggerInteraction.Ignore))
 		{
 			// Consider grounded if the normal is reasonably upwards (handle both cos and angle values)
 			float slopeThreshold = pm_maxsteepness > 1f ? Mathf.Cos(pm_maxsteepness * Mathf.Deg2Rad) : pm_maxsteepness;
@@ -599,9 +606,9 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			Vector3 top = center + transform.up * halfHeight;
 			Vector3 bottom = center - transform.up * halfHeight;
 			
-			// Check with larger distance for slopes (was 0.2f, now 2f for better detection)
-			float slopeCheckDistance = colliderSystem.GetCurrentGroundCheckDistance() * 2f;
-			if (Physics.CapsuleCast(top, bottom, colliderSystem.GetCurrentCapsuleRadius() * 0.9f, Vector3.down, out RaycastHit slopeHit, slopeCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
+			// Check with larger distance for slopes (angleichen an MoveCharacter: 3x)
+			float slopeCheckDistance = colliderSystem.GetCurrentGroundCheckDistance() * 4f;
+			if (Physics.CapsuleCast(top, bottom, colliderSystem.GetCurrentCapsuleRadius() * 0.95f, Vector3.down, out RaycastHit slopeHit, slopeCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
 			{
 				float slopeThreshold = pm_maxsteepness > 1f ? Mathf.Cos(pm_maxsteepness * Mathf.Deg2Rad) : pm_maxsteepness;
 				if (Vector3.Dot(slopeHit.normal, Vector3.up) > slopeThreshold)
@@ -612,11 +619,33 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			}
 		}
 		
+		// Grace period: Wenn wir vor kurzem grounded waren, bleiben wir grounded (verhindert False-Negatives auf Diagonalen)
+		if (!isGrounded && wasGrounded && (Time.time - lastGroundedTime) < groundGracePeriod)
+		{
+			// Versuche nochmal mit größerer Distanz
+			float halfHeight = Mathf.Max(0, (colliderSystem.GetCurrentCapsuleHeight() * 0.5f) - colliderSystem.GetCurrentCapsuleRadius());
+			Vector3 center = GetWorldCenterAtPosition(transform.position);
+			Vector3 top = center + transform.up * halfHeight;
+			Vector3 bottom = center - transform.up * halfHeight;
+			
+			float graceCheckDistance = colliderSystem.GetCurrentGroundCheckDistance() * 4f; // Noch größer für Grace-Period
+			if (Physics.CapsuleCast(top, bottom, colliderSystem.GetCurrentCapsuleRadius() * 0.95f, Vector3.down, out RaycastHit graceHit, graceCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
+			{
+				float slopeThreshold = pm_maxsteepness > 1f ? Mathf.Cos(pm_maxsteepness * Mathf.Deg2Rad) : pm_maxsteepness;
+				if (Vector3.Dot(graceHit.normal, Vector3.up) > slopeThreshold)
+				{
+					isGrounded = true;
+					lastGroundHit = graceHit;
+				}
+			}
+		}
+		
 		// Update grounded position AFTER ground check
 		if (isGrounded)
 		{
 			lastGroundedPosition = GetColliderBottomPosition();
 			hasValidGroundedPosition = true;
+			lastGroundedTime = Time.time; // Track when we were last grounded
 		}
 		
 		// NOW handle non-jump airtime with CORRECT grounded state
@@ -646,6 +675,17 @@ public class MyPlayerControllerCustom : MonoBehaviour
 				}
 			}
 			nonJumpAirTime += Time.fixedDeltaTime;
+		}
+		else
+		{
+			// Reset non-jump airtime if it's very short (likely a false negative)
+			if (nonJumpAirTime > 0f && nonJumpAirTime < 0.1f)
+			{
+				// Very short airtime - likely a ground detection glitch, reset silently
+				nonJumpAirTime = 0f;
+				nonJumpStartY = 0f;
+				nonJumpStartPosition = Vector3.zero;
+			}
 		}
 		
 		// Edge detection for landings (more robust than velocity.y <= 0f)
@@ -741,7 +781,6 @@ public class MyPlayerControllerCustom : MonoBehaviour
         // Apply character root rotation after physics and before GUI
         HandleRotation();
 
-		// das ist vermutlich alles bullshit!!
 		if (yawTarget != null)
 		{
 			Vector3 lookAtPoint;
@@ -1511,8 +1550,8 @@ public class MyPlayerControllerCustom : MonoBehaviour
 			Vector3 bottom = center - transform.up * halfHeight;
 			
 			// Check with larger distance for slopes
-			float slopeCheckDistance = colliderSystem.GetCurrentGroundCheckDistance() * 3f; // Increased from 2f to 3f
-			if (Physics.CapsuleCast(top, bottom, colliderSystem.GetCurrentCapsuleRadius() * 0.9f, Vector3.down, out RaycastHit slopeHit, slopeCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
+			float slopeCheckDistance = colliderSystem.GetCurrentGroundCheckDistance() * 4f; // Increased to 4f for better detection
+			if (Physics.CapsuleCast(top, bottom, colliderSystem.GetCurrentCapsuleRadius() * 0.95f, Vector3.down, out RaycastHit slopeHit, slopeCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
 			{
 				float slopeThreshold = pm_maxsteepness > 1f ? Mathf.Cos(pm_maxsteepness * Mathf.Deg2Rad) : pm_maxsteepness;
 				if (Vector3.Dot(slopeHit.normal, Vector3.up) > slopeThreshold)
@@ -1642,7 +1681,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 		// Additional check: verify we can actually stand on the step
 		// Cast down from step-up position to ensure there's ground
 		float groundCheckDist = stepUpAmount + colliderSystem.GetCurrentGroundCheckDistance();
-		if (!Physics.CapsuleCast(stepUpTop, stepUpBottom, colliderSystem.GetCurrentCapsuleRadius() * 0.9f, Vector3.down, out RaycastHit groundHit, groundCheckDist, groundMask, QueryTriggerInteraction.Ignore))
+		if (!Physics.CapsuleCast(stepUpTop, stepUpBottom, colliderSystem.GetCurrentCapsuleRadius() * 0.95f, Vector3.down, out RaycastHit groundHit, groundCheckDist, groundMask, QueryTriggerInteraction.Ignore))
 		{
 			// No ground below step-up position, don't step up
 			return false;

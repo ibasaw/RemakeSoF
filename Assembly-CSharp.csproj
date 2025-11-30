@@ -95,7 +95,6 @@
     <Compile Include="Assets\Scripts\Runtime\Game\NetcodeHooks.cs" />
     <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionEvents.cs" />
     <Compile Include="Assets\Scripts\Runtime\Core\Controller.cs" />
-    <Compile Include="Assets\Scripts\Player\OldCode.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\DirectIPController.cs" />
     <Compile Include="Assets\Scripts\Models\Inventory.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\GameApplication.cs" />
