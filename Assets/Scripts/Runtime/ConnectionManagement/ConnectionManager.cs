@@ -7,11 +7,6 @@ using UnityEngine;
 
 namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
 {
-    [Serializable]
-    public class ConnectionPayload
-    {
-        public string applicationVersion;
-    }
 
     /// <summary>
     /// This state machine handles connection through the NetworkManager. It is responsible for listening to

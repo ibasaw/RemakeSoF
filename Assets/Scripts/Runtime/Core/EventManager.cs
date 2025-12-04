@@ -10,17 +10,17 @@ namespace Unity.DedicatedGameServerSample.Runtime
     /// </summary>
     public class EventManager
     {
-        readonly Dictionary<Type, Action<AppEvent>> m_Events = new Dictionary<Type, Action<AppEvent>>();
-        readonly Dictionary<Delegate, Action<AppEvent>> m_EventLookups = new Dictionary<Delegate, Action<AppEvent>>();
+        readonly Dictionary<Type, Action<AppEvent>> m_Events = new();
+        readonly Dictionary<Delegate, Action<AppEvent>> m_EventLookups = new();
 
         internal void AddListener<T>(Action<T> evt) where T : AppEvent
         {
             if (m_EventLookups.ContainsKey(evt))
-            { 
-                return; 
+            {
+                return;
             }
 
-            Action<AppEvent> newAction = (e) => evt((T)e);
+            void newAction(AppEvent e) => evt((T)e);
             m_EventLookups[evt] = newAction;
 
             if (m_Events.TryGetValue(typeof(T), out Action<AppEvent> internalAction))

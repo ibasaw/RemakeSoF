@@ -21,10 +21,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.Core
         {
             get
             {
-                if (m_EventManager == null)
-                {
-                    m_EventManager = new EventManager();
-                }
+                m_EventManager ??= new EventManager();
 
                 return m_EventManager;
             }

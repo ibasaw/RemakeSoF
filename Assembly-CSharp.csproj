@@ -115,6 +115,7 @@
     <Compile Include="Assets\Scripts\Runtime\Game\NetworkedGameState.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Models\MetagameModel.cs" />
     <Compile Include="Assets\Scripts\Player\MyPlayerControllerCustom.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Shared\DTOs\AuthenticationResponse.cs" />
     <Compile Include="Assets\Scripts\WorldMaterialAssignerEditor.cs" />
     <Compile Include="Assets\Scripts\AddAndCombimeMeshColliders.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Controllers\GameController.cs" />
@@ -131,6 +132,7 @@
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\Patrol.cs" />
     <Compile Include="Assets\Scripts\MeshVisibilityLogger.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Models\GameModel.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Shared\DTOs\ConnectionPayload.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Views\ConsoleView.cs" />
     <Compile Include="Assets\Scripts\Serializable\AmmoData.cs" />
     <Compile Include="Assets\Scripts\Player\MyPlayerBoltOnSystem.cs" />
@@ -158,6 +160,7 @@
     <Compile Include="Assets\Scripts\MeasureRootMotionSpeed.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Views\MetagameView.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\MetagameEvents.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Shared\DTOs\AuthenticationPayload.cs" />
     <Compile Include="Assets\Scripts\Runtime\Shared\CoroutinesHelper.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\RegisterController.cs" />
     <Compile Include="Assets\Scripts\Models\Enums\Occupation.cs" />

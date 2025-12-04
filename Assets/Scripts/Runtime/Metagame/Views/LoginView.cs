@@ -2,6 +2,12 @@ using UnityEngine.UIElements;
 
 namespace Unity.DedicatedGameServerSample.Runtime
 {
+    [UnityEngine.RequireComponent(typeof(UIDocument))]
+    /// <summary>
+    /// Stellt die Login-Benutzeroberfläche bereit und verwaltet Benutzerinteraktionen
+    /// mit der Login-Ansicht. Interagiert mit dem LoginController, um
+    /// Login-Ereignisse zu verarbeiten.
+    /// </summary>
     internal class LoginView : View<MetagameApplication>
     {
         Button m_LoginButton;

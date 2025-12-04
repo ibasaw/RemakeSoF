@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement;
 using Unity.DedicatedGameServerSample.Runtime.ConnectionManagement;
 using Unity.Multiplayer;
 using Unity.Netcode;
@@ -19,7 +20,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle
         const string k_DefaultServerListenAddress = "0.0.0.0";
         const string k_DefaultClientAutoConnectServerAddress = "127.0.0.1";
         public static ApplicationEntryPoint Singleton { get; private set; }
-        
+
 #if UNITY_EDITOR
         public static bool s_AreTestsRunning = false;
         public bool AreTestsRunning => s_AreTestsRunning;
@@ -50,7 +51,11 @@ namespace Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle
         public ConnectionManager ConnectionManager => m_ConnectionManager;
 
         [SerializeField]
-        internal int MinPlayers = 2;
+        AuthenticationManager m_AuthenticationManager;
+        public AuthenticationManager AuthenticationManager => m_AuthenticationManager;
+
+        [SerializeField]
+        internal int MinPlayers = 1;
         [SerializeField]
         internal int MaxPlayers = 2;
         [SerializeField]
@@ -59,10 +64,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle
         void Awake()
         {
             DontDestroyOnLoad(gameObject);
-            if (Singleton is null)
-            {
-                Singleton = this;
-            }
+            Singleton = Singleton != null ? Singleton : this;
             m_ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
         }
 
@@ -90,7 +92,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle
         void InitializeNetworkLogic()
         {
             var commandLineArgumentsParser = new CommandLineArgumentsParser();
-            ushort listeningPort = (ushort) commandLineArgumentsParser.Port;
+            ushort listeningPort = (ushort)commandLineArgumentsParser.Port;
             switch (MultiplayerRolesManager.ActiveMultiplayerRoleMask)
             {
                 case MultiplayerRoleFlags.Server:
@@ -100,14 +102,14 @@ namespace Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle
                     m_ConnectionManager.StartServerIP(k_DefaultServerListenAddress, listeningPort);
                     break;
                 case MultiplayerRoleFlags.Client:
-                {
-                    SceneManager.LoadScene("MetagameScene");
-                    if (AutoConnectOnStartup)
                     {
-                        m_ConnectionManager.StartClient(k_DefaultClientAutoConnectServerAddress, listeningPort);
+                        SceneManager.LoadScene("MetagameScene");
+                        if (AutoConnectOnStartup)
+                        {
+                            m_ConnectionManager.StartClient(k_DefaultClientAutoConnectServerAddress, listeningPort);
+                        }
+                        break;
                     }
-                    break;
-                }
                 case MultiplayerRoleFlags.ClientAndServer:
                     throw new ArgumentOutOfRangeException("MultiplayerRole", "ClientAndServer is an invalid multiplayer role in this sample. Please select the Client or Server role.");
             }

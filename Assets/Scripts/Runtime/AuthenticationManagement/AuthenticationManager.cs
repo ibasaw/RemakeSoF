@@ -5,12 +5,6 @@ using UnityEngine;
 
 namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
 {
-    [Serializable]
-    public class AuthenticationPayload
-    {
-        public string username;
-        public string password;
-    }
 
     /// <summary>
     /// This state machine handles authentication. It is responsible for managing authentication state transitions

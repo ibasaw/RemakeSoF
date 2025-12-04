@@ -1,7 +1,5 @@
 using System;
 using Unity.Netcode.Transports.UTP;
-using Unity.Services.Authentication;
-using Unity.Services.Core;
 using UnityEngine;
 
 namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
@@ -14,13 +12,13 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
     {
         string m_IPAddress;
         ushort m_Port;
-        
+
         public void Configure(string iPAddress, ushort port)
         {
             m_IPAddress = iPAddress;
             m_Port = port;
         }
-        
+
         public override void Enter()
         {
             Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.Connecting });
@@ -40,7 +38,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
             // client ID is for sure ours here
             StartingClientFailed();
         }
-        
+
         void StartingClientFailed()
         {
             var disconnectReason = Manager.NetworkManager.DisconnectReason;
@@ -55,7 +53,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
             }
             Manager.ChangeState(Manager.m_Offline);
         }
-        
+
         void ConnectClient()
         {
             try
@@ -64,7 +62,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
                 SetConnectionPayload();
                 var utp = (UnityTransport)Manager.NetworkManager.NetworkConfig.NetworkTransport;
                 utp.SetConnectionData(m_IPAddress, m_Port);
-                
+
                 Debug.Log($"Attempting to connect to server on {m_IPAddress} with port {m_Port}");
                 // NGO's StartClient launches everything
                 if (!Manager.NetworkManager.StartClient())
@@ -89,7 +87,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
             });
 
             var payloadBytes = System.Text.Encoding.UTF8.GetBytes(payload);
-            
+
             Manager.NetworkManager.NetworkConfig.ConnectionData = payloadBytes;
         }
     }

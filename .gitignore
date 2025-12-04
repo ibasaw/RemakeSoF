@@ -1,11 +1,9 @@
 Assets/docs
-Assets/Materials
 Library
 Logs
 Temp
 *.meta
 Assets/Resources/uQuake
-Assets/Packages
 *.csproj
 *.sln
 *.config
@@ -14,4 +12,3 @@ ProjectSettings
 UserSettings
 docs
 .cursor
-*.sln
