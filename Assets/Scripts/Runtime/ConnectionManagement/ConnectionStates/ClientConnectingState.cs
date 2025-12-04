@@ -23,7 +23,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
         
         public override void Enter()
         {
-            ConnectionManager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.Connecting });
+            Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.Connecting });
             ConnectClient();
         }
 
@@ -31,8 +31,8 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
 
         public override void OnClientConnected(ulong clientId)
         {
-            ConnectionManager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.Success });
-            ConnectionManager.ChangeState(ConnectionManager.m_ClientConnected);
+            Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.Success });
+            Manager.ChangeState(Manager.m_ClientConnected);
         }
 
         public override void OnClientDisconnect(ulong clientId)
@@ -43,17 +43,17 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
         
         void StartingClientFailed()
         {
-            var disconnectReason = ConnectionManager.NetworkManager.DisconnectReason;
+            var disconnectReason = Manager.NetworkManager.DisconnectReason;
             if (string.IsNullOrEmpty(disconnectReason))
             {
-                ConnectionManager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.StartClientFailed });
+                Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.StartClientFailed });
             }
             else
             {
                 var connectStatus = JsonUtility.FromJson<ConnectStatus>(disconnectReason);
-                ConnectionManager.EventManager.Broadcast(new ConnectionEvent { status = connectStatus });
+                Manager.EventManager.Broadcast(new ConnectionEvent { status = connectStatus });
             }
-            ConnectionManager.ChangeState(ConnectionManager.m_Offline);
+            Manager.ChangeState(Manager.m_Offline);
         }
         
         void ConnectClient()
@@ -62,12 +62,12 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
             {
                 // Setup NGO with current connection method
                 SetConnectionPayload();
-                var utp = (UnityTransport)ConnectionManager.NetworkManager.NetworkConfig.NetworkTransport;
+                var utp = (UnityTransport)Manager.NetworkManager.NetworkConfig.NetworkTransport;
                 utp.SetConnectionData(m_IPAddress, m_Port);
                 
                 Debug.Log($"Attempting to connect to server on {m_IPAddress} with port {m_Port}");
                 // NGO's StartClient launches everything
-                if (!ConnectionManager.NetworkManager.StartClient())
+                if (!Manager.NetworkManager.StartClient())
                 {
                     throw new Exception("NetworkManager StartClient failed");
                 }
@@ -89,8 +89,8 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
             });
 
             var payloadBytes = System.Text.Encoding.UTF8.GetBytes(payload);
-
-            ConnectionManager.NetworkManager.NetworkConfig.ConnectionData = payloadBytes;
+            
+            Manager.NetworkManager.NetworkConfig.ConnectionData = payloadBytes;
         }
     }
 }

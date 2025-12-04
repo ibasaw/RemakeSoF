@@ -32,8 +32,8 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
 
         public override void OnServerStarted()
         {
-            ConnectionManager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.Success });
-            ConnectionManager.ChangeState(ConnectionManager.m_ServerListening);
+            Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.Success });
+            Manager.ChangeState(Manager.m_ServerListening);
         }
 
         public override void OnServerStopped()
@@ -43,13 +43,13 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
 
         void StartServerFailed()
         {
-            ConnectionManager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.StartServerFailed });
-            ConnectionManager.ChangeState(ConnectionManager.m_Offline);
+            Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.StartServerFailed });
+            Manager.ChangeState(Manager.m_Offline);
         }
 
         public void StartServer()
         {
-            ConnectionManager.NetworkManager.StartCoroutine(DelayedStart());
+            Manager.NetworkManager.StartCoroutine(DelayedStart());
         }
 
         private IEnumerator DelayedStart()
@@ -60,11 +60,11 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
 
         private void TryStartServer()
         {
-            var utp = (UnityTransport)ConnectionManager.NetworkManager.NetworkConfig.NetworkTransport;
+            var utp = (UnityTransport)Manager.NetworkManager.NetworkConfig.NetworkTransport;
             utp.SetConnectionData(m_IPAddress, m_Port);
             Debug.Log($"Starting server on {m_IPAddress}:{m_Port}");
-
-            if (!ConnectionManager.NetworkManager.StartServer())
+            
+            if (!Manager.NetworkManager.StartServer())
                 StartServerFailed();
         }
     }

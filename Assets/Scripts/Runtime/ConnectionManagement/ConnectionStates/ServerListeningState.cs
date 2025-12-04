@@ -25,47 +25,47 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
         public override void OnClientConnected(ulong clientId)
         {
             Debug.Log($"Client {clientId} connected to the server.");
-            ConnectionManager.EventManager.Broadcast(new ClientConnectedEvent());
-            
-            if (!m_MinPlayerConnected && ConnectionManager.NetworkManager.ConnectedClientsIds.Count >= ApplicationEntryPoint.Singleton.MinPlayers)
+            Manager.EventManager.Broadcast(new ClientConnectedEvent());
+
+            if (!m_MinPlayerConnected && Manager.NetworkManager.ConnectedClientsIds.Count >= ApplicationEntryPoint.Singleton.MinPlayers)
             {
                 m_MinPlayerConnected = true;
-                ConnectionManager.EventManager.Broadcast(new MinNumberPlayersConnectedEvent());
+                Manager.EventManager.Broadcast(new MinNumberPlayersConnectedEvent());
             }
         }
 
         public override void OnClientDisconnect(ulong clientId)
         {
             Debug.Log($"Client {clientId} disconnected from the server.");
-            ConnectionManager.EventManager.Broadcast(new ClientDisconnectedEvent());
-            if (ConnectionManager.NetworkManager.ConnectedClientsIds.Count == 1 && ConnectionManager.NetworkManager.ConnectedClients.ContainsKey(clientId))
+            Manager.EventManager.Broadcast(new ClientDisconnectedEvent());
+            if (Manager.NetworkManager.ConnectedClientsIds.Count == 1 && Manager.NetworkManager.ConnectedClients.ContainsKey(clientId))
             {
                 // This callback is invoked by the last client disconnecting from the server
                 // Here the networked session is shut down immediately, but if we wanted to allow reconnection, we could
                 // include a delay in a coroutine that could get cancelled when a client reconnects
                 Debug.Log("All clients have disconnected from the server. Shutting down");
-                ConnectionManager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.ServerEndedSession });
-                ConnectionManager.ChangeState(ConnectionManager.m_Offline);
+                Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.ServerEndedSession });
+                Manager.ChangeState(Manager.m_Offline);
             }
         }
 
         public override void OnUserRequestedShutdown()
         {
             var reason = JsonUtility.ToJson(ConnectStatus.ServerEndedSession);
-            for (var i = 0; i < ConnectionManager.NetworkManager.ConnectedClientsIds.Count; i++)
+            for (var i = 0; i < Manager.NetworkManager.ConnectedClientsIds.Count; i++)
             {
-                var id = ConnectionManager.NetworkManager.ConnectedClientsIds[i];
+                var id = Manager.NetworkManager.ConnectedClientsIds[i];
 
-                ConnectionManager.NetworkManager.DisconnectClient(id, reason);
+                Manager.NetworkManager.DisconnectClient(id, reason);
             }
-            ConnectionManager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.ServerEndedSession });
-            ConnectionManager.ChangeState(ConnectionManager.m_Offline);
+            Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.ServerEndedSession });
+            Manager.ChangeState(Manager.m_Offline);
         }
 
         public override void OnServerStopped()
         {
-            ConnectionManager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.GenericDisconnect });
-            ConnectionManager.ChangeState(ConnectionManager.m_Offline);
+            Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.GenericDisconnect });
+            Manager.ChangeState(Manager.m_Offline);
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
         
         ConnectStatus GetConnectStatus(ConnectionPayload connectionPayload)
         {
-            if (ConnectionManager.NetworkManager.ConnectedClientsIds.Count >= ApplicationEntryPoint.Singleton.MaxPlayers)
+            if (Manager.NetworkManager.ConnectedClientsIds.Count >= ApplicationEntryPoint.Singleton.MaxPlayers)
             {
                 return ConnectStatus.ServerFull;
             }

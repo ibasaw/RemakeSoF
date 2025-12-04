@@ -68,10 +68,12 @@
     <Compile Include="Assets\Scripts\Runtime\Core\BaseApplication.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\ICharacter.cs" />
     <Compile Include="Assets\Scripts\AimCameraController.cs" />
+    <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationStates\UnauthenticatedState.cs" />
     <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\ClientConnectedState.cs" />
     <Compile Include="Assets\Scripts\Models\NPCParsing.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ServerPlayerCharacter.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Views\RegisterView.cs" />
+    <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationEvents.cs" />
     <Compile Include="Assets\Scripts\Models\Enums\Rank.cs" />
     <Compile Include="Assets\Scripts\CameraSwitcher.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\ServerAISpawner.cs" />
@@ -102,6 +104,7 @@
     <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\MainMenuController.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Views\LoginView.cs" />
     <Compile Include="Assets\Scripts\AvatarActions.cs" />
+    <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationManager.cs" />
     <Compile Include="Assets\Scripts\Runtime\Core\View.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\MetagameController.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Utils\MyUtils.cs" />
@@ -141,10 +144,14 @@
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\NetworkedPlayerCharacter.cs" />
     <Compile Include="Assets\Scripts\IMyPlayerStatus.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\ClientAICharacter.cs" />
+    <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationStates\AuthenticatedState.cs" />
+    <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationStates\AuthenticationState.cs" />
     <Compile Include="Assets\Scripts\BGPlayer.cs" />
     <Compile Include="Assets\Scripts\Utils\JsonDataReader.cs" />
+    <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationStates\AuthenticatingState.cs" />
     <Compile Include="Assets\Scripts\WorldMaterialAssigner.cs" />
     <Compile Include="Assets\Scripts\Player\MyPlayerMaterialAssigner.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Core\StateMachine.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\MetagameApplication.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ClientPlayerCharacter.cs" />
     <Compile Include="Assets\Scripts\BgPublic.cs" />
@@ -157,7 +164,9 @@
     <Compile Include="Assets\Scripts\Runtime\Metagame\Views\DirectIPView.cs" />
     <Compile Include="Assets\Scripts\Models\Stance.cs" />
     <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\ConnectionState.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Core\State.cs" />
     <Compile Include="Assets\Scripts\Runtime\Shared\ProfileManager.cs" />
+    <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationStates\SessionExpiredState.cs" />
     <Compile Include="Assets\Scripts\Models\CharacterTemplate.cs" />
     <Compile Include="Assets\Scripts\AddMeshColliders.cs" />
     <Compile Include="Assets\Scripts\Runtime\Core\EventManager.cs" />

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.DedicatedGameServerSample.Runtime.Core;
 using Unity.Multiplayer;
 using Unity.Netcode;
 using UnityEngine;
@@ -17,28 +18,11 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
     /// NetworkManger callbacks and other outside calls and redirecting them to the current ConnectionState object.
     /// </summary>
     [MultiplayerRoleRestricted]
-    public class ConnectionManager : MonoBehaviour
+    public class ConnectionManager : StateMachine<ConnectionState, ConnectionManager>
     {
-        ConnectionState m_CurrentState;
-
         [SerializeField]
         NetworkManager m_NetworkManager;
         public NetworkManager NetworkManager => m_NetworkManager;
-
-        public EventManager EventManager
-        {
-            get
-            {
-                if (m_EventManager == null)
-                {
-                    m_EventManager = new EventManager();
-                }
-
-                return m_EventManager;
-            }
-        }
-
-        EventManager m_EventManager;
 
         internal readonly OfflineState m_Offline = new();
         internal readonly ClientConnectingState m_ClientConnecting = new();
@@ -50,12 +34,8 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
         {
             DontDestroyOnLoad(gameObject);
             List<ConnectionState> states = new() {m_Offline, m_ClientConnecting, m_ClientConnected, m_StartingServer, m_ServerListening};
-            foreach (var state in states)
-            {
-                state.ConnectionManager = this;
-            }
+            InitializeStates(states, m_Offline);
 
-            m_CurrentState = m_Offline;
             NetworkManager.OnConnectionEvent += OnConnectionEvent;
             NetworkManager.OnServerStarted += OnServerStarted;
             NetworkManager.ConnectionApprovalCallback += ApprovalCheck;
@@ -70,19 +50,6 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
             NetworkManager.ConnectionApprovalCallback -= ApprovalCheck;
             NetworkManager.OnTransportFailure -= OnTransportFailure;
             NetworkManager.OnServerStopped -= OnServerStopped;
-        }
-
-        internal void ChangeState(ConnectionState nextState)
-        {
-            Debug.Log($"{name}: Changed connection state from {m_CurrentState.GetType().Name} to {nextState.GetType().Name}.");
-
-            if (m_CurrentState != null)
-            {
-                m_CurrentState.Exit();
-            }
-
-            m_CurrentState = nextState;
-            m_CurrentState.Enter();
         }
 
         void OnConnectionEvent(NetworkManager arg1, ConnectionEventData arg2)

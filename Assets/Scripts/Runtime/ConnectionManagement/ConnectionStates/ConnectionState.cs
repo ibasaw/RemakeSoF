@@ -1,20 +1,19 @@
 using Unity.Netcode;
+using Unity.DedicatedGameServerSample.Runtime.Core;
 
 namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
 {
     /// <summary>
     /// Base class representing a connection state.
     /// </summary>
-    abstract class ConnectionState
+    public abstract class ConnectionState : State<ConnectionManager>
     {
-        public ConnectionManager ConnectionManager { get; set; }
+        public override abstract void Enter();
 
-        public abstract void Enter();
-
-        public abstract void Exit();
+        public override abstract void Exit();
 
         public virtual void OnClientConnected(ulong clientId) { }
-        
+
         public virtual void OnClientDisconnect(ulong clientId) { }
 
         public virtual void OnServerStarted() { }

@@ -13,17 +13,17 @@ namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
 
         public override void OnClientDisconnect(ulong clientId)
         {
-            var disconnectReason = ConnectionManager.NetworkManager.DisconnectReason;
+            var disconnectReason = Manager.NetworkManager.DisconnectReason;
             if (string.IsNullOrEmpty(disconnectReason))
             {
-                ConnectionManager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.GenericDisconnect });
+                Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.GenericDisconnect });
             }
             else
             {
                 var connectStatus = JsonUtility.FromJson<ConnectStatus>(disconnectReason);
-                ConnectionManager.EventManager.Broadcast(new ConnectionEvent { status = connectStatus });
+                Manager.EventManager.Broadcast(new ConnectionEvent { status = connectStatus });
             }
-            ConnectionManager.ChangeState(ConnectionManager.m_Offline);
+            Manager.ChangeState(Manager.m_Offline);
         }
     }
 }
