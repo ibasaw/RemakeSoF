@@ -13,3 +13,5 @@ Packages
 ProjectSettings
 UserSettings
 docs
+.cursor
+*.sln
