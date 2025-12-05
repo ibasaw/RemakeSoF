@@ -30,7 +30,10 @@ namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
         /// </summary>
         public void Authenticate(string username, string password)
         {
-            m_CurrentState.OnAuthenticationAttempt(username, password);
+            if (m_CurrentState is IAuthenticationHandler handler)
+            {
+                handler.OnAuthenticationAttempt(username, password);
+            }
         }
 
         /// <summary>

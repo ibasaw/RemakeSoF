@@ -66,5 +66,6 @@
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj",
     },
-    "dotnet.defaultSolution": "RemakeSoF.sln"
+    "dotnet.defaultSolution": "RemakeSoF.sln",
+    "cSpell.enabled": false
 }

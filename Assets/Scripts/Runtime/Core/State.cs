@@ -13,5 +13,6 @@ namespace Unity.DedicatedGameServerSample.Runtime.Core
         public abstract void Enter();
 
         public abstract void Exit();
+
     }
 }

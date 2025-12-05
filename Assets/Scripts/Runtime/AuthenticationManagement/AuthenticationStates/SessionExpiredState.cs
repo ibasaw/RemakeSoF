@@ -4,7 +4,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
     /// Authentication state corresponding to when the user's session has expired.
     /// From this state we can transition back to UnauthenticatedState or attempt to re-authenticate.
     /// </summary>
-    class SessionExpiredState : AuthenticationState
+    class SessionExpiredState : AuthenticationState, IAuthenticationHandler
     {
         private AuthenticationStatus m_ExpireReason;
 
@@ -21,12 +21,6 @@ namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
         }
 
         public override void Exit() { }
-
-        public override void OnAuthenticationAttempt(string username, string password)
-        {
-            Manager.m_Authenticating.Configure(username, password);
-            Manager.ChangeState(Manager.m_Authenticating);
-        }
 
         public override void OnUserRequestedLogout()
         {

@@ -233,7 +233,7 @@
 }
 
 .spinner.spinning {
-    rotate: 360deg;
+    rotate: 640deg;
 }
 
 .login-modal-text {

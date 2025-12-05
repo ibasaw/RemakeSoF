@@ -11,7 +11,11 @@ namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
 
         public override abstract void Exit();
 
-        public virtual void OnAuthenticationAttempt(string username, string password) { }
+        public void OnAuthenticationAttempt(string username, string password)
+        {
+            Manager.m_Authenticating.Configure(username, password);
+            Manager.ChangeState(Manager.m_Authenticating);
+        }
 
         public virtual void OnAuthenticationSuccess() { }
 

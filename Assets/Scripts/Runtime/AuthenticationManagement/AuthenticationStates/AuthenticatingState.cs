@@ -55,7 +55,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
             string jsonData = JsonUtility.ToJson(loginData);
             byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
 
-            using var request = new UnityWebRequest("http://localhost:8080/api/loginUser", "POST");
+            using var request = new UnityWebRequest("http://localhost:8000/api/loginUser", "POST");
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");

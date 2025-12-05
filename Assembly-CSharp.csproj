@@ -71,6 +71,7 @@
     <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationStates\UnauthenticatedState.cs" />
     <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\ClientConnectedState.cs" />
     <Compile Include="Assets\Scripts\Models\NPCParsing.cs" />
+    <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\IAuthenticationHandler.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ServerPlayerCharacter.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Views\RegisterView.cs" />
     <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationEvents.cs" />

@@ -4,7 +4,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
     /// Authentication state corresponding to when the user is successfully authenticated.
     /// From this state we can transition to UnauthenticatedState on logout or SessionExpiredState if session expires.
     /// </summary>
-    class AuthenticatedState : AuthenticationState
+    class AuthenticatedState : AuthenticationState, IAuthenticationHandler
     {
         public override void Enter()
         {

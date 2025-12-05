@@ -85,7 +85,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
                     break;
                 case AuthenticationStatus.NetworkError:
                     View.SetLoginInProgress(false);
-                    View.SetStatusMessage("Login failed: Cannot connect to the network", isError: true);
+                    View.SetStatusMessage("Login failed: Authserver unreachable", isError: true);
                     break;
                 case AuthenticationStatus.InvalidCredentials:
                     View.SetLoginInProgress(false);
