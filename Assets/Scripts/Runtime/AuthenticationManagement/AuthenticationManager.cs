@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Unity.DedicatedGameServerSample.Runtime.Core;
+using Unity.Multiplayer;
 using UnityEngine;
 
 namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
 {
-
+    [MultiplayerRoleRestricted]
     /// <summary>
     /// This state machine handles authentication. It is responsible for managing authentication state transitions
     /// and redirecting calls to the current AuthenticationState object.

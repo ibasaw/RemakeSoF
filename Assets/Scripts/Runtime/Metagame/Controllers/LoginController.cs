@@ -16,7 +16,6 @@ namespace Unity.DedicatedGameServerSample.Runtime
     internal class LoginController : Controller<MetagameApplication>
     {
         LoginView View => App.View.LoginView;
-        ConnectionManager ConnectionManager => ApplicationEntryPoint.Singleton.ConnectionManager;
         AuthenticationManager AuthenticationManager => ApplicationEntryPoint.Singleton.AuthenticationManager;
 
         void Awake()
@@ -24,7 +23,8 @@ namespace Unity.DedicatedGameServerSample.Runtime
             AddListener<PlayerLoginEvent>(OnPlayerLogin);
             AddListener<ChangeToRegisterEvent>(OnChangeToRegister);
             AddListener<ChangeToLoginEvent>(OnChangeToLogin);
-            ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
+            AuthenticationManager.EventManager.AddListener<AuthenticationEvent>(OnAuthenticationEvent);
+            AuthenticationManager.EventManager.AddListener<UserUnauthenticatedEvent>(OnUserUnauthenticatedEvent);
         }
 
         // Called when the user clicks the "Login" button on the login view to attempt to log in
@@ -33,25 +33,25 @@ namespace Unity.DedicatedGameServerSample.Runtime
             Debug.Log($"Attempting to log in user: {evt.username} with password: {evt.password}");
 
             // Validate all login data
-            //if (!View.ValidateLoginData())
-            //    return; // Validation failed, error message already shown
+            if (!View.ValidateLoginData())
+                return; // Validation failed, error message already shown
 
-            // Clear any previous status message
-            //View.ClearStatusMessage();
-
-            // Set UI to loading logging in state
-            //View.SetLoginInProgress(true);
+            View.SetLoginInProgress(true);
 
             AuthenticationManager.Authenticate(evt.username, evt.password);
         }
 
-        // Called when the user clicks the "Login" button on the registration view to switch back to the login view
+        /// <summary>
+        /// Called when the user clicks the "Login" button on the registration view to switch to the login view
+        /// </summary>
         void OnChangeToLogin(ChangeToLoginEvent evt)
         {
             View.Show();
         }
 
-        // Called when the user clicks the "Register" button on the login view to switch to the registration view
+        /// <summary>
+        /// Called when the user clicks the "Register" button on the login view to switch to the registration view
+        /// </summary>
         void OnChangeToRegister(ChangeToRegisterEvent evt)
         {
             View.Hide();
@@ -67,15 +67,41 @@ namespace Unity.DedicatedGameServerSample.Runtime
             RemoveListener<PlayerLoginEvent>(OnPlayerLogin);
             RemoveListener<ChangeToRegisterEvent>(OnChangeToRegister);
             RemoveListener<ChangeToLoginEvent>(OnChangeToLogin);
-            ConnectionManager.EventManager.RemoveListener<ConnectionEvent>(OnConnectionEvent);
+            AuthenticationManager.EventManager.RemoveListener<AuthenticationEvent>(OnAuthenticationEvent);
+            AuthenticationManager.EventManager.RemoveListener<UserUnauthenticatedEvent>(OnUserUnauthenticatedEvent);
         }
 
-        void OnConnectionEvent(ConnectionEvent evt)
+        void OnAuthenticationEvent(AuthenticationEvent evt)
         {
-            if (evt.status == ConnectStatus.Connecting)
+            Debug.Log($"Authentication event received with status: {evt.status}");
+            switch (evt.status)
             {
-                View.Hide();
+                case AuthenticationStatus.Authenticating:
+                    View.SetLoginInProgress(true);
+                    break;
+                case AuthenticationStatus.Success:
+                    View.SetLoginInProgress(false);
+                    View.SetStatusMessage("Login successful");
+                    break;
+                case AuthenticationStatus.NetworkError:
+                    View.SetLoginInProgress(false);
+                    View.SetStatusMessage("Login failed: Cannot connect to the network", isError: true);
+                    break;
+                case AuthenticationStatus.InvalidCredentials:
+                    View.SetLoginInProgress(false);
+                    View.SetStatusMessage("Login failed: Invalid credentials", isError: true);
+                    break;
+                default:
+                    View.SetLoginInProgress(false);
+                    View.SetStatusMessage($"Login failed: {evt.status}", isError: true);
+                    break;
             }
+        }
+
+        void OnUserUnauthenticatedEvent(UserUnauthenticatedEvent evt)
+        {
+            Debug.Log("User unauthenticated event received, showing login view");
+            View.Show();
         }
     }
 }

@@ -8,11 +8,16 @@ namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
     {
         public override void Enter()
         {
-            Manager.EventManager.Broadcast(new UserUnauthenticatedEvent());
+            Manager.EventManager.Broadcast(new UserUnauthenticatedEvent { });
         }
 
         public override void Exit() { }
 
+        /// <summary>
+        /// Wird aufgerufen, wenn der Benutzer versucht, sich zu authentifizieren.
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
         public override void OnAuthenticationAttempt(string username, string password)
         {
             Manager.m_Authenticating.Configure(username, password);

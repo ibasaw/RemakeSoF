@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Unity.DedicatedGameServerSample.Runtime
@@ -15,6 +16,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
         Button m_QuitButton;
         TextField m_UsernameTextField;
         TextField m_PasswordTextField;
+        VisualElement m_loginModal;
         Label m_StatusLabel;
         UIDocument m_UIDocument;
 
@@ -33,6 +35,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
             m_UsernameTextField = root.Q<TextField>("usernameTextField");
             m_PasswordTextField = root.Q<TextField>("passwordTextField");
             m_StatusLabel = root.Q<Label>("statusLabel");
+            m_loginModal = root.Q<VisualElement>("loginModal");
 
             m_LoginButton.RegisterCallback<ClickEvent>(OnClickLogin);
             m_ChangeToRegisterButton.RegisterCallback<ClickEvent>(OnClickChangeToRegister);
@@ -40,6 +43,12 @@ namespace Unity.DedicatedGameServerSample.Runtime
 
             m_UsernameTextField.RegisterValueChangedCallback(OnUsernameChanged);
             m_PasswordTextField.RegisterValueChangedCallback(OnPasswordChanged);
+
+            // Focus auf usernameTextField beim Start + Cursor blinkt automatisch
+            m_UsernameTextField.Focus();
+
+            // Optional: Select all text für bessere UX
+            m_UsernameTextField.SelectAll();
         }
 
         void OnDisable()
@@ -47,18 +56,18 @@ namespace Unity.DedicatedGameServerSample.Runtime
             m_LoginButton.UnregisterCallback<ClickEvent>(OnClickLogin);
             m_ChangeToRegisterButton.UnregisterCallback<ClickEvent>(OnClickChangeToRegister);
             m_QuitButton.UnregisterCallback<ClickEvent>(OnClickQuit);
-            
+
             m_UsernameTextField.UnregisterValueChangedCallback(OnUsernameChanged);
-            m_PasswordTextField.UnregisterValueChangedCallback(OnPasswordChanged);
+            m_UsernameTextField.UnregisterValueChangedCallback(OnPasswordChanged);
         }
 
         void OnUsernameChanged(ChangeEvent<string> username)
         {
-           m_UsernameTextField.value = username.newValue;
+            m_UsernameTextField.value = username.newValue;
         }
         void OnPasswordChanged(ChangeEvent<string> password)
         {
-           m_PasswordTextField.value = password.newValue;
+            m_PasswordTextField.value = password.newValue;
         }
 
         void OnClickQuit(ClickEvent evt)
@@ -92,8 +101,17 @@ namespace Unity.DedicatedGameServerSample.Runtime
                 m_QuitButton.SetEnabled(false);
                 m_UsernameTextField.SetEnabled(false);
                 m_PasswordTextField.SetEnabled(false);
-                m_StatusLabel.text = "Logging in...";
-                m_StatusLabel.style.color = new StyleColor(new UnityEngine.Color(0f, 1f, 0f, 1f)); // Green
+                m_LoginButton.AddToClassList("button-disabled");
+                m_ChangeToRegisterButton.AddToClassList("button-disabled");
+                m_QuitButton.AddToClassList("button-disabled");
+                //m_StatusLabel.text = "Logging in...";
+                //m_StatusLabel.style.color = new StyleColor(new UnityEngine.Color(0f, 1f, 0f, 1f)); // Green
+
+                // Show authentication modal
+                m_loginModal.style.display = DisplayStyle.Flex;
+                var spinner = m_loginModal.Q<VisualElement>(className: "spinner");
+                if (spinner != null)
+                    spinner.AddToClassList("spinning");
             }
             else
             {
@@ -102,12 +120,26 @@ namespace Unity.DedicatedGameServerSample.Runtime
                 m_QuitButton.SetEnabled(true);
                 m_UsernameTextField.SetEnabled(true);
                 m_PasswordTextField.SetEnabled(true);
-                
+                m_LoginButton.RemoveFromClassList("button-disabled");
+                m_ChangeToRegisterButton.RemoveFromClassList("button-disabled");
+                m_QuitButton.RemoveFromClassList("button-disabled");
+
+                // Hide authentication modal
+                var spinner = m_loginModal.Q<VisualElement>(className: "spinner");
+                if (spinner != null)
+                    spinner.RemoveFromClassList("spinning");
+                m_loginModal.style.display = DisplayStyle.None;
+
                 // Only clear status message if explicitly requested
                 if (clearStatusMessage)
                 {
-                    m_StatusLabel.text = "";
+                    ClearStatusMessage();
                 }
+                // Focus auf usernameTextField beim Start + Cursor blinkt automatisch
+                m_UsernameTextField.Focus();
+
+                // Optional: Select all text für bessere UX
+                m_UsernameTextField.SelectAll();
             }
         }
 
@@ -131,13 +163,13 @@ namespace Unity.DedicatedGameServerSample.Runtime
 
         public bool ValidateLoginData()
         {
-            string email = m_UsernameTextField.text.Trim();
+            string username = m_UsernameTextField.text.Trim();
             string password = m_PasswordTextField.text;
 
-            // Validate email
-            if (string.IsNullOrEmpty(email))
+            // Validate username
+            if (string.IsNullOrEmpty(username))
             {
-                SetStatusMessage("Email cannot be empty!", true);
+                SetStatusMessage("Username cannot be empty!", true);
                 return false;
             }
 

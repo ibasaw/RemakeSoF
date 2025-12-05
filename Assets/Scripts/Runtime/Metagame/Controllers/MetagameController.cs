@@ -3,7 +3,8 @@ using UnityEngine;
 namespace Unity.DedicatedGameServerSample.Runtime
 {
     /// <summary>
-    /// Main controller of the <see cref="MetagameApplication"></see>
+    /// Globaler controller koordiniert die Metagame-Application. 
+    /// Handelt alle globale Events wie ApplicationQuitEvent und SceneTransitionEvent.
     /// </summary>
     public class MetagameController : Controller<MetagameApplication>
     {

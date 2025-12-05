@@ -11,42 +11,10 @@
     padding-bottom: 0;
 }
 
-.labelText {
-    font-size: 24px;
-    padding-left: 0;
-    padding-right: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    margin-left: 5px;
-    margin-right: 5px;
-    margin-top: 0;
-    margin-bottom: 0;
-}
-
 .button {
     transition-duration: 0.1s;
     transition-timing-function: ease-out;
     opacity: 1;
-    border-top-left-radius: 7px;
-    border-bottom-left-radius: 7px;
-    border-top-right-radius: 7px;
-    border-bottom-right-radius: 7px;
-    background-color: rgb(82, 125, 175);
-    border-left-color: rgb(131, 180, 222);
-    border-right-color: rgb(131, 180, 222);
-    border-top-color: rgb(131, 180, 222);
-    border-bottom-color: rgb(131, 180, 222);
-    border-left-width: 3px;
-    border-right-width: 3px;
-    border-top-width: 3px;
-    border-bottom-width: 3px;
-    padding-left: 30px;
-    padding-right: 30px;
-    padding-top: 0;
-    padding-bottom: 0;
-    flex-grow: 0;
-    margin-right: 0;
-    margin-left: 0;
     height: 80px;
     font-size: 36px;
     width: 450px;
@@ -55,11 +23,6 @@
 }
 
 .button:hover {
-    background-color: rgb(98, 140, 189);
-    border-left-color: rgb(165, 209, 247);
-    border-right-color: rgb(165, 209, 247);
-    border-top-color: rgb(165, 209, 247);
-    border-bottom-color: rgb(165, 209, 247);
     translate: -1px -1px;
 }
 
@@ -128,9 +91,6 @@
     align-items: flex-end;
     max-width: 100%;
     min-width: 100%;
-}
-
-.unity-slider {
 }
 
 .unity-slider__label {
@@ -206,3 +166,79 @@
 }
 
 
+.button-disabled {
+    opacity: 0.5;
+    background-color: rgb(60, 60, 60);
+    border-left-color: rgb(80, 80, 80);
+    border-right-color: rgb(80, 80, 80);
+    border-top-color: rgb(80, 80, 80);
+    border-bottom-color: rgb(80, 80, 80);
+}
+
+.button-disabled:hover {
+    background-color: rgb(60, 60, 60);
+    border-left-color: rgb(80, 80, 80);
+    border-right-color: rgb(80, 80, 80);
+    border-top-color: rgb(80, 80, 80);
+    border-bottom-color: rgb(80, 80, 80);
+    translate: 0 0;
+}
+
+.button-disabled:active {
+    background-color: rgb(60, 60, 60);
+    border-left-color: rgb(80, 80, 80);
+    border-right-color: rgb(80, 80, 80);
+    border-top-color: rgb(80, 80, 80);
+    border-bottom-color: rgb(80, 80, 80);
+    translate: 0 0;
+}
+
+/* Login Modal Styles */
+.login-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.login-modal-content {
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+.spinner {
+    width: 80px;
+    height: 80px;
+    border-top-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 4px;
+    border-left-width: 4px;
+    border-top-left-radius: 50%;
+    border-top-right-radius: 50%;
+    border-bottom-right-radius: 50%;
+    border-bottom-left-radius: 50%;
+    border-top-color: rgb(82, 125, 175);
+    border-right-color: rgba(82, 125, 175, 0.3);
+    border-bottom-color: rgba(82, 125, 175, 0.3);
+    border-left-color: rgba(82, 125, 175, 0.3);
+    transition-duration: 1s;
+    transition-timing-function: linear;
+}
+
+.spinner.spinning {
+    rotate: 360deg;
+}
+
+.login-modal-text {
+    color: rgb(213, 236, 255);
+    font-size: 24px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
