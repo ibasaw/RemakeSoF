@@ -42,5 +42,26 @@ namespace Unity.DedicatedGameServerSample.Runtime
 
         internal ConsoleView ConsoleView => m_ConsoleView;
 
+        [SerializeField]
+        LoadoutView m_LoadoutView;
+
+        internal LoadoutView LoadoutView => m_LoadoutView;
+
+        [SerializeField]
+        OptionsView m_OptionsView;
+
+        internal OptionsView OptionsView => m_OptionsView;
+
+        [SerializeField]
+        CreateServerView m_CreateServerView;
+        internal CreateServerView CreateServerView => m_CreateServerView;
+
+        [SerializeField]
+        JoinServerView m_JoinServerView;
+        internal JoinServerView JoinServerView => m_JoinServerView;
+
+        [SerializeField]
+        LogoutView m_LogoutView;
+        internal LogoutView LogoutView => m_LogoutView;
     }
 }

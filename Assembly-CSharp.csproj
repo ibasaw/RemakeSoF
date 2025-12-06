@@ -70,6 +70,7 @@
     <Compile Include="Assets\Scripts\AimCameraController.cs" />
     <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationStates\UnauthenticatedState.cs" />
     <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\ClientConnectedState.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\LogoutView.cs" />
     <Compile Include="Assets\Scripts\Models\NPCParsing.cs" />
     <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\IAuthenticationHandler.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ServerPlayerCharacter.cs" />
@@ -96,7 +97,9 @@
     <Compile Include="Assets\Scripts\UI\UIToolkitCrosshair.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\GameplayObjects\SwitchedDoor.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\NetcodeHooks.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\LoadoutView.cs" />
     <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionEvents.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\CreateServerView.cs" />
     <Compile Include="Assets\Scripts\Runtime\Core\Controller.cs" />
     <Compile Include="Assets\Scripts\Runtime\Metagame\Controllers\DirectIPController.cs" />
     <Compile Include="Assets\Scripts\Models\Inventory.cs" />
@@ -145,6 +148,7 @@
     <Compile Include="Assets\Scripts\Models\Enums\VoiceReport.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ServerPlayerSpawnPoints.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\NetworkedPlayerCharacter.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\OptionsView.cs" />
     <Compile Include="Assets\Scripts\IMyPlayerStatus.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\ClientAICharacter.cs" />
     <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationStates\AuthenticatedState.cs" />
@@ -169,6 +173,7 @@
     <Compile Include="Assets\Scripts\Models\Stance.cs" />
     <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\ConnectionState.cs" />
     <Compile Include="Assets\Scripts\Runtime\Core\State.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Views\JoinServerView.cs" />
     <Compile Include="Assets\Scripts\Runtime\Shared\ProfileManager.cs" />
     <Compile Include="Assets\Scripts\Runtime\AuthenticationManagement\AuthenticationStates\SessionExpiredState.cs" />
     <Compile Include="Assets\Scripts\Models\CharacterTemplate.cs" />
@@ -249,6 +254,7 @@
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\zh-Hans\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Resources\Data\shaders\gore.shader" />
     <None Include="Assets\Packages\MongoDB.Driver.3.5.0\lib\netstandard2.1\MongoDB.Driver.xml" />
+    <None Include="Assets\UIToolkit\MainMenuView\CreateServerView\CreateServerView.uxml" />
     <None Include="Assets\Packages\Microsoft.Win32.Registry.5.0.0\LICENSE.TXT" />
     <None Include="Assets\Packages\System.Text.Encoding.CodePages.5.0.0\useSharedDesignerContext.txt" />
     <None Include="Assets\Packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.xml" />
@@ -271,6 +277,7 @@
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.4\cs\es\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\UI\Uss\LoginUI.uss" />
     <None Include="Assets\UIToolkit\MatchView\MatchView.uxml" />
+    <None Include="Assets\UIToolkit\MainMenuView\OptionsView\OptionsView.uxml" />
     <None Include="Assets\Packages\System.Security.Principal.Windows.5.0.0\lib\netstandard2.0\System.Security.Principal.Windows.dll" />
     <None Include="Assets\UIToolkit\ConsoleView\ConsoleView.uxml" />
     <None Include="Assets\Resources\uQuake\ext_data\outfitting\temp_airport.txt" />
@@ -353,6 +360,7 @@
     <None Include="Assets\Resources\Data\shaders\menu.shader" />
     <None Include="Assets\Resources\uQuake\ext_data\outfitting\temp_kamchatka.txt" />
     <None Include="Assets\Packages\Microsoft.IdentityModel.Tokens.8.14.0\lib\netstandard2.0\Microsoft.IdentityModel.Tokens.xml" />
+    <None Include="Assets\UIToolkit\MainMenuView\JoinServerView\JoinServerView.uxml" />
     <None Include="Assets\Packages\AWSSDK.Core.3.7.100.14\lib\netstandard2.0\AWSSDK.Core.dll" />
     <None Include="Assets\Packages\MongoDB.Libmongocrypt.1.12.0\License.txt" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.4\cs\pl\System.Text.Json.SourceGeneration.resources.dll" />
@@ -361,7 +369,7 @@
     <None Include="Assets\UIToolkit\MainMenuView\MainMenuView.uxml" />
     <None Include="Assets\Resources\Data\shaders\skingore.shader" />
     <None Include="Assets\Packages\System.Security.Principal.Windows.5.0.0\THIRD-PARTY-NOTICES.TXT" />
-    <None Include="Assets\UIToolkit\LoadoutView\LoadoutView.uxml" />
+    <None Include="Assets\UIToolkit\MainMenuView\LoadoutView\LoadoutView.uxml" />
     <None Include="Assets\Resources\Data\shaders\colombia_models.shader" />
     <None Include="Assets\Packages\System.Runtime.CompilerServices.Unsafe.6.0.0\LICENSE.TXT" />
     <None Include="Assets\Resources\Data\shaders\test.shader" />
@@ -375,6 +383,7 @@
     <None Include="Assets\Packages\System.Runtime.CompilerServices.Unsafe.6.0.0\useSharedDesignerContext.txt" />
     <None Include="Assets\Resources\Data\shaders\kamchatka.shader" />
     <None Include="Assets\Resources\Data\shaders\female_pants.shader" />
+    <None Include="Assets\UIToolkit\MainMenuView\LogoutView\LogoutView.uxml" />
     <None Include="Assets\Resources\uQuake\ext_data\outfitting\finca1.txt" />
     <None Include="Assets\Resources\Data\shaders\common.shader" />
     <None Include="Assets\Packages\Microsoft.IdentityModel.Abstractions.8.14.0\lib\netstandard2.0\Microsoft.IdentityModel.Abstractions.xml" />

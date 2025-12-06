@@ -74,7 +74,7 @@
     padding-right: 10px;
     padding-top: 0;
     padding-bottom: 0;
-    background-image: resource("uQuake/gfx/menus/scoreboard/scorelineheader");
+    background-image: resource('uQuake/gfx/menus/scoreboard/scorelineheader');
     background-color: rgba(0, 0, 0, 0.5);
     -unity-text-align: middle-left;
     color: rgb(213, 236, 255);
@@ -160,7 +160,6 @@
     margin-bottom: 50px;
 }
 
-
 .button-disabled {
     opacity: 0.5;
     background-color: rgb(60, 60, 60);
@@ -188,7 +187,6 @@
     translate: 0 0;
 }
 
-/* Login Modal Styles */
 .login-modal-overlay {
     position: absolute;
     top: 0;
@@ -236,4 +234,47 @@
     font-size: 24px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
+}
+
+.logout-modal-overlay {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.logout-modal-content {
+    background-image: resource('uQuake/gfx/menus/scoreboard/scorelineheader');
+    background-color: rgba(30, 30, 30, 0.95);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-left-color: rgb(131, 180, 222);
+    border-right-color: rgb(131, 180, 222);
+    border-top-color: rgb(131, 180, 222);
+    border-bottom-color: rgb(131, 180, 222);
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    min-width: 600px;
+}
+
+.button {
+    background-image: resource('uQuake/gfx/menus/scoreboard/scorelineheader');
+    background-color: rgba(2, 2, 2, 0);
+    border-left-color: rgba(204, 204, 204, 0);
+    border-right-color: rgba(204, 204, 204, 0);
+    border-top-color: rgba(204, 204, 204, 0);
+    border-bottom-color: rgba(204, 204, 204, 0);
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    width: 450px;
+    height: 80px;
 }

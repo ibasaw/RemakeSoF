@@ -1,4 +1,6 @@
-﻿namespace Unity.DedicatedGameServerSample.Runtime
+﻿using UnityEngine.UIElements;
+
+namespace Unity.DedicatedGameServerSample.Runtime
 {
     /// <summary>
     /// Base class for all View related classes.
@@ -24,6 +26,11 @@
         internal void Hide()
         {
             gameObject.SetActive(false);
+        }
+
+        public VisualElement LoadVisualElement()
+        {
+            return GetComponent<UIDocument>().rootVisualElement;
         }
     }
 }

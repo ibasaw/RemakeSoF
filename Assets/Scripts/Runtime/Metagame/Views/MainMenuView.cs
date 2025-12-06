@@ -8,7 +8,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
 
     internal class MainMenuView : View<MetagameApplication>
     {
-        Button m_CurrentButton;
+        private VisualElement m_ContentBackground;
         UIDocument m_UIDocument;
 
         // Ein Container für alle Button-Infos
@@ -16,7 +16,8 @@ namespace Unity.DedicatedGameServerSample.Runtime
         {
             public string Name;
             public string HoverIconPath;
-            public EventCallback<ClickEvent> OnClick;
+            public System.Action<ButtonConfig> OnClick;
+            public View<MetagameApplication> TargetView;
             public Button ButtonRef;
             public string ActiveIconPath => HoverIconPath;
             public bool IsActive;
@@ -31,47 +32,84 @@ namespace Unity.DedicatedGameServerSample.Runtime
             {
                 Name = "joinServerButton",
                 HoverIconPath = "uQuake/gfx/menus/icons/icon_join_server_glow_mp",
-                OnClick = evt => OnJoinServerButtonClick(evt)
+                TargetView = App.View.JoinServerView
             });
             m_ButtonConfigs.Add(new ButtonConfig
             {
                 Name = "createServerButton",
                 HoverIconPath = "uQuake/gfx/menus/icons/icon_create_server_glow_mp",
-                OnClick = evt => OnCreateServerButtonClick(evt)
+                TargetView = App.View.CreateServerView
             });
             m_ButtonConfigs.Add(new ButtonConfig
             {
                 Name = "optionsButton",
                 HoverIconPath = "uQuake/gfx/menus/icons/icon_options_glow_mp",
-                OnClick = evt => OnOptionsButtonClick(evt)
+                TargetView = App.View.OptionsView
             });
             m_ButtonConfigs.Add(new ButtonConfig
             {
                 Name = "loadoutButton",
                 HoverIconPath = "uQuake/gfx/menus/icons/icon_credits_glow_mp",
-                OnClick = evt => OnLoadoutButtonClick(evt)
+                TargetView = App.View.LoadoutView
             });
             m_ButtonConfigs.Add(new ButtonConfig
             {
                 Name = "logoutButton",
                 HoverIconPath = "uQuake/gfx/menus/icons/icon_quit_glow_mp",
-                OnClick = evt => OnLogoutButtonClick(evt)
+                TargetView = App.View.LogoutView
             });
         }
 
         void OnEnable()
         {
             var root = m_UIDocument.rootVisualElement;
+
+            m_ContentBackground = root.Q<VisualElement>("contentBackground");
             // Buttons finden + callbacks registrieren
             foreach (var cfg in m_ButtonConfigs)
             {
                 cfg.ButtonRef = root.Q<Button>(cfg.Name);
 
-                cfg.ButtonRef.RegisterCallback(cfg.OnClick);
+                if (cfg.TargetView != null)
+                {
+                    cfg.ButtonRef.RegisterCallback<ClickEvent>(evt => LoadSubView(cfg));
+                }
+                else if (cfg.OnClick != null)
+                {
+                    cfg.ButtonRef.RegisterCallback<ClickEvent>(evt => cfg.OnClick(cfg));
+                }
 
                 cfg.ButtonRef.RegisterCallback<PointerEnterEvent>(evt => OnPointerEnterEvent(evt, cfg));
 
                 cfg.ButtonRef.RegisterCallback<PointerLeaveEvent>(evt => OnPointerLeaveEvent(evt, cfg));
+            }
+        }
+
+        public void LoadSubViewByName(string viewName)
+        {
+            var cfg = m_ButtonConfigs.Find(b => b.Name == viewName);
+            if (cfg != null)
+            {
+                LoadSubView(cfg);
+            }
+        }
+
+        private void LoadSubView(ButtonConfig cfg)
+        {
+            if (cfg.IsActive) return;
+            Debug.Log($"Loading subview: {cfg.Name}");
+            m_ContentBackground.Clear();
+            HideAllSubViews();
+            if (cfg.TargetView != null)
+            {
+                // Zuerst Show() aufrufen, damit OnEnable() ausgeführt wird
+                cfg.TargetView.Show();
+
+                // Dann erst nach dem nächsten Frame das VisualElement laden
+                VisualElement element = cfg.TargetView.LoadVisualElement();
+                m_ContentBackground.Add(element);
+
+                SetButtonActive(cfg.Name, true);
             }
         }
 
@@ -88,37 +126,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
             cfg.ButtonRef.style.backgroundImage = StyleKeyword.Null;
         }
 
-        void OnOptionsButtonClick(ClickEvent evt)
-        {
-            Debug.Log("Options Button Clicked");
-            SetButtonActive("optionsButton", true);
-        }
-
-        void OnLoadoutButtonClick(ClickEvent evt)
-        {
-            Debug.Log("Loadout Button Clicked");
-            SetButtonActive("loadoutButton", true);
-        }
-
-        void OnCreateServerButtonClick(ClickEvent evt)
-        {
-            Debug.Log("Create Server Button Clicked");
-            SetButtonActive("createServerButton", true);
-        }
-
-        void OnJoinServerButtonClick(ClickEvent evt)
-        {
-            Debug.Log("Join Server Button Clicked");
-            SetButtonActive("joinServerButton", true);
-            //Broadcast(new EnterMatchmakerQueueEvent("Queue01"));
-        }
-        void OnLogoutButtonClick(ClickEvent evt)
-        {
-            Debug.Log("Logout Button Clicked");
-            SetButtonActive("logoutButton", true);
-        }
-
-        public void SetButtonActive(string buttonName, bool isActive)
+        private void SetButtonActive(string buttonName, bool isActive)
         {
             ClearAllActiveButtons();
 
@@ -149,13 +157,25 @@ namespace Unity.DedicatedGameServerSample.Runtime
             }
         }
 
+        private void HideAllSubViews()
+        {
+            foreach (var cfg in m_ButtonConfigs)
+            {
+                if (cfg.TargetView != null)
+                {
+                    cfg.TargetView.Hide();
+                }
+            }
+        }
+
         void OnDisable()
         {
             foreach (var cfg in m_ButtonConfigs)
             {
                 if (cfg.ButtonRef == null) continue;
 
-                cfg.ButtonRef.UnregisterCallback(cfg.OnClick);
+                cfg.ButtonRef.UnregisterCallback<ClickEvent>(evt => cfg.OnClick(cfg));
+                cfg.ButtonRef.UnregisterCallback<ClickEvent>(evt => LoadSubView(cfg));
                 cfg.ButtonRef.UnregisterCallback<PointerEnterEvent>(evt => OnPointerEnterEvent(evt, cfg));
                 cfg.ButtonRef.UnregisterCallback<PointerLeaveEvent>(evt => OnPointerLeaveEvent(evt, cfg));
             }

@@ -77,7 +77,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
         {
             Debug.Log("User authenticated event received, showing main menu view");
             View.Show();
-            View.SetButtonActive("loadoutButton", true);
+            View.LoadSubViewByName("loadoutButton");
         }
     }
 }
