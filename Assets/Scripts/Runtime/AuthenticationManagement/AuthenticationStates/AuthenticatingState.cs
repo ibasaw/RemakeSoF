@@ -73,7 +73,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
                 catch (Exception e)
                 {
                     Debug.LogError($"Failed to parse response: {e.Message}");
-                    OnAuthenticationFailure(AuthenticationStatus.InvalidCredentials);
+                    OnAuthenticationFailure(AuthenticationStatus.Undefined);
                 }
             }
             else

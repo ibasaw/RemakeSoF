@@ -10,7 +10,6 @@ namespace Unity.DedicatedGameServerSample.Runtime
     {
         void Awake()
         {
-            AddListener<PlayerSignedIn>(OnPlayerSignedIn);
             AddListener<MatchEnteredEvent>(OnMatchEntered);
         }
 
@@ -21,20 +20,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
 
         internal override void RemoveListeners()
         {
-            RemoveListener<PlayerSignedIn>(OnPlayerSignedIn);
             RemoveListener<MatchEnteredEvent>(OnMatchEntered);
-        }
-
-        void OnPlayerSignedIn(PlayerSignedIn evt)
-        {
-            if (evt.Success)
-            {
-                Debug.Log($"Player signed in with id {evt.PlayerId}");
-            }
-            else
-            {
-                Debug.Log("Player did not sign in");
-            }
         }
 
         void OnMatchEntered(MatchEnteredEvent evt)

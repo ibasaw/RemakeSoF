@@ -1,0 +1,11 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UIToolkit/ConsoleView/ConsoleViewStyle.uss?fileID=7433441132597879392&amp;guid=1258970711b367945bc36ba7c3fb6745&amp;type=3#ConsoleViewStyle" />
+    <ui:VisualElement name="console-root" class="console-root" style="background-size: 100% 100%; background-position-y: top 0; height: 500px; border-bottom-width: 4px; border-left-color: rgb(245, 0, 0); border-right-color: rgb(245, 0, 0); border-top-color: rgb(245, 0, 0); border-bottom-color: rgb(245, 0, 0);">
+        <ui:VisualElement name="VisualElement" class="terminal-panel" style="transform-origin: center; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 0%; margin-right: 0%; margin-bottom: 0%; margin-left: 0%; align-items: stretch; height: 100%; max-width: 100%;">
+            <ui:ScrollView name="console-output" class="console-output" style="font-size: 24px;" />
+            <ui:VisualElement name="glowline" class="glowline" style="height: 6px;" />
+            <ui:VisualElement name="glowline-wide" class="glowline-wide" style="background-size: cover; height: 18px;" />
+            <ui:TextField name="console-input" hide-placeholder-on-focus="true" class="console-input" style="height: 50px; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; background-color: rgba(255, 255, 255, 0); -unity-background-image-tint-color: rgba(0, 0, 0, 0); color: rgb(255, 255, 255); background-image: none; -unity-font-definition: url(&quot;project://database/Assets/UIToolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&amp;guid=2798018c7901adf47b47c3e251c0d36b&amp;type=3#NotInter-Regular&quot;); border-top-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; border-bottom-left-radius: 0; -unity-text-outline-color: rgba(0, 0, 0, 0); font-size: 24px;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

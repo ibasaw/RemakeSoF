@@ -25,6 +25,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
             AddListener<ChangeToLoginEvent>(OnChangeToLogin);
             AuthenticationManager.EventManager.AddListener<AuthenticationEvent>(OnAuthenticationEvent);
             AuthenticationManager.EventManager.AddListener<UserUnauthenticatedEvent>(OnUserUnauthenticatedEvent);
+            AuthenticationManager.EventManager.AddListener<UserAuthenticatedEvent>(OnUserAuthenticatedEvent);
         }
 
         // Called when the user clicks the "Login" button on the login view to attempt to log in
@@ -69,6 +70,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
             RemoveListener<ChangeToLoginEvent>(OnChangeToLogin);
             AuthenticationManager.EventManager.RemoveListener<AuthenticationEvent>(OnAuthenticationEvent);
             AuthenticationManager.EventManager.RemoveListener<UserUnauthenticatedEvent>(OnUserUnauthenticatedEvent);
+            AuthenticationManager.EventManager.RemoveListener<UserAuthenticatedEvent>(OnUserAuthenticatedEvent);
         }
 
         void OnAuthenticationEvent(AuthenticationEvent evt)
@@ -102,6 +104,12 @@ namespace Unity.DedicatedGameServerSample.Runtime
         {
             Debug.Log("User unauthenticated event received, showing login view");
             View.Show();
+        }
+
+        void OnUserAuthenticatedEvent(UserAuthenticatedEvent evt)
+        {
+            Debug.Log("User authenticated event received, hiding login view");
+            View.Hide();
         }
     }
 }

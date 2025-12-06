@@ -12,8 +12,8 @@ namespace Unity.DedicatedGameServerSample.Runtime
     /// </summary>
     public class NetworkedGameState : NetworkBehaviour
     {
-        internal NetworkVariable<uint> matchCountdown = new NetworkVariable<uint>();
-        internal NetworkVariable<int> playersConnected = new NetworkVariable<int>();
+        internal NetworkVariable<uint> matchCountdown = new();
+        internal NetworkVariable<int> playersConnected = new();
         bool m_MatchStarted;
         bool m_MatchEnded;
 

@@ -207,20 +207,20 @@
     <None Include="Assets\Resources\Data\shaders\metashader.shader" />
     <None Include="Assets\Packages\System.Security.Cryptography.Cng.4.5.0\THIRD-PARTY-NOTICES.TXT" />
     <None Include="Assets\Packages\System.Diagnostics.DiagnosticSource.6.0.2\lib\netstandard2.0\System.Diagnostics.DiagnosticSource.xml" />
-    <None Include="Assets\UI Toolkit\UnityStyleSheet.uss" />
+    <None Include="Assets\UIToolkit\UnityStyleSheet.uss" />
     <None Include="Assets\Packages\System.IdentityModel.Tokens.Jwt.8.14.0\lib\netstandard2.0\System.IdentityModel.Tokens.Jwt.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\de\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\ko\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Resources\Data\shaders\fat.shader" />
-    <None Include="Assets\UI Toolkit\ConsoleView\ConsoleViewStyle.uss" />
+    <None Include="Assets\UIToolkit\ConsoleView\ConsoleViewStyle.uss" />
     <None Include="Assets\Packages\System.IdentityModel.Tokens.Jwt.8.14.0\lib\netstandard2.0\System.IdentityModel.Tokens.Jwt.xml" />
-    <None Include="Assets\UI Toolkit\ClientConnectingView\ClientConnectingView.uxml" />
+    <None Include="Assets\UIToolkit\ClientConnectingView\ClientConnectingView.uxml" />
     <None Include="Assets\Resources\Data\shaders\finca.shader" />
     <None Include="Assets\Packages\System.Runtime.CompilerServices.Unsafe.6.0.0\THIRD-PARTY-NOTICES.TXT" />
     <None Include="Assets\Packages\SharpCompress.0.30.1\lib\netstandard2.1\SharpCompress.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\it\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\ja\System.Text.Json.SourceGeneration.resources.dll" />
-    <None Include="Assets\UI Toolkit\LoginView\LoginView.uxml" />
+    <None Include="Assets\UIToolkit\LoginView\LoginView.uxml" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.4\cs\tr\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Resources\Data\shaders\female_armor.shader" />
     <None Include="Assets\Packages\MongoDB.Driver.Core.2.30.0\lib\netstandard2.1\MongoDB.Driver.Core.dll" />
@@ -270,9 +270,9 @@
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\zh-Hant\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.4\cs\es\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\UI\Uss\LoginUI.uss" />
-    <None Include="Assets\UI Toolkit\MatchView\MatchView.uxml" />
+    <None Include="Assets\UIToolkit\MatchView\MatchView.uxml" />
     <None Include="Assets\Packages\System.Security.Principal.Windows.5.0.0\lib\netstandard2.0\System.Security.Principal.Windows.dll" />
-    <None Include="Assets\UI Toolkit\ConsoleView\ConsoleView.uxml" />
+    <None Include="Assets\UIToolkit\ConsoleView\ConsoleView.uxml" />
     <None Include="Assets\Resources\uQuake\ext_data\outfitting\temp_airport.txt" />
     <None Include="Assets\Packages\System.Text.Encodings.Web.8.0.0\LICENSE.TXT" />
     <None Include="Assets\Packages\Microsoft.IdentityModel.Abstractions.8.14.0\lib\netstandard2.0\Microsoft.IdentityModel.Abstractions.dll" />
@@ -289,7 +289,7 @@
     <None Include="Assets\Packages\System.Text.Encodings.Web.8.0.0\useSharedDesignerContext.txt" />
     <None Include="Assets\Packages\Snappier.1.0.0\lib\netstandard2.1\Snappier.xml" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\THIRD-PARTY-NOTICES.TXT" />
-    <None Include="Assets\UI Toolkit\MatchRecapView\MatchRecapView.uxml" />
+    <None Include="Assets\UIToolkit\MatchRecapView\MatchRecapView.uxml" />
     <None Include="Assets\Packages\Microsoft.Bcl.AsyncInterfaces.8.0.0\lib\netstandard2.1\Microsoft.Bcl.AsyncInterfaces.dll" />
     <None Include="Assets\Resources\Data\shaders\snow.shader" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\fr\System.Text.Json.SourceGeneration.resources.dll" />
@@ -299,7 +299,7 @@
     <None Include="Assets\Packages\Microsoft.Bcl.AsyncInterfaces.8.0.0\LICENSE.TXT" />
     <None Include="Assets\Resources\Data\shaders\weapons.shader" />
     <None Include="Assets\Resources\uQuake\ext_data\outfitting\liner1.txt" />
-    <None Include="Assets\UI Toolkit\DirectIPView\DirectIPView.uxml" />
+    <None Include="Assets\UIToolkit\DirectIPView\DirectIPView.uxml" />
     <None Include="Assets\Packages\Microsoft.IdentityModel.JsonWebTokens.8.14.0\lib\netstandard2.0\Microsoft.IdentityModel.JsonWebTokens.xml" />
     <None Include="Assets\Resources\Data\shaders\prague.shader" />
     <None Include="Assets\Resources\uQuake\ui\hud.txt" />
@@ -318,7 +318,7 @@
     <None Include="Assets\Resources\Data\shaders\sprites.shader" />
     <None Include="Assets\Packages\Microsoft.Extensions.Logging.Abstractions.2.1.0\lib\netstandard2.0\Microsoft.Extensions.Logging.Abstractions.xml" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\fr\System.Text.Json.SourceGeneration.resources.dll" />
-    <None Include="Assets\UI Toolkit\MatchmakerView\MatchmakerView.uxml" />
+    <None Include="Assets\UIToolkit\MatchmakerView\MatchmakerView.uxml" />
     <None Include="Assets\Resources\uQuake\ext_data\outfitting\shop5.txt" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\es\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Packages\System.Security.Principal.Windows.5.0.0\lib\netstandard2.0\System.Security.Principal.Windows.xml" />
@@ -349,7 +349,7 @@
     <None Include="Assets\Packages\System.Security.AccessControl.5.0.0\LICENSE.TXT" />
     <None Include="Assets\Packages\Microsoft.Bcl.TimeProvider.8.0.1\lib\netstandard2.0\Microsoft.Bcl.TimeProvider.xml" />
     <None Include="Assets\Resources\Data\shaders\airport_models.shader" />
-    <None Include="Assets\UI Toolkit\RegisterView\RegisterView.uxml" />
+    <None Include="Assets\UIToolkit\RegisterView\RegisterView.uxml" />
     <None Include="Assets\Resources\Data\shaders\menu.shader" />
     <None Include="Assets\Resources\uQuake\ext_data\outfitting\temp_kamchatka.txt" />
     <None Include="Assets\Packages\Microsoft.IdentityModel.Tokens.8.14.0\lib\netstandard2.0\Microsoft.IdentityModel.Tokens.xml" />
@@ -358,9 +358,10 @@
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.4\cs\pl\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Resources\Data\shaders\jordan_models.shader" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\pt-BR\System.Text.Json.SourceGeneration.resources.dll" />
-    <None Include="Assets\UI Toolkit\MainMenuView\MainMenuView.uxml" />
+    <None Include="Assets\UIToolkit\MainMenuView\MainMenuView.uxml" />
     <None Include="Assets\Resources\Data\shaders\skingore.shader" />
     <None Include="Assets\Packages\System.Security.Principal.Windows.5.0.0\THIRD-PARTY-NOTICES.TXT" />
+    <None Include="Assets\UIToolkit\LoadoutView\LoadoutView.uxml" />
     <None Include="Assets\Resources\Data\shaders\colombia_models.shader" />
     <None Include="Assets\Packages\System.Runtime.CompilerServices.Unsafe.6.0.0\LICENSE.TXT" />
     <None Include="Assets\Resources\Data\shaders\test.shader" />
@@ -407,8 +408,8 @@
     <None Include="Assets\Packages\Microsoft.Bcl.TimeProvider.8.0.1\lib\netstandard2.0\Microsoft.Bcl.TimeProvider.dll" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.4\cs\cs\System.Text.Json.SourceGeneration.resources.dll" />
     <None Include="Assets\Packages\System.Text.Encoding.CodePages.5.0.0\lib\netstandard2.0\System.Text.Encoding.CodePages.dll" />
-    <None Include="Assets\UI Toolkit\GameMenuView\GameMenuView.uxml" />
-    <None Include="Assets\UI Toolkit\GameplayObjects\InteractiveDoor.uxml" />
+    <None Include="Assets\UIToolkit\GameMenuView\GameMenuView.uxml" />
+    <None Include="Assets\UIToolkit\GameplayObjects\InteractiveDoor.uxml" />
     <None Include="Assets\Resources\Data\shaders\chunks.shader" />
     <None Include="Assets\UI\Uss\MyToolkitCrosshair.uss" />
     <None Include="Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn3.11\cs\ko\System.Text.Json.SourceGeneration.resources.dll" />
@@ -1687,6 +1688,10 @@
     </Reference>
     <Reference Include="Unity.Services.Multiplayer.Editor.Shared">
       <HintPath>Library\ScriptAssemblies\Unity.Services.Multiplayer.Editor.Shared.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.2D.Sprite.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.2D.Sprite.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Services.Multiplayer.Multiplay.Authoring.Core">

@@ -1,5 +1,6 @@
 using System;
 using Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle;
+using Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement;
 using Unity.DedicatedGameServerSample.Runtime.ConnectionManagement;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
     {
         MainMenuView View => App.View.MainMenu;
         ConnectionManager ConnectionManager => ApplicationEntryPoint.Singleton.ConnectionManager;
+        AuthenticationManager AuthenticationManager => ApplicationEntryPoint.Singleton.AuthenticationManager;
 
         void Awake()
         {
@@ -17,6 +19,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
             AddListener<EnterIPConnectionEvent>(OnEnterIPConnection);
             AddListener<ExitIPConnectionEvent>(OnExitIPConnection);
             ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
+            AuthenticationManager.EventManager.AddListener<UserAuthenticatedEvent>(OnUserAuthenticatedEvent);
         }
 
         void OnDestroy()
@@ -31,6 +34,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
             RemoveListener<EnterIPConnectionEvent>(OnEnterIPConnection);
             RemoveListener<ExitIPConnectionEvent>(OnExitIPConnection);
             ConnectionManager.EventManager.RemoveListener<ConnectionEvent>(OnConnectionEvent);
+            AuthenticationManager.EventManager.RemoveListener<UserAuthenticatedEvent>(OnUserAuthenticatedEvent);
         }
 
         void OnEnterMatchmakerQueue(EnterMatchmakerQueueEvent evt)
@@ -67,6 +71,13 @@ namespace Unity.DedicatedGameServerSample.Runtime
                     View.Show();
                     break;
             }
+        }
+
+        void OnUserAuthenticatedEvent(UserAuthenticatedEvent evt)
+        {
+            Debug.Log("User authenticated event received, showing main menu view");
+            View.Show();
+            View.SetButtonActive("loadoutButton", true);
         }
     }
 }

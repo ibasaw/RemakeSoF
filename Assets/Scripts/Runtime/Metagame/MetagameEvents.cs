@@ -71,16 +71,4 @@ namespace Unity.DedicatedGameServerSample.Runtime
         public string confirmPassword;
         public string email;
     }
-    
-    internal class PlayerSignedIn : AppEvent
-    {
-        public bool Success { get; private set; }
-        public string PlayerId { get; private set; }
-
-        public PlayerSignedIn(bool success, string playerId)
-        {
-            Success = success;
-            PlayerId = playerId;
-        }
-    }
 }
