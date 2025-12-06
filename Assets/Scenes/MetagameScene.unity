@@ -678,6 +678,10 @@ PrefabInstance:
       propertyPath: m_CullingMask.m_Bits
       value: 4294967295
       objectReference: {fileID: 0}
+    - target: {fileID: 2543586066506059114, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
+      propertyPath: m_PlayerDataModel
+      value: 
+      objectReference: {fileID: 1718550451}
     - target: {fileID: 4653335918413459185, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -750,6 +754,9 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1373550602}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8555614893495770896, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1718550451}
     - targetCorrespondingSourceObject: {fileID: 7866452525617413525, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
       insertIndex: -1
       addedObject: {fileID: 927500431}
@@ -779,6 +786,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1 &1718550450 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8555614893495770896, guid: a792aead6be06b44eaa0f1e2ff26af60, type: 3}
+  m_PrefabInstance: {fileID: 1718550446}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1718550451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1718550450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946f1c994bbcb854380f45032aab8172, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1790139188

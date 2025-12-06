@@ -76,6 +76,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
         void OnUserAuthenticatedEvent(UserAuthenticatedEvent evt)
         {
             Debug.Log("User authenticated event received, showing main menu view");
+            App.Model.PlayerData.InitializePlayer(evt.AuthResponse);
             View.Show();
             View.LoadSubViewByName("loadoutButton");
         }

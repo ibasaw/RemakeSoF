@@ -68,6 +68,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
                 {
                     var response = JsonUtility.FromJson<AuthenticationResponse>(request.downloadHandler.text);
                     Debug.Log($"Server response: {response.message}");
+                    Manager.m_Authenticated.Configure(response);
                     Manager.OnAuthenticationSuccess();
                 }
                 catch (Exception e)

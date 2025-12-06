@@ -11,5 +11,9 @@ namespace Unity.DedicatedGameServerSample.Runtime
 
         [SerializeField]
         ClientConnectingModel m_ClientConnectingModel;
+
+        internal PlayerDataModel PlayerData => m_PlayerDataModel;
+        [SerializeField]
+        PlayerDataModel m_PlayerDataModel;
     }
 }

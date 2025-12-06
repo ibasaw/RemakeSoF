@@ -6,11 +6,18 @@ namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
     /// </summary>
     class AuthenticatedState : AuthenticationState, IAuthenticationHandler
     {
+        private AuthenticationResponse m_AuthResponse;
+
+        public void Configure(AuthenticationResponse response)
+        {
+            m_AuthResponse = response;
+        }
+
         public override void Enter()
         {
             var authEvent = new AuthenticationEvent { status = AuthenticationStatus.Success };
             Manager.EventManager.Broadcast(authEvent);
-            Manager.EventManager.Broadcast(new UserAuthenticatedEvent());
+            Manager.EventManager.Broadcast(new UserAuthenticatedEvent(m_AuthResponse));
         }
 
         public override void Exit() { }

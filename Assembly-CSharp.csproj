@@ -144,6 +144,7 @@
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\AI\ServerAICharacter.cs" />
     <Compile Include="Assets\Scripts\Runtime\ConnectionManagement\ConnectionStates\OfflineState.cs" />
     <Compile Include="Assets\Scripts\Runtime\Core\Model.cs" />
+    <Compile Include="Assets\Scripts\Runtime\Metagame\Models\PlayerDataModel.cs" />
     <Compile Include="Assets\Scripts\Serializable\FootstepData.cs" />
     <Compile Include="Assets\Scripts\Models\Enums\VoiceReport.cs" />
     <Compile Include="Assets\Scripts\Runtime\Game\Characters\Player\ServerPlayerSpawnPoints.cs" />

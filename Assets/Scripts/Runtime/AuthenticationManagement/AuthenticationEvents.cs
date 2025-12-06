@@ -49,7 +49,15 @@ namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
         public AuthenticationStatus status;
     }
 
-    public class UserAuthenticatedEvent : AppEvent { }
+    public class UserAuthenticatedEvent : AppEvent
+    {
+        public AuthenticationResponse AuthResponse { get; }
+
+        public UserAuthenticatedEvent(AuthenticationResponse response)
+        {
+            AuthResponse = response;
+        }
+    }
 
     public class UserUnauthenticatedEvent : AppEvent { }
 

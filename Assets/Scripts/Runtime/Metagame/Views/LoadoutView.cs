@@ -7,6 +7,10 @@ namespace Unity.DedicatedGameServerSample.Runtime
     {
         UIDocument m_UIDocument;
 
+        Label m_PlayerNameLabel;
+
+        Label m_PlayerIdLabel;
+
         void Awake()
         {
             m_UIDocument = GetComponent<UIDocument>();
@@ -15,6 +19,12 @@ namespace Unity.DedicatedGameServerSample.Runtime
         void OnEnable()
         {
             var root = m_UIDocument.rootVisualElement;
+
+            m_PlayerNameLabel = root.Q<Label>("playerName");
+            m_PlayerIdLabel = root.Q<Label>("playerId");
+
+            m_PlayerNameLabel.text = App.Model.PlayerData.PlayerName;
+            m_PlayerIdLabel.text = App.Model.PlayerData.PlayerId;
         }
     }
 }
