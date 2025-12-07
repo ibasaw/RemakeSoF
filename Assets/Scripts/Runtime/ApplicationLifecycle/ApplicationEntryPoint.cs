@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement;
 using Unity.DedicatedGameServerSample.Runtime.ConnectionManagement;
+using Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement;
 using Unity.Multiplayer;
 using Unity.Netcode;
 using UnityEngine;
@@ -53,6 +54,10 @@ namespace Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle
         [SerializeField]
         AuthenticationManager m_AuthenticationManager;
         public AuthenticationManager AuthenticationManager => m_AuthenticationManager;
+
+        [SerializeField]
+        PlayerSkinManager m_PlayerSkinManager;
+        public PlayerSkinManager PlayerSkinManager => m_PlayerSkinManager;
 
         [SerializeField]
         internal int MinPlayers = 1;

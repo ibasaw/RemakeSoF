@@ -816,6 +816,7 @@ GameObject:
   - component: {fileID: 1790139189}
   - component: {fileID: 1790139191}
   - component: {fileID: 1790139190}
+  - component: {fileID: 1790139192}
   m_Layer: 5
   m_Name: LoadoutView
   m_TagString: Untagged
@@ -869,6 +870,26 @@ MonoBehaviour:
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 1920
   m_WorldSpaceHeight: 1080
+--- !u!114 &1790139192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1790139188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d5db74836b3a8d4d94753e5056c1c59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  characterPrefab: {fileID: 9192965884396362840, guid: 0eebb3b5d7752f8418eddbccb012ac47, type: 3}
+  previewLayer: 30
+  cameraOffset: {x: 15, y: 0, z: 0}
+  cameraFov: 40
+  clearColor: {r: 0, g: 0, b: 0, a: 0}
+  nameOffset: {x: 0, y: 0, z: 0}
+  characterRotation: {x: 0, y: 90, z: 0}
+  characterPosition: {x: 0, y: -5, z: 0}
 --- !u!1 &1876043740
 GameObject:
   m_ObjectHideFlags: 0

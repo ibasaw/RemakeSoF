@@ -1,0 +1,113 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1656048291008223716
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      propertyPath: m_Name
+      value: test_suit_longcoat
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3482747524018232643}
+  m_SourcePrefab: {fileID: 100100000, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+--- !u!1 &1889857028575012021 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
+  m_PrefabInstance: {fileID: 1656048291008223716}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3482747524018232643
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1889857028575012021}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c8339cf5953ee34b8a0e78fa8d6bcb0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  urpShaderName: Universal Render Pipeline/Unlit
+  selectedModelName: suit_long_coat
+  selectedSkinName: manuel_vergara
+  availableSkins:
+  - aaron_wilson
+  - conductor
+  - doctor_h1
+  - dr_stestrogor
+  - finca_guard_h1
+  - finca_guard_h2
+  - finca_guard_h3
+  - hk_gang_leader_a1
+  - honor_guard_w1
+  - manuel_vergara
+  - men_in_black1
+  - men_in_black2
+  - mullins_non_combat
+  - mullins_suit
+  - mullins_young
+  - patient_w1
+  - priest
+  - prometheus_sailor
+  - prometheus_sailor_w2
+  - prometheus_sailor_w3
+  - sam_patient
+  - sam_suit
+  - scientist_w1
+  - shop_contact
+  - skip
+  surfaceDefinition: {fileID: 4900000, guid: d967d5e16f754cc4aa677b40d4d9466c, type: 3}

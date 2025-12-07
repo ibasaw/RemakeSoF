@@ -4,5 +4,6 @@
         <ui:Label text="MY LOADOUT VIEW" />
         <ui:Label text="Label" name="playerName" />
         <ui:Label text="Label" name="playerId" />
+        <ui:VisualElement name="previewArea" style="width: 400px; height: 600px; background-color: rgb(91, 85, 85); border-width: 2px; border-color: rgb(255, 255, 255); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
     </ui:VisualElement>
 </ui:UXML>

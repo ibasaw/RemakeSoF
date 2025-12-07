@@ -5,6 +5,9 @@ using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 
+using SoF2Remake.Utils;
+using Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement;
+
 /// <summary>
 /// Liest JSON-Dateien wie aaron_wilson.json, erzeugt URP-Materialien für jedes texture1/shader1 group
 /// und speichert sie in: Dictionary[fileKey -> Dictionary<partName -> List<Material>>>.
@@ -14,7 +17,7 @@ using UnityEngine;
 public class MyPlayerMaterialAssigner : MonoBehaviour
 {
     [Header("URP Shader (Fallback)")]
-    public string urpShaderName = "Universal Render Pipeline/Lit";
+    public string urpShaderName = "Universal Render Pipeline/Unlit";
 
     [Tooltip("Selected default model type for this player (e.g., average_sleeves, suit_long_coat, etc.)")]
     [SerializeField] private string selectedModelName = "average_sleeves";
@@ -48,7 +51,12 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
         public List<MaterialDef> materials;
     }
     [Serializable]
-    public class Prefs { public Dictionary<string, string> models; public Dictionary<string, string> surfaces_on; public Dictionary<string, string> surfaces_off; }
+    public class Prefs
+    {
+        public Dictionary<string, string> models;
+        public Dictionary<string, string> surfaces_on;
+        public Dictionary<string, string> surfaces_off;
+    }
     [Serializable]
     public class MaterialDef
     {
@@ -90,7 +98,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
             ParseSurfaceDefinition(surfaceDefinition.text);
         }
 
-        if(definitions.Count == 0)
+        if (definitions.Count == 0)
         {
             Debug.LogWarning("[MyPlayerMaterialAssigner] Keine surfaceDefinition geladen oder geparst.");
             return;
@@ -103,39 +111,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
             selectedSkinData = LoadSelectedSkin();
         }
 
-        // For quick renderer lookup, get all renderers under root
-        var allRenderers = this.gameObject.GetComponentsInChildren<Renderer>(true);
-        // Durchlaufe alle Renderers und deaktiviere GameObjects, deren Name "_off" enthält
-        foreach (var renderer in allRenderers)
-        {
-            if (renderer != null && renderer.gameObject != null)
-            {
-                if (renderer.gameObject.name != null && renderer.gameObject.name.ToLower().Contains("_off")
-                && !renderer.gameObject.name.ToLower().Contains("stupidtriangle"))
-                {
-                    renderer.gameObject.SetActive(false);
-                }
-            }
-            if (selectedSkinData != null && selectedSkinData.prefs != null)
-            {
-                string rendererName = renderer.gameObject.name;
-                string cleanRendererName = System.Text.RegularExpressions.Regex.Replace(rendererName, @"_\d+$", "");
-                if (selectedSkinData.prefs.surfaces_on != null)
-                {
-                    if (selectedSkinData.prefs.surfaces_on.ContainsValue(cleanRendererName))
-                    {
-                        renderer.gameObject.SetActive(true);
-                    }
-                }
-                if (selectedSkinData.prefs.surfaces_off != null)
-                {
-                    if (selectedSkinData.prefs.surfaces_off.ContainsValue(cleanRendererName))
-                    {
-                        renderer.gameObject.SetActive(false);
-                    }
-                }
-            }
-        }
+        DisableAndEnableSurfaces(selectedSkinData);
 
         // Wenn ein Skin geladen wurde und surfaceDefinition gesetzt ist, wende automatisch Varianten an
         if (!string.IsNullOrEmpty(selectedSkinName) && surfaceDefinition != null)
@@ -308,9 +284,34 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
         selectedSkinName = newSkinName;
         RootJson selectedSkinData = LoadSelectedSkin();
 
-        // For quick renderer lookup, get all renderers under root
-        var allRenderers = this.gameObject.GetComponentsInChildren<Renderer>(true);
         // Durchlaufe alle Renderers und deaktiviere GameObjects, deren Name "_off" enthält
+        DisableAndEnableSurfaces(selectedSkinData);
+
+        // Reapply materials if surface definition is available
+        if (surfaceDefinition != null)
+        {
+            string fileKey = selectedSkinName;
+            string modelsSafe = GetModelForSkin(selectedSkinName);
+
+            Debug.Log($"[MyPlayerMaterialAssigner] === Changing skin to '{fileKey}' ===");
+
+            if (definitions.ContainsKey("default"))
+            {
+                ApplyMaterialsFromDefinition(fileKey, "default", this.gameObject);
+            }
+
+            if (!string.IsNullOrEmpty(modelsSafe) && definitions.ContainsKey(modelsSafe))
+            {
+                ApplyMaterialsFromDefinition(fileKey, modelsSafe, this.gameObject);
+            }
+
+            Debug.Log($"[MyPlayerMaterialAssigner] === Skin changed to '{fileKey}' ===");
+        }
+    }
+
+    private void DisableAndEnableSurfaces(RootJson selectedSkinData)
+    {
+        var allRenderers = this.gameObject.GetComponentsInChildren<Renderer>(true);
         foreach (var renderer in allRenderers)
         {
             if (renderer != null && renderer.gameObject != null)
@@ -340,27 +341,6 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
                     }
                 }
             }
-        }
-
-        // Reapply materials if surface definition is available
-        if (surfaceDefinition != null)
-        {
-            string fileKey = selectedSkinName;
-            string modelsSafe = GetModelForSkin(selectedSkinName);
-
-            Debug.Log($"[MyPlayerMaterialAssigner] === Changing skin to '{fileKey}' ===");
-
-            if (definitions.ContainsKey("default"))
-            {
-                ApplyMaterialsFromDefinition(fileKey, "default", this.gameObject);
-            }
-
-            if (!string.IsNullOrEmpty(modelsSafe) && definitions.ContainsKey(modelsSafe))
-            {
-                ApplyMaterialsFromDefinition(fileKey, modelsSafe, this.gameObject);
-            }
-
-            Debug.Log($"[MyPlayerMaterialAssigner] === Skin changed to '{fileKey}' ===");
         }
     }
 
@@ -509,7 +489,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
                     // Smoothness -> 0.0
                     if (material.HasProperty("_Smoothness"))
                         material.SetFloat("_Smoothness", 0.0f);
-                    
+
                     if (partName.IndexOf("2sided", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         SetTwoSidedURP(material, true);
@@ -581,7 +561,7 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
 
         Debug.Log("[MyPlayerMaterialAssigner] === Parsing Shader Definition ===");
 
-        var shaderEntries = ParseShaderEntries(shaderContent);
+        var shaderEntries = ShaderDataReader.ParseShaderEntries(shaderContent);
 
         foreach (var entry in shaderEntries)
         {
@@ -597,152 +577,6 @@ public class MyPlayerMaterialAssigner : MonoBehaviour
         }
         Debug.Log($"[MyPlayerMaterialAssigner] Erzeugte {shaderEntries.Count} Materialien für Shader Definition.");
     }
-
-    private class ShaderEntry
-    {
-        public string HitLocation { get; set; }
-        public string HitMaterial { get; set; }
-        public string EditorImage { get; set; }
-        public bool CullDisabled { get; set; }
-        public string MainTexture { get; set; }
-    }
-
-    private Dictionary<string, ShaderEntry> ParseShaderEntries(string content)
-    {
-        var entries = new Dictionary<string, ShaderEntry>();
-
-        // Normalize line endings and split into lines
-        var lines = content.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
-
-        string currentShader = null;
-        ShaderEntry currentEntry = null;
-        bool inShaderBlock = false;
-        int braceDepth = 0;
-
-        for (int i = 0; i < lines.Length; i++)
-        {
-            string line = lines[i].Trim();
-
-            // Skip empty lines and comments
-            if (string.IsNullOrEmpty(line) || line.StartsWith("//"))
-                continue;
-
-            // Check if this is a shader name (starts with models/ and is followed by { on next line)
-            if (line.StartsWith("models/") && !line.EndsWith("{"))
-            {
-                // Check if next line is just "{"
-                if (i + 1 < lines.Length && lines[i + 1].Trim() == "{")
-                {
-                    // Save previous entry if exists
-                    if (currentShader != null && currentEntry != null)
-                    {
-                        entries[currentShader] = currentEntry;
-                    }
-
-                    // Start new shader entry
-                    currentShader = line.Trim();
-                    currentEntry = new ShaderEntry();
-                    inShaderBlock = true;
-                    braceDepth = 1;
-                    i++; // Skip the next line (the opening brace)
-                    continue;
-                }
-            }
-
-            // Handle opening braces
-            if (line == "{" && inShaderBlock)
-            {
-                braceDepth++;
-                continue;
-            }
-
-            // Handle closing braces
-            if (line == "}" && inShaderBlock)
-            {
-                braceDepth--;
-
-                // If we're back to depth 0, we've closed the shader block
-                if (braceDepth == 0)
-                {
-                    if (currentShader != null && currentEntry != null)
-                    {
-                        entries[currentShader] = currentEntry;
-                    }
-                    currentShader = null;
-                    currentEntry = null;
-                    inShaderBlock = false;
-                }
-                continue;
-            }
-
-            // Parse shader properties (at any level within the shader block)
-            if (inShaderBlock && currentEntry != null)
-            {
-                ParseShaderProperty(line, currentEntry);
-            }
-        }
-
-        // Don't forget the last entry
-        if (currentShader != null && currentEntry != null)
-        {
-            entries[currentShader] = currentEntry;
-        }
-
-        return entries;
-    }
-
-    private void ParseShaderProperty(string line, ShaderEntry entry)
-    {
-        // Parse hitLocation
-        if (line.StartsWith("hitLocation"))
-        {
-            var parts = line.Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 2)
-            {
-                entry.HitLocation = parts[1];
-            }
-        }
-
-        // Parse hitMaterial
-        if (line.StartsWith("hitMaterial"))
-        {
-            var parts = line.Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 2)
-            {
-                entry.HitMaterial = parts[1];
-            }
-        }
-
-        // Parse qer_editorimage
-        if (line.StartsWith("qer_editorimage"))
-        {
-            var parts = line.Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 2)
-            {
-                entry.EditorImage = parts[1];
-            }
-        }
-
-        // Parse cull disable
-        if (line.Trim() == "cull\tdisable" || line.Trim() == "cull disable")
-        {
-            entry.CullDisabled = true;
-        }
-
-        // Parse map (main texture) - this is inside nested blocks, so we need to handle it differently
-        if (line.StartsWith("map"))
-        {
-            var parts = line.Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 2)
-            {
-                entry.MainTexture = parts[1];
-            }
-        }
-
-        // Parse q3map_nolightmap and q3map_onlyvertexlighting (these are just flags)
-        // These don't need special handling, they're just shader directives
-    }
-
     private void CreateMaterialFromShaderEntry(string shaderName, ShaderEntry entry)
     {
         string partName = Path.GetFileNameWithoutExtension(shaderName);
