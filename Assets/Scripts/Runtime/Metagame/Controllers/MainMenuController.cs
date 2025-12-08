@@ -80,7 +80,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
             Debug.Log("User authenticated event received, showing main menu view");
             App.Model.PlayerData.InitializePlayer(evt.AuthResponse);
 
-            //PlayerSkinManager.ChangeSkin("manuel_vergara");
+            PlayerSkinManager.ChangeSkin("manuel_vergara");
 
             View.Show();
             View.LoadSubViewByName("loadoutButton");

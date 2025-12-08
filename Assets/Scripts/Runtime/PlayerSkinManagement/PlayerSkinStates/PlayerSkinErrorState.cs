@@ -14,7 +14,7 @@ namespace Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement
 
         public override void Exit() { }
 
-        public void OnSkinChangeRequested(string skinName, string modelType)
+        public void OnSkinChangeRequested(string skinName)
         {
             // Allow retry from error state
             Debug.Log("[PlayerSkinManager] Retrying skin load after error");

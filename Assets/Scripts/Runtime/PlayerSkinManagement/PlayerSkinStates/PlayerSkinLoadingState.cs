@@ -35,20 +35,29 @@ namespace Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement
                 return;
             }
 
-            // Reset all GameObjects to active before changing skin
-            ResetAllGameObjectsToActive();
+            try
+            {
+                // Reset all GameObjects to active before changing skin
+                ResetAllGameObjectsToActive();
 
-            // Try to load skin data from Resources
-            string resourcePath = $"Data/skin_data/{m_LoadingSkinName}";
-            SkinDefinition skinDefinition = ParseSkinDefinitionForPath(resourcePath);
-            if (skinDefinition == null) return;
+                // Try to load skin data from Resources
+                string resourcePath = $"Data/skin_data/{m_LoadingSkinName}";
+                SkinDefinition skinDefinition = ParseSkinDefinitionForPath(resourcePath);
+                if (skinDefinition == null) return;
 
-            string modelName = skinDefinition.prefs.models["1"];
-            LoadShaderDefinitionFromResources($"Data/shaders/{modelName}");
-            CreateMaterialsFromSkinDefinition(m_LoadingSkinName, skinDefinition);
-            Debug.Log($"[PlayerSkinManager] Successfully loaded skin: {m_LoadingSkinName}.json with model: {modelName}.shader");
+                string modelName = skinDefinition.prefs.models["1"];
+                LoadShaderDefinitionFromResources($"Data/shaders/{modelName}");
+                CreateMaterialsFromSkinDefinition(m_LoadingSkinName, skinDefinition);
+                Debug.Log($"[PlayerSkinManager] Successfully loaded skin: {m_LoadingSkinName}.json with model: {modelName}.shader");
 
-            Manager.OnSkinLoadSuccess(m_LoadingSkinName);
+                Manager.OnSkinLoadSuccess(m_LoadingSkinName);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[PlayerSkinManager] Error loading skin: {ex.Message}");
+                Manager.OnSkinLoadFailure($"Error loading skin: {ex.Message}", PlayerSkinStatus.GenericError);
+                return;
+            }
         }
 
         /// <summary>

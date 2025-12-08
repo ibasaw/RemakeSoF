@@ -366,9 +366,6 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 6446027509528340687}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 9196267698460185028}
   m_SourcePrefab: {fileID: 100100000, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
 --- !u!1 &9192965884396362840 stripped
@@ -376,48 +373,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
   m_PrefabInstance: {fileID: 8309862669833724169}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6446027509528340687
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9192965884396362840}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c8339cf5953ee34b8a0e78fa8d6bcb0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  urpShaderName: Universal Render Pipeline/Unlit
-  selectedModelName: suit_long_coat
-  selectedSkinName: manuel_vergara
-  availableSkins:
-  - aaron_wilson
-  - conductor
-  - doctor_h1
-  - dr_stestrogor
-  - finca_guard_h1
-  - finca_guard_h2
-  - finca_guard_h3
-  - hk_gang_leader_a1
-  - honor_guard_w1
-  - manuel_vergara
-  - men_in_black1
-  - men_in_black2
-  - mullins_non_combat
-  - mullins_suit
-  - mullins_young
-  - patient_w1
-  - priest
-  - prometheus_sailor
-  - prometheus_sailor_w2
-  - prometheus_sailor_w3
-  - sam_patient
-  - sam_suit
-  - scientist_w1
-  - shop_contact
-  - skip
-  surfaceDefinition: {fileID: 4900000, guid: d967d5e16f754cc4aa677b40d4d9466c, type: 3}
 --- !u!95 &9196267698460185028
 Animator:
   serializedVersion: 7
