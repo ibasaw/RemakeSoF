@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     public class AppEvent { }
 

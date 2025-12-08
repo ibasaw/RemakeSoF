@@ -1,13 +1,13 @@
 using System;
 using System.Collections;
 using System.Text;
-using Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle;
-using Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement;
-using Unity.DedicatedGameServerSample.Runtime.ConnectionManagement;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.AuthenticationManagement;
+using Tolik.RemakeSoF.Runtime.ConnectionManagement;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     /// <summary>
     /// Zuständig für die Orchestrierung von Login-bezogenen Ereignissen und Interaktionen

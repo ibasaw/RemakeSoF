@@ -1,4 +1,4 @@
-namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
+namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 {
     /// <summary>
     /// Base class representing an online connection state.

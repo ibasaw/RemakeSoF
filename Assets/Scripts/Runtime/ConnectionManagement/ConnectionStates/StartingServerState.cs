@@ -5,7 +5,7 @@ using UnityEngine;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 
-namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
+namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 {
     /// <summary>
     /// Connection state corresponding to a server starting up. Starts the server when entering the state. If successful,

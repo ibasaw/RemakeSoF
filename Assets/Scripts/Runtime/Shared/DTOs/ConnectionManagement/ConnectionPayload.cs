@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     [Serializable]
     public class ConnectionPayload

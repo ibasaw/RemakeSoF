@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     [UnityEngine.RequireComponent(typeof(UIDocument))]
     /// <summary>

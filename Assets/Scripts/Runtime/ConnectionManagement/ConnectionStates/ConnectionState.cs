@@ -1,7 +1,7 @@
 using Unity.Netcode;
-using Unity.DedicatedGameServerSample.Runtime.Core;
+using Tolik.RemakeSoF.Runtime.Core;
 
-namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
+namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 {
     /// <summary>
     /// Base class representing a connection state.

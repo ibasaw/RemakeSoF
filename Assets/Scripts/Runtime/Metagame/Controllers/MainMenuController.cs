@@ -1,11 +1,11 @@
 using System;
-using Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle;
-using Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement;
-using Unity.DedicatedGameServerSample.Runtime.ConnectionManagement;
-using Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.AuthenticationManagement;
+using Tolik.RemakeSoF.Runtime.ConnectionManagement;
+using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     internal class MainMenuController : Controller<MetagameApplication>
     {

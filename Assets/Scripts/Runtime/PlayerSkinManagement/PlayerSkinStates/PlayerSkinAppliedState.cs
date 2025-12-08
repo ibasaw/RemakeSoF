@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement
+namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 {
     /// <summary>
     /// Applied state - skin is loaded and ready to be applied to characters

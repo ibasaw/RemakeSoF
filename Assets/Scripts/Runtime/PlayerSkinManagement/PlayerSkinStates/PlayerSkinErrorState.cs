@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement
+namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 {
     /// <summary>
     /// Error state - skin loading failed

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Unity.DedicatedGameServerSample.Runtime.Core;
+using Tolik.RemakeSoF.Runtime.Core;
 using Unity.Multiplayer;
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
+namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
 {
     [MultiplayerRoleRestricted]
     /// <summary>

@@ -1,6 +1,6 @@
 using System;
 
-namespace Unity.DedicatedGameServerSample.Runtime.Core
+namespace Tolik.RemakeSoF.Runtime.Core
 {
     /// <summary>
     /// Generic base class for states used by a manager class.

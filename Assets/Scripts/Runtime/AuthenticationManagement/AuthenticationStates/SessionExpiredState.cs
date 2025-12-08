@@ -1,4 +1,4 @@
-namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
+namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
 {
     /// <summary>
     /// Authentication state corresponding to when the user's session has expired.

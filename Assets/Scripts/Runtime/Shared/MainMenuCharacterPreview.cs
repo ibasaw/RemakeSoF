@@ -1,8 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using TMPro; // Falls du TextMesh Pro nutzt
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     [RequireComponent(typeof(UIDocument))]
     public class MainMenuCharacterPreview : MonoBehaviour

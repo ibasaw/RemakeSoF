@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
+using Tolik.RemakeSoF.Runtime;
 
 [CustomEditor(typeof(MyPlayerMaterialAssigner))]
 public class MyPlayerMaterialAssignerEditor : Editor

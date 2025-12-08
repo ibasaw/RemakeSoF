@@ -1,6 +1,6 @@
 using System;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     [Serializable]
     public class AuthenticationResponse

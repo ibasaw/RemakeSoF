@@ -7,8 +7,8 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.IO;
 
-using SoF2Remake.Utils;
-using SoF2Remake.Data;
+using Tolik.RemakeSoF.Data;
+using Tolik.RemakeSoF.Runtime;
 
 [DisallowMultipleComponent]
 public class PlayerSoundSystem : MonoBehaviour

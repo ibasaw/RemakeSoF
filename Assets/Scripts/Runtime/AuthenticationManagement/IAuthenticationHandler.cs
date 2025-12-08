@@ -1,4 +1,4 @@
-namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
+namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
 {
     /// <summary>
     /// Interface for states that handle authentication attempts.

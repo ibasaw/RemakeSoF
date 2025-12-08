@@ -1,7 +1,7 @@
 using System;
 using Unity.Netcode;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     /// <summary>
     /// The application that manages the Metagame

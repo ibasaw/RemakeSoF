@@ -8,7 +8,7 @@ using System.Text;
 
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     public class ProfileManager
     {

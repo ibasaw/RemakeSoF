@@ -1,4 +1,4 @@
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     /* * * * *
      * A simple JSON Parser / builder

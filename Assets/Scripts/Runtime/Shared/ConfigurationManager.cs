@@ -1,9 +1,9 @@
 using System.IO;
 using System.Linq;
-using Unity.DedicatedGameServerSample.Runtime.SimpleJSON;
+using Tolik.RemakeSoF.Runtime.SimpleJSON;
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     /// <summary>
     /// A configuration Manager for easily accessing dynamic configurations that alter the behaviour of the app

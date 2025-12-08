@@ -8,7 +8,7 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.IO;
 
-namespace SoF2Remake.Data
+namespace Tolik.RemakeSoF.Data
 {
     [Serializable]
     public class MaterialInfo

@@ -1,6 +1,6 @@
 using Unity.Netcode;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     /// <summary>
     /// Manages the flow of the Game part of the application

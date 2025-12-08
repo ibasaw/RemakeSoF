@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement
+namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 {
     // Definition.json Struktur
     public class SkinSurfaceDefinition

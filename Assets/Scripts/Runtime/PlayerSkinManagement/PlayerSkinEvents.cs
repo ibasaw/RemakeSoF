@@ -1,4 +1,4 @@
-namespace Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement
+namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 {
     public enum PlayerSkinStatus
     {

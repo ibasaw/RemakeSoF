@@ -1,11 +1,11 @@
 using System;
-using Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle;
-using Unity.DedicatedGameServerSample.Runtime.ConnectionManagement;
-using Unity.Services.Matchmaker.Models;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.ConnectionManagement;
+//using Unity.Services.Matchmaker.Models;
 using UnityEngine;
-using static Unity.Services.Matchmaker.Models.MultiplayAssignment;
+//using static Unity.Services.Matchmaker.Models.MultiplayAssignment;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     internal class MatchmakerController : Controller<MetagameApplication>
     {
@@ -56,7 +56,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
             }
         }
 
-        void OnMatchSearchCompleted(MultiplayAssignment assignment)
+        /*void OnMatchSearchCompleted(MultiplayAssignment assignment)
         {
             var error = string.Empty;
             if (assignment == null)
@@ -91,7 +91,7 @@ namespace Unity.DedicatedGameServerSample.Runtime
                 Debug.LogError(error);
                 Broadcast(new ExitMatchmakerQueueEvent());
             }
-        }
+        }*/
 
         void StopMatchmaker()
         {

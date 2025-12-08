@@ -1,4 +1,4 @@
-﻿namespace Unity.DedicatedGameServerSample.Runtime
+﻿namespace Tolik.RemakeSoF.Runtime
 {
     /// <summary>
     /// Extension of the BaseApplication class to handle different types of Model View Controllers.

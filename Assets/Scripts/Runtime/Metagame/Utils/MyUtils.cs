@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     public static class MyUtils
     {

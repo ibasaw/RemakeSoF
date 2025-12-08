@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using System.Linq;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     [RequireComponent(typeof(UIDocument))]
     internal class ConsoleView : View<MetagameApplication>

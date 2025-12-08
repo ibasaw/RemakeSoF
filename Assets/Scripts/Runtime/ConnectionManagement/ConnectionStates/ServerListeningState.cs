@@ -1,8 +1,8 @@
-using Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
+namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 {
     /// <summary>
     /// Connection state corresponding to a listening server. Handles incoming client connections. When shutting down or

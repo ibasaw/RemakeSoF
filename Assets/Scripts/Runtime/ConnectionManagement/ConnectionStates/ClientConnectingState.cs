@@ -2,7 +2,7 @@ using System;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime.ConnectionManagement
+namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 {
     /// <summary>
     /// Connection state corresponding to when a client is attempting to connect to a server. Starts the client when

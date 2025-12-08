@@ -5,8 +5,8 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 
-using SoF2Remake.Utils;
-using SoF2Remake.Data;
+using Tolik.RemakeSoF.Data;
+using Tolik.RemakeSoF.Runtime;
 
 [DisallowMultipleComponent]
 public class MyPlayerWeaponSystem : MonoBehaviour

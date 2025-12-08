@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     /// <summary>
     /// Base class for all Controllers in the application.

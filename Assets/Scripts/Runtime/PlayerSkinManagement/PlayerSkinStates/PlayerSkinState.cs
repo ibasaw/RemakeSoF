@@ -1,7 +1,7 @@
-using Unity.DedicatedGameServerSample.Runtime.Core;
+using Tolik.RemakeSoF.Runtime.Core;
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement
+namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 {
     /// <summary>
     /// Base state for player skin management

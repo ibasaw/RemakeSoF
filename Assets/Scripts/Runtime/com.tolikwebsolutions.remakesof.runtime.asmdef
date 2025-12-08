@@ -1,0 +1,25 @@
+{
+    "name": "com.tolikwebsolutions.remakesof.runtime",
+    "rootNamespace": "Tolik.RemakeSoF.Runtime",
+    "references": [
+        "Unity.Netcode.Runtime",
+        "Unity.Services.Core",
+        "Unity.Services.Authentication",
+        "Unity.Services.Core.Environments",
+        "Unity.Networking.Transport",
+        "Unity.InputSystem",
+        "Unity.Cinemachine",
+        "Unity.DedicatedServer.MultiplayerRoles",
+        "com.tolikwebsolutions.remakesof.shared",
+        "com.tolikwebsolutions.remakesof.utils"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

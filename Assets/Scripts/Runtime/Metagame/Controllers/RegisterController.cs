@@ -1,12 +1,12 @@
 using System;
 using System.Collections;
 using System.Text;
-using Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle;
-using Unity.DedicatedGameServerSample.Runtime.ConnectionManagement;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.ConnectionManagement;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     internal class RegisterController : Controller<MetagameApplication>
     {

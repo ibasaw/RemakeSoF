@@ -1,6 +1,6 @@
 ﻿using UnityEngine.UIElements;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     /// <summary>
     /// Base class for all View related classes.

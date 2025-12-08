@@ -1,6 +1,6 @@
 using System;
 using UnityEngine.UIElements;
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     [UnityEngine.RequireComponent(typeof(UIDocument))]
     internal class LoadoutView : View<MetagameApplication>

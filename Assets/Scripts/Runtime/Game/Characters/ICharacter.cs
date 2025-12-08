@@ -1,6 +1,6 @@
 using Unity.Netcode;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     internal interface ICharacter
     {

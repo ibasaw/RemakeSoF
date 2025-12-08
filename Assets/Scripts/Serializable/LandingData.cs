@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace SoF2Remake.Data
+namespace Tolik.RemakeSoF.Data
 {
     [Serializable]
     public class LandingData

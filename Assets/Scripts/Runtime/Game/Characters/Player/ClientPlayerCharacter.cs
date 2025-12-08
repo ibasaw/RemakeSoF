@@ -4,7 +4,7 @@ using StarterAssets;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     /// <summary>
     /// Assumes client authority

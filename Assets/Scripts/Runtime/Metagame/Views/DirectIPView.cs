@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using UnityEngine.UIElements;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     internal class DirectIPView : View<MetagameApplication>
     {

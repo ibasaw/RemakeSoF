@@ -1,15 +1,15 @@
 using System;
 using System.Collections;
-using Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement;
-using Unity.DedicatedGameServerSample.Runtime.ConnectionManagement;
-using Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement;
+using Tolik.RemakeSoF.Runtime.AuthenticationManagement;
+using Tolik.RemakeSoF.Runtime.ConnectionManagement;
+using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using Unity.Multiplayer;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using ConnectionEvent = Unity.DedicatedGameServerSample.Runtime.ConnectionManagement.ConnectionEvent;
+using ConnectionEvent = Tolik.RemakeSoF.Runtime.ConnectionManagement.ConnectionEvent;
 
-namespace Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle
+namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 {
     /// <summary>
     /// This is the application's entry point, where the configuration is read and the application is initialized

@@ -5,7 +5,7 @@ using UnityEditor;
 #endif
 using UnityEngine.UIElements;
 
-namespace Unity.DedicatedGameServerSample.Shared
+namespace Tolik.RemakeSoF.Shared
 {
     /// <summary>
     /// An utility class for common UIElements setup method

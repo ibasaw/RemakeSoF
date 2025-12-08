@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime.Core
+namespace Tolik.RemakeSoF.Runtime.Core
 {
     /// <summary>
     /// Generic state machine base class. Managers can inherit from this to get a common

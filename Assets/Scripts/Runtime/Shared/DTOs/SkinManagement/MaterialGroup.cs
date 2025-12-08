@@ -2,7 +2,7 @@
 
 using System;
 
-namespace Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement
+namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 {
     [Serializable]
     public class MaterialGroup

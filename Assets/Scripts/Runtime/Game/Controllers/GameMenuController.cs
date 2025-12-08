@@ -1,7 +1,7 @@
 using System;
-using Unity.DedicatedGameServerSample.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     internal class GameMenuController : Controller<GameApplication>
     {

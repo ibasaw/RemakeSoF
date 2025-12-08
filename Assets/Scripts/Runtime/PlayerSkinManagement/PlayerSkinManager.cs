@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Unity.DedicatedGameServerSample.Runtime.Core;
+using Tolik.RemakeSoF.Runtime.Core;
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement
+namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 {
     /// <summary>
     /// Manages player skin selection and application across game and metagame scenes.

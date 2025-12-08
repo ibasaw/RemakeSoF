@@ -1,5 +1,5 @@
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     public class PlayerDataModel : Model<MetagameApplication>
     {

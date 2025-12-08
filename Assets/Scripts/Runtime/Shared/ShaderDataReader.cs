@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-using Unity.DedicatedGameServerSample.Runtime.PlayerSkinManagement;
+using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 
-namespace SoF2Remake.Utils
+namespace Tolik.RemakeSoF.Runtime
 {
     public static class ShaderDataReader
     {

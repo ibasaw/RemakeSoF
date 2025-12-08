@@ -1,7 +1,7 @@
 using System;
 using UnityEngine.UIElements;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     public class ClientConnectingView : View<MetagameApplication>
     {

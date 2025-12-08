@@ -1,6 +1,6 @@
-using Unity.DedicatedGameServerSample.Runtime.Core;
+using Tolik.RemakeSoF.Runtime.Core;
 
-namespace Unity.DedicatedGameServerSample.Runtime.AuthenticationManagement
+namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
 {
     /// <summary>
     /// Base class representing an authentication state.

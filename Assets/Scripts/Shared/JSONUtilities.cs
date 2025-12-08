@@ -1,9 +1,9 @@
 using System.IO;
 using System.Threading.Tasks;
-using Unity.DedicatedGameServerSample.Runtime.SimpleJSON;
+using Tolik.RemakeSoF.Runtime.SimpleJSON;
 using UnityEngine;
 
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     /// <summary>
     /// Utility class for JSON files

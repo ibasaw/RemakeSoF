@@ -5,9 +5,9 @@ using Newtonsoft.Json;
 using System;
 using Newtonsoft.Json.Linq;
 using System.Linq;
-using SoF2Remake.Data;
+using Tolik.RemakeSoF.Data;
 
-namespace SoF2Remake.Utils
+namespace Tolik.RemakeSoF.Runtime
 {
 	public static class JsonDataReader
 	{

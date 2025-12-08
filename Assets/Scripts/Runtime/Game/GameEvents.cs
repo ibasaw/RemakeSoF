@@ -1,4 +1,4 @@
-namespace Unity.DedicatedGameServerSample.Runtime
+namespace Tolik.RemakeSoF.Runtime
 {
     internal class ResumeButtonClickedEvent : AppEvent { }
 
