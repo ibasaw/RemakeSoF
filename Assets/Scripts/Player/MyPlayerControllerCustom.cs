@@ -59,7 +59,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	[SerializeField] private float standYawTargetY = 85f;
 	[SerializeField] private float crouchYawTargetY = 45f;
 
-	[Header("BGPlayer Bones")]
+	[Header("Player Bones Configuration")]
 	[SerializeField] private Transform lowerLumbar;
 	[SerializeField] private Transform upperLumbar;
 	[SerializeField] private Transform cranium;

@@ -3,14 +3,14 @@ namespace Tolik.RemakeSoF.Runtime
 {
     public class PlayerDataModel : Model<MetagameApplication>
     {
-        public AuthenticationResponse AuthResponse { get; private set; }
+        private AuthenticationResponse m_AuthResponse;
 
-        public string PlayerName => AuthResponse.username;
-        public string PlayerId => AuthResponse.playerId;
+        public string PlayerName => m_AuthResponse.username;
+        public string PlayerId => m_AuthResponse.playerId;
 
         public void InitializePlayer(AuthenticationResponse authResponse)
         {
-            AuthResponse = authResponse;
+            m_AuthResponse = authResponse;
         }
     }
 }

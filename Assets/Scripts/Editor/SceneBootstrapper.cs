@@ -30,8 +30,8 @@ namespace Tolik.RemakeSoF.Editor
         const string k_PreviousSceneKey = "PreviousScene";
         const string k_ShouldLoadBootstrapSceneKey = "LoadBootstrapScene";
 
-        const string k_LoadBootstrapSceneOnPlay = "DedicatedGameServerSample/Load Bootstrap Scene On Play";
-        const string k_DoNotLoadBootstrapSceneOnPlay = "DedicatedGameServerSample/Don't Load Bootstrap Scene On Play";
+        const string k_LoadBootstrapSceneOnPlay = "RemakeSoF2/Load Bootstrap Scene On Play";
+        const string k_DoNotLoadBootstrapSceneOnPlay = "RemakeSoF2/Don't Load Bootstrap Scene On Play";
 
         const string k_TestRunnerSceneName = "InitTestScene";
 

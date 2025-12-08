@@ -172,7 +172,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         /// </summary>
         internal void OnSkinLoadSuccess(string skinName)
         {
-            SetCurrentSkin(skinName);
+            SetCurrentSkin(skinName); //TODO gameobject hinzufügen
             m_CurrentState.OnSkinLoadSuccess();
         }
 

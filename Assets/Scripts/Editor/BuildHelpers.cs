@@ -9,7 +9,7 @@ namespace Tolik.RemakeSoF.Editor
     ///</summary>
     public static class BuildHelpers
     {
-        const string k_MenuRoot = "DedicatedGameServerSample/Builds/";
+        const string k_MenuRoot = "RemakeSoF2/Builds/";
         const string k_BuildClient = k_MenuRoot + "Build Client(s)";
         const string k_BuildServer = k_MenuRoot + "Build Server(s)";
         const string k_BuildClientAndServer = k_MenuRoot + "Build Client(s) and Server(s)";

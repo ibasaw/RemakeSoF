@@ -152591,7 +152591,7 @@ MonoBehaviour:
   playerController: {fileID: 338497851}
   handBone: {fileID: 0}
   pickupDistance: 3
-  interactAction: {fileID: 1781555164194001046, guid: f08f4a55f3d8b364cbc3622e499a3ee8, type: 3}
+  interactAction: {fileID: 0}
   playerCamera: {fileID: 330585545}
   shootDistance: 100
   enemyLayer:

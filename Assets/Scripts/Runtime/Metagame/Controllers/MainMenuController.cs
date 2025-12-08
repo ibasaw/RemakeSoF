@@ -80,6 +80,7 @@ namespace Tolik.RemakeSoF.Runtime
             Debug.Log("User authenticated event received, showing main menu view");
             App.Model.PlayerData.InitializePlayer(evt.AuthResponse);
 
+            //TODO gameobject hier reingeben
             PlayerSkinManager.ChangeSkin("manuel_vergara");
 
             View.Show();

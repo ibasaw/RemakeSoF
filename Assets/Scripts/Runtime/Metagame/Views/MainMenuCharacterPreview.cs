@@ -8,12 +8,11 @@ namespace Tolik.RemakeSoF.Runtime
     {
         [SerializeField] GameObject characterPrefab;
         [SerializeField] int previewLayer = 30;
-        [SerializeField] Vector3 cameraOffset = new(0, 1.6f, 3.2f);
-        [SerializeField] float cameraFov = 25f;
+        [SerializeField] Vector3 cameraOffset = new(15f,0, 0);
+        [SerializeField] float cameraFov = 40f;
         [SerializeField] Color clearColor = new(0, 0, 0, 0);
-        [SerializeField] Vector3 nameOffset = new(0, 2.2f, 0); // Über dem Kopf
-        [SerializeField] Vector3 characterRotation = new(0, 180, 0); // Charakter-Rotation in Grad
-        [SerializeField] Vector3 characterPosition = new(0, -1f, 0); // Charakter-Position (Y nach unten)
+        [SerializeField] Vector3 characterRotation = new(0, 90, 0); // Charakter-Rotation in Grad
+        [SerializeField] Vector3 characterPosition = new(0, -5f, 0); // Charakter-Position (Y nach unten)
 
         VisualElement _target;
         RenderTexture _rt;

@@ -37,12 +37,12 @@ public class WorldMaterialAssigner : MonoBehaviour
                     string surfaceType = meta.GetString("surface_types_json");
                     Debug.Log($"[WorldMaterialAssigner] Surface Type: {surfaceType}");
                     if (surfaceType.ToLower().Contains("trans") || surfaceType.ToLower().Contains("nonopaque")
-                     || surfaceType.ToLower().Contains("nonsolid")
-                    || surfaceType.ToLower().Contains("alpha") || surfaceType.ToLower().Contains("translucent") 
-                    || surfaceType.ToLower().Contains("transparent") 
+                    || surfaceType.ToLower().Contains("nonsolid")
+                    || surfaceType.ToLower().Contains("alpha") || surfaceType.ToLower().Contains("translucent")
+                    || surfaceType.ToLower().Contains("transparent")
                     || surfaceType.ToLower().Contains("translucent") || surfaceType.ToLower().Contains("nosolid"))
                         transparent = true;
-                        Debug.Log($"[WorldMaterialAssigner] Transparent: {transparent}");
+                    Debug.Log($"[WorldMaterialAssigner] Transparent: {transparent}");
                 }
 
                 string matNameLower = mat.name.ToLower();
@@ -51,7 +51,7 @@ public class WorldMaterialAssigner : MonoBehaviour
                     transparent = true;
                 }
 
-                if (matNameLower.Contains("_two_sided") || matNameLower.Contains("_cull_disable") 
+                if (matNameLower.Contains("_two_sided") || matNameLower.Contains("_cull_disable")
                 || matNameLower.Contains("_cull_back") || matNameLower.Contains("_cull") || matNameLower.Contains("_twosided")
                 || matNameLower.Contains(".vertex") || matNameLower.Contains(".grid"))
                 {
