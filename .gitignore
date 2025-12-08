@@ -2,7 +2,6 @@ Assets/docs
 Library
 Logs
 Temp
-*.meta
 Assets/Resources/uQuake
 *.csproj
 *.sln
@@ -27,6 +26,8 @@ UIElementsSchema
 [Ll]ogs/
 [Uu]ser[Ss]ettings/
 *.log
+
+.vscode
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1
