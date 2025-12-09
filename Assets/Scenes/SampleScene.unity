@@ -65189,7 +65189,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: db3861d73fbffbb479041fda3cfe5dfd, type: 3}
       propertyPath: m_Name
-      value: test_suit_longcoat
+      value: suit_longcoat
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

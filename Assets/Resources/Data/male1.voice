@@ -1,0 +1,106 @@
+male
+
+careful
+{
+	sound/radio/male/careful.wav			"Be careful!"
+}
+
+clear
+{
+	sound/radio/male/clear.wav				"Clear!"
+}
+
+cover_me
+{
+	sound/radio/male/cover_me.wav			"Cover me!"
+}
+
+got_him
+{
+	sound/radio/male/got_him.wav			"Got him!"
+}
+
+got_it
+{
+	sound/radio/male/got_it.wav				"Got it!"
+}
+
+hold_position
+{
+	sound/radio/male/hold_position.wav		"Hold position!"
+}
+
+man_down
+{
+	sound/radio/male/man_down01.wav			"Man down!"
+}
+
+need_backup
+{
+	sound/radio/male/need_backup.wav		"I need backup, NOW!"
+}
+
+obj_complete
+{
+	sound/radio/male/obj_complete.wav		"Objective Complete!"
+}
+
+take_cover
+{
+	sound/radio/male/take_cover.wav			"Take cover!"
+}
+
+under_fire
+{
+	sound/radio/male/underfire01.wav		"Under Fire!"
+}
+
+sniper
+{
+	sound/npc/col8/blakely/sniper.mp3		"Sniper!"
+}
+
+check_fire
+{
+	sound/npc/col8/blakely/checkfire.mp3	"Check your fire!"
+}
+
+fire_hole
+{
+	sound/npc/col8/blakely/firehole.mp3		"Fire in the Hole!"
+}
+
+grenade
+{
+	sound/npc/col8/blakely/grenade.mp3		"Grenade!"
+}
+
+affirmative
+{
+	sound/radio/male/affirm.wav				"Affirmative!"
+}
+
+negative
+{
+	sound/radio/male/neg.wav				"Negative!"
+}
+
+advance
+{
+	sound/radio/male/advance.wav			"Advance!"
+}
+
+await_orders
+{
+	sound/radio/male/await_orders.wav		"Awaiting Orders!"
+}
+
+check_out
+{
+	sound/radio/male/check.wav				"Go check that out."
+}
+
+yes_sir
+{
+	sound/radio/male/yes_sir.wav			"Yes Sir!"
+}

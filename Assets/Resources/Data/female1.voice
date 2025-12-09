@@ -1,0 +1,26 @@
+female
+
+careful
+{
+	sound/radio/fmale/careful.wav			"Be careful!"
+}
+
+check_that_out
+{
+	sound/radio/fmale/check_that_out.wav	"Go check that out!"
+}
+
+cover_me
+{
+	sound/radio/fmale/cover_me.wav			"Cover me!"
+}
+
+hold_position
+{
+	sound/radio/fmale/hold_position.wav		"Hold position!"
+}
+
+under_fire
+{
+	sound/radio/fmale/underfire01.wav		"Under Fire!"
+}
