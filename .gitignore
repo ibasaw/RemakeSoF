@@ -3,6 +3,7 @@ Library
 Logs
 Temp
 Assets/Resources/uQuake
+uQuake.meta
 *.csproj
 *.sln
 *.config
