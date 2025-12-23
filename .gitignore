@@ -127,3 +127,6 @@ __pycache__
 .env
 
 Library
+
+# is release trough github build download there!
+Art
