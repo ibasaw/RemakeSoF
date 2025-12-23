@@ -3,6 +3,7 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.AuthenticationManagement;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
+using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime
@@ -13,6 +14,7 @@ namespace Tolik.RemakeSoF.Runtime
         ConnectionManager ConnectionManager => ApplicationEntryPoint.Singleton.ConnectionManager;
         AuthenticationManager AuthenticationManager => ApplicationEntryPoint.Singleton.AuthenticationManager;
         PlayerSkinManager PlayerSkinManager => ApplicationEntryPoint.Singleton.PlayerSkinManager;
+        TextureManager TextureManager => ApplicationEntryPoint.Singleton.TextureManager;
 
         void Awake()
         {
@@ -80,11 +82,23 @@ namespace Tolik.RemakeSoF.Runtime
             Debug.Log("User authenticated event received, showing main menu view");
             App.Model.PlayerData.InitializePlayer(evt.AuthResponse);
 
-            //TODO gameobject hier reingeben
-            PlayerSkinManager.ChangeSkin("manuel_vergara");
+            PlayerSkinManager.ChangeSkin(App.Model.PlayerData.CurrentSelectedSkinName);
 
-            View.Show();
+            PrepareViewTexturesAndShow();
             View.LoadSubViewByName("loadoutButton");
+        }
+
+        private void PrepareViewTexturesAndShow()
+        {
+            View.Show();
+
+            TextureConfiguration configuration = TextureManager.Configuration;
+
+            // Texturen vom Manager holen (aus Art/Textures oder persistentDataPath/CustomTextures)
+            Texture2D mainMenuBackgroundTexture = TextureManager.GetTexture(configuration.metagame.mainMenu.background);
+
+            // An View übergeben
+            View.SetBackgroundTexture(mainMenuBackgroundTexture);
         }
     }
 }

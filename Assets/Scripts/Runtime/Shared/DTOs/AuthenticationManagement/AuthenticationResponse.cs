@@ -9,5 +9,7 @@ namespace Tolik.RemakeSoF.Runtime
         public string playerId;
         public string username;
         public string token;
+
+        public string selectedSkinName;
     }
 }

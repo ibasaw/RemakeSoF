@@ -74,7 +74,6 @@
     padding-right: 10px;
     padding-top: 0;
     padding-bottom: 0;
-    background-image: resource('uQuake/gfx/menus/scoreboard/scorelineheader');
     background-color: rgba(0, 0, 0, 0.5);
     -unity-text-align: middle-left;
     color: rgb(213, 236, 255);
@@ -261,7 +260,6 @@
 }
 
 .button {
-    background-image: resource('uQuake/gfx/menus/scoreboard/scorelineheader');
     background-color: rgba(2, 2, 2, 0);
     border-left-color: rgba(204, 204, 204, 0);
     border-right-color: rgba(204, 204, 204, 0);

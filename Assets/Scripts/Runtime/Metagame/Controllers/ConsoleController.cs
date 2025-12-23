@@ -12,7 +12,6 @@ namespace Tolik.RemakeSoF.Runtime
 
         void Awake()
         {
-            Debug.Log("ConsoleController Awake");
             AddListener<SubmitConsoleCommandEvent>(OnConsoleCommand);
             AddListener<ToggleConsoleEvent>(OnToggleConsole);
         }

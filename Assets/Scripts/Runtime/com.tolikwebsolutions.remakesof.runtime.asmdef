@@ -11,7 +11,9 @@
         "Unity.Cinemachine",
         "Unity.DedicatedServer.MultiplayerRoles",
         "com.tolikwebsolutions.remakesof.shared",
-        "com.tolikwebsolutions.remakesof.utils"
+        "com.tolikwebsolutions.remakesof.utils",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

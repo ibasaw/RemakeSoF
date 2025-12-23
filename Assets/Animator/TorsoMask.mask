@@ -1,0 +1,521 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!319 &31900000
+AvatarMask:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: TorsoMask
+  m_Mask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+  m_Elements:
+  - m_Path: 
+    m_Weight: 1
+  - m_Path: model_root_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*head_t_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*head_t_0/*headg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*head_t_0/*headg_0/*head_b_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*head_t_0/*headg_0/*head_b_0/*head_f_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*head_t_0/*headg_0/*head_b_0/*head_f_0/*head_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*head_t_0/*headg_0/*head_b_0/*head_f_0/*head_l_0/*head_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_fl_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_fl_0/*hip_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_fl_0/*hip_l_0/*hip_bl_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_fr_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_fr_0/*hip_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_fr_0/*hip_r_0/*hip_br_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_lg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_lg_0/*thigh_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_lg_0/*thigh_l_0/*thigh_lg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_lg_0/*thigh_l_0/*thigh_lg_0/*calf_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_lg_0/*thigh_l_0/*thigh_lg_0/*calf_l_0/*foot_lg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_rg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_rg_0/*thigh_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_rg_0/*thigh_r_0/*thigh_rg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_rg_0/*thigh_r_0/*thigh_rg_0/*calf_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*hip_rg_0/*thigh_r_0/*thigh_rg_0/*calf_r_0/*foot_rg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*neckg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*neckg_0/*back_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*neckg_0/*back_0/*chestg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*neckg_0/*back_0/*chestg_0/*gutg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_l_0/*uchest_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_l_0/*uchest_l_0/*lchest_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_lg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_lg_0/*bicep_lg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_lg_0/*bicep_lg_0/*hand_lg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_lg_0/*bicep_lg_0/*hand_lg_0/*hand_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_r_0/*uchest_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_r_0/*uchest_r_0/*lchest_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_rg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_rg_0/*bicep_rg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_rg_0/*bicep_rg_0/*hand_rg_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/*shldr_rg_0/*bicep_rg_0/*hand_rg_0/*hand_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/avmedbangs_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/avmedbangs_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/avmst_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/avmst_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/beardhead_frnt_lwr_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/beardhead_frnt_lwr_l_off_0/cap_beardhead_frnt_lwr_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/beardhead_frnt_lwr_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/beardhead_frnt_lwr_r_off_0/cap_beardhead_frnt_lwr_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/beardhead_frnt_mid_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/beardhead_frnt_mid_l_off_0/cap_beardhead_frnt_mid_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/beardhead_frnt_mid_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/beardhead_frnt_mid_r_off_0/cap_beardhead_frnt_mid_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/ear_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/ear_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/eyeball_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/eyeball_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_lwr_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_lwr_l_0/cap_head_bck_lwr_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_lwr_l_avlong_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_lwr_l_avmed_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_lwr_l_avmedhat_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_lwr_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_lwr_r_0/cap_head_bck_lwr_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_lwr_r_avlong_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_lwr_r_avmed_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_lwr_r_avmedhat_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_uppr_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_uppr_l_0/cap_head_bck_uppr_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_uppr_l_avlong_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_uppr_l_avmed_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_uppr_l_avmedhat_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_uppr_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_uppr_r_0/cap_head_bck_uppr_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_uppr_r_avlong_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_uppr_r_avmed_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_bck_uppr_r_avmedhat_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_lwr_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_lwr_l_0/cap_head_frnt_lwr_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_lwr_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_lwr_r_0/cap_head_frnt_lwr_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_mid_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_mid_l_0/cap_head_frnt_mid_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_mid_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_mid_r_0/cap_head_frnt_mid_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_uppr_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_uppr_l_0/cap_head_frnt_uppr_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_uppr_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_uppr_r_0/cap_head_frnt_uppr_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_uppra_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_frnt_uppra_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_side_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_side_l_0/cap_head_side_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_side_l_avlong_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_side_l_avmed_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_side_l_avmedhat_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_side_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_side_r_0/cap_head_side_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_side_r_avlong_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_side_r_avmed_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/head_side_r_avmedhat_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_l_0/cap_hip_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_l_0/leg_uppr_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_l_0/leg_uppr_l_0/cap_leg_uppr_l_hip_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_l_0/leg_uppr_l_0/cap_leg_uppr_l_lwr_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_l_0/leg_uppr_l_0/leg_lwr_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_l_0/leg_uppr_l_0/leg_lwr_l_0/cap_leg_lwr_l_foot_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_l_0/leg_uppr_l_0/leg_lwr_l_0/cap_leg_lwr_l_uppr_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_l_0/leg_uppr_l_0/leg_lwr_l_0/foot_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_l_0/leg_uppr_l_0/leg_lwr_l_0/foot_l_0/cap_foot_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_r_0/cap_hip_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_r_0/leg_uppr_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_r_0/leg_uppr_r_0/cap_leg_uppr_r_hip_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_r_0/leg_uppr_r_0/cap_leg_uppr_r_lwr_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_r_0/leg_uppr_r_0/leg_lwr_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_r_0/leg_uppr_r_0/leg_lwr_r_0/cap_leg_lwr_r_foot_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_r_0/leg_uppr_r_0/leg_lwr_r_0/cap_leg_lwr_r_uppr_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_r_0/leg_uppr_r_0/leg_lwr_r_0/foot_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/hip_r_0/leg_uppr_r_0/leg_lwr_r_0/foot_r_0/cap_foot_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/mouth_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/mouth_l_0/teeth_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/mouth_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/mouth_r_0/teeth_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/arm_uppr_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/arm_uppr_l_0/arm_lwr_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/arm_uppr_l_0/arm_lwr_l_0/cap_arm_lwr_l_hand_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/arm_uppr_l_0/arm_lwr_l_0/cap_arm_lwr_l_uppr_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/arm_uppr_l_0/arm_lwr_l_0/hand_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/arm_uppr_l_0/arm_lwr_l_0/hand_l_0/cap_hand_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/arm_uppr_l_0/arm_lwr_l_0/hand_l_0/fingers_l_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/arm_uppr_l_0/cap_arm_uppr_l_lwr_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/arm_uppr_l_0/cap_arm_uppr_l_torso_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/cap_torso_l_arm_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/cap_torso_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/labcoat_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/labcollar_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/suitcoat_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/trenchcoat_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_l_0/trenchcollar_l_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/arm_uppr_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/arm_uppr_r_0/arm_lwr_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/arm_uppr_r_0/arm_lwr_r_0/cap_arm_lwr_r_hand_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/arm_uppr_r_0/arm_lwr_r_0/cap_arm_lwr_r_uppr_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/arm_uppr_r_0/arm_lwr_r_0/hand_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/arm_uppr_r_0/arm_lwr_r_0/hand_r_0/cap_hand_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/arm_uppr_r_0/arm_lwr_r_0/hand_r_0/fingers_r_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/arm_uppr_r_0/cap_arm_uppr_r_lwr_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/arm_uppr_r_0/cap_arm_uppr_r_torso_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/cap_torso_r_arm_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/cap_torso_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/labcoat_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/labcollar_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/suitcoat_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/trenchcoat_r_off_0
+    m_Weight: 0
+  - m_Path: model_root_0/stupidtriangle_off_0/torso_r_0/trenchcollar_r_off_0
+    m_Weight: 0
+  - m_Path: skeleton_root
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis/lfemurYZ
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis/lfemurYZ/lfemurX
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis/lfemurYZ/lfemurX/ltibia
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis/lfemurYZ/lfemurX/ltibia/ltalus
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis/lfemurYZ/lfemurX/ltibia/ltalus/ltarsal
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis/lower_lumbar
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/ceyebrow
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/chin
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/cnose
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/jaw
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/lbeyelid
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/lblip1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/lblip1/lblip2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/lcheek
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/lcheekfix
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/leye
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/leyebrow3
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/leyebrow3/leyebrow2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/lnose
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/lteyelid
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/ltlip1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/ltlip1/ltlip2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/nosefix
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/rbeyelid
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/rblip1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/rblip1/rblip2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/rcheek
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/rcheekfix
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/reye
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/reyebrow1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/reyebrow1/reyebrow2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/rnose_bone
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/rteyelid
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/rtlip1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/cervical/cranium/face/rtlip1/rtlip2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d1_j1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d1_j1/l_d1_j2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d1_j1/l_d1_j2/l_d1_j3
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d2_j1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d2_j1/l_d2_j2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d2_j1/l_d2_j2/l_d2_j3
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d3_j1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d3_j1/l_d3_j2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d3_j1/l_d3_j2/l_d3_j3
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d4_j1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d4_j1/l_d4_j2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/l_d4_j1/l_d4_j2/l_d4_j3
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/lhand_tag_bone
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/mc5
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/mc5/l_d5_j1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/mc5/l_d5_j1/l_d5_j2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/lclavical/lhumerus/lhumerusX/lradius/lradiusX/lhand/mc5/l_d5_j1/l_d5_j2/l_d5_j3
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/mc7
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/mc7/r_d5_j1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/mc7/r_d5_j1/r_d5_j2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/mc7/r_d5_j1/r_d5_j2/r_d5_j3
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d1_j1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d1_j1/r_d1_j2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d1_j1/r_d1_j2/r_d1_j3
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d2_j1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d2_j1/r_d2_j2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d2_j1/r_d2_j2/r_d2_j3
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d3_j1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d3_j1/r_d3_j2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d3_j1/r_d3_j2/r_d3_j3
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d4_j1
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d4_j1/r_d4_j2
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/r_d4_j1/r_d4_j2/r_d4_j3
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/lower_lumbar/upper_lumbar/thoracic/rclavical/rhumerus/rhumerusX/rradius/rradiusX/rhand/rhang_tag_bone
+    m_Weight: 1
+  - m_Path: skeleton_root/pelvis/model_root
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis/rfemurYZ
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis/rfemurYZ/rfemurX
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis/rfemurYZ/rfemurX/rtibia
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis/rfemurYZ/rfemurX/rtibia/rtalus
+    m_Weight: 0
+  - m_Path: skeleton_root/pelvis/rfemurYZ/rfemurX/rtibia/rtalus/rtarsal
+    m_Weight: 0

@@ -1,0 +1,16 @@
+{
+    "metagame": {
+        "login": {
+            "background": "ui/metagame/background",
+            "logo": "ui/metagame/logo",
+            "buttonBackground": "ui/metagame/button_background2",
+            "inputBackground": "ui/metagame/input_background"
+        },
+        "mainMenu": {
+            "background": "ui/metagame/main_menu_background"
+        }
+    },
+    "gameplay": {
+        "playerAvatar": "ui/gameplay/player_avatar"
+    }
+}

@@ -11,6 +11,8 @@ namespace Tolik.RemakeSoF.Runtime
     /// </summary>
     internal class LoginView : View<MetagameApplication>
     {
+        VisualElement m_MainMenu;
+        VisualElement m_LogoImage;
         Button m_LoginButton;
         Button m_ChangeToRegisterButton;
         Button m_QuitButton;
@@ -31,6 +33,8 @@ namespace Tolik.RemakeSoF.Runtime
             m_LoginButton = root.Q<Button>("loginButton");
             m_ChangeToRegisterButton = root.Q<Button>("registerButton");
             m_QuitButton = root.Q<Button>("quitButton");
+            m_MainMenu = root.Q<VisualElement>("mainMenu");
+            m_LogoImage = root.Q<VisualElement>("logoImage");
 
             m_UsernameTextField = root.Q<TextField>("usernameTextField");
             m_PasswordTextField = root.Q<TextField>("passwordTextField");
@@ -49,6 +53,49 @@ namespace Tolik.RemakeSoF.Runtime
 
             // Optional: Select all text für bessere UX
             m_UsernameTextField.SelectAll();
+        }
+        public void SetBackgroundTexture(Texture2D texture)
+        {
+            if (texture != null)
+            {
+                m_MainMenu.style.backgroundImage = new StyleBackground(texture);
+            }
+        }
+
+        public void SetLogoTexture(Texture2D texture)
+        {
+            if (texture != null)
+            {
+                m_LogoImage.style.backgroundImage = new StyleBackground(texture);
+            }
+        }
+
+        public void SetAllTextFieldInputsBackgroundTexture(Texture2D texture)
+        {
+            if (texture != null)
+            {
+                var root = m_UIDocument.rootVisualElement;
+                var inputs = root.Query(className: "unity-text-field__input").ToList();
+
+                foreach (var input in inputs)
+                {
+                    input.style.backgroundImage = new StyleBackground(texture);
+                }
+            }
+        }
+
+        public void SetAllButtonBackgroundTexture(Texture2D texture)
+        {
+            if (texture != null)
+            {
+                var root = m_UIDocument.rootVisualElement;
+                var buttons = root.Query(className: "button").ToList();
+
+                foreach (var button in buttons)
+                {
+                    button.style.backgroundImage = new StyleBackground(texture);
+                }
+            }
         }
 
         void OnDisable()

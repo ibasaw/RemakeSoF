@@ -9,6 +9,7 @@ namespace Tolik.RemakeSoF.Runtime
     internal class MainMenuView : View<MetagameApplication>
     {
         private VisualElement m_ContentBackground;
+        private VisualElement m_MainMenuBackground;
         UIDocument m_UIDocument;
 
         // Ein Container für alle Button-Infos
@@ -56,7 +57,11 @@ namespace Tolik.RemakeSoF.Runtime
             {
                 Name = "logoutButton",
                 HoverIconPath = "uQuake/gfx/menus/icons/icon_quit_glow_mp",
-                TargetView = App.View.LogoutView
+                //TargetView = App.View.LogoutView
+                OnClick = (cfg) =>
+                {
+                    Debug.Log("Logout button clicked");
+                }
             });
         }
 
@@ -65,6 +70,7 @@ namespace Tolik.RemakeSoF.Runtime
             var root = m_UIDocument.rootVisualElement;
 
             m_ContentBackground = root.Q<VisualElement>("contentBackground");
+            m_MainMenuBackground = root.Q<VisualElement>("mainMenu");
             // Buttons finden + callbacks registrieren
             foreach (var cfg in m_ButtonConfigs)
             {
@@ -91,6 +97,14 @@ namespace Tolik.RemakeSoF.Runtime
             if (cfg != null)
             {
                 LoadSubView(cfg);
+            }
+        }
+
+        public void SetBackgroundTexture(Texture2D texture)
+        {
+            if (texture != null)
+            {
+                m_MainMenuBackground.style.backgroundImage = new StyleBackground(texture);
             }
         }
 

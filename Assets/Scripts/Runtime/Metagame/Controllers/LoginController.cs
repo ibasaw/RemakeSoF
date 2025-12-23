@@ -4,6 +4,7 @@ using System.Text;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.AuthenticationManagement;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
+using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -17,6 +18,7 @@ namespace Tolik.RemakeSoF.Runtime
     {
         LoginView View => App.View.LoginView;
         AuthenticationManager AuthenticationManager => ApplicationEntryPoint.Singleton.AuthenticationManager;
+        TextureManager TextureManager => ApplicationEntryPoint.Singleton.TextureManager;
 
         void Awake()
         {
@@ -26,6 +28,11 @@ namespace Tolik.RemakeSoF.Runtime
             AuthenticationManager.EventManager.AddListener<AuthenticationEvent>(OnAuthenticationEvent);
             AuthenticationManager.EventManager.AddListener<UserUnauthenticatedEvent>(OnUserUnauthenticatedEvent);
             AuthenticationManager.EventManager.AddListener<UserAuthenticatedEvent>(OnUserAuthenticatedEvent);
+        }
+
+        void Start()
+        {
+            PrepareViewTexturesAndShow();
         }
 
         // Called when the user clicks the "Login" button on the login view to attempt to log in
@@ -47,7 +54,7 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         void OnChangeToLogin(ChangeToLoginEvent evt)
         {
-            View.Show();
+            PrepareViewTexturesAndShow();
         }
 
         /// <summary>
@@ -103,7 +110,26 @@ namespace Tolik.RemakeSoF.Runtime
         void OnUserUnauthenticatedEvent(UserUnauthenticatedEvent evt)
         {
             Debug.Log("User unauthenticated event received, showing login view");
+            PrepareViewTexturesAndShow();
+        }
+
+        private void PrepareViewTexturesAndShow()
+        {
             View.Show();
+
+            TextureConfiguration configuration = TextureManager.Configuration;
+
+            // Texturen vom Manager holen (aus Art/Textures oder persistentDataPath/CustomTextures)
+            Texture2D backgroundTexture = TextureManager.GetTexture(configuration.metagame.login.background);
+            Texture2D logoTexture = TextureManager.GetTexture(configuration.metagame.login.logo);
+            Texture2D buttonBackgroundTexture = TextureManager.GetTexture(configuration.metagame.login.buttonBackground);
+            Texture2D textFieldBackgroundTexture = TextureManager.GetTexture(configuration.metagame.login.inputBackground);
+
+            // An View übergeben
+            View.SetBackgroundTexture(backgroundTexture);
+            View.SetLogoTexture(logoTexture);
+            View.SetAllButtonBackgroundTexture(buttonBackgroundTexture);
+            View.SetAllTextFieldInputsBackgroundTexture(textFieldBackgroundTexture);
         }
 
         void OnUserAuthenticatedEvent(UserAuthenticatedEvent evt)
