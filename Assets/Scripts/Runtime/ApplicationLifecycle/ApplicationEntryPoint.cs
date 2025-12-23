@@ -3,6 +3,8 @@ using System.Collections;
 using Tolik.RemakeSoF.Runtime.AuthenticationManagement;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
+using Tolik.RemakeSoF.Runtime.PrefabManagement;
+using Tolik.RemakeSoF.Runtime.TextureManagement;
 using Unity.Multiplayer;
 using Unity.Netcode;
 using UnityEngine;
@@ -58,6 +60,14 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         [SerializeField]
         PlayerSkinManager m_PlayerSkinManager;
         public PlayerSkinManager PlayerSkinManager => m_PlayerSkinManager;
+
+        [SerializeField]
+        TextureManager m_TextureManager;
+        public TextureManager TextureManager => m_TextureManager;
+
+        [SerializeField]
+        PrefabManager m_PrefabManager;
+        public PrefabManager PrefabManager => m_PrefabManager;
 
         [SerializeField]
         internal int MinPlayers = 1;

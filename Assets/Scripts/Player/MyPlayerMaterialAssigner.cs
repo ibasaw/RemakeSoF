@@ -326,6 +326,7 @@ namespace Tolik.RemakeSoF.Runtime
                 if (selectedSkinData != null && selectedSkinData.prefs != null)
                 {
                     string rendererName = renderer.gameObject.name;
+                    //cleanup the _0, _1,... suffixes
                     string cleanRendererName = System.Text.RegularExpressions.Regex.Replace(rendererName, @"_\d+$", "");
                     if (selectedSkinData.prefs.surfaces_on != null)
                     {

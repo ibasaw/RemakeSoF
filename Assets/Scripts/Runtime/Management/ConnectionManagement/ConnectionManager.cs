@@ -36,6 +36,7 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
             NetworkManager.ConnectionApprovalCallback += ApprovalCheck;
             NetworkManager.OnTransportFailure += OnTransportFailure;
             NetworkManager.OnServerStopped += OnServerStopped;
+            Debug.Log("[ConnectionManager] Initialized");
         }
 
         void OnDestroy()

@@ -15,13 +15,17 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         /// </summary>
         Success,
         /// <summary>
-        /// Skin not found in resources.
+        /// Skin data file not found in resources.
         /// </summary>
         SkinNotFound,
         /// <summary>
         /// Failed to parse skin data.
         /// </summary>
         ModelNameParseError,
+        /// <summary>
+        /// Prefab for the model not found.
+        /// </summary>
+        PrefabNotFound,
         /// <summary>
         /// Failed to parse shader definition file.
         /// </summary>
