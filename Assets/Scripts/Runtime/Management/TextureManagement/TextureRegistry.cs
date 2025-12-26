@@ -7,7 +7,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
     /// <summary>
     /// Zentrale Verwaltung für Texture2D-Assets mit Caching und dynamischer Erweiterbarkeit.
     /// Nutzt das Observer Pattern für Benachrichtigungen über Cache-Änderungen.
-    /// Default Eager Loading und On-Demand Lazy Loading via Custom Loadern.
+    /// Default Lazy Loading via Custom Loadern.
     /// TextureRegistry → lädt die eigentlichen Texture2D-Assets und Materialien (Bilder, Materialien)
     /// Beim Anwenden eines Skins/Materials lädt TextureRegistry die Texturen/Materialien on-demand
     /// </summary>
@@ -15,6 +15,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
     {
         // Caching
         private Dictionary<string, TextureData> m_TextureCache = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, TextureData> TextureCache => m_TextureCache;
         private Dictionary<string, ITextureLoader> m_CustomLoaders = new();
         private List<ITextureRegistryObserver> m_Observers = new();
 
@@ -126,33 +127,40 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         }
 
         /// <summary>
-        /// Vorlädt und registriert eine Texture mit einem bestimmten Key.
-        /// </summary>
-        public void RegisterTexture(string key, Texture2D texture, Material material, TextureSource source = TextureSource.System)
-        {
-            if (string.IsNullOrEmpty(key) || texture == null)
-            {
-                Debug.LogWarning("[TextureRegistry] Cannot register null texture");
-                return;
-            }
-
-            var data = TextureDataFactory.Create(key, key, texture, material, source);
-            RegisterTextureData(data);
-        }
-
-        /// <summary>
-        /// Registriert bereits erstellte TextureData.
+        /// registriert eine TextureData mit einem bestimmten Key.
         /// </summary>
         public void RegisterTextureData(TextureData data)
         {
-            if (data == null || string.IsNullOrEmpty(data.Id) || data.Texture == null)
+            bool isOverride = m_TextureCache.ContainsKey(data.Id) && data.Source == TextureSource.Custom;
+            if (data == null || !data.IsValid())
             {
-                Debug.LogWarning("[TextureRegistry] Cannot register invalid TextureData");
+                Debug.LogWarning("[TextureRegistry] Invalid TextureData registration");
                 return;
             }
-
+            if (m_TextureCache.ContainsKey(data.Id))
+            {
+                Debug.LogWarning($"[TextureRegistry] Duplicate texture key detected, overriding: {data.Id} => {data.Source}");
+                //UnregisterTextureData(data.Id, true);
+            }
+            if (isOverride)
+            {
+                Debug.Log($"[TextureRegistry] Custom texture will override system texture for key: {data.Id} => {data.Source}");
+            }
             m_TextureCache[data.Id] = data;
             NotifyTextureRegistered(data.Id, data);
+        }
+
+        public void UpdateTextureData(string key, Texture2D texture)
+        {
+            if (m_TextureCache.TryGetValue(key, out TextureData data))
+            {
+                data.Texture = texture;
+                Debug.Log($"[TextureRegistry] set new texture for key: {key}");
+            }
+            else
+            {
+                Debug.LogWarning($"[TextureRegistry] Cannot set texture, key not found: {key}");
+            }
         }
 
         /// <summary>
@@ -163,13 +171,11 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             if (string.IsNullOrEmpty(key))
                 return null;
 
-            if (m_TextureCache.TryGetValue(key, out var cached))
+            if (m_TextureCache.TryGetValue(key, out TextureData cached) && cached.IsValid() && cached.HasTexture())
                 return cached;
 
-            if (TryLoadFromCustomLoaders(key, out var customData))
+            if (TryLoadFromLoaders(key, out TextureData customData))
             {
-                m_TextureCache[key] = customData;
-                NotifyTextureRegistered(key, customData);
                 return customData;
             }
 
@@ -178,34 +184,13 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         }
 
         /// <summary>
-        /// Gibt nur die Texture2D zurück (Legacy).
-        /// </summary>
-        public Texture2D GetTexture(string key)
-        {
-            return GetTextureData(key)?.Texture;
-        }
-
-        /// <summary>
-        /// Prüft, ob eine Texture existiert (im Cache oder ladbar).
-        /// </summary>
-        /// <param name="key">Der Texture-Schlüssel</param>
-        /// <returns>True, wenn die Texture verfügbar ist</returns>
-        public bool HasTexture(string key)
-        {
-            if (string.IsNullOrEmpty(key))
-                return false;
-
-            return m_TextureCache.ContainsKey(key) || CanLoad(key);
-        }
-
-        /// <summary>
         /// Entfernt eine Texture aus dem Cache und optional auch aus dem Speicher.
         /// </summary>
         /// <param name="key">Der Texture-Schlüssel</param>
         /// <param name="destroy">Wenn true, wird die Texture auch zerstört</param>
-        public void UnregisterTexture(string key, bool destroy = false)
+        public void UnregisterTextureData(string key, bool destroy = false)
         {
-            if (m_TextureCache.TryGetValue(key, out var data))
+            if (m_TextureCache.TryGetValue(key, out TextureData data))
             {
                 m_TextureCache.Remove(key);
 
@@ -213,7 +198,11 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 {
                     UnityEngine.Object.Destroy(data.Texture);
                 }
-
+                if (destroy && data.Material != null)
+                {
+                    UnityEngine.Object.Destroy(data.Material);
+                }
+                Debug.Log($"[TextureRegistry] Unregistered old texture: {key}");
                 NotifyTextureUnregistered(key);
             }
         }
@@ -230,11 +219,13 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 {
                     if (textureData?.Texture != null)
                         UnityEngine.Object.Destroy(textureData.Texture);
+                    if (textureData?.Material != null)
+                        UnityEngine.Object.Destroy(textureData.Material);
                 }
             }
 
             m_TextureCache.Clear();
-            Debug.Log("[TextureRegistry] Cache cleared");
+            Debug.Log("[TextureRegistry] Texture Cache cleared");
             NotifyCacheCleared();
         }
 
@@ -242,13 +233,18 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
         #region Internal Loading
 
+        public TextureRegistry()
+        {
+            RegisterDefaultLoaders();
+        }
+
         private void RegisterDefaultLoaders()
         {
             // Hier können Standard-Loader registriert werden
-            // Beispiel: RegisterLoader("ui", new UITextureLoader());
+            RegisterLoader("lazy", new LazyTextureLoader(this));
         }
 
-        private bool TryLoadFromCustomLoaders(string key, out TextureData textureData)
+        private bool TryLoadFromLoaders(string key, out TextureData textureData)
         {
             textureData = null;
 
@@ -256,58 +252,16 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             {
                 if (loader.CanLoad(key))
                 {
-                    var texture = loader.Load(key);
+                    TextureData texture = loader.Load(key);
                     if (texture != null)
                     {
-                        textureData = TextureDataFactory.CreateCustomTexture(key, key, texture, null);
+                        textureData = texture;
                         return true;
                     }
                 }
             }
 
             return false;
-        }
-
-        private bool CanLoad(string key)
-        {
-            // Prüfung, ob ein Custom Loader diese Texture laden kann
-            foreach (var loader in m_CustomLoaders.Values)
-            {
-                if (loader.CanLoad(key))
-                    return true;
-            }
-
-            return false;
-        }
-
-        #endregion
-
-        #region Statistics & Debug
-
-        /// <summary>
-        /// Anzahl der gecachten Texturen.
-        /// </summary>
-        public int CachedTextureCount => m_TextureCache.Count;
-
-        /// <summary>
-        /// Anzahl der registrierten Custom Loader.
-        /// </summary>
-        public int RegisteredLoaderCount => m_CustomLoaders.Count;
-
-        /// <summary>
-        /// Anzahl der registrierten Observer.
-        /// </summary>
-        public int RegisteredObserverCount => m_Observers.Count;
-
-        /// <summary>
-        /// Gibt Statistiken über die TextureRegistry aus.
-        /// </summary>
-        public void LogStatistics()
-        {
-            Debug.Log($"[TextureRegistry] Statistics:\n" +
-                      $"  Cached Textures: {CachedTextureCount}\n" +
-                      $"  Custom Loaders: {RegisteredLoaderCount}\n" +
-                      $"  Observers: {RegisteredObserverCount}");
         }
 
         #endregion

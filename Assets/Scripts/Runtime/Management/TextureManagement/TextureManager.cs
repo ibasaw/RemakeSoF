@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
 
@@ -19,7 +18,6 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         [SerializeField] private string m_CustomDirectory = "CustomTextures";
 
         [Tooltip("Lazy Loading (nur bei Bedarf) oder Eager Loading (alles sofort)")]
-        [SerializeField] private bool m_UseLazyLoading = false;
 
         [Header("Supported Formats")]
         [SerializeField] private string[] m_SupportedExtensions = { ".png", ".jpg", ".jpeg", ".tga", ".tif", ".tiff" };
@@ -27,7 +25,6 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         private readonly string m_ShaderRenderName = "Universal Render Pipeline/Unlit";
 
         // State
-        private Dictionary<string, string> m_TexturePathMap = new(StringComparer.OrdinalIgnoreCase);
         private TextureRegistry m_Registry;
 
         public TextureConfiguration Configuration => m_Configuration;
@@ -36,8 +33,8 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         private bool m_IsInitialized = false;
 
         public bool IsInitialized => m_IsInitialized;
-        public int RegisteredTextureCount => m_Registry?.CachedTextureCount ?? 0;
 
+        //TODO 
         private Dictionary<string, Dictionary<string, List<Material>>> m_MaterialsByFile { get; } =
             new Dictionary<string, Dictionary<string, List<Material>>>(StringComparer.OrdinalIgnoreCase);
 
@@ -53,10 +50,8 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         void Awake()
         {
             DontDestroyOnLoad(gameObject);
-            m_Registry = new TextureRegistry();
-            m_Configuration = new TextureConfiguration();
             Initialize();
-            Debug.Log("[TextureManager] Initialized");
+            Debug.Log($"[TextureManager] Initialized. Found {m_Registry.TextureCache.Count} textures.");
         }
 
         void OnDestroy()
@@ -74,7 +69,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// <summary>
         /// Initialisiert den TextureManager und scannt das konfigurierte Verzeichnis.
         /// </summary>
-        public void Initialize()
+        private void Initialize()
         {
             if (m_IsInitialized)
             {
@@ -82,6 +77,8 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 return;
             }
 
+            m_Registry = new TextureRegistry();
+            m_Configuration = new TextureConfiguration();
             if (m_Registry == null)
             {
                 Debug.LogError("[TextureManager] TextureRegistry is null!");
@@ -93,27 +90,18 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 Debug.LogError("[TextureManager] TextureConfiguration is null!");
                 return;
             }
-            m_Configuration.Initialize();
-            Debug.Log($"[TextureManager] Starting initialization...");
-
-            // Lazy Loader registrieren falls benötigt
-            if (m_UseLazyLoading)
-            {
-                m_Registry.RegisterLoader("lazy", new LazyTextureLoader(m_TexturePathMap, this));
-            }
 
             // Alle relevanten Verzeichnisse scannen (System zuerst, dann Custom)
             ScanAllTextureDirectories();
-
+            m_Configuration.Initialize();
             m_IsInitialized = true;
-            Debug.Log($"[TextureManager] Initialization complete. Found {m_TexturePathMap.Count} textures.");
         }
 
         /// <summary>
         /// Gibt den vollständigen Pfad für Custom-Texturen zurück. 
         /// Sie überschreiben System-Texturen. Liegen im AppDataPath(system).
         /// </summary>
-        public string GetCustomTexturesFullPath()
+        private string GetCustomTexturesFullPath()
         {
             return Path.Combine(Application.persistentDataPath, m_CustomDirectory);
         }
@@ -122,7 +110,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// Gibt den vollständigen Pfad für System-Texturen zurück.
         /// System-Texturen liegen im Art/Textures Verzeichnis innerhalb des Unity-Projekts.
         /// </summary>
-        public string GetSystemTexturesFullPath()
+        private string GetSystemTexturesFullPath()
         {
             return Path.Combine(Application.dataPath, "Art/Textures");
         }
@@ -133,7 +121,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// </summary>
         private void ScanAllTextureDirectories()
         {
-            m_TexturePathMap.Clear();
+            m_Registry.ClearCache(true);
 
             string systemPath = GetSystemTexturesFullPath();
             if (Directory.Exists(systemPath))
@@ -185,7 +173,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
             Debug.Log($"[TextureManager] Found {allFiles.Count} texture files in {directoryPath}");
 
-            foreach (var filePath in allFiles)
+            foreach (string filePath in allFiles)
             {
                 string fileName = Path.GetFileNameWithoutExtension(filePath);
                 string relativePath = GetRelativePath(directoryPath, filePath);
@@ -194,26 +182,9 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 string key = Path.Combine(Path.GetDirectoryName(relativePath) ?? "", fileName)
                     .Replace('\\', '/');
 
-                // In Map speichern (Custom darf System überschreiben)
-                bool isOverride = m_TexturePathMap.ContainsKey(key) && source == TextureSource.Custom;
-                m_TexturePathMap[key] = filePath;
-
-                if (isOverride)
-                {
-                    Debug.Log($"[TextureManager] Custom texture overrides system texture for key: {key}");
-                }
-
-                // Bei Eager Loading sofort laden
-                if (!m_UseLazyLoading)
-                {
-                    Texture2D texture = LoadTextureFromFile(filePath);
-                    if (texture != null)
-                    {
-                        texture.name = key;
-                        var data = TextureDataFactory.Create(key, key, texture, null, source);
-                        m_Registry.RegisterTextureData(data);
-                    }
-                }
+                // Vorregistrieren in der Registry ohne geladene Texture und Material (werden on demand geladen)
+                TextureData data = TextureDataFactory.Create(key, filePath, null, null, source);
+                m_Registry.RegisterTextureData(data);
             }
         }
 
@@ -344,44 +315,6 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
         #endregion
 
-        #region Loading
-
-        /// <summary>
-        /// Lädt eine Texture aus einer Datei.
-        /// </summary>
-        private Texture2D LoadTextureFromFile(string filePath)
-        {
-            if (!File.Exists(filePath))
-            {
-                Debug.LogWarning($"[TextureManager] File not found: {filePath}");
-                return null;
-            }
-
-            try
-            {
-                byte[] fileData = File.ReadAllBytes(filePath);
-                Texture2D texture = new(2, 2);
-
-                if (texture.LoadImage(fileData))
-                {
-                    return texture;
-                }
-                else
-                {
-                    Debug.LogError($"[TextureManager] Failed to load image data from: {filePath}");
-                    Destroy(texture);
-                    return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[TextureManager] Error loading texture from {filePath}: {ex.Message}");
-                return null;
-            }
-        }
-
-        #endregion
-
         #region Public API
 
         /// <summary>
@@ -404,69 +337,24 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         }
 
         /// <summary>
-        /// Registriert eine Texture manuell.
-        /// </summary>
-        public void RegisterTexture(string key, Texture2D texture, Material material, TextureSource source = TextureSource.System)
-        {
-            if (m_Registry != null)
-            {
-                m_Registry.RegisterTexture(key, texture, material, source);
-            }
-        }
-
-        /// <summary>
-        /// <summary>
-        /// Prüft, ob eine Texture mit dem angegebenen Key existiert.
-        /// </summary>
-        public bool HasTexture(string key)
-        {
-            return m_Registry?.HasTexture(key) == true || m_TexturePathMap.ContainsKey(key);
-        }
-
-        /// <summary>
-        /// Gibt alle registrierten Texture-Keys zurück.
-        /// </summary>
-        public string[] GetAllTextureKeys()
-        {
-            return m_TexturePathMap.Keys.ToArray();
-        }
-
-        /// <summary>
         /// Lädt das Verzeichnis neu.
         /// </summary>
-        public void Reload()
+        /*public void Reload()
         {
             m_IsInitialized = false;
             m_Registry?.ClearCache(true);
             Initialize();
-        }
+        }*/
 
         /// <summary>
         /// Löscht den Cache und optional auch die Texturen aus dem Speicher.
         /// </summary>
-        public void ClearCache(bool destroy = false)
+        /*public void ClearCache(bool destroy = false)
         {
             m_Registry?.ClearCache(destroy);
-        }
+        }*/
 
         #endregion
-
-        #region Debug
-
-        /// <summary>
-        /// Gibt Debug-Informationen über den Manager aus.
-        /// </summary>
-        public void LogStatistics()
-        {
-            Debug.Log($"[TextureManager] Statistics:\n" +
-                      $"  Initialized: {m_IsInitialized}\n" +
-                      $"  System Directory: {GetSystemTexturesFullPath()}\n" +
-                      $"  Custom Directory: {GetCustomTexturesFullPath()}\n" +
-                      $"  Registered Textures (paths): {m_TexturePathMap.Count}\n" +
-                      $"  Cached Textures: {m_Registry?.CachedTextureCount ?? 0}\n" +
-                      $"  Lazy Loading: {m_UseLazyLoading}");
-        }
-
-        #endregion
+        
     }
 }

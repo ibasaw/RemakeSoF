@@ -19,7 +19,8 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// Lädt die Texture für den angegebenen Key.
         /// </summary>
         /// <param name="key">Der Texture-Schlüssel</param>
+        /// <param name="source">Die Quelle der Texture</param>
         /// <returns>Die geladene Texture oder null bei Fehler</returns>
-        Texture2D Load(string key);
+        TextureData Load(string key);
     }
 }

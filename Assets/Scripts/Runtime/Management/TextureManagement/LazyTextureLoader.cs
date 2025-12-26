@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+
 
 namespace Tolik.RemakeSoF.Runtime.TextureManagement
 {
@@ -9,33 +11,69 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
     /// </summary>
     public class LazyTextureLoader : ITextureLoader
     {
-        private Dictionary<string, string> m_PathMap;
-        private TextureManager m_Manager;
+        private TextureRegistry m_Registry;
 
-        public LazyTextureLoader(Dictionary<string, string> pathMap, TextureManager manager)
+        public LazyTextureLoader(TextureRegistry registry)
         {
-            m_PathMap = pathMap;
-            m_Manager = manager;
+            m_Registry = registry;
         }
 
         public bool CanLoad(string key)
         {
-            return m_PathMap.ContainsKey(key);
+            return m_Registry.TextureCache.ContainsKey(key);
         }
 
-        public Texture2D Load(string key)
+        public TextureData Load(string key)
         {
-            if (!m_PathMap.TryGetValue(key, out var filePath))
+            if (!m_Registry.TextureCache.TryGetValue(key, out TextureData textureData))
                 return null;
 
-            if (!File.Exists(filePath))
+            if (!File.Exists(textureData.FilePath))
                 return null;
 
-            Texture2D texture = m_Manager.GetTextureData(filePath).Texture;
-            if (texture != null)
+            // if no texture yet, load from file and update TextureData
+            if (!textureData.HasTexture())
+            {
+                Texture2D texture = LoadTextureFromFile(textureData.FilePath);
                 texture.name = key;
+                m_Registry.UpdateTextureData(textureData.Id, texture);
+                return textureData;
+            }
+            return null;
+        }
 
-            return texture;
+        /// <summary>
+        /// interne Methode lädt eine Texture aus einer Datei.
+        /// </summary>
+        private Texture2D LoadTextureFromFile(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                Debug.LogWarning($"[LazyTextureLoader] File not found: {filePath}");
+                return null;
+            }
+
+            try
+            {
+                byte[] fileData = File.ReadAllBytes(filePath);
+                Texture2D texture = new(2, 2);
+
+                if (texture.LoadImage(fileData))
+                {
+                    return texture;
+                }
+                else
+                {
+                    Debug.LogError($"[TextureManager] Failed to load image data from: {filePath}");
+                    UnityEngine.Object.Destroy(texture);
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[TextureManager] Error loading texture from {filePath}: {ex.Message}");
+                return null;
+            }
         }
     }
 }

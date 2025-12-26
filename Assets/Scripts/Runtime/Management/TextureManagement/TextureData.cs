@@ -20,9 +20,9 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
     {
         // Properties
         public string Id { get; }
-        public string Name { get; }
-        public Texture2D Texture { get; private set; }
-        public Material Material { get; private set; } // Optional zugehöriges Material
+        public string FilePath { get; }
+        public Texture2D Texture { get; internal set; }
+        public Material Material { get; internal set; } // Optional zugehöriges Material
         public TextureSource Source { get; }
         public DateTime LoadedAt { get; }
         public int ReferenceCount { get; private set; }
@@ -34,17 +34,15 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// <param name="name">Display Name</param>
         /// <param name="texture">Die Texture2D</param>
         /// <param name="source">Quelle der Texture</param>
-        public TextureData(string id, string name, Texture2D texture, Material material, TextureSource source)
+        public TextureData(string id, string filePath, Texture2D texture, Material material, TextureSource source)
         {
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("Id cannot be empty", nameof(id));
-            if (string.IsNullOrEmpty(name))
-                throw new ArgumentException("Name cannot be empty", nameof(name));
-            if (texture == null)
-                throw new ArgumentNullException(nameof(texture));
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("FilePath cannot be empty", nameof(filePath));
 
             Id = id;
-            Name = name;
+            FilePath = filePath;
             Texture = texture;
             Source = source;
             LoadedAt = DateTime.UtcNow;
@@ -55,7 +53,9 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// <summary>
         /// Prüft, ob die TextureData gültig ist.
         /// </summary>
-        public bool IsValid() => Texture != null && !string.IsNullOrEmpty(Id);
+        public bool IsValid() => !string.IsNullOrEmpty(Id);
+
+        public bool HasTexture() => Texture != null;
 
         /// <summary>
         /// Erhöht den Referenzzähler.
@@ -89,7 +89,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// <summary>
         /// Gibt eine String-Repräsentation zurück.
         /// </summary>
-        public override string ToString() => $"TextureData({Id}, {Name}, {Source}, Refs: {ReferenceCount})";
+        public override string ToString() => $"TextureData({Id}, {FilePath}, {Source}, Refs: {ReferenceCount})";
     }
 
     /// <summary>
@@ -97,22 +97,6 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
     /// </summary>
     public static class TextureDataFactory
     {
-        /// <summary>
-        /// Erstellt eine System-Texture.
-        /// </summary>
-        public static TextureData CreateSystemTexture(string id, string name, Texture2D texture, Material material)
-        {
-            return new TextureData(id, name, texture, material, TextureSource.System);
-        }
-
-        /// <summary>
-        /// Erstellt eine Custom-Texture.
-        /// </summary>
-        public static TextureData CreateCustomTexture(string id, string name, Texture2D texture, Material material)
-        {
-            return new TextureData(id, name, texture, material, TextureSource.Custom);
-        }
-
         /// <summary>
         /// Erstellt eine TextureData basierend auf Quelle.
         /// </summary>
