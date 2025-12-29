@@ -483,7 +483,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CustomDirectory: CustomTextures
-  m_UseLazyLoading: 1
   m_SupportedExtensions:
   - .png
   - .jpg

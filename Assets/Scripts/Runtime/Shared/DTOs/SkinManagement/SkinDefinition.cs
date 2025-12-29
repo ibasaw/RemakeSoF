@@ -18,5 +18,31 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             }
             return null;
         }
+
+        /// <summary>
+        /// Returns the texture1 (or shadow1 if present in future) for the given material definition name (e.g. "body").
+        /// </summary>
+        public string GetTextureOrShadowForMaterialDefinitionName(string materialName)
+        {
+            if (materials == null)
+                return null;
+            foreach (var mat in materials)
+            {
+                if (mat != null && string.Equals(mat.name, materialName, StringComparison.OrdinalIgnoreCase) && mat.groups != null)
+                {
+                    foreach (var group in mat.groups)
+                    {
+                        if (group != null)
+                        {
+                            if (!string.IsNullOrEmpty(group.texture1))
+                                return group.texture1;
+                            if (!string.IsNullOrEmpty(group.shader1))
+                                return group.shader1;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
     }
 }

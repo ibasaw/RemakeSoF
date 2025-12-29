@@ -34,17 +34,6 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
         public bool IsInitialized => m_IsInitialized;
 
-        //TODO 
-        private Dictionary<string, Dictionary<string, List<Material>>> m_MaterialsByFile { get; } =
-            new Dictionary<string, Dictionary<string, List<Material>>>(StringComparer.OrdinalIgnoreCase);
-
-        public Dictionary<string, Dictionary<string, List<Material>>> MaterialsByFile => m_MaterialsByFile;
-
-        // Caches für Performance
-        private Dictionary<string, Material> materialCache = new(StringComparer.OrdinalIgnoreCase);
-
-        public Dictionary<string, Material> MaterialCache => materialCache;
-
         #region Lifecycle
 
         void Awake()
@@ -188,71 +177,45 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             }
         }
 
-        public void CreateMaterialsFromSkinDefinition(string selectedSkinName, SkinDefinition skinDefinition)
+        public void CreateMaterialsFromSkinDefinition(Dictionary<string, ShaderEntry> shaderDefinitionForModel,
+            SkinDefinition skinDefinition)
         {
-            var map = new Dictionary<string, List<Material>>(StringComparer.OrdinalIgnoreCase);
-
             foreach (var mdef in skinDefinition.materials)
             {
                 string partName = mdef.name ?? "unnamed_part";
-
-                if (!map.TryGetValue(partName, out List<Material> list))
-                {
-                    list = new List<Material>();
-                    map[partName] = list;
-                }
-
                 foreach (var g in mdef.groups)
                 {
+                    //TODO hier evtl. noch erweitern für mehrfache Texturen pro Material (texture1, texture2, ...)
                     string cacheKey = g.texture1 == null || g.texture1.Length == 0 ? g.shader1 : g.texture1;
-                    if (MaterialCache.TryGetValue(cacheKey, out Material cached))
+                    if (m_Registry.TextureCache.ContainsKey(cacheKey))
                     {
-                        list.Add(cached);
-                        continue;
+                        TextureData textureData = GetTextureData(cacheKey);
+                        if (textureData.IsValid() && textureData.HasTexture())
+                        {
+                            // Shader & Material erzeugen
+                            Shader shader = Shader.Find(m_ShaderRenderName);
+                            Material material = new(shader) { name = $"{partName}_{cacheKey}" };
+
+                            SetupMaterialProperties(material, textureData.Texture, partName.IndexOf("2sided",
+                                StringComparison.OrdinalIgnoreCase) >= 0);
+                            // In Cache speichern
+                            m_Registry.UpdateTextureData(cacheKey, material);
+                        }
                     }
                     else
                     {
-                        /*definitions.TryGetValue("default", out var defaultDefinitionVariant);
-                        definitions.TryGetValue(selectedModelName, out var modelSpecificVariant);
-
-                        PartDef foundPartDef = null;
-                        if (defaultDefinitionVariant != null)
+                        shaderDefinitionForModel.TryGetValue(cacheKey, out ShaderEntry entry);
+                        if (entry != null)
                         {
-                            defaultDefinitionVariant.parts.TryGetValue(partName, out foundPartDef);
+                            CreateMaterialFromShaderEntry(cacheKey, entry);
                         }
-                        if (modelSpecificVariant != null && foundPartDef == null)
+                        else
                         {
-                            modelSpecificVariant.parts.TryGetValue(partName, out foundPartDef);
-                        }*/
-
-                        //analog ähnlich in CreateMaterialFromShaderEntry()
-                        Shader shader = Shader.Find(m_ShaderRenderName);
-                        var material = new Material(shader) { name = $"{partName}_{cacheKey}" };
-                        // Load texture
-                        var texture = GetTexture(cacheKey);
-                        if (texture != null)
-                        {
-                            if (material.HasProperty("_BaseMap"))
-                                material.SetTexture("_BaseMap", texture);
-                            else
-                                material.mainTexture = texture;
+                            Debug.LogWarning($"[PlayerSkinManager] No legacy ShaderEntry found for key: {cacheKey}");
                         }
-                        // Smoothness -> 0.0
-                        if (material.HasProperty("_Smoothness"))
-                            material.SetFloat("_Smoothness", 0.0f);
-
-                        if (partName.IndexOf("2sided", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            SetTwoSidedURP(material, true);
-                        }
-                        MaterialCache[cacheKey] = material;
-                        list.Add(material);
                     }
                 }
             }
-
-            MaterialsByFile[selectedSkinName] = map;
-            Debug.Log($"[PlayerSkinManager] Zugewiesene Materialien für '{selectedSkinName}': {map.Count} parts. Keys: {string.Join(", ", map.Keys)}");
         }
 
         public void CreateMaterialFromShaderEntry(string shaderName, ShaderEntry entry)
@@ -263,20 +226,45 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
             // Shader & Material erzeugen
             Shader shader = Shader.Find(m_ShaderRenderName);
-            var material = new Material(shader) { name = partName };
+            Material material = new(shader) { name = partName };
 
             // Textur setzen
             if (!string.IsNullOrEmpty(texturePath))
             {
-                Texture texture = GetTexture(texturePath);
-                if (texture != null)
+                TextureData textureData = GetTextureData(texturePath);
+                if (textureData != null && textureData.IsValid() && textureData.HasTexture())
                 {
-                    if (material.HasProperty("_BaseMap"))
-                        material.SetTexture("_BaseMap", texture);
+                    SetupMaterialProperties(material, textureData.Texture, isTwoSided);
+                    // In Cache speichern
+                    if (m_Registry.TextureCache.ContainsKey(shaderName))
+                    {
+                        m_Registry.UpdateTextureData(shaderName, material);
+                    }
                     else
-                        material.mainTexture = texture;
+                    {
+                        m_Registry.UpdateTextureWithAlias(texturePath, shaderName, material);
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[TextureManager] TextureData invalid or missing texture for key: {texturePath}");
                 }
             }
+        }
+
+        /// <summary>
+        /// Setzt Standard-Materialeigenschaften (Textur, Smoothness, TwoSided) für URP-Materialien.
+        /// </summary>
+        private void SetupMaterialProperties(Material material, Texture texture, bool isTwoSided)
+        {
+            if (material == null)
+                return;
+
+            // Textur setzen
+            if (material.HasProperty("_BaseMap"))
+                material.SetTexture("_BaseMap", texture);
+            else
+                material.mainTexture = texture;
 
             // Smoothness -> 0.0
             if (material.HasProperty("_Smoothness"))
@@ -285,9 +273,6 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             // Zwei-seitig rendern
             if (isTwoSided)
                 SetTwoSidedURP(material, true);
-
-            // In Cache speichern
-            MaterialCache[shaderName] = material;
         }
 
         private void SetTwoSidedURP(Material mat, bool twoSided)
@@ -328,12 +313,12 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             return m_Registry?.GetTextureData(key);
         }
 
-        /// <summary>
-        /// Gibt nur die Texture2D zurück (Legacy).
-        /// </summary>
-        public Texture2D GetTexture(string key)
+        public TextureData GetTextureDataByAlias(string aliasKey)
         {
-            return GetTextureData(key)?.Texture;
+            if (string.IsNullOrEmpty(aliasKey))
+                return null;
+
+            return m_Registry?.GetTextureDataByAlias(aliasKey);
         }
 
         /// <summary>
@@ -355,6 +340,6 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         }*/
 
         #endregion
-        
+
     }
 }

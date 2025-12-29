@@ -31,15 +31,16 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             if (!File.Exists(textureData.FilePath))
                 return null;
 
-            // if no texture yet, load from file and update TextureData
             if (!textureData.HasTexture())
             {
                 Texture2D texture = LoadTextureFromFile(textureData.FilePath);
-                texture.name = key;
-                m_Registry.UpdateTextureData(textureData.Id, texture);
-                return textureData;
+                if (texture != null)
+                {
+                    texture.name = key;
+                    m_Registry.UpdateTextureData(textureData.Id, texture);
+                }
             }
-            return null;
+            return textureData;
         }
 
         /// <summary>

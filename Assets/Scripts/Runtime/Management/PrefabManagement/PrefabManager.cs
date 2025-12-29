@@ -32,13 +32,13 @@ namespace Tolik.RemakeSoF.Runtime.PrefabManagement
         }
 
         #endregion
-
+        
         #region Loading
         /// <summary>
         /// Lädt ein Prefab synchron über Addressables und registriert es in der Registry.
         /// WARNUNG: Blockiert den Main Thread - verwende async wenn möglich!
         /// </summary>
-        public GameObject LoadPrefab(string key)
+        public T LoadPrefab<T>(string key) where T : UnityEngine.Object
         {
             if (string.IsNullOrEmpty(key))
             {
@@ -48,28 +48,24 @@ namespace Tolik.RemakeSoF.Runtime.PrefabManagement
 
             try
             {
-                var handle = Addressables.LoadAssetAsync<GameObject>(key);
-                var prefab = handle.WaitForCompletion();
-
-                if (prefab != null)
+                var handle = Addressables.LoadAssetAsync<T>(key);
+                var asset = handle.WaitForCompletion();
+                if (asset != null)
                 {
-                    var data = PrefabDataFactory.Create(key, prefab, PrefabSource.System);
-                    data.Handle = handle; // Handle speichern für späteres Release
-
-                    m_Registry.RegisterPrefabData(data);
-                    Debug.Log($"[PrefabManager] Loaded via Addressables: {key}");
-                    return prefab;
+                    // Optional: Registry/Handle-Management wie bei GameObject
+                    Debug.Log($"[PrefabManager] Loaded via Addressables: {key} as {typeof(T).Name}");
+                    return asset;
                 }
                 else
                 {
-                    Addressables.Release(handle); // Release bei Fehler
+                    Addressables.Release(handle);
                     Debug.LogError($"[PrefabManager] Addressable not found: {key}");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[PrefabManager] Error loading prefab {key}: {ex.Message}");
+                Debug.LogError($"[PrefabManager] Error loading asset {key}: {ex.Message}");
                 return null;
             }
         }

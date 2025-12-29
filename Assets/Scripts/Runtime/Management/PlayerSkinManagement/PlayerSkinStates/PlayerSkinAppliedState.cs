@@ -10,6 +10,12 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         public override void Enter()
         {
             Debug.Log($"[PlayerSkinManager] Entered Applied state - skin ready: {Manager.CurrentSkinName}");
+            // Broadcast skin changed event
+            Manager.EventManager.Broadcast(new PlayerSkinChangedEvent
+            {
+                skinName = Manager.CurrentSkinName,
+                playerPrefab = Manager.CurrentPlayerPrefab
+            });
         }
 
         public override void Exit() { }
@@ -18,7 +24,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         {
             Debug.Log($"[PlayerSkinManager] Changing from {Manager.CurrentSkinName} to {skinName}");
             Manager.ChangeState(Manager.m_Loading);
-            
+
             if (Manager.m_Loading is IPlayerSkinChangeHandler handler)
             {
                 handler.OnSkinChangeRequested(skinName);

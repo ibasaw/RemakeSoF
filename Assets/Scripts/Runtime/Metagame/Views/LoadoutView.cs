@@ -1,8 +1,8 @@
-using System;
+using UnityEngine;
 using UnityEngine.UIElements;
 namespace Tolik.RemakeSoF.Runtime
 {
-    [UnityEngine.RequireComponent(typeof(UIDocument))]
+    [RequireComponent(typeof(UIDocument))]
     internal class LoadoutView : View<MetagameApplication>
     {
         UIDocument m_UIDocument;
@@ -10,6 +10,23 @@ namespace Tolik.RemakeSoF.Runtime
         Label m_PlayerNameLabel;
 
         Label m_PlayerIdLabel;
+
+        VisualElement m_CharacterPreviewContainer;
+        GameObject m_CharacterPrefab;
+        RenderTexture m_CharacterPreviewRenderTexture;
+        Camera m_CharacterPreviewCamera;
+        GameObject m_CharacterPreviewStage;
+        GameObject m_CharacterPreviewInstance;
+
+        Button m_LoadPreviousSkinButton;
+        Button m_LoadNextSkinButton;
+
+        int m_PreviewLayer = 30;
+        Vector3 m_CameraOffset = new(15f, 0, 0);
+        float m_CameraFov = 40f;
+        Color m_ClearColor = new(0, 0, 0, 0);
+        Vector3 m_CharacterRotation = new(0, 90, 0); // Charakter-Rotation in Grad
+        Vector3 m_CharacterPosition = new(0, -5f, 0); // Charakter-Position (Y nach unten)
 
         void Awake()
         {
@@ -22,9 +39,122 @@ namespace Tolik.RemakeSoF.Runtime
 
             m_PlayerNameLabel = root.Q<Label>("playerName");
             m_PlayerIdLabel = root.Q<Label>("playerId");
+            m_LoadPreviousSkinButton = root.Q<Button>("loadPrevious");
+            m_LoadNextSkinButton = root.Q<Button>("loadNext");
+            m_CharacterPreviewContainer = root.Q<VisualElement>("previewArea");
+            m_CharacterPreviewContainer.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
 
             m_PlayerNameLabel.text = App.Model.PlayerData.PlayerName;
             m_PlayerIdLabel.text = App.Model.PlayerData.PlayerId;
+
+            m_LoadNextSkinButton.RegisterCallback<ClickEvent>(OnClickLoadNextSkin);
+            m_LoadPreviousSkinButton.RegisterCallback<ClickEvent>(OnClickLoadPreviousSkin);
+
+            CreateStage();
+            UpdateRenderTexture();
+        }
+
+        void OnClickLoadNextSkin(ClickEvent evt)
+        {
+            //ApplicationEntryPoint.Singleton.PlayerSkinManager.LoadNextSkin();
+            Debug.Log("Load Next Skin clicked");
+            Broadcast(new LoadNextSkinEvent());
+        }
+        void OnClickLoadPreviousSkin(ClickEvent evt)
+        {
+            //ApplicationEntryPoint.Singleton.PlayerSkinManager.LoadPreviousSkin();
+            Debug.Log("Load Previous Skin clicked");
+            Broadcast(new LoadPreviousSkinEvent());
+        }
+
+        public void SetCharacterPrefab(GameObject prefab)
+        {
+            m_CharacterPrefab = prefab;
+        }
+
+        void CreateStage()
+        {
+            m_CharacterPreviewStage = new GameObject("PreviewStage") { hideFlags = HideFlags.HideAndDontSave };
+
+            m_CharacterPreviewCamera = new GameObject("PreviewCamera").AddComponent<Camera>();
+            m_CharacterPreviewCamera.transform.SetParent(m_CharacterPreviewStage.transform, false);
+            m_CharacterPreviewCamera.transform.position = m_CameraOffset;
+            m_CharacterPreviewCamera.transform.LookAt(Vector3.zero);
+            m_CharacterPreviewCamera.clearFlags = CameraClearFlags.SolidColor;
+            m_CharacterPreviewCamera.backgroundColor = m_ClearColor;
+            m_CharacterPreviewCamera.cullingMask = 1 << m_PreviewLayer;
+            m_CharacterPreviewCamera.fieldOfView = m_CameraFov;
+            m_CharacterPreviewCamera.nearClipPlane = 0.1f;
+            m_CharacterPreviewCamera.farClipPlane = 20f;
+
+            var light = new GameObject("PreviewLight").AddComponent<Light>();
+            light.transform.SetParent(m_CharacterPreviewStage.transform, false);
+            light.type = LightType.Directional;
+            light.transform.rotation = Quaternion.Euler(40f, -30f, 0f);
+            light.intensity = 1.2f;
+            light.cullingMask = 1 << m_PreviewLayer;
+            if (m_CharacterPrefab != null)
+            {
+                m_CharacterPreviewInstance = Instantiate(m_CharacterPrefab, m_CharacterPreviewStage.transform);
+                m_CharacterPreviewInstance.transform.position = m_CharacterPosition;
+                m_CharacterPreviewInstance.transform.rotation = Quaternion.Euler(m_CharacterRotation);
+                SetLayerRecursively(m_CharacterPreviewInstance, m_PreviewLayer);
+            }
+        }
+
+        void LateUpdate()
+        {
+            // Force render every frame
+            if (m_CharacterPreviewCamera != null && m_CharacterPreviewRenderTexture != null)
+            {
+                m_CharacterPreviewCamera.Render();
+            }
+        }
+
+        void OnGeometryChanged(GeometryChangedEvent _) => UpdateRenderTexture();
+
+        void UpdateRenderTexture()
+        {
+            if (m_CharacterPreviewContainer == null || m_CharacterPreviewCamera == null) return;
+
+            Vector2 size = m_CharacterPreviewContainer.contentRect.size;
+            int w = Mathf.Max(1, Mathf.RoundToInt(size.x));
+            int h = Mathf.Max(1, Mathf.RoundToInt(size.y));
+
+            if (m_CharacterPreviewRenderTexture != null && (m_CharacterPreviewRenderTexture.width != w || m_CharacterPreviewRenderTexture.height != h))
+            {
+                m_CharacterPreviewRenderTexture.Release();
+                Destroy(m_CharacterPreviewRenderTexture);
+                m_CharacterPreviewRenderTexture = null;
+            }
+
+            if (m_CharacterPreviewRenderTexture == null)
+            {
+                m_CharacterPreviewRenderTexture = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32)
+                {
+                    name = "MainMenuCharacterPreviewRT"
+                };
+            }
+
+            m_CharacterPreviewCamera.targetTexture = m_CharacterPreviewRenderTexture;
+            m_CharacterPreviewContainer.style.backgroundImage = new StyleBackground(Background.FromRenderTexture(m_CharacterPreviewRenderTexture));
+
+            // Force immediate render after RT change
+            m_CharacterPreviewCamera.Render();
+        }
+
+        void OnDisable()
+        {
+            m_CharacterPreviewContainer?.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
+            if (m_CharacterPreviewRenderTexture != null) { m_CharacterPreviewRenderTexture.Release(); Destroy(m_CharacterPreviewRenderTexture); }
+            if (m_CharacterPreviewStage != null) Destroy(m_CharacterPreviewStage);
+        }
+
+        void SetLayerRecursively(GameObject go, int layer)
+        {
+            go.layer = layer;
+            foreach (Transform child in go.transform)
+                SetLayerRecursively(child.gameObject, layer);
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 {
-    // Definition.json Struktur
+    // NPC_definition.json Struktur
     public class SkinSurfaceDefinition
     {
         public string description;

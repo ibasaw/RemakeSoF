@@ -24,12 +24,4 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
     {
         void OnSkinChangeRequested(string skinName);
     }
-
-    /// <summary>
-    /// Handler interface for applying skins to characters
-    /// </summary>
-    internal interface IPlayerSkinApplicationHandler
-    {
-        void OnApplySkinToCharacter(GameObject character, string skinName);
-    }
 }

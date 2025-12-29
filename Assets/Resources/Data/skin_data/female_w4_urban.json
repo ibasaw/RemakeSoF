@@ -1,0 +1,65 @@
+{
+  "prefs": {
+    "models": {
+      "1": "female_armor"
+    },
+    "surfaces_on": {},
+    "surfaces_off": {}
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_face/f_female_civilian_w4"
+        }
+      ]
+    },
+    {
+      "name": "eye_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/female_face/f2_nurse_w1"
+        }
+      ]
+    },
+    {
+      "name": "pony",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_face/h_female_civilian_pony_w4"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_armor/a_taylor_armor"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_armor/b_armor"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

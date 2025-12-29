@@ -1344,9 +1344,6 @@
                 }
               ]
             }
-          },
-          {
-            "File": "woopy"
           }
         ],
         "Voice": {
@@ -6849,41 +6846,36 @@
         "FormalName": "US Marine Scout",
         "comments": "The Scout will move ahead of the squad searching for problems (unfriendly targets, tripwires, mines...)  He carries only a pistol, and is good at hiding and moving quietly.",
         "Occupation": "Scout",
-        "Skin": [
-          {
-            "File": "marine_camo1",
-            "mp_identity": "marinescout",
-            "mp_team": "marine",
-            "Inventory": {
-              "Weapon": {
-                "Name": "M4"
+        "Skin": {
+          "File": "marine_camo1",
+          "mp_identity": "marinescout",
+          "mp_team": "marine",
+          "Inventory": {
+            "Weapon": {
+              "Name": "M4"
+            },
+            "Item": [
+              {
+                "Name": "backpack_radio",
+                "Bolt": "*back",
+                "mp_onback": "YES"
               },
-              "Item": [
-                {
-                  "Name": "backpack_radio",
-                  "Bolt": "*back",
-                  "mp_onback": "YES"
-                },
-                {
-                  "Name": "bandana",
-                  "Bolt": "*head_t"
-                },
-                {
-                  "Name": "ammo_pack_green",
-                  "Bolt": "*uchest_l"
-                },
-                {
-                  "Name": "canteen",
-                  "Bolt": "*hip_br",
-                  "Chance": "50"
-                }
-              ]
-            }
-          },
-          {
-            "File": "marine"
+              {
+                "Name": "bandana",
+                "Bolt": "*head_t"
+              },
+              {
+                "Name": "ammo_pack_green",
+                "Bolt": "*uchest_l"
+              },
+              {
+                "Name": "canteen",
+                "Bolt": "*hip_br",
+                "Chance": "50"
+              }
+            ]
           }
-        ]
+        }
       },
       {
         "Name": "NPC_Marine_Soldier_Washington",
@@ -12836,6 +12828,803 @@
           "File": "deadmeat2"
         },
         "Inventory": {}
+      }
+    ]
+  },
+  "clown.npc": {
+    "GroupInfo": {
+      "Skeleton": "average_sleeves.skl",
+      "ParentTemplate": "NPC_clown"
+    },
+    "CharacterTemplate": {
+      "Name": "NPC_clown",
+      "FormalName": "clown",
+      "comments": "funny",
+      "Rank": "Private",
+      "Model": "models/characters/suit_sleeves/suit_sleeves.glm",
+      "Health": "85 105",
+      "Deathmatch": "yes",
+      "DamageEasy": "0.040",
+      "DamageMedium": "0.055",
+      "DamageHard": "0.075",
+      "DamageSuperHard": "0.085",
+      "Skin": {
+        "File": "clown",
+        "Inventory": {
+          "Item": [
+            {
+              "Name": "hat_boone_blk",
+              "Bolt": "*head_t"
+            },
+            {
+              "Name": "collar_suitsleeves"
+            },
+            {
+              "Name": "sleeves"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "roc_females.npc": {
+    "GroupInfo": {
+      "Skeleton": "female_pants.skl",
+      "ParentTemplate": "NPC_Base_Female"
+    },
+    "CharacterTemplate": [
+      {
+        "Name": "NPC_Female_Colombian_Snow_Soldier",
+        "FormalName": "Female Colombian Snow Soldier",
+        "Occupation": "Soldier",
+        "Rank": "Private",
+        "comments": "A female snow soldier",
+        "Team": "snow",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_colombian_snow_soldier",
+          "mp_identity": "female_snowcolombian",
+          "mp_team": "shop",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "ponytail"
+              },
+              {
+                "Name": "knife_white",
+                "Chance": "80",
+                "Bolt": "*hip_l"
+              },
+              {
+                "Name": "holster_black",
+                "Chance": "80",
+                "Bolt": "*hip_r"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_Taylor_Snow_Soldier",
+        "FormalName": "Female Taylor Snow Soldier",
+        "Occupation": "Soldier",
+        "Rank": "Private",
+        "comments": "A female snow soldier",
+        "Team": "snow",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_taylor_snow_soldier",
+          "mp_identity": "female_snowtaylor",
+          "mp_team": "snow",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "ponytail"
+              },
+              {
+                "Name": "knife_white",
+                "Chance": "80",
+                "Bolt": "*hip_l"
+              },
+              {
+                "Name": "holster_black",
+                "Chance": "80",
+                "Bolt": "*hip_r"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_Thug_Snow_Soldier",
+        "FormalName": "Female Thug Snow Soldier",
+        "Occupation": "Soldier",
+        "Rank": "Private",
+        "comments": "A female snow soldier",
+        "Team": "snow",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_thug_snow_soldier",
+          "mp_identity": "female_snowthug",
+          "mp_team": "snow",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "flong"
+              },
+              {
+                "Name": "female_asian_eyes"
+              },
+              {
+                "Name": "knife_white",
+                "Chance": "80",
+                "Bolt": "*hip_l"
+              },
+              {
+                "Name": "holster_black",
+                "Chance": "80",
+                "Bolt": "*hip_r"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_Prometheus_Snow_Soldier",
+        "FormalName": "Female Prometheus Snow Soldier",
+        "Occupation": "Soldier",
+        "Rank": "Private",
+        "comments": "A female snow soldier",
+        "Team": "snow",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_prometheus_snow_soldier",
+          "mp_identity": "female_snowprometheus",
+          "mp_team": "snow",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "hat_warf_snow",
+                "Bolt": "*head_t",
+                "Chance": "25"
+              },
+              {
+                "Name": "knife_white",
+                "Chance": "80",
+                "Bolt": "*hip_l"
+              },
+              {
+                "Name": "holster_black",
+                "Chance": "80",
+                "Bolt": "*hip_r"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_W3_Snow_Soldier",
+        "FormalName": "Female W3 Snow Soldier",
+        "Occupation": "Soldier",
+        "Rank": "Private",
+        "comments": "A female snow soldier",
+        "Team": "snow",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_W3_snow_soldier",
+          "mp_identity": "female_snoww3",
+          "mp_team": "snow",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "flong"
+              },
+              {
+                "Name": "knife_white",
+                "Chance": "80",
+                "Bolt": "*hip_l"
+              },
+              {
+                "Name": "holster_black",
+                "Chance": "80",
+                "Bolt": "*hip_r"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_W4_Snow_Soldier",
+        "FormalName": "Female W4 Snow Soldier",
+        "Occupation": "Soldier",
+        "Rank": "Private",
+        "comments": "A female snow soldier",
+        "Team": "snow",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_W4_snow_soldier",
+          "mp_identity": "female_snoww4",
+          "mp_team": "snow",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "ponytail"
+              },
+              {
+                "Name": "knife_white",
+                "Chance": "80",
+                "Bolt": "*hip_l"
+              },
+              {
+                "Name": "holster_black",
+                "Chance": "80",
+                "Bolt": "*hip_r"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_Colombian_Soldier",
+        "FormalName": "Female Colombian Soldier",
+        "comments": "A female Colombian soldier.",
+        "Team": "Colombian",
+        "Rank": "Private",
+        "Occupation": "Soldier",
+        "Model": "models/characters/female_pants/female_pants.glm",
+        "Skin": {
+          "File": "female_colombian_soldier",
+          "mp_team": "colombian",
+          "mp_identity": "Colombian_female",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "ponytail"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_Taylor_Soldier",
+        "FormalName": "Female Taylor Soldier",
+        "Occupation": "Soldier",
+        "Rank": "Private",
+        "comments": "A female soldier",
+        "Team": "Colombian",
+        "Model": "models/characters/female_pants/female_pants.glm",
+        "Skin": {
+          "File": "female_Taylor_soldier",
+          "mp_identity": "female_soldiertaylor",
+          "mp_team": "colombian",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "ponytail"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_Thug_Soldier",
+        "FormalName": "Female Thug Soldier",
+        "Occupation": "Soldier",
+        "Rank": "Private",
+        "comments": "A female soldier",
+        "Team": "Colombian",
+        "Model": "models/characters/female_pants/female_pants.glm",
+        "Skin": {
+          "File": "female_thug_soldier",
+          "mp_identity": "female_soldierthug",
+          "mp_team": "colombian",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "flong"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_Prometheus_Soldier",
+        "FormalName": "Female Prometheus Soldier",
+        "Occupation": "Soldier",
+        "Rank": "Private",
+        "comments": "A female soldier",
+        "Team": "Colombian",
+        "Model": "models/characters/female_pants/female_pants.glm",
+        "Skin": {
+          "File": "female_prometheus_soldier",
+          "mp_identity": "female_soldierprometheus",
+          "mp_team": "colombian",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "hat_warf_blk",
+                "Bolt": "*head_t",
+                "Chance": "25"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_W3_Soldier",
+        "FormalName": "Female W3 Soldier",
+        "Occupation": "Soldier",
+        "Rank": "Private",
+        "comments": "A female soldier",
+        "Team": "Colombian",
+        "Model": "models/characters/female_pants/female_pants.glm",
+        "Skin": {
+          "File": "female_W3_soldier",
+          "mp_identity": "female_soldierw3",
+          "mp_team": "colombian",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "flong"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_W4_Soldier",
+        "FormalName": "Female W4 Soldier",
+        "Occupation": "Soldier",
+        "Rank": "Private",
+        "comments": "A female soldier",
+        "Team": "Colombian",
+        "Model": "models/characters/female_pants/female_pants.glm",
+        "Skin": {
+          "File": "female_W4_soldier",
+          "mp_identity": "female_soldierw4",
+          "mp_team": "colombian",
+          "Inventory": {
+            "Weapon": {
+              "Name": "AK74"
+            },
+            "Item": [
+              {
+                "Name": "ponytail"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_Colombian_Urban",
+        "FormalName": "Colombian in Urban Gear",
+        "comments": "Colombian in Urban Gear.",
+        "Team": "The Shop",
+        "Rank": "Private",
+        "Occupation": "ScriptGuy",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_colombian_urban",
+          "mp_identity": "female_urbancolombian",
+          "mp_team": "shop"
+        },
+        "Inventory": {
+          "Item": [
+            {
+              "Name": "ponytail"
+            },
+            {
+              "Name": "holster",
+              "Bolt": "*hip_r"
+            },
+            {
+              "Name": "knife",
+              "Bolt": "*calf_r"
+            }
+          ]
+        }
+      },
+      {
+        "Name": "NPC_Female_Taylor_Urban",
+        "FormalName": "Taylor in Urban Gear",
+        "comments": "Taylor in Urban Gear.",
+        "Team": "The Shop",
+        "Rank": "Private",
+        "Occupation": "ScriptGuy",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_taylor_urban"
+        },
+        "Inventory": {
+          "Item": [
+            {
+              "Name": "ponytail"
+            },
+            {
+              "Name": "holster",
+              "Bolt": "*hip_r"
+            },
+            {
+              "Name": "knife",
+              "Bolt": "*calf_r"
+            }
+          ]
+        }
+      },
+      {
+        "Name": "NPC_Female_Thug_Urban",
+        "FormalName": "Thug in Urban Gear",
+        "comments": "Thug in Urban Gear.",
+        "Team": "The Shop",
+        "Rank": "Private",
+        "Occupation": "ScriptGuy",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_thug_urban"
+        },
+        "Inventory": {
+          "Item": [
+            {
+              "Name": "flong"
+            },
+            {
+              "Name": "holster",
+              "Bolt": "*hip_r"
+            },
+            {
+              "Name": "knife",
+              "Bolt": "*calf_r"
+            }
+          ]
+        }
+      },
+      {
+        "Name": "NPC_Female_Prometheus_Urban",
+        "FormalName": "prometheus in Urban Gear",
+        "comments": "prometheus in Urban Gear.",
+        "Team": "The Shop",
+        "Rank": "Private",
+        "Occupation": "ScriptGuy",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_prometheus_urban"
+        },
+        "Inventory": {
+          "Item": [
+            {
+              "Name": "hat_warf_blk",
+              "Bolt": "*head_t",
+              "Chance": "25"
+            },
+            {
+              "Name": "holster",
+              "Bolt": "*hip_r"
+            },
+            {
+              "Name": "knife",
+              "Bolt": "*calf_r"
+            }
+          ]
+        }
+      },
+      {
+        "Name": "NPC_Female_W3_Urban",
+        "FormalName": "W3 in Urban Gear",
+        "comments": "W3 in Urban Gear.",
+        "Team": "The Shop",
+        "Rank": "Private",
+        "Occupation": "ScriptGuy",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_w3_urban"
+        },
+        "Inventory": {
+          "Item": [
+            {
+              "Name": "flong"
+            },
+            {
+              "Name": "holster",
+              "Bolt": "*hip_r"
+            },
+            {
+              "Name": "knife",
+              "Bolt": "*calf_r"
+            }
+          ]
+        }
+      },
+      {
+        "Name": "NPC_Female_W4_Urban",
+        "FormalName": "W4 in Urban Gear",
+        "comments": "W4 in Urban Gear.",
+        "Team": "Prometheus",
+        "Rank": "Private",
+        "Occupation": "ScriptGuy",
+        "Model": "models/characters/female_armor/female_armor.glm",
+        "Skin": {
+          "File": "female_w4_urban",
+          "mp_identity": "female_urbanw4",
+          "mp_team": "Prometheus"
+        },
+        "Inventory": {
+          "Weapon": {
+            "Name": "AK74"
+          },
+          "Item": [
+            {
+              "Name": "ponytail"
+            },
+            {
+              "Name": "holster",
+              "Bolt": "*hip_r"
+            },
+            {
+              "Name": "knife",
+              "Bolt": "*calf_r"
+            }
+          ]
+        }
+      },
+      {
+        "Name": "NPC_Female_Colombian_HK",
+        "FormalName": "Hong Kong Female Colombian",
+        "comments": "Female thugs for Hong Kong.",
+        "Team": "Hong Kong Gang",
+        "Rank": "Criminal",
+        "Occupation": "Thug",
+        "Model": "models/characters/female_skirt/female_skirt.glm",
+        "Skin": {
+          "File": "female_colombian_hk",
+          "Inventory": {
+            "Weapon": {
+              "Name": "Micro Uzi"
+            },
+            "Item": [
+              {
+                "Name": "ponytail"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              },
+              {
+                "Name": "skirt_off"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_Taylor_HK",
+        "FormalName": "Hong Kong Female Taylor",
+        "comments": "Female thugs for Hong Kong.",
+        "Team": "Hong Kong Gang",
+        "Rank": "Criminal",
+        "Occupation": "Thug",
+        "Model": "models/characters/female_skirt/female_skirt.glm",
+        "Skin": {
+          "File": "female_taylor_hk",
+          "Inventory": {
+            "Weapon": {
+              "Name": "Micro Uzi"
+            },
+            "Item": [
+              {
+                "Name": "ponytail"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              },
+              {
+                "Name": "skirt_off"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_Thug_HK",
+        "FormalName": "Hong Kong Female Thug",
+        "comments": "Female thugs for Hong Kong.",
+        "Team": "Hong Kong Gang",
+        "Rank": "Criminal",
+        "Occupation": "Thug",
+        "Model": "models/characters/female_skirt/female_skirt.glm",
+        "Skin": {
+          "File": "female_thug_hk",
+          "Inventory": {
+            "Weapon": {
+              "Name": "Micro Uzi"
+            },
+            "Item": [
+              {
+                "Name": "flong"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              },
+              {
+                "Name": "female_asian_eyes"
+              },
+              {
+                "Name": "skirt_off"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_Prometheus_HK",
+        "FormalName": "Hong Kong Female Prometheus",
+        "comments": "Female thugs for Hong Kong.",
+        "Team": "Hong Kong Gang",
+        "Rank": "Criminal",
+        "Occupation": "Thug",
+        "Model": "models/characters/female_skirt/female_skirt.glm",
+        "Skin": {
+          "File": "female_prometheus_hk",
+          "Inventory": {
+            "Weapon": {
+              "Name": "Micro Uzi"
+            },
+            "Item": [
+              {
+                "Name": "hat_warf_blk",
+                "Bolt": "*head_t",
+                "Chance": "25"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              },
+              {
+                "Name": "skirt_off"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_W3_HK",
+        "FormalName": "Hong Kong Female W3",
+        "comments": "Female thugs for Hong Kong.",
+        "Team": "Hong Kong Gang",
+        "Rank": "Criminal",
+        "Occupation": "Thug",
+        "Model": "models/characters/female_skirt/female_skirt.glm",
+        "Skin": {
+          "File": "female_w3_hk",
+          "Inventory": {
+            "Weapon": {
+              "Name": "Micro Uzi"
+            },
+            "Item": [
+              {
+                "Name": "flong"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              },
+              {
+                "Name": "skirt_off"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "NPC_Female_W4_HK",
+        "FormalName": "Hong Kong Female W4",
+        "comments": "Female thugs for Hong Kong.",
+        "Team": "Hong Kong Gang",
+        "Rank": "Criminal",
+        "Occupation": "Thug",
+        "Model": "models/characters/female_skirt/female_skirt.glm",
+        "Skin": {
+          "File": "female_w4_hk",
+          "Inventory": {
+            "Weapon": {
+              "Name": "Micro Uzi"
+            },
+            "Item": [
+              {
+                "Name": "ponytail"
+              },
+              {
+                "Name": "sleeves"
+              },
+              {
+                "Name": "collar_suitsleeves"
+              },
+              {
+                "Name": "skirt_off"
+              }
+            ]
+          }
+        }
       }
     ]
   }

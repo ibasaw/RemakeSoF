@@ -14,7 +14,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GroupName: Default Local Group
   m_GUID: 48e356ca73297cd46ad922e286b32a70
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 2e92615550413c34aaf9b526bd70b64e
+    m_Address: characters/models/suit_long_coat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: acae1b99ec54d864f99c3cdc6a5069b6
+    m_Address: models/animator/loadout_preview
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d67a39a1e9ee9ac42b32666fda3b2a4d
+    m_Address: characters/animations/average_sleeves
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 9500df7d393bcc147931f5c826073cc6, type: 2}
   m_SchemaSet:

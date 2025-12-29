@@ -28,6 +28,11 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         public int ReferenceCount { get; private set; }
 
         /// <summary>
+        /// Alternative Schlüssel (Aliases) für diese Texture, z.B. verschiedene Namen oder Legacy-IDs.
+        /// </summary>
+        public System.Collections.Generic.List<string> AliasKeys { get; } = new System.Collections.Generic.List<string>();
+
+        /// <summary>
         /// Erstellt neue TextureData.
         /// </summary>
         /// <param name="id">Eindeutige ID der Texture</param>

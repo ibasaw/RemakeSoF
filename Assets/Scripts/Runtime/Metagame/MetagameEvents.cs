@@ -1,3 +1,10 @@
+/**
+* Metagame-related events.
+* All view and controller events should be defined here.
+* Das ist die Event Pipeline für die Views und Controller des Metagame.
+* @author Tolik
+**/
+
 namespace Tolik.RemakeSoF.Runtime
 {
     internal class EnterMatchmakerQueueEvent : AppEvent
@@ -71,4 +78,7 @@ namespace Tolik.RemakeSoF.Runtime
         public string confirmPassword;
         public string email;
     }
+    
+    internal class LoadNextSkinEvent : AppEvent { }
+    internal class LoadPreviousSkinEvent : AppEvent { }
 }

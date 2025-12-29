@@ -163,6 +163,33 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             }
         }
 
+        public void UpdateTextureData(string key, Material material)
+        {
+            if (m_TextureCache.TryGetValue(key, out TextureData data))
+            {
+                data.Material = material;
+                Debug.Log($"[TextureRegistry] set new material for key: {key}");
+            }
+            else
+            {
+                Debug.LogWarning($"[TextureRegistry] Cannot set material, key not found: {key}");
+            }
+        }
+
+        public void UpdateTextureWithAlias(string aliasKey, string targetKey, Material material)
+        {
+            if (m_TextureCache.TryGetValue(aliasKey, out TextureData targetData))
+            {
+                targetData.AliasKeys.Add(targetKey);
+                targetData.Material = material;
+                Debug.Log($"[TextureRegistry] Created alias '{targetKey}' for alias key: {aliasKey} and set material");
+            }
+            else
+            {
+                Debug.LogWarning($"[TextureRegistry] Cannot create alias too, target key not found: {aliasKey}");
+            }
+        }
+
         /// <summary>
         /// Gibt TextureData nach Key zurück. Nutzt Cache oder lädt aus registrierten Custom Loadern.
         /// </summary>
@@ -179,7 +206,24 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 return customData;
             }
 
-            Debug.LogWarning($"[TextureRegistry] Texture not found: {key}");
+            Debug.LogWarning($"[TextureRegistry] TextureData not found: {key}");
+            return null;
+        }
+
+        public TextureData GetTextureDataByAlias(string aliasKey)
+        {
+            if (string.IsNullOrEmpty(aliasKey))
+                return null;
+
+            foreach (var data in m_TextureCache.Values)
+            {
+                if (data.AliasKeys.Contains(aliasKey) && data.IsValid() && data.HasTexture())
+                {
+                    return data;
+                }
+            }
+
+            Debug.LogWarning($"[TextureRegistry] TextureData not found by alias: {aliasKey}");
             return null;
         }
 

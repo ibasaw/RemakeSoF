@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 {
     public enum PlayerSkinStatus
@@ -62,6 +64,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
     public class PlayerSkinChangedEvent : AppEvent
     {
         public string skinName;
+        public GameObject playerPrefab;
     }
 
     public class PlayerSkinLoadingEvent : AppEvent

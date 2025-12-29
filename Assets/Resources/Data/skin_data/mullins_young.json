@@ -3,20 +3,8 @@
     "models": {
       "1": "suit_long_coat"
     },
-    "surfaces_on": {
-      "name0": "trenchcollar_r_off",
-      "name2": "trenchcollar_l_off",
-      "name4": "head_bck_uppr_r_avmed_off",
-      "name5": "head_bck_lwr_r_avmed_off",
-      "name6": "head_side_r_avmed_off",
-      "name7": "head_side_l_avmed_off",
-      "name8": "head_bck_lwr_l_avmed_off",
-      "name9": "head_bck_uppr_l_avmed_off"
-    },
-    "surfaces_off": {
-      "name0": "head_side_l",
-      "name1": "head_side_r"
-    }
+    "surfaces_on": {},
+    "surfaces_off": {}
   },
   "materials": [
     {

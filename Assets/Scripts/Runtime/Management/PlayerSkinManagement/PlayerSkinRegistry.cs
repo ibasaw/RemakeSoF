@@ -25,7 +25,8 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         private Dictionary<string, SkinDefinition> m_SkinDataByName = new(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, Dictionary<string, ShaderEntry>> m_LegacyShaderDefinitionsByModel = new(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, SkinSurfaceDefinition> m_SkinSurfaceDefinitionsByModel = new(StringComparer.OrdinalIgnoreCase);
-        private TextureManager TextureManager => ApplicationEntryPoint.Singleton.TextureManager;
+        public Dictionary<string, SkinSurfaceDefinition> SkinSurfaceDefinitionsByModel => m_SkinSurfaceDefinitionsByModel;
+        public TextureManager TextureManager => ApplicationEntryPoint.Singleton.TextureManager;
         public PlayerSkinDataRegistry()
         {
             LoadAllSkinDataFromResources();
@@ -38,40 +39,28 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             Debug.Log($"[PlayerSkinRegistry] Loaded {m_LegacyShaderDefinitionsByModel.Count} legacy shader definitions for models: {string.Join(", ", m_LegacyShaderDefinitionsByModel.Keys)}");
         }
 
-        /// <summary>
-        /// Parst eine .shader Definition Datei und erstellt Materialien basierend auf den Shader-Einträgen
-        /// </summary>
-        public void CreateMaterialsFromLegacyShaderDefinition(Dictionary<string, ShaderEntry> shaderEntries)
+        public string GetNextSkinName(string currentName)
         {
-            if (shaderEntries == null || shaderEntries.Count == 0)
-            {
-                Debug.LogWarning("[PlayerSkinManager] Keine Shader-Einträge zum Erstellen von Materialien.");
-            }
-            foreach (var entry in shaderEntries)
-            {
-                // Create material for this shader entry
-                TextureManager.CreateMaterialFromShaderEntry(entry.Key, entry.Value);
-            }
-            Debug.Log($"[PlayerSkinManager] Erzeugte {shaderEntries.Count} Materialien für Shader Definition.");
+            var keys = m_SkinDataByName.Keys.ToList();
+            if (keys.Count == 0) return null;
+            int idx = keys.IndexOf(currentName);
+            int nextIdx = (idx + 1) % keys.Count;
+            return keys[nextIdx];
         }
 
-        /// <summary>
-        /// Erstellt Materialien basierend auf der SkinDefinition (JSON)
-        /// </summary>
-        public void CreateMaterialsFromSkinDefinition(string selectedSkinName, SkinDefinition skinDefinition)
+        public string GetPreviousSkinName(string currentName)
         {
-            if (skinDefinition?.materials == null || skinDefinition.materials.Count == 0)
-            {
-                Debug.LogError($"[PlayerSkinManager] Keine 'materials' in skinDefinition JSON vorhanden: {selectedSkinName}");
-                return;
-            }
-            TextureManager.CreateMaterialsFromSkinDefinition(selectedSkinName, skinDefinition);
+            var keys = m_SkinDataByName.Keys.ToList();
+            if (keys.Count == 0) return null;
+            int idx = keys.IndexOf(currentName);
+            int prevIdx = (idx - 1 + keys.Count) % keys.Count;
+            return keys[prevIdx];
         }
 
         /// <summary>
         /// Manually load original SoF2 .shader data definition from Resources folder (world,player)
         /// </summary>
-        public Dictionary<string, ShaderEntry> LoadLegacyShaderDefinitionForModel(string modelName)
+        private Dictionary<string, ShaderEntry> LoadLegacyShaderDefinitionForModel(string modelName)
         {
             // Erwartet z. B. "Data/shaders/model_name"
             string fullPath = Path.Combine(Application.dataPath, "Resources", modelName + ".shader");
@@ -144,6 +133,12 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 string.Join(", ", m_SkinDataByModel.Select(kvp => $"{kvp.Key} ({kvp.Value.Count} skins)")));
         }
 
+        public Dictionary<string, ShaderEntry> GetLegacyShaderDefinitionForModel(string modelName)
+        {
+            m_LegacyShaderDefinitionsByModel.TryGetValue(modelName, out var shaderEntries);
+            return shaderEntries;
+        }
+
         /// <summary>
         /// Get all skins available for a specific model type
         /// </summary>
@@ -197,7 +192,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         /// <summary>
         /// Loads and parses NPC_definition.json from Resources/Data.
         /// </summary>
-        public void LoadSurfaceDefinitionsFromResources(string resourcePath = "Data/NPC_definition")
+        private void LoadSurfaceDefinitionsFromResources(string resourcePath = "Data/NPC_definition")
         {
             var asset = Resources.Load<TextAsset>(resourcePath);
             if (asset == null)

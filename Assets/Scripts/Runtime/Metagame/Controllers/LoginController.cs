@@ -120,10 +120,10 @@ namespace Tolik.RemakeSoF.Runtime
             TextureConfiguration configuration = TextureManager.Configuration;
 
             // Texturen vom Manager holen (aus Art/Textures oder persistentDataPath/CustomTextures)
-            Texture2D backgroundTexture = TextureManager.GetTexture(configuration.metagame.login.background);
-            Texture2D logoTexture = TextureManager.GetTexture(configuration.metagame.login.logo);
-            Texture2D buttonBackgroundTexture = TextureManager.GetTexture(configuration.metagame.login.buttonBackground);
-            Texture2D textFieldBackgroundTexture = TextureManager.GetTexture(configuration.metagame.login.inputBackground);
+            Texture2D backgroundTexture = TextureManager.GetTextureData(configuration.metagame.login.background).Texture;
+            Texture2D logoTexture = TextureManager.GetTextureData(configuration.metagame.login.logo).Texture;
+            Texture2D buttonBackgroundTexture = TextureManager.GetTextureData(configuration.metagame.login.buttonBackground).Texture;
+            Texture2D textFieldBackgroundTexture = TextureManager.GetTextureData(configuration.metagame.login.inputBackground).Texture;
 
             // An View übergeben
             View.SetBackgroundTexture(backgroundTexture);

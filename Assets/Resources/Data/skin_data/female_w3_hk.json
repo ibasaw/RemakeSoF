@@ -1,0 +1,83 @@
+{
+  "prefs": {
+    "models": {
+      "1": "female_skirt"
+    },
+    "surfaces_on": {
+      "name0": "head_bck_lwr_l_flong_off",
+      "name1": "head_bck_lwr_r_flong_off",
+      "name2": "head_bck_uppr_l_flong_off",
+      "name3": "head_bck_uppr_r_flong_off",
+      "name4": "head_side_l_flong_off",
+      "name5": "head_side_r_flong_off"
+    },
+    "surfaces_off": {
+      "name0": "head_side_r",
+      "name1": "head_side_l",
+      "name2": "head_bck_uppr_l",
+      "name3": "head_bck_uppr_r",
+      "name4": "head_bck_lwr_l",
+      "name5": "head_bck_lwr_r",
+      "name6": "sleeve_l",
+      "name7": "collar_l",
+      "name8": "sleeve_r",
+      "name9": "collar_r"
+    }
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_face/f_female_civilian_w3"
+        }
+      ]
+    },
+    {
+      "name": "eye_2sided",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/female_face/f2_nurse_w1"
+        }
+      ]
+    },
+    {
+      "name": "flong",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_face/h_female_civilian_long_w3"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "asian",
+          "shader1": "models/characters/female_skirt/a_fhk_thug_a1"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "asian",
+          "shader1": "models/characters/female_skirt/b_fhk_thug_a1"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "white",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

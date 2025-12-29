@@ -1,0 +1,104 @@
+{
+  "prefs": {
+    "models": {
+      "1": "female_armor"
+    },
+    "surfaces_on": {
+      "name0": "eyelasha_l_off",
+      "name1": "eyelasha_r_off",
+      "name2": "head_frnt_mida_l_off",
+      "name3": "head_frnt_uppra_l_off",
+      "name4": "head_frnt_uppra_r_off",
+      "name5": "head_frnt_mida_r_off",
+      "name6": "head_bck_lwr_l_flong_off",
+      "name7": "head_bck_lwr_r_flong_off",
+      "name8": "head_bck_uppr_l_flong_off",
+      "name9": "head_bck_uppr_r_flong_off",
+      "name10": "head_side_l_flong_off",
+      "name11": "head_side_r_flong_off"
+    },
+    "surfaces_off": {
+      "name0": "eyelash_r",
+      "name1": "eyelash_l",
+      "name2": "head_side_r",
+      "name3": "head_side_l",
+      "name4": "head_bck_uppr_l",
+      "name5": "head_bck_uppr_r",
+      "name6": "head_bck_lwr_l",
+      "name7": "head_bck_lwr_r",
+      "name8": "head_frnt_mid_l",
+      "name9": "head_frnt_uppr_l",
+      "name10": "head_frnt_uppr_r",
+      "name11": "sleeve_l",
+      "name12": "collar_l",
+      "name13": "sleeve_r",
+      "name14": "collar_r",
+      "name15": "head_frnt_mid_r"
+    }
+  },
+  "materials": [
+    {
+      "name": "face",
+      "groups": [
+        {
+          "name": "asian",
+          "shader1": "models/characters/female_face/f_fhk_thug_a1"
+        }
+      ]
+    },
+    {
+      "name": "eye_2sided",
+      "groups": [
+        {
+          "name": "asian",
+          "shader1": "models/characters/female_face/f2_deviant1"
+        }
+      ]
+    },
+    {
+      "name": "face_2sided",
+      "groups": [
+        {
+          "name": "asian",
+          "shader1": "models/characters/female_face/f2_deviant1"
+        }
+      ]
+    },
+    {
+      "name": "flong",
+      "groups": [
+        {
+          "name": "asian",
+          "shader1": "models/characters/female_face/h_fhk_thug_long_a1"
+        }
+      ]
+    },
+    {
+      "name": "arms",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_armor/a_fpro_armored_snow"
+        }
+      ]
+    },
+    {
+      "name": "body",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_armor/b_fpro_armored_snow"
+        }
+      ]
+    },
+    {
+      "name": "caps",
+      "groups": [
+        {
+          "name": "asian",
+          "shader1": "models/characters/caps/caps"
+        }
+      ]
+    }
+  ]
+}

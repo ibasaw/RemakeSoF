@@ -51,11 +51,24 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 }
 
                 // Load prefab through manager
-                GameObject prefab = Manager.LoadPrefabForModel(modelName);
+                string prefabPath = $"characters/models/{modelName}";
+                GameObject prefab = Manager.LoadPrefabForModel(prefabPath);
                 if (prefab == null)
                 {
                     Manager.OnSkinLoadFailure($"Failed to load prefab for model: {modelName}", PlayerSkinStatus.PrefabNotFound);
                     return;
+                }
+                RuntimeAnimatorController controller = GetControllerWithClip("models/animator/loadout_preview");
+                if (!prefab.TryGetComponent<Animator>(out var animator))
+                {
+                    animator = prefab.AddComponent<Animator>();
+                    animator.runtimeAnimatorController = controller;
+                    Debug.Log("[PlayerSkinManager] Added Animator component to prefab for preview animation.");
+                }
+                else
+                {
+                    animator.runtimeAnimatorController = controller;
+                    Debug.Log("[PlayerSkinManager] Assigned controller to existing Animator for preview animation.");
                 }
                 Manager.SetCurrentPlayerPrefab(prefab);
 
@@ -63,16 +76,14 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 Manager.ResetAllRenderersInCurrentPlayerPrefabToActive();
 
                 // Load shader definition file and create materials for it
-                //TODO das muss eventuell preloaded zum start werden anstatt zur laufzeit
-                //Dictionary<string, ShaderEntry> shaderDefinition = Manager.LoadLegacyShaderDefinitionForModel($"Data/shaders/{modelName}");
-                //Manager.CreateMaterialsForShaderDefinition(shaderDefinition);
-                //Manager.CreateMaterialsFromSkinDefinition(m_LoadingSkinName, skinDefinition);
-                Debug.Log($"[PlayerSkinManager] Successfully loaded skin: {m_LoadingSkinName}.json with model: {modelName}.shader");
+                Dictionary<string, ShaderEntry> shaderDefinition = Manager.PlayerSkinDataRegistry.GetLegacyShaderDefinitionForModel(modelName);
+                Manager.CreateMaterialsFromSkinDefinition(m_LoadingSkinName, shaderDefinition, skinDefinition);
 
                 Manager.DisableAndEnableSurfacesForCurrentPlayerPrefab(skinDefinition);
-                //TODO apply materials to playerprefab
+                Manager.ApplyMaterialsToCurrentPlayerPrefab(m_LoadingSkinName, skinDefinition);
 
-                Manager.OnSkinLoadSuccess(m_LoadingSkinName);
+                Debug.Log($"[PlayerSkinManager] Successfully loaded skin: {m_LoadingSkinName}.json with model: {modelName}.shader");
+                Manager.OnSkinLoadSuccess(m_LoadingSkinName, prefab);
             }
             catch (Exception ex)
             {
@@ -80,6 +91,13 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 Manager.OnSkinLoadFailure($"Error loading skin: {ex.Message}", PlayerSkinStatus.GenericError);
                 return;
             }
+        }
+        public RuntimeAnimatorController GetControllerWithClip(string name = "models/animator/loadout_preview")
+        {
+            var controller = new AnimatorOverrideController();
+            RuntimeAnimatorController baseController = Manager.LoadAnimatorForModel(name);
+            controller.runtimeAnimatorController = baseController;
+            return controller;
         }
 
         public override void OnSkinLoadSuccess()
