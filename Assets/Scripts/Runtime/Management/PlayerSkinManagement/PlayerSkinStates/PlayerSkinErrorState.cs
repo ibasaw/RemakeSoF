@@ -18,12 +18,8 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         {
             // Allow retry from error state
             Debug.Log("[PlayerSkinManager] Retrying skin load after error");
+            Manager.m_Loading.Configure(skinName);
             Manager.ChangeState(Manager.m_Loading);
-            
-            if (Manager.m_Loading is IPlayerSkinChangeHandler handler)
-            {
-                handler.OnSkinChangeRequested(skinName);
-            }
         }
     }
 }

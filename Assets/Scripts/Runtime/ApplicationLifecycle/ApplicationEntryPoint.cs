@@ -1,10 +1,9 @@
 using System;
-using System.Collections;
 using Tolik.RemakeSoF.Runtime.AuthenticationManagement;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
-using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
+using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using Unity.Multiplayer;
 using Unity.Netcode;
 using UnityEngine;
@@ -62,14 +61,6 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         public PlayerSkinManager PlayerSkinManager => m_PlayerSkinManager;
 
         [SerializeField]
-        TextureManager m_TextureManager;
-        public TextureManager TextureManager => m_TextureManager;
-
-        [SerializeField]
-        PrefabManager m_PrefabManager;
-        public PrefabManager PrefabManager => m_PrefabManager;
-
-        [SerializeField]
         internal int MinPlayers = 1;
         [SerializeField]
         internal int MaxPlayers = 2;
@@ -80,12 +71,21 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         {
             DontDestroyOnLoad(gameObject);
             Singleton = Singleton != null ? Singleton : this;
+
+            // 1. Services registrieren
+            TextureManager textureManager = new();
+            ServiceLocator.Register(textureManager);
+
+            PrefabManager prefabManager = new();
+            ServiceLocator.Register(prefabManager);
+
             m_ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
         }
 
         void OnDestroy()
         {
             m_ConnectionManager.EventManager.RemoveListener<ConnectionEvent>(OnConnectionEvent);
+            ServiceLocator.ClearAll();
         }
 
         [RuntimeInitializeOnLoadMethod]

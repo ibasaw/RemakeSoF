@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
 
@@ -11,69 +10,35 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
     /// Manager für automatisches Laden von Texturen aus Verzeichnissen.
     /// Verwaltet eine interne TextureRegistry und lädt Texturen automatisch beim Start.
     /// </summary>
-    public class TextureManager : MonoBehaviour
+    public class TextureManager
     {
-        [Header("Configuration")]
-        [Tooltip("Basis-Verzeichnis für Custom-Texturen (relativ zu Application.persistentDataPath)")]
-        [SerializeField] private string m_CustomDirectory = "CustomTextures";
-
-        [Tooltip("Lazy Loading (nur bei Bedarf) oder Eager Loading (alles sofort)")]
-
-        [Header("Supported Formats")]
-        [SerializeField] private string[] m_SupportedExtensions = { ".png", ".jpg", ".jpeg", ".tga", ".tif", ".tiff" };
-
+        private readonly string m_CustomDirectory = "CustomTextures";
+        private readonly string[] m_SupportedExtensions = { ".png", ".jpg", ".jpeg", ".tga", ".tif", ".tiff" };
         private readonly string m_ShaderRenderName = "Universal Render Pipeline/Unlit";
-
-        // State
-        private TextureRegistry m_Registry;
-
+        private readonly TextureRegistry m_Registry;
+        private readonly TextureConfiguration m_Configuration;
         public TextureConfiguration Configuration => m_Configuration;
-        private TextureConfiguration m_Configuration;
 
-        private bool m_IsInitialized = false;
-
-        public bool IsInitialized => m_IsInitialized;
-
-        #region Lifecycle
-
-        void Awake()
+        public TextureManager()
         {
-            DontDestroyOnLoad(gameObject);
+            m_Registry = new TextureRegistry();
+            m_Configuration = new TextureConfiguration();
             Initialize();
             Debug.Log($"[TextureManager] Initialized. Found {m_Registry.TextureCache.Count} textures.");
         }
 
-        void OnDestroy()
-        {
-            m_Registry?.ClearCache(true);
-            m_Registry = null;
-            m_Configuration = null;
-            Debug.Log("[TextureManager] Destroyed");
-        }
-
-        #endregion
-
         #region Initialization
 
         /// <summary>
-        /// Initialisiert den TextureManager und scannt das konfigurierte Verzeichnis.
+        /// Initialisiert den TextureManager: lädt Konfiguration und scannt Verzeichnisse.
         /// </summary>
         private void Initialize()
         {
-            if (m_IsInitialized)
-            {
-                Debug.LogWarning("[TextureManager] Already initialized");
-                return;
-            }
-
-            m_Registry = new TextureRegistry();
-            m_Configuration = new TextureConfiguration();
             if (m_Registry == null)
             {
                 Debug.LogError("[TextureManager] TextureRegistry is null!");
                 return;
             }
-
             if (m_Configuration == null)
             {
                 Debug.LogError("[TextureManager] TextureConfiguration is null!");
@@ -83,7 +48,6 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             // Alle relevanten Verzeichnisse scannen (System zuerst, dann Custom)
             ScanAllTextureDirectories();
             m_Configuration.Initialize();
-            m_IsInitialized = true;
         }
 
         /// <summary>
@@ -110,7 +74,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// </summary>
         private void ScanAllTextureDirectories()
         {
-            m_Registry.ClearCache(true);
+            m_Registry.ClearCache();
 
             string systemPath = GetSystemTexturesFullPath();
             if (Directory.Exists(systemPath))
@@ -186,6 +150,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 foreach (var g in mdef.groups)
                 {
                     //TODO hier evtl. noch erweitern für mehrfache Texturen pro Material (texture1, texture2, ...)
+                    //Derzeit nur texture1 oder shader1 Key genutzt
                     string cacheKey = g.texture1 == null || g.texture1.Length == 0 ? g.shader1 : g.texture1;
                     if (m_Registry.TextureCache.ContainsKey(cacheKey))
                     {
@@ -313,6 +278,10 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             return m_Registry?.GetTextureData(key);
         }
 
+        /// <summary>
+        /// Gibt TextureData nach Alias-Key zurück.
+        /// Nutzen Sie dies, wenn für einen Key nicht direkt eine Textur gefunden wurde.
+        /// </summary>
         public TextureData GetTextureDataByAlias(string aliasKey)
         {
             if (string.IsNullOrEmpty(aliasKey))
@@ -326,18 +295,17 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// </summary>
         /*public void Reload()
         {
-            m_IsInitialized = false;
-            m_Registry?.ClearCache(true);
+            m_Registry?.ClearCache();
             Initialize();
         }*/
 
         /// <summary>
         /// Löscht den Cache und optional auch die Texturen aus dem Speicher.
         /// </summary>
-        /*public void ClearCache(bool destroy = false)
+        public void ClearCache()
         {
-            m_Registry?.ClearCache(destroy);
-        }*/
+            m_Registry?.ClearCache();
+        }
 
         #endregion
 

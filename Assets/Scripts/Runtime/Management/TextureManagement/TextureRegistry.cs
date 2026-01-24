@@ -6,7 +6,6 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 {
     /// <summary>
     /// Zentrale Verwaltung für Texture2D-Assets mit Caching und dynamischer Erweiterbarkeit.
-    /// Nutzt das Observer Pattern für Benachrichtigungen über Cache-Änderungen.
     /// Default Lazy Loading via Custom Loadern.
     /// TextureRegistry → lädt die eigentlichen Texture2D-Assets und Materialien (Bilder, Materialien)
     /// Beim Anwenden eines Skins/Materials lädt TextureRegistry die Texturen/Materialien on-demand
@@ -14,97 +13,9 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
     public class TextureRegistry
     {
         // Caching
-        private Dictionary<string, TextureData> m_TextureCache = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, TextureData> m_TextureCache = new(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, TextureData> TextureCache => m_TextureCache;
-        private Dictionary<string, ITextureLoader> m_CustomLoaders = new();
-        private List<ITextureRegistryObserver> m_Observers = new();
-
-        #region Observer Management
-
-        /// <summary>
-        /// Registriert einen Observer für Cache-Benachrichtigungen.
-        /// </summary>
-        public void Subscribe(ITextureRegistryObserver observer)
-        {
-            if (observer != null && !m_Observers.Contains(observer))
-            {
-                m_Observers.Add(observer);
-                Debug.Log("[TextureRegistry] Observer subscribed");
-            }
-        }
-
-        /// <summary>
-        /// Entfernt einen Observer.
-        /// </summary>
-        public void Unsubscribe(ITextureRegistryObserver observer)
-        {
-            if (observer != null && m_Observers.Remove(observer))
-            {
-                Debug.Log("[TextureRegistry] Observer unsubscribed");
-            }
-        }
-
-        private void NotifyTextureRegistered(string key, TextureData textureData)
-        {
-            foreach (var observer in m_Observers)
-            {
-                try
-                {
-                    observer?.OnTextureRegistered(key, textureData);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[TextureRegistry] Error notifying observer: {ex.Message}");
-                }
-            }
-        }
-
-        private void NotifyTextureUnregistered(string key)
-        {
-            foreach (var observer in m_Observers)
-            {
-                try
-                {
-                    observer?.OnTextureUnregistered(key);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[TextureRegistry] Error notifying observer: {ex.Message}");
-                }
-            }
-        }
-
-        private void NotifyCacheCleared()
-        {
-            foreach (var observer in m_Observers)
-            {
-                try
-                {
-                    observer?.OnCacheCleared();
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[TextureRegistry] Error notifying observer: {ex.Message}");
-                }
-            }
-        }
-
-        private void NotifyLoaderRegistered(string key)
-        {
-            foreach (var observer in m_Observers)
-            {
-                try
-                {
-                    observer?.OnLoaderRegistered(key);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[TextureRegistry] Error notifying observer: {ex.Message}");
-                }
-            }
-        }
-
-        #endregion
+        private readonly Dictionary<string, ITextureLoader> m_CustomLoaders = new();
 
         #region Registration & Loading
 
@@ -123,7 +34,6 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
             m_CustomLoaders[key] = loader;
             Debug.Log($"[TextureRegistry] Registered custom loader for: {key}");
-            NotifyLoaderRegistered(key);
         }
 
         /// <summary>
@@ -147,7 +57,6 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 Debug.Log($"[TextureRegistry] Custom texture will override system texture for key: {data.Id} => {data.Source}");
             }
             m_TextureCache[data.Id] = data;
-            NotifyTextureRegistered(data.Id, data);
         }
 
         public void UpdateTextureData(string key, Texture2D texture)
@@ -247,30 +156,23 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                     UnityEngine.Object.Destroy(data.Material);
                 }
                 Debug.Log($"[TextureRegistry] Unregistered old texture: {key}");
-                NotifyTextureUnregistered(key);
             }
         }
 
         /// <summary>
         /// Löscht alle gecachten Texturen.
         /// </summary>
-        /// <param name="destroy">Wenn true, werden die Texturen auch aus dem Speicher gelöscht</param>
-        public void ClearCache(bool destroy = false)
+        public void ClearCache()
         {
-            if (destroy)
+            foreach (var textureData in m_TextureCache.Values)
             {
-                foreach (var textureData in m_TextureCache.Values)
-                {
-                    if (textureData?.Texture != null)
-                        UnityEngine.Object.Destroy(textureData.Texture);
-                    if (textureData?.Material != null)
-                        UnityEngine.Object.Destroy(textureData.Material);
-                }
+                if (textureData?.Texture != null)
+                    UnityEngine.Object.Destroy(textureData.Texture);
+                if (textureData?.Material != null)
+                    UnityEngine.Object.Destroy(textureData.Material);
             }
-
+            Debug.Log($"[TextureRegistry] Texture Cache {m_TextureCache.Count} cleared");
             m_TextureCache.Clear();
-            Debug.Log("[TextureRegistry] Texture Cache cleared");
-            NotifyCacheCleared();
         }
 
         #endregion

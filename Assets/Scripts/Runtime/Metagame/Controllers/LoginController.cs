@@ -18,8 +18,6 @@ namespace Tolik.RemakeSoF.Runtime
     {
         LoginView View => App.View.LoginView;
         AuthenticationManager AuthenticationManager => ApplicationEntryPoint.Singleton.AuthenticationManager;
-        TextureManager TextureManager => ApplicationEntryPoint.Singleton.TextureManager;
-
         void Awake()
         {
             AddListener<PlayerLoginEvent>(OnPlayerLogin);
@@ -117,13 +115,13 @@ namespace Tolik.RemakeSoF.Runtime
         {
             View.Show();
 
-            TextureConfiguration configuration = TextureManager.Configuration;
+            TextureConfiguration configuration = ServiceLocator.Get<TextureManager>().Configuration;
 
             // Texturen vom Manager holen (aus Art/Textures oder persistentDataPath/CustomTextures)
-            Texture2D backgroundTexture = TextureManager.GetTextureData(configuration.metagame.login.background).Texture;
-            Texture2D logoTexture = TextureManager.GetTextureData(configuration.metagame.login.logo).Texture;
-            Texture2D buttonBackgroundTexture = TextureManager.GetTextureData(configuration.metagame.login.buttonBackground).Texture;
-            Texture2D textFieldBackgroundTexture = TextureManager.GetTextureData(configuration.metagame.login.inputBackground).Texture;
+            Texture2D backgroundTexture = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.login.background).Texture;
+            Texture2D logoTexture = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.login.logo).Texture;
+            Texture2D buttonBackgroundTexture = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.login.buttonBackground).Texture;
+            Texture2D textFieldBackgroundTexture = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.login.inputBackground).Texture;
 
             // An View übergeben
             View.SetBackgroundTexture(backgroundTexture);

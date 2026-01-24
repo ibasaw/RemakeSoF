@@ -14,8 +14,6 @@ namespace Tolik.RemakeSoF.Runtime
         ConnectionManager ConnectionManager => ApplicationEntryPoint.Singleton.ConnectionManager;
         AuthenticationManager AuthenticationManager => ApplicationEntryPoint.Singleton.AuthenticationManager;
         PlayerSkinManager PlayerSkinManager => ApplicationEntryPoint.Singleton.PlayerSkinManager;
-        TextureManager TextureManager => ApplicationEntryPoint.Singleton.TextureManager;
-
         void Awake()
         {
             AddListener<EnterMatchmakerQueueEvent>(OnEnterMatchmakerQueue);
@@ -92,10 +90,10 @@ namespace Tolik.RemakeSoF.Runtime
         {
             View.Show();
 
-            TextureConfiguration configuration = TextureManager.Configuration;
+            TextureConfiguration configuration = ServiceLocator.Get<TextureManager>().Configuration;
 
             // Texturen vom Manager holen (aus Art/Textures oder persistentDataPath/CustomTextures)
-            Texture2D mainMenuBackgroundTexture = TextureManager.GetTextureData(configuration.metagame.mainMenu.background).Texture;
+            Texture2D mainMenuBackgroundTexture = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.background).Texture;
 
             // An View übergeben
             View.SetBackgroundTexture(mainMenuBackgroundTexture);

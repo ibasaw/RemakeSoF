@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -11,7 +10,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
     /// </summary>
     public class LazyTextureLoader : ITextureLoader
     {
-        private TextureRegistry m_Registry;
+        private readonly TextureRegistry m_Registry;
 
         public LazyTextureLoader(TextureRegistry registry)
         {
@@ -57,7 +56,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             try
             {
                 byte[] fileData = File.ReadAllBytes(filePath);
-                Texture2D texture = new(2, 2);
+                Texture2D texture = new(2, 2); //dynamic size will be replaced by LoadImage
 
                 if (texture.LoadImage(fileData))
                 {
@@ -65,14 +64,14 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 }
                 else
                 {
-                    Debug.LogError($"[TextureManager] Failed to load image data from: {filePath}");
+                    Debug.LogError($"[LazyTextureLoader] Failed to load image data from: {filePath}");
                     UnityEngine.Object.Destroy(texture);
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[TextureManager] Error loading texture from {filePath}: {ex.Message}");
+                Debug.LogError($"[LazyTextureLoader] Error loading texture from {filePath}: {ex.Message}");
                 return null;
             }
         }

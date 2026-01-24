@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
-using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
-using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
@@ -21,12 +19,11 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
     /// </summary>
     public class PlayerSkinDataRegistry
     {
-        private Dictionary<string, List<SkinDefinition>> m_SkinDataByModel = new(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<string, SkinDefinition> m_SkinDataByName = new(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<string, Dictionary<string, ShaderEntry>> m_LegacyShaderDefinitionsByModel = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, List<SkinDefinition>> m_SkinDataByModel = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, SkinDefinition> m_SkinDataByName = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Dictionary<string, ShaderEntry>> m_LegacyShaderDefinitionsByModel = new(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, SkinSurfaceDefinition> m_SkinSurfaceDefinitionsByModel = new(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, SkinSurfaceDefinition> SkinSurfaceDefinitionsByModel => m_SkinSurfaceDefinitionsByModel;
-        public TextureManager TextureManager => ApplicationEntryPoint.Singleton.TextureManager;
         public PlayerSkinDataRegistry()
         {
             LoadAllSkinDataFromResources();
@@ -234,6 +231,15 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 m_SkinSurfaceDefinitionsByModel.Clear();
                 Debug.LogError($"[PlayerSkinRegistry] Error parsing surface definition: {ex}");
             }
+        }
+
+        public void ClearAllCaches()
+        {
+            m_SkinDataByModel.Clear();
+            m_SkinDataByName.Clear();
+            m_LegacyShaderDefinitionsByModel.Clear();
+            m_SkinSurfaceDefinitionsByModel.Clear();
+            Debug.Log("[PlayerSkinRegistry] Cleared all cached json/shader/surface skin data.");
         }
     }
 }

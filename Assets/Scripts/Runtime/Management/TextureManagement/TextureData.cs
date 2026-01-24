@@ -81,7 +81,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// <summary>
         /// Entlädt die Texture und gibt Speicher frei.
         /// </summary>
-        public void Unload()
+        public void UnloadTexture()
         {
             if (Texture != null)
             {
@@ -89,6 +89,16 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 Texture = null;
             }
             Debug.Log($"[TextureData] Unloaded texture: {Id}");
+        }
+
+        public void UnloadMaterial()
+        {
+            if (Material != null)
+            {
+                UnityEngine.Object.Destroy(Material);
+                Material = null;
+            }
+            Debug.Log($"[TextureData] Unloaded material: {Id}");
         }
 
         /// <summary>

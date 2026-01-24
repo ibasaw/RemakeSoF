@@ -10,13 +10,8 @@ using UnityEngine;
 namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 {
     /// <summary>
-    /// Manages player skin selection and application across game and metagame scenes.
-    /// Uses state machine pattern to handle different skin loading states.
-    /// Zustandsverwaltung (runtime state)
-    /// Welcher Skin ist aktuell aktiv
-    /// State Machine (Idle/Loading/Applied/Error)
-    /// Event-Broadcasting bei Änderungen
-    /// Zustandsbehaftet – tracked was gerade läuft
+    /// Orchestriert das Laden und Anwenden von Spieler-Skins via State Machine (Idle/Loading/Applied/Error),
+    /// verwaltet aktuellen Skin/Prefab, ruft PrefabManager + PlayerSkinDataRegistry auf und broadcastet Status/Fehler.
     /// </summary>
     public class PlayerSkinManager : StateMachine<PlayerSkinState, PlayerSkinManager>
     {
@@ -24,16 +19,12 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         internal readonly PlayerSkinLoadingState m_Loading = new();
         internal readonly PlayerSkinAppliedState m_Applied = new();
         internal readonly PlayerSkinErrorState m_Error = new();
+        private PlayerSkinDataRegistry m_PlayerSkinDataRegistry;
 
         // Current skin data
         private string m_CurrentSkinName;
-        public string CurrentSkinName => m_CurrentSkinName;
         private GameObject m_CurrentPlayerPrefab;
-        public GameObject CurrentPlayerPrefab => m_CurrentPlayerPrefab;
 
-        private PlayerSkinDataRegistry m_PlayerSkinDataRegistry;
-        public PlayerSkinDataRegistry PlayerSkinDataRegistry => m_PlayerSkinDataRegistry;
-        private PrefabManager PrefabManager => ApplicationEntryPoint.Singleton.PrefabManager;
         void Awake()
         {
             DontDestroyOnLoad(gameObject);
@@ -48,6 +39,17 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         void OnDestroy()
         {
             Debug.Log("[PlayerSkinManager] Destroyed");
+            m_PlayerSkinDataRegistry.ClearAllCaches();
+        }
+
+        public SkinDefinition GetSkinByName(string skinName)
+        {
+            return m_PlayerSkinDataRegistry.GetSkinByName(skinName);
+        }
+
+        public Dictionary<string, ShaderEntry> GetLegacyShaderDefinitionForModel(string modelName)
+        {
+            return m_PlayerSkinDataRegistry.GetLegacyShaderDefinitionForModel(modelName);
         }
 
         /// <summary>
@@ -61,7 +63,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 Debug.LogError($"[PlayerSkinManager] Keine 'materials' in skinDefinition JSON vorhanden: {selectedSkinName}");
                 return;
             }
-            m_PlayerSkinDataRegistry.TextureManager.CreateMaterialsFromSkinDefinition(shaderDefinition, skinDefinition);
+            ServiceLocator.Get<TextureManager>().CreateMaterialsFromSkinDefinition(shaderDefinition, skinDefinition);
         }
 
         public void ApplyMaterialsToCurrentPlayerPrefab(string skinDefinitionName, SkinDefinition skinDefinition)
@@ -91,11 +93,11 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                     Debug.LogWarning($"[PlayerSkinManager] No texture/shader-key found for material definition name: '{partName}' in skin definition: '{skinDefinitionName}'");
                     continue;
                 }
-                TextureData textureData = m_PlayerSkinDataRegistry.TextureManager.GetTextureData(textureKey);
+                TextureData textureData = ServiceLocator.Get<TextureManager>().GetTextureData(textureKey);
                 if (textureData == null || !textureData.IsValid())
                 {
                     Debug.Log($"[PlayerSkinManager] Search by TextureData by alias for key: '{textureKey}' in skin definition: '{skinDefinitionName}'");
-                    textureData = m_PlayerSkinDataRegistry.TextureManager.GetTextureDataByAlias(textureKey);
+                    textureData = ServiceLocator.Get<TextureManager>().GetTextureDataByAlias(textureKey);
                 }
                 Debug.Log($"[PlayerSkinManager] TextureData for key '{textureKey}': {textureData}");
                 Debug.Log($"[PlayerSkinManager] [{modelName} , {skinDefinitionName}] Processing part '{partName}' with texture/shader: {textureKey}");
@@ -280,26 +282,16 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         /// <summary>
         /// Load and set the player prefab for the given model name
         /// from Addressables via PrefabManager
-        /// TODO - beim laden oder warten loader anzeigen / async machen
+        /// TODO: async machen
         /// 
         /// </summary>
         public GameObject LoadPrefabForModel(string prefabPath)
         {
-            return PrefabManager.LoadPrefab<GameObject>(prefabPath);
+            return ServiceLocator.Get<PrefabManager>().LoadPrefab<GameObject>(prefabPath);
         }
         public RuntimeAnimatorController LoadAnimatorForModel(string prefabPath)
         {
-            return PrefabManager.LoadPrefab<RuntimeAnimatorController>(prefabPath);
-        }
-
-        /// <summary>
-        /// handles skin load failures from the states
-        /// </summary>
-        public void OnSkinLoadFailure(string message, PlayerSkinStatus status)
-        {
-            Debug.LogError($"[PlayerSkinManager] {status}: {message}");
-            EventManager.Broadcast(new PlayerSkinErrorEvent { error = message, status = status });
-            ChangeState(m_Error);
+            return ServiceLocator.Get<PrefabManager>().LoadPrefab<RuntimeAnimatorController>(prefabPath);
         }
 
         /// <summary>
@@ -402,13 +394,38 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         }
 
         /// <summary>
+        /// handles skin load failures from the states
+        /// </summary>
+        public void OnSkinLoadFailure(string message, PlayerSkinStatus status)
+        {
+            Debug.LogError($"[PlayerSkinManager] {status}: {message}");
+            EventManager.Broadcast(new PlayerSkinErrorEvent { error = message, status = status });
+            ChangeState(m_Error);
+        }
+        
+        /// <summary>
         /// Internal: Signal successful skin load (called by states)
+        /// And update current client skin data
         /// </summary>
         internal void OnSkinLoadSuccess(string skinName, GameObject prefab)
         {
             m_CurrentSkinName = skinName;
             m_CurrentPlayerPrefab = prefab;
             m_CurrentState.OnSkinLoadSuccess();
+        }
+
+        /// <summary>
+        /// Signal successful skin application and broadcast event to listeners
+        /// Called when skin is fully applied and ready
+        /// </summary>
+        internal void OnSkinApplied()
+        {
+            Debug.Log($"[PlayerSkinManager] Applied skin: {m_CurrentSkinName}");
+            EventManager.Broadcast(new PlayerSkinChangedEvent
+            {
+                skinName = m_CurrentSkinName,
+                playerPrefab = m_CurrentPlayerPrefab
+            });
         }
 
         internal void SetCurrentPlayerPrefab(GameObject prefab)

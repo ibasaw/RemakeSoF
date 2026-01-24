@@ -35,7 +35,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                     return;
                 }
                 // Try to load skin data from Registry
-                SkinDefinition skinDefinition = Manager.PlayerSkinDataRegistry.GetSkinByName(m_LoadingSkinName);
+                SkinDefinition skinDefinition = Manager.GetSkinByName(m_LoadingSkinName);
                 if (skinDefinition == null)
                 {
                     Manager.OnSkinLoadFailure($"Skin definition file not found: {m_LoadingSkinName}", PlayerSkinStatus.SkinNotFound);
@@ -76,7 +76,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 Manager.ResetAllRenderersInCurrentPlayerPrefabToActive();
 
                 // Load shader definition file and create materials for it
-                Dictionary<string, ShaderEntry> shaderDefinition = Manager.PlayerSkinDataRegistry.GetLegacyShaderDefinitionForModel(modelName);
+                Dictionary<string, ShaderEntry> shaderDefinition = Manager.GetLegacyShaderDefinitionForModel(modelName);
                 Manager.CreateMaterialsFromSkinDefinition(m_LoadingSkinName, shaderDefinition, skinDefinition);
 
                 Manager.DisableAndEnableSurfacesForCurrentPlayerPrefab(skinDefinition);

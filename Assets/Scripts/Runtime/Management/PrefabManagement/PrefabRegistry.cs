@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -8,191 +7,19 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Tolik.RemakeSoF.Runtime.PrefabManagement
 {
     /// <summary>
-    /// Zentrale Verwaltung für Prefab-Assets mit Caching und dynamischer Erweiterbarkeit.
-    /// Nutzt das Observer Pattern für Benachrichtigungen über Cache-Änderungen.
-    /// Analog zur TextureRegistry für konsistentes Design Pattern.
+    /// Zentrale Verwaltung für Prefab-Assets mit Caching über Addressables.
+    /// Cached geladene Prefabs und managed Addressables Handles.
     /// </summary>
     public class PrefabRegistry
     {
-        // Caching
-        private Dictionary<string, PrefabData> m_PrefabCache = new(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<string, IPrefabLoader> m_CustomLoaders = new();
-        private List<IPrefabRegistryObserver> m_Observers = new();
+        private readonly Dictionary<string, object> m_PrefabCache = new(StringComparer.OrdinalIgnoreCase);
 
-        #region Observer Interface
-
-        /// <summary>
-        /// Observer Interface für Cache-Änderungen.
-        /// </summary>
-        public interface IPrefabRegistryObserver
-        {
-            /// <summary>
-            /// Aufgerufen wenn ein Prefab registriert wurde.
-            /// </summary>
-            void OnPrefabRegistered(string key, PrefabData prefabData);
-
-            /// <summary>
-            /// Aufgerufen wenn ein Prefab entfernt wurde.
-            /// </summary>
-            void OnPrefabUnregistered(string key);
-
-            /// <summary>
-            /// Aufgerufen wenn der Cache geleert wurde.
-            /// </summary>
-            void OnCacheCleared();
-
-            /// <summary>
-            /// Aufgerufen wenn ein Loader registriert wurde.
-            /// </summary>
-            void OnLoaderRegistered(string key);
-        }
-
-        #endregion
-
-        #region Loader Interface
-
-        /// <summary>
-        /// Interface für benutzerdefinierte Prefab-Loader.
-        /// </summary>
-        public interface IPrefabLoader
-        {
-            /// <summary>
-            /// Prüft, ob dieser Loader das Prefab laden kann.
-            /// </summary>
-            bool CanLoad(string key);
-
-            /// <summary>
-            /// Lädt das Prefab mit dem gegebenen Key.
-            /// </summary>
-            GameObject Load(string key);
-        }
-
-        #endregion
-
-        #region Observer Management
-
-        /// <summary>
-        /// Registriert einen Observer für Cache-Benachrichtigungen.
-        /// </summary>
-        public void Subscribe(IPrefabRegistryObserver observer)
-        {
-            if (observer != null && !m_Observers.Contains(observer))
-            {
-                m_Observers.Add(observer);
-                Debug.Log("[PrefabRegistry] Observer subscribed");
-            }
-        }
-
-        /// <summary>
-        /// Entfernt einen Observer.
-        /// </summary>
-        public void Unsubscribe(IPrefabRegistryObserver observer)
-        {
-            if (observer != null && m_Observers.Remove(observer))
-            {
-                Debug.Log("[PrefabRegistry] Observer unsubscribed");
-            }
-        }
-
-        private void NotifyPrefabRegistered(string key, PrefabData prefabData)
-        {
-            foreach (var observer in m_Observers)
-            {
-                try
-                {
-                    observer?.OnPrefabRegistered(key, prefabData);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[PrefabRegistry] Error notifying observer: {ex.Message}");
-                }
-            }
-        }
-
-        private void NotifyPrefabUnregistered(string key)
-        {
-            foreach (var observer in m_Observers)
-            {
-                try
-                {
-                    observer?.OnPrefabUnregistered(key);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[PrefabRegistry] Error notifying observer: {ex.Message}");
-                }
-            }
-        }
-
-        private void NotifyCacheCleared()
-        {
-            foreach (var observer in m_Observers)
-            {
-                try
-                {
-                    observer?.OnCacheCleared();
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[PrefabRegistry] Error notifying observer: {ex.Message}");
-                }
-            }
-        }
-
-        private void NotifyLoaderRegistered(string key)
-        {
-            foreach (var observer in m_Observers)
-            {
-                try
-                {
-                    observer?.OnLoaderRegistered(key);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[PrefabRegistry] Error notifying observer: {ex.Message}");
-                }
-            }
-        }
-
-        #endregion
-
-        #region Registration & Loading
-
-        /// <summary>
-        /// Registriert einen benutzerdefinierten Prefab-Loader für bestimmte Keys oder Muster.
-        /// </summary>
-        public void RegisterLoader(string key, IPrefabLoader loader)
-        {
-            if (string.IsNullOrEmpty(key) || loader == null)
-            {
-                Debug.LogWarning("[PrefabRegistry] Invalid loader registration");
-                return;
-            }
-
-            m_CustomLoaders[key] = loader;
-            Debug.Log($"[PrefabRegistry] Registered custom loader for: {key}");
-            NotifyLoaderRegistered(key);
-        }
-
-        /// <summary>
-        /// Vorlädt und registriert ein Prefab mit einem bestimmten Key.
-        /// </summary>
-        public void RegisterPrefab(string key, GameObject prefab, PrefabSource source = PrefabSource.System)
-        {
-            if (string.IsNullOrEmpty(key) || prefab == null)
-            {
-                Debug.LogWarning("[PrefabRegistry] Cannot register null prefab or empty key");
-                return;
-            }
-
-            var data = PrefabDataFactory.Create(key, prefab, source);
-            RegisterPrefabData(data);
-        }
+        #region Loading & Caching
 
         /// <summary>
         /// Registriert bereits erstellte PrefabData.
         /// </summary>
-        public void RegisterPrefabData(PrefabData data)
+        public void RegisterPrefabData<T>(PrefabData<T> data) where T : UnityEngine.Object
         {
             if (data == null || string.IsNullOrEmpty(data.Id) || data.Prefab == null)
             {
@@ -201,25 +28,28 @@ namespace Tolik.RemakeSoF.Runtime.PrefabManagement
             }
 
             m_PrefabCache[data.Id] = data;
-            NotifyPrefabRegistered(data.Id, data);
         }
 
         /// <summary>
-        /// Gibt PrefabData nach Key zurück. Nutzt Cache oder lädt aus registrierten Custom Loadern.
+        /// Gibt PrefabData nach Key zurück. Nutzt Cache oder lädt über Addressables.
         /// </summary>
-        public PrefabData GetPrefabData(string key)
+        public PrefabData<T> GetOrLoadPrefabData<T>(string key) where T : UnityEngine.Object
         {
             if (string.IsNullOrEmpty(key))
                 return null;
 
-            if (m_PrefabCache.TryGetValue(key, out var cached))
-                return cached;
-
-            if (TryLoadFromCustomLoaders(key, out var customData))
+            // 1. Cache prüfen
+            if (m_PrefabCache.TryGetValue(key, out var cached) && cached is PrefabData<T> castedData)
             {
-                m_PrefabCache[key] = customData;
-                NotifyPrefabRegistered(key, customData);
-                return customData;
+                Debug.Log($"[PrefabRegistry] Returning cached prefab: {key}");
+                return castedData;
+            }
+
+            // 2. Addressables laden
+            if (TryLoadFromAddressables<T>(key, out var addressablesData))
+            {
+                m_PrefabCache[key] = (object)addressablesData;
+                return addressablesData;
             }
 
             Debug.LogWarning($"[PrefabRegistry] Prefab not found: {key}");
@@ -227,42 +57,15 @@ namespace Tolik.RemakeSoF.Runtime.PrefabManagement
         }
 
         /// <summary>
-        /// Gibt nur das Prefab GameObject zurück (Legacy).
-        /// </summary>
-        public GameObject GetPrefab(string key)
-        {
-            return GetPrefabData(key)?.Prefab;
-        }
-
-        /// <summary>
-        /// Prüft, ob ein Prefab existiert (im Cache oder ladbar).
-        /// </summary>
-        public bool HasPrefab(string key)
-        {
-            if (string.IsNullOrEmpty(key))
-                return false;
-
-            return m_PrefabCache.ContainsKey(key) || CanLoad(key);
-        }
-
-        /// <summary>
         /// Entfernt ein Prefab aus dem Cache und released das Addressables-Handle.
         /// </summary>
         public void UnregisterPrefab(string key)
         {
-            if (m_PrefabCache.TryGetValue(key, out var data))
-            {
-                m_PrefabCache.Remove(key);
+            if (!m_PrefabCache.TryGetValue(key, out var data))
+                return;
 
-                // Release Addressables handle falls vorhanden
-                if (data.Handle.IsValid()) // ✅ Prüfe ob Handle valide ist
-                {
-                    Addressables.Release(data.Handle);
-                    Debug.Log($"[PrefabRegistry] Released Addressables handle for: {key}");
-                }
-
-                NotifyPrefabUnregistered(key);
-            }
+            m_PrefabCache.Remove(key);
+            ReleasePrefabDataHandle(data);
         }
 
         /// <summary>
@@ -273,48 +76,67 @@ namespace Tolik.RemakeSoF.Runtime.PrefabManagement
             int releasedCount = 0;
             foreach (var data in m_PrefabCache.Values)
             {
-                if (data.Handle.IsValid()) // ✅ Prüfe ob Handle valide ist
-                {
-                    Addressables.Release(data.Handle);
+                if (ReleasePrefabDataHandle(data))
                     releasedCount++;
-                }
             }
 
             m_PrefabCache.Clear();
             Debug.Log($"[PrefabRegistry] Cache cleared - released {releasedCount} Addressables handles");
-            NotifyCacheCleared();
         }
-
         #endregion
 
-        #region Internal Loading
+        #region Internal Methods
 
-        private bool TryLoadFromCustomLoaders(string key, out PrefabData prefabData)
+        /// <summary>
+        /// Hilfsmethode zum Release des Addressables-Handles aus PrefabData.
+        /// Nutzt Reflection statt dynamic.
+        /// </summary>
+        private bool ReleasePrefabDataHandle(object data)
         {
-            prefabData = null;
-
-            foreach (var loader in m_CustomLoaders.Values)
+            try
             {
-                if (loader.CanLoad(key))
+                var handleProp = data.GetType().GetProperty("Handle");
+                if (handleProp != null)
                 {
-                    var prefab = loader.Load(key);
-                    if (prefab != null)
+                    var handle = (AsyncOperationHandle)handleProp.GetValue(data);
+                    if (handle.IsValid())
                     {
-                        prefabData = PrefabDataFactory.CreateFromLoader(key, prefab);
+                        Addressables.Release(handle);
                         return true;
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[PrefabRegistry] Error releasing handle: {ex.Message}");
             }
 
             return false;
         }
 
-        private bool CanLoad(string key)
+        /// <summary>
+        /// Versucht, ein Prefab über Addressables zu laden.
+        /// </summary>
+        private bool TryLoadFromAddressables<T>(string key, out PrefabData<T> prefabData) where T : UnityEngine.Object
         {
-            foreach (var loader in m_CustomLoaders.Values)
+            prefabData = null;
+
+            try
             {
-                if (loader.CanLoad(key))
+                var handle = Addressables.LoadAssetAsync<T>(key);
+                var asset = handle.WaitForCompletion();
+
+                if (asset != null)
+                {
+                    prefabData = PrefabDataFactory.Create(key, asset, PrefabSource.System);
+                    prefabData.Handle = handle;
+                    Debug.Log($"[PrefabRegistry] Loaded prefab from Addressables: {key}");
                     return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[PrefabRegistry] Failed to load from Addressables: {key}, Error: {ex.Message}");
             }
 
             return false;
@@ -330,80 +152,15 @@ namespace Tolik.RemakeSoF.Runtime.PrefabManagement
         public int CachedPrefabCount => m_PrefabCache.Count;
 
         /// <summary>
-        /// Anzahl der registrierten Custom Loader.
-        /// </summary>
-        public int RegisteredLoaderCount => m_CustomLoaders.Count;
-
-        /// <summary>
-        /// Anzahl der registrierten Observer.
-        /// </summary>
-        public int RegisteredObserverCount => m_Observers.Count;
-
-        /// <summary>
         /// Gibt Statistiken über die PrefabRegistry aus.
         /// </summary>
         public void LogStatistics()
         {
             Debug.Log($"[PrefabRegistry] Statistics:\n" +
                       $"  Cached Prefabs: {CachedPrefabCount}\n" +
-                      $"  Custom Loaders: {RegisteredLoaderCount}\n" +
-                      $"  Observers: {RegisteredObserverCount}\n" +
                       $"  Cached Keys: {string.Join(", ", m_PrefabCache.Keys)}");
         }
 
         #endregion
     }
-
-    #region Supporting Types
-
-    /// <summary>
-    /// Datenstruktur für gespeicherte Prefab-Informationen.
-    /// </summary>
-    public class PrefabData
-    {
-        public string Id { get; set; }
-        public GameObject Prefab { get; set; }
-        public PrefabSource Source { get; set; }
-        public DateTime LoadedAt { get; set; }
-
-        /// <summary>
-        /// Addressables Handle für Memory Management.
-        /// Non-generic AsyncOperationHandle kann alle Asset-Typen halten.
-        /// </summary>
-        public AsyncOperationHandle Handle { get; set; }
-    }
-
-    /// <summary>
-    /// Source, von wo das Prefab geladen wurde.
-    /// </summary>
-    public enum PrefabSource
-    {
-        System,      // Aus Editor/Resources geladen
-        Custom,      // Von Custom Loader
-        Manual       // Manuell registriert
-    }
-
-    /// <summary>
-    /// Factory für PrefabData-Erstellung.
-    /// </summary>
-    public static class PrefabDataFactory
-    {
-        public static PrefabData Create(string key, GameObject prefab, PrefabSource source = PrefabSource.System)
-        {
-            return new PrefabData
-            {
-                Id = key,
-                Prefab = prefab,
-                Source = source,
-                LoadedAt = DateTime.Now
-            };
-        }
-
-        public static PrefabData CreateFromLoader(string key, GameObject prefab)
-        {
-            return Create(key, prefab, PrefabSource.Custom);
-        }
-    }
-
-    #endregion
 }
