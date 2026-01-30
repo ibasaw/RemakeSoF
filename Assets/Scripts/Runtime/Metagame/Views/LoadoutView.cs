@@ -70,6 +70,10 @@ namespace Tolik.RemakeSoF.Runtime
         public void SetCharacterPrefab(GameObject prefab)
         {
             m_CharacterPrefab = prefab;
+            if (m_CharacterPreviewStage != null)
+            {
+                RefreshCharacterPreview();
+            }
         }
 
         void CreateStage()
@@ -93,13 +97,25 @@ namespace Tolik.RemakeSoF.Runtime
             light.transform.rotation = Quaternion.Euler(40f, -30f, 0f);
             light.intensity = 1.2f;
             light.cullingMask = 1 << m_PreviewLayer;
-            if (m_CharacterPrefab != null)
+            RefreshCharacterPreview();
+        }
+
+        void RefreshCharacterPreview()
+        {
+            if (m_CharacterPreviewStage == null) return;
+
+            if (m_CharacterPreviewInstance != null)
             {
-                m_CharacterPreviewInstance = Instantiate(m_CharacterPrefab, m_CharacterPreviewStage.transform);
-                m_CharacterPreviewInstance.transform.position = m_CharacterPosition;
-                m_CharacterPreviewInstance.transform.rotation = Quaternion.Euler(m_CharacterRotation);
-                SetLayerRecursively(m_CharacterPreviewInstance, m_PreviewLayer);
+                Destroy(m_CharacterPreviewInstance);
+                m_CharacterPreviewInstance = null;
             }
+
+            if (m_CharacterPrefab == null) return;
+
+            m_CharacterPreviewInstance = Instantiate(m_CharacterPrefab, m_CharacterPreviewStage.transform);
+            m_CharacterPreviewInstance.transform.position = m_CharacterPosition;
+            m_CharacterPreviewInstance.transform.rotation = Quaternion.Euler(m_CharacterRotation);
+            SetLayerRecursively(m_CharacterPreviewInstance, m_PreviewLayer);
         }
 
         void LateUpdate()

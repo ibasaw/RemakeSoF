@@ -1,18 +1,15 @@
 # RemakeSoF
+Eine Unity-Implementierung der klassischen Soldier of Fortune 2 Bewegung.
 
-**Hauptunterschiede:**
 
-| Aspekt | **TextureRegistry** | **PlayerSkinRegistry** |
-|--------|---------------------|------------------------|
-| **Zweck** | Verwaltet **Texture2D**-Assets (Bilder) | Verwaltet **Skin-Definitionen** (JSON-Metadaten) |
-| **Daten** | `Texture2D` + `TextureData` | `SkinDefinition` (Model, Materialien, Surfaces) |
-| **Pattern** | **Observer Pattern** (Observables) | **Dependency Injection** (Host-Interface) |
-| **Lazy Loading** | Ja, via Custom Loaders | Nein, Eager Loading beim Init |
-| **Fehlerbehandlung** | Internes Logging | Internes logging |
-| **Erweiterbarkeit** | `RegisterLoader(...)` für externe Quellen | Fest: nur Resources-Ordner |
-| **Zustand** | Cache + dynamische Loader | stateless: nur Lookup-Dictionary |
 
-**TextureRegistry** ist generischer und nutzt Observer für Benachrichtigungen. **PlayerSkinRegistry** ist spezialisiert auf Skins, kennt aber seinen Manager via Interface und meldet Fehler zurück.
+
+
+
+
+
+
+
 
 TODOS:
 

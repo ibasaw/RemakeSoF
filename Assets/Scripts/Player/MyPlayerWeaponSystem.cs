@@ -16,7 +16,7 @@ public class MyPlayerWeaponSystem : MonoBehaviour
 
 	[Header("Visual Collider Debug")]
 	[SerializeField] private bool showVisualCollider = true;
-	[SerializeField] private Color hitColor = new Color(0, 1, 0, 0.3f);  // Semi-transparent green
+	[SerializeField] private Color hitColor = new(0, 1, 0, 0.3f);  // Semi-transparent green
 	[SerializeField] private Material hitMaterial;
 	[SerializeField] private float hitMarkerSize = 4f;
 	[SerializeField] private float hitMarkerDuration = 3f;
@@ -28,7 +28,7 @@ public class MyPlayerWeaponSystem : MonoBehaviour
 	private JArray cachedWeaponsData;
 	private bool materialsLoaded = false;
 	private string lastMaterialHit = "None";
-	private Dictionary<string, MaterialInfo> materialInfos = new Dictionary<string, MaterialInfo>(StringComparer.OrdinalIgnoreCase);
+	private readonly Dictionary<string, MaterialInfo> materialInfos = new(StringComparer.OrdinalIgnoreCase);
 
 	private string currentWeaponName;
 

@@ -45,10 +45,10 @@ public class PlayerSoundSystem : MonoBehaviour
 	private float currentSoundDuration = 0f;
 
 	// Sound cache for different surface materials
-	private Dictionary<string, MaterialInfo> materialInfos = new Dictionary<string, MaterialInfo>(StringComparer.OrdinalIgnoreCase);
-	private Dictionary<string, AudioClip> landingSounds = new Dictionary<string, AudioClip>();
-	private Dictionary<string, AudioClip[]> footstepSounds = new Dictionary<string, AudioClip[]>();
-	private Dictionary<string, AudioClip[]> weaponSounds = new Dictionary<string, AudioClip[]>();
+	private readonly Dictionary<string, MaterialInfo> materialInfos = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Dictionary<string, AudioClip> landingSounds = new();
+	private readonly Dictionary<string, AudioClip[]> footstepSounds = new();
+	private readonly Dictionary<string, AudioClip[]> weaponSounds = new();
 
 	private bool soundsLoaded = false;
 

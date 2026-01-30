@@ -80,7 +80,7 @@ namespace Tolik.RemakeSoF.Runtime
             Debug.Log("User authenticated event received, showing main menu view");
             App.Model.PlayerData.InitializePlayer(evt.AuthResponse);
 
-            PlayerSkinManager.ChangeSkin(App.Model.PlayerData.CurrentSelectedSkinName);
+            PlayerSkinManager.ChangeSkin(App.Model.PlayerData.CurrentSelectedSkinName, "loadout_preview");
 
             PrepareViewTexturesAndShow();
             View.LoadSubViewByName("loadoutButton"); // start Default to Loadout view

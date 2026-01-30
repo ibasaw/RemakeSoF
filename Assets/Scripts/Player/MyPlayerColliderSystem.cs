@@ -20,14 +20,14 @@ public class MyPlayerColliderSystem : MonoBehaviour
 	[SerializeField] private bool drawCapsuleDebugGUI = false;
 	[SerializeField] private float capsuleRadius = 0f;  
 	[SerializeField] private float capsuleHeight = 0f;
-	[SerializeField] private Vector3 capsuleCenter = new Vector3(0, 0, 0);  // Center at half height
+	[SerializeField] private Vector3 capsuleCenter = new(0, 0, 0);  // Center at half height
 	[SerializeField] private float groundCheckDistance = 1f;  // Distance to check for ground 1 ist perfekt erstmal.
 	[SerializeField] private float groundCheckRadius = 0.1f;  // Radius of ground check visual (calculated from feet width)
 	[SerializeField] private float groundCheckHeight = 0.1f;  // Height of ground check disk (0.1 or 0 for flat disk)
 
     [Header("Visual Collider Debug")]
 	[SerializeField] private bool showVisualCollider = true;
-	[SerializeField] private Color colliderColor = new Color(0, 1, 0, 0.3f);  // Semi-transparent green
+	[SerializeField] private Color colliderColor = new(0, 1, 0, 0.3f);  // Semi-transparent green
 	[SerializeField] private Material colliderMaterial;
 
 	//Berechnet die Capsule-Größe basierend auf den Charakter-Bones (Cranium ↔ Pelvis)

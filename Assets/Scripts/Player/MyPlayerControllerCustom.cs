@@ -147,7 +147,7 @@ public class MyPlayerControllerCustom : MonoBehaviour
 	private bool isLeaningLeft = false;
 	private bool isLeaningRight = false;
 	private int leanOffset = 0; // -30 for left, +30 for right, 0 for none
-	private List<string> touchedObjects = new List<string>(); // touched objects on movement-collide / jump
+	private readonly List<string> touchedObjects = new(); // touched objects on movement-collide / jump
 
 	[Header("Lean Settings")]
 	[SerializeField] private bool debugInputInfo = false;

@@ -37,8 +37,15 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnPlayerSkinChanged(PlayerSkinChangedEvent evt)
         {
-            Debug.Log($"[LoadoutController] OnPlayerSkinChanged - Setting character prefab in LoadoutView: {evt.playerPrefab.name}");
-            View.SetCharacterPrefab(evt.playerPrefab);
+            var prefab = PlayerSkinManager.GetCurrentPlayerPrefab();
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[LoadoutController] OnPlayerSkinChanged - Current prefab is null for skin '{evt.skinName}'");
+                return;
+            }
+
+            Debug.Log($"[LoadoutController] OnPlayerSkinChanged - Setting character prefab in LoadoutView: {prefab.name}");
+            View.SetCharacterPrefab(prefab);
         }
 
         void OnDestroy()

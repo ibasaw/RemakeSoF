@@ -15,13 +15,58 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 48e356ca73297cd46ad922e286b32a70
   m_SerializeEntries:
+  - m_GUID: 01a45810de9ae584fb11870a96a69daf
+    m_Address: characters/models/snow
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1def85f5e74bda3409add6cd46509ca1
+    m_Address: characters/models/average_armor
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2e92615550413c34aaf9b526bd70b64e
     m_Address: characters/models/suit_long_coat
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 69c525f7aabd64145a31c59c5c703574
+    m_Address: characters/models/female_armor
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6dec7ed9477024246b8388cb4fea0b52
+    m_Address: characters/models/female_skirt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6e077d41b1616514f81c0734b1b61081
+    m_Address: characters/models/fat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c68e8f1f36b3fc46b328a176294bb15
+    m_Address: characters/models/chem_suit
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: acae1b99ec54d864f99c3cdc6a5069b6
     m_Address: models/animator/loadout_preview
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bbec368c1aac07241a140a8efe3b78ac
+    m_Address: characters/models/suit_sleeves
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c64754162df1edd4bb9489d7742245db
+    m_Address: characters/models/female_pants
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cbd2dcea820271944bed24852d8f4938
+    m_Address: characters/models/average_sleeves
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -106,7 +106,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         static void EnsureDirectoryExists(string filePath)
         {
-            FileInfo fi = new FileInfo(filePath);
+            FileInfo fi = new(filePath);
             if (!fi.Directory.Exists)
             {
                 Directory.CreateDirectory(fi.DirectoryName);

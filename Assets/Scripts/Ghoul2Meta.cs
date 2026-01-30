@@ -11,12 +11,12 @@ using System.Linq;
 public class Ghoul2Meta : MonoBehaviour
 {
     [Header("Dynamic Properties")]
-    [SerializeField] private List<string> propertyNames = new List<string>();
-    [SerializeField] private List<string> propertyValues = new List<string>();
-    [SerializeField] private List<string> propertyTypes = new List<string>();
+    [SerializeField] private List<string> propertyNames = new();
+    [SerializeField] private List<string> propertyValues = new();
+    [SerializeField] private List<string> propertyTypes = new();
     
     // Dictionary for fast runtime access
-    private Dictionary<string, object> properties = new Dictionary<string, object>();
+    private readonly Dictionary<string, object> properties = new();
     
     /// <summary>
     /// Set a property value dynamically during import

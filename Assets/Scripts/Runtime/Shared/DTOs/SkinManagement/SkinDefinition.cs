@@ -10,6 +10,11 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         public ModelPreferences prefs;
         public List<MaterialDefinition> materials;
 
+        /// <summary>
+        /// Returns the model name for the skin.
+        /// For now we only support model "1".
+        /// TODO: Extend to support multiple models in future.
+        /// </summary>
         public string GetModelName()
         {
             if (prefs != null && prefs.models != null && prefs.models.TryGetValue("1", out string modelName))

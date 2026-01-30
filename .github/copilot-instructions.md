@@ -1,13 +1,64 @@
 # Copilot Instructions for RemakeSoF
 
 ## Project Architecture
-- **Core Movement**: Faithful recreation of Quake III/SoF2 movement logic, with Unity-specific adaptations.
-- **Asset Management**:
-  - **PrefabManager**: Clean service (no MonoBehaviour) for loading prefabs via Addressables. Cache-first strategy, delegates to `PrefabRegistry`. Use via DI, not singleton.
-  - **PrefabRegistry**: Internal cache + Addressables loading. Manages handles, releases on clear. Only accessed through `PrefabManager`.
-  - **PrefabDataFactory**: Creates `PrefabData` instances from loaded prefabs. Used by `PrefabManager`.
-  
+- **Core Movement**: Quake III/SoF2 Bewegung mit Unity-Anpassungen (manuelle Physik bevorzugt).
+- **MVC Architecture (Runtime/Core)**:
+  - **BaseApplication**: Root-Klasse für Scene-Scripts; verwaltet EventManager und findet Model/View/Controller-Instanzen per DFS; generisch typisierbar `BaseApplication<M,V,C>`.
+  - **Model**: Basisklasse für Datenhaltung; `Model<T>` ermöglicht typsichere App-Referenzen.
+  - **View**: Basisklasse für UI-Darstellung (MonoBehaviour); `View<T>` mit `LoadVisualElement()` für UIToolkit-Integration, `Show()`/`Hide()` für Activation.
+  - **Controller**: Basisklasse für MVC-Bridge; `Controller<T>` handheld Event-Listeners auf App-EventManager; `AddListener<E>()` / `RemoveListener<E>()` / `RemoveListeners()`.
+  - **Element**: Gemeinsame Basis für alle MVC-Klassen; lazy-loaded App-Reference, `Find<T>()` für Component-Suche, `Broadcast(evt)` für Event-Versand.
+  - **EventManager**: Typ-sichere Event-Broadcasting; zentrales Kommunikationssystem für MVC-Komponenten.
+- **State Machine Architecture (Runtime/Core)**:
+  - **StateMachine<TState, TSelf>**: Generische Base-Klasse für Manager; CRTP-Pattern ermöglicht States Rückreferenz zum Manager; `ChangeState()` ruft Exit/Enter auf; `EventManager` für State-Events.
+  - **State<TManager>**: Abstrakte Base-Klasse für konkrete States; implementiert `Enter()` und `Exit()`; Manager wird per Property gesetzt.
+- **Pure Services (keine MonoBehaviours, via ServiceLocator)**:
+  - **PrefabManager**: Cache-first Addressables, delegiert an `PrefabRegistry`, nur über ServiceLocator/DI.
+  - **PrefabRegistry**: Interner Cache + Addressables, released Handles on `ClearCache()`, keine Custom-Prefab-Loader.
+  - **TextureManager**: Baut Materialien aus Skin-Definitionen, nutzt `TextureRegistry`, zugreifbar via ServiceLocator, `ClearCache()` delegiert.
+  - **TextureRegistry**: Cache + Custom Loader (Default Lazy Loader), kein Observer-Pattern, `ClearCache()` zerstört Texturen/Materialien.
+- **MonoBehaviour Manager / State Machines**:
+  - **PlayerSkinManager**: StateMachine (Idle/Loading/Applied/Error); orchestriert Skin-Laden & -Anwenden via interne Services (`PlayerSkinLoader`, `PlayerSkinApplier`); Input via `IPlayerSkinChangeHandler` je State; Output-Events zentral im Manager (`OnSkinApplied()`, `OnSkinLoadFailure()` via `EventManager`); nutzt `PrefabManager`, `TextureManager` via ServiceLocator, `PlayerSkinDataRegistry` intern.
+  - **PlayerSkinLoader** (intern): Lädt Prefabs, Animatoren, Skin-Definitionen; delegiert zu `PlayerSkinDataRegistry`.
+  - **PlayerSkinApplier** (intern): Wendet Materialien & Surface-Definitionen auf Prefabs an; findet Renderer per Match-Logik, verwaltet Aktivierung.
+  - **PlayerSkinDataRegistry**: Lädt Skin-Definitionen, Shader-/Surface-Mappings, liefert Next/Prev Names; interne Registry nur für `PlayerSkinManager`.
+  - **ConnectionManager**: StateMachine für NGO; leitet NetworkManager-Callbacks (OnConnectionEvent, OnServerStarted, ApprovalCheck, OnTransportFailure, OnServerStopped) an den aktuellen State weiter; Abos in `Awake`, Deregistrierung in `OnDestroy`.
+  - **AuthenticationManager**: StateMachine (Unauthenticated/Authenticating/Authenticated/SessionExpired); Input via `IAuthenticationHandler` je State; Output-Events zentral im Manager (`OnAuthenticationSuccess()`, `OnAuthenticationFailure()`, `OnSessionExpired()`); verwaltet Authentifizierungsverlauf und Token-Refresh.
+  - **ConsoleManager**: StateMachine (ConsoleInactive/ConsoleActive); leitet Kommandos und Aktivierungszustände an den aktuellen State; verwaltet Konsolen-UI und Befehlsausführung.
+  - **ApplicationEntryPoint**: Registriert Pure Services im `ServiceLocator` (z. B. TextureManager/PrefabManager) in `Awake`; hält serialisierte MonoBehaviour-Manager (Connection/Authentication/PlayerSkin/Console); ruft `ServiceLocator.ClearAll()` in `OnDestroy` auf.
+- **Sonstiges**: `PrefabDataFactory` bleibt als Helper für PrefabManager.
+
+## Scene Architecture
+- **Metagame Scene**: Nutzt MVC-Pattern mit generischem `MetagameApplication<MetagameModel, MetagameView, MetagameController>`. Ist die Hub-Scene für Spieler vor dem Joinen eines Games (Login, Skin-Auswahl, etc.).
+- **Game Scene**: Nutzt MVC-Pattern mit generischem `GameApplication<GameModel, GameView, GameController>`. Ist die Main-Gameplay-Scene mit Netcode-Integration, Server/Client-Character-Synchronisation, und networked game state.
+
+## Application Lifecycle & Initialization
+- **ServiceLocator**: Typ-sicherer Service-Container für Pure Services; `Register<T>(T service)` registriert, `Get<T>()` ruft ab; `ClearAll()` räumt auf und ruft `ClearCache()` bei Managern auf; initialisiert in `ApplicationEntryPoint.Awake()`.
+- **ApplicationEntryPoint**: Singleton, DontDestroyOnLoad; registriert Pure Services (`TextureManager`, `PrefabManager`) in `Awake`; hält MonoBehaviour-Manager (Connection/Authentication/PlayerSkin) als serialisierte Felder; initialisiert Network via `InitializeNetworkLogic()` in `[RuntimeInitializeOnLoadMethod]`.
+- **Network Initialization**: Server startet Port-Listening, setzt Framerate/VSync, lädt GameScene nach erfolgreicher Initialisierung; Client lädt MetagameScene, verbindet sich optional auto via `AutoConnectOnStartup`; CommandLineArgumentsParser liest `--port` und `--target-framerate`.
+
 ## Patterns & Conventions
-- **Dependency Injection**: Inject `PrefabManager` into systems that need prefab loading.
-- **Cache-First Loading**: `PrefabManager` checks `PrefabRegistry` cache before loading from Addressables. Never bypass caches manually.
-- **Manual Physics**: Prefer explicit physics/collision code over Unity built-ins for core movement.
+- **Single Source of Truth**: Manager halten immer aktuelle State-Daten (z. B. `m_CurrentPlayerPrefab`, `m_CurrentSkinName`); Events sind nur Trigger (minimal Payload); Views/Controller fragen Daten beim Manager an statt aus Events zu lesen; keine State-Duplikation in UI; Manager garantiert State-Konsistenz.
+- **Klare Trennungen (Separation of Concerns)**:
+  - **Manager**: Hält State, orchestriert, sendet Events, ist Single Source of Truth.
+  - **State**: Nur Orchestrierung (Enter/Exit), keine Business-Logik, delegiert an Manager.
+  - **Interne Services** (Loader, Applier): Spezifische Operationen (Asset-Laden, Material-Anwendung), keine State-Haltung.
+  - **Views**: Nur UI-Rendering und User-Input, fragen State beim Manager ab, senden Events für Actions.
+  - **Controller**: UI-Bridge; abonniert Manager-Events, leitet zu Views weiter, triggert Manager-Actions.
+  - **Pure Services** (PrefabManager, TextureManager): Global verfügbar, Cache-first, Lifecycle-Management.
+- **Dependency Injection**: 
+  - Pure Services (global verfügbar) immer über `ServiceLocator.Get<T>()` beziehen (z. B. `PrefabManager`, `TextureManager`).
+  - Interne Services (nur von einem Manager genutzt) via Constructor-Injection; keine ServiceLocator-Nutzung nötig.
+  - Keine Singleton-Zugriffe über `ApplicationEntryPoint.Singleton` für Services.
+- **Cache-First**: Immer über `PrefabManager`/`TextureManager`; Registries nicht umgehen; Cache-Flush via `ClearCache()`/`ServiceLocator.ClearAll()`.
+- **State Machines**: Input über State-spezifische Interfaces; Events/Output werden vom Manager (nicht vom State) via `EventManager` gesendet; States steuern nur Transitionen.
+- **Service Decomposition**: Komplexe Manager können interne Services (keine MonoBehaviours) nutzen für bessere Separation of Concerns; z. B. `PlayerSkinManager` → `PlayerSkinLoader` + `PlayerSkinApplier`.
+- **Addressables Only**: Prefab-Loading ausschließlich Addressables, keine Custom Prefab Loader; Custom Loader nur in `TextureRegistry` erlaubt.
+- **Lifecycle**: Externe Callbacks in `Awake` abonnieren und in `OnDestroy` sauber deregistrieren; `ServiceLocator.ClearAll()` beim Teardown.
+- **Manual Physics**: Für Kernbewegung explizite Physik-/Kollisionslogik bevorzugen.
+- **Logging**: Kurze Warnungen/Errors; keine Observer-Benachrichtigungen in TextureRegistry.
+
+## Dedicated Server & Networking
+- **Multiplayer Roles**: Server/Client-Rollen via `Unity.DedicatedServer.MultiplayerRoles`; konfigurierbar über Command-Line-Arguments (`--port`, `--target-framerate`).
+- **CommandLineArgumentsParser**: Parst Server-Startparameter (Default Port: 7777, Default TargetFramerate: 30).
+- **NetworkedGameState**: Zentrale Synchronisation des Game-State zwischen Server und Clients.

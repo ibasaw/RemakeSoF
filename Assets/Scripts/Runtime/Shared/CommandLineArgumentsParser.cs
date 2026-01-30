@@ -17,7 +17,7 @@ namespace Tolik.RemakeSoF.Runtime
         /// Initializes the CommandLineArgumentsParser
         /// </summary>
         public CommandLineArgumentsParser() : this(Environment.GetCommandLineArgs()) { }
-        
+
         /// <summary>
         /// Initializes the CommandLineArgumentsParser
         /// </summary>
@@ -30,8 +30,8 @@ namespace Tolik.RemakeSoF.Runtime
                 m_Args = new string[0];
             }
 
-            Port = Arguments.Port.HasValue ? Arguments.Port.Value : k_DefaultPort;
-            TargetFramerate = Arguments.TargetFramerate.HasValue ? Arguments.TargetFramerate.Value : k_DefaultTargetFramerate;
+            Port = Arguments.Port ?? k_DefaultPort;
+            TargetFramerate = Arguments.TargetFramerate ?? k_DefaultTargetFramerate;
         }
 
         /// <summary>
