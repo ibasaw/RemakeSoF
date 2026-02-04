@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using UnityEngine;
@@ -16,9 +17,14 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             m_Registry = registry;
         }
 
-        public SkinDefinition GetSkinByName(string skinName)
+        public SkinDefinition GetSkinDefinitionByName(string skinName)
         {
-            return m_Registry.GetSkinByName(skinName);
+            return m_Registry.GetSkinDefinitionByName(skinName);
+        }
+
+        public List<CharacterTemplate> GetCharacterTemplatesBySkinName(string skinName)
+        {
+            return m_Registry.GetCharacterTemplatesBySkinName(skinName);
         }
 
         public GameObject LoadPrefabForModel(string prefabPath)

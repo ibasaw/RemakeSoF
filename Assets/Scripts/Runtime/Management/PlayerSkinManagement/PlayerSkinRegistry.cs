@@ -19,26 +19,31 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
     /// </summary>
     public class PlayerSkinDataRegistry
     {
-        private readonly Dictionary<string, List<SkinDefinition>> m_SkinDataByModel = new(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, SkinDefinition> m_SkinDataByName = new(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, Dictionary<string, ShaderEntry>> m_LegacyShaderDefinitionsByModel = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, List<SkinDefinition>> m_SkinDefinitionsByModelName = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, SkinDefinition> m_SkinDefinitionByName = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Dictionary<string, ShaderEntry>> m_LegacyShaderEntriesByModel = new(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, SkinSurfaceDefinition> m_SkinSurfaceDefinitionsByModel = new(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, SkinSurfaceDefinition> SkinSurfaceDefinitionsByModel => m_SkinSurfaceDefinitionsByModel;
+        private readonly Dictionary<string, CharacterTemplate> m_CharacterTemplatesByName = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, List<CharacterTemplate>> m_CharacterTemplatesBySkinName = new(StringComparer.OrdinalIgnoreCase);
+
         public PlayerSkinDataRegistry()
         {
             LoadAllSkinDataFromResources();
             LoadSurfaceDefinitionsFromResources();
+            LoadAllCharacterTemplatesFromResources();
 
-            m_SkinDataByModel.Keys.ToList().ForEach(model =>
+            m_SkinDefinitionsByModelName.Keys.ToList().ForEach(model =>
             {
-                m_LegacyShaderDefinitionsByModel[model] = LoadLegacyShaderDefinitionForModel($"Data/shaders/{model}");
+                m_LegacyShaderEntriesByModel[model] = LoadLegacyShaderEntriesForModel($"Data/shaders/{model}");
             });
-            Debug.Log($"[PlayerSkinRegistry] Loaded {m_LegacyShaderDefinitionsByModel.Count} legacy shader definitions for models: {string.Join(", ", m_LegacyShaderDefinitionsByModel.Keys)}");
+
+            Debug.Log($"[PlayerSkinRegistry] Loaded {m_LegacyShaderEntriesByModel.Count} legacy shader definitions for models: {string.Join(", ", m_LegacyShaderEntriesByModel.Keys)}");
         }
 
         public string GetNextSkinName(string currentName)
         {
-            var keys = m_SkinDataByName.Keys.ToList();
+            var keys = m_SkinDefinitionByName.Keys.ToList();
             if (keys.Count == 0) return null;
             int idx = keys.IndexOf(currentName);
             int nextIdx = (idx + 1) % keys.Count;
@@ -47,7 +52,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 
         public string GetPreviousSkinName(string currentName)
         {
-            var keys = m_SkinDataByName.Keys.ToList();
+            var keys = m_SkinDefinitionByName.Keys.ToList();
             if (keys.Count == 0) return null;
             int idx = keys.IndexOf(currentName);
             int prevIdx = (idx - 1 + keys.Count) % keys.Count;
@@ -57,7 +62,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         /// <summary>
         /// Manually load original SoF2 .shader data definition from Resources folder (world,player)
         /// </summary>
-        private Dictionary<string, ShaderEntry> LoadLegacyShaderDefinitionForModel(string modelName)
+        private Dictionary<string, ShaderEntry> LoadLegacyShaderEntriesForModel(string modelName)
         {
             // Erwartet z. B. "Data/shaders/model_name"
             string fullPath = Path.Combine(Application.dataPath, "Resources", modelName + ".shader");
@@ -90,8 +95,8 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         /// </summary>
         public void LoadAllSkinDataFromResources(string resourcePath = "Data/skin_data")
         {
-            m_SkinDataByModel.Clear();
-            m_SkinDataByName.Clear();
+            m_SkinDefinitionsByModelName.Clear();
+            m_SkinDefinitionByName.Clear();
 
             var allSkinFiles = Resources.LoadAll<TextAsset>(resourcePath);
 
@@ -107,16 +112,16 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                         skinDefinition.prefs.models.TryGetValue("1", out string model))
                     {
                         // Add to model-based dictionary
-                        if (!m_SkinDataByModel.ContainsKey(model))
+                        if (!m_SkinDefinitionsByModelName.ContainsKey(model))
                         {
-                            m_SkinDataByModel[model] = new List<SkinDefinition>();
+                            m_SkinDefinitionsByModelName[model] = new List<SkinDefinition>();
                         }
-                        m_SkinDataByModel[model].Add(skinDefinition);
+                        m_SkinDefinitionsByModelName[model].Add(skinDefinition);
 
                         // Add to name-based dictionary for quick lookup
                         if (!string.IsNullOrEmpty(skinFile.name))
                         {
-                            m_SkinDataByName[skinFile.name] = skinDefinition;
+                            m_SkinDefinitionByName[skinFile.name] = skinDefinition;
                         }
                     }
                 }
@@ -126,13 +131,13 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 }
             }
 
-            Debug.Log($"[PlayerSkinRegistry] Loaded {m_SkinDataByModel.Count} model types with {m_SkinDataByName.Count} total skins: " +
-                string.Join(", ", m_SkinDataByModel.Select(kvp => $"{kvp.Key} ({kvp.Value.Count} skins)")));
+            Debug.Log($"[PlayerSkinRegistry] Loaded {m_SkinDefinitionsByModelName.Count} model types with {m_SkinDefinitionByName.Count} total skins: " +
+                string.Join(", ", m_SkinDefinitionsByModelName.Select(kvp => $"{kvp.Key} ({kvp.Value.Count} skins)")));
         }
 
         public Dictionary<string, ShaderEntry> GetLegacyShaderDefinitionForModel(string modelName)
         {
-            m_LegacyShaderDefinitionsByModel.TryGetValue(modelName, out var shaderEntries);
+            m_LegacyShaderEntriesByModel.TryGetValue(modelName, out var shaderEntries);
             return shaderEntries;
         }
 
@@ -141,7 +146,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         /// </summary>
         public List<SkinDefinition> GetSkinsForModel(string modelType)
         {
-            if (m_SkinDataByModel.TryGetValue(modelType, out var skins))
+            if (m_SkinDefinitionsByModelName.TryGetValue(modelType, out var skins))
             {
                 return new List<SkinDefinition>(skins);
             }
@@ -149,12 +154,27 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         }
 
         /// <summary>
-        /// Get a specific skin by name
+        /// Get a specific SkinDefinition by name
         /// </summary>
-        public SkinDefinition GetSkinByName(string skinName)
+        public SkinDefinition GetSkinDefinitionByName(string skinName)
         {
-            m_SkinDataByName.TryGetValue(skinName, out var skin);
+            m_SkinDefinitionByName.TryGetValue(skinName, out var skin);
             return skin;
+        }
+
+        public List<CharacterTemplate> GetCharacterTemplatesBySkinName(string skinName)
+        {
+            if (m_CharacterTemplatesBySkinName.TryGetValue(skinName, out var templates))
+            {
+                return new List<CharacterTemplate>(templates);
+            }
+            return new List<CharacterTemplate>();
+        }
+
+        public CharacterTemplate GetCharacterTemplateByName(string templateName)
+        {
+            m_CharacterTemplatesByName.TryGetValue(templateName, out var template);
+            return template;
         }
 
         /// <summary>
@@ -162,7 +182,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         /// </summary>
         public string[] GetAvailableModels()
         {
-            return m_SkinDataByModel.Keys.ToArray();
+            return m_SkinDefinitionsByModelName.Keys.ToArray();
         }
 
         /// <summary>
@@ -170,20 +190,113 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         /// </summary>
         public bool HasSkin(string skinName)
         {
-            return m_SkinDataByName.ContainsKey(skinName);
+            return m_SkinDefinitionByName.ContainsKey(skinName);
         }
 
         /// <summary>
         /// Get total number of loaded skins
         /// </summary>
-        public int TotalSkinCount => m_SkinDataByName.Count;
+        public int TotalSkinCount => m_SkinDefinitionByName.Count;
 
         /// <summary>
         /// Get number of skins for a specific model
         /// </summary>
         public int GetSkinCountForModel(string modelType)
         {
-            return m_SkinDataByModel.TryGetValue(modelType, out var skins) ? skins.Count : 0;
+            return m_SkinDefinitionsByModelName.TryGetValue(modelType, out var skins) ? skins.Count : 0;
+        }
+
+        private void LoadAllCharacterTemplatesFromResources()
+        {
+            m_CharacterTemplatesByName.Clear();
+            m_CharacterTemplatesBySkinName.Clear();
+            string resourcePath = "Data/SoF2_NPCs";
+            TextAsset dataRaw = Resources.Load<TextAsset>(resourcePath);
+            if (dataRaw == null)
+            {
+                Debug.LogWarning($"[PlayerSkinRegistry] Character templates file not found at Resources/{resourcePath}.json");
+                return;
+            }
+            try
+            {
+                List<CharacterTemplate> parsed = ParseCharacterTemplatesJson(dataRaw.text);
+                foreach (CharacterTemplate template in parsed)
+                {
+                    if (!string.IsNullOrEmpty(template.Name))
+                    {
+                        m_CharacterTemplatesByName[template.Name] = template;
+                    }
+
+                    // Build skin name lookup
+                    if (template.SkinTemplates != null)
+                    {
+                        foreach (SkinTemplate skinTemplate in template.SkinTemplates)
+                        {
+                            if (!string.IsNullOrEmpty(skinTemplate.SkinName))
+                            {
+                                if (!m_CharacterTemplatesBySkinName.ContainsKey(skinTemplate.SkinName))
+                                {
+                                    m_CharacterTemplatesBySkinName[skinTemplate.SkinName] = new List<CharacterTemplate>();
+                                }
+                                m_CharacterTemplatesBySkinName[skinTemplate.SkinName].Add(template);
+                            }
+                        }
+                    }
+                }
+
+                Debug.Log($"[PlayerSkinRegistry] Loaded {m_CharacterTemplatesByName.Count} character templates with {m_CharacterTemplatesBySkinName.Count} unique skins: {string.Join(", ", m_CharacterTemplatesByName.Keys)}");
+            }
+            catch (Exception ex)
+            {
+                m_CharacterTemplatesByName.Clear();
+                m_CharacterTemplatesBySkinName.Clear();
+                Debug.LogError($"[PlayerSkinRegistry] Error parsing character templates: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// Custom parser for nested CharacterTemplate JSON structure.
+        /// Handles the format: { "file.npc": { "GroupInfo": {...}, "CharacterTemplate": [...] } }
+        /// </summary>
+        private List<CharacterTemplate> ParseCharacterTemplatesJson(string json)
+        {
+            var result = new List<CharacterTemplate>();
+
+            if (string.IsNullOrEmpty(json))
+                return result;
+
+            try
+            {
+                // Parse as dynamic nested dictionary
+                Dictionary<string, NpcFileEntry> parsed = JsonConvert.DeserializeObject<Dictionary<string, NpcFileEntry>>(json);
+
+                if (parsed == null)
+                    return result;
+
+                foreach (KeyValuePair<string, NpcFileEntry> kvp in parsed)
+                {
+                    string fileName = kvp.Key;
+                    NpcFileEntry fileEntry = kvp.Value;
+
+                    if (fileEntry?.CharacterTemplate == null)
+                        continue;
+
+                    foreach (CharacterTemplate template in fileEntry.CharacterTemplate)
+                    {
+                        if (template != null)
+                        {
+                            template.ParentTemplate = fileEntry.GroupInfo?.ParentTemplate;
+                            result.Add(template);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[PlayerSkinRegistry] Error in ParseCharacterTemplatesJson: {ex}");
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -215,7 +328,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 
             try
             {
-                var parsed = JsonConvert.DeserializeObject<Dictionary<string, SkinSurfaceDefinition>>(json);
+                Dictionary<string, SkinSurfaceDefinition> parsed = JsonConvert.DeserializeObject<Dictionary<string, SkinSurfaceDefinition>>(json);
                 if (parsed == null)
                 {
                     Debug.LogWarning("[PlayerSkinRegistry] Surface definition parsed to null");
@@ -235,11 +348,13 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 
         public void ClearAllCaches()
         {
-            m_SkinDataByModel.Clear();
-            m_SkinDataByName.Clear();
-            m_LegacyShaderDefinitionsByModel.Clear();
+            m_SkinDefinitionsByModelName.Clear();
+            m_SkinDefinitionByName.Clear();
+            m_LegacyShaderEntriesByModel.Clear();
             m_SkinSurfaceDefinitionsByModel.Clear();
-            Debug.Log("[PlayerSkinRegistry] Cleared all cached json/shader/surface skin data.");
+            m_CharacterTemplatesByName.Clear();
+            m_CharacterTemplatesBySkinName.Clear();
+            Debug.Log("[PlayerSkinRegistry] Cleared all cached json/shader/surface/template skin data.");
         }
     }
 }

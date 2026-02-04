@@ -1,5 +1,13 @@
 # Copilot Instructions for RemakeSoF
 
+
+## Important Developer Coding Rules
+- NEVER use a `var` declaration. ALWAYS use explicit types for better readability and maintainability.
+- Always include XML documentation comments (`/// <summary>...</summary>`) for all classes, methods, and public members to ensure clarity of purpose and usage.
+- Always use `new(TypeName)` syntax for object instantiation instead of `new TypeName()`. This improves performance by reducing IL code size.
+- Always use expression-bodied members (`=>`) for simple getters, setters, and methods to enhance code conciseness.
+- Always follow the established project architecture and design patterns as outlined below.
+
 ## Project Architecture
 - **Core Movement**: Quake III/SoF2 Bewegung mit Unity-Anpassungen (manuelle Physik bevorzugt).
 - **MVC Architecture (Runtime/Core)**:

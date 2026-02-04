@@ -153,7 +153,8 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                     //Derzeit nur texture1 oder shader1 Key genutzt
                     string cacheKey = g.texture1 == null || g.texture1.Length == 0 ? g.shader1 : g.texture1;
                     if (m_Registry.TextureCache.ContainsKey(cacheKey))
-                    {
+                    //TODO: das könnte bullshit logik sein im else, müsste evtl überschreiben! MUSS ICH TESTEN!
+                    { //try material from g2skin definition
                         TextureData textureData = GetTextureData(cacheKey);
                         if (textureData.IsValid() && textureData.HasTexture())
                         {
@@ -168,7 +169,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                         }
                     }
                     else
-                    {
+                    { // try material from legacy shader definition
                         shaderDefinitionForModel.TryGetValue(cacheKey, out ShaderEntry entry);
                         if (entry != null)
                         {
@@ -176,14 +177,14 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                         }
                         else
                         {
-                            Debug.LogWarning($"[PlayerSkinManager] No legacy ShaderEntry found for key: {cacheKey}");
+                            Debug.LogWarning($"[TextureManager] No legacy ShaderEntry found for key: {cacheKey}");
                         }
                     }
                 }
             }
         }
 
-        public void CreateMaterialFromShaderEntry(string shaderName, ShaderEntry entry)
+        internal void CreateMaterialFromShaderEntry(string shaderName, ShaderEntry entry)
         {
             string partName = Path.GetFileNameWithoutExtension(shaderName);
             bool isTwoSided = entry.CullDisabled;

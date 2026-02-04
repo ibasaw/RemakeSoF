@@ -81,7 +81,7 @@ namespace Tolik.RemakeSoF.Runtime.PrefabManagement
             }
 
             m_PrefabCache.Clear();
-            Debug.Log($"[PrefabRegistry] Cache cleared - released {releasedCount} Addressables handles");
+            Debug.Log($"[PrefabRegistry] Prefab Cache cleared - released {releasedCount} Addressables handles");
         }
         #endregion
 

@@ -164,14 +164,22 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// </summary>
         public void ClearCache()
         {
+            int updated = 0;
             foreach (var textureData in m_TextureCache.Values)
             {
                 if (textureData?.Texture != null)
+                {
                     UnityEngine.Object.Destroy(textureData.Texture);
+                    updated++;
+                }
+
                 if (textureData?.Material != null)
+                {
                     UnityEngine.Object.Destroy(textureData.Material);
+                    updated++;
+                }
             }
-            Debug.Log($"[TextureRegistry] Texture Cache {m_TextureCache.Count} cleared");
+            Debug.Log($"[TextureRegistry] Texture Cache {m_TextureCache.Count} cleared, destroyed {updated} textures/materials");
             m_TextureCache.Clear();
         }
 

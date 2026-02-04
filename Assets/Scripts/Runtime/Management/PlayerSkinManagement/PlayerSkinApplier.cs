@@ -27,7 +27,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 return;
             }
 
-            var shaderDefinition = m_Registry.GetLegacyShaderDefinitionForModel(skinDefinition.GetModelName());
+            Dictionary<string, ShaderEntry> shaderDefinition = m_Registry.GetLegacyShaderDefinitionForModel(skinDefinition.GetModelName());
             ServiceLocator.Get<TextureManager>().CreateMaterialsFromSkinDefinition(shaderDefinition, skinDefinition);
         }
 
@@ -222,6 +222,50 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             }
 
             Debug.Log($"[PlayerSkinApplier] Reset {activatedCount} GameObjects to active");
+        }
+
+        public void DisableAndEnableSurfaces(GameObject prefab, List<CharacterTemplate> characterTemplates, string skinName)
+        {
+            List<InventoryItem> allItems = new();
+
+            foreach (CharacterTemplate template in characterTemplates)
+            {
+                // Sammle Items aus dem CharacterTemplate Inventory
+                if (template.Inventory != null && template.Inventory.Items != null)
+                {
+                    allItems.AddRange(template.Inventory.Items);
+                    Debug.Log($"[PlayerSkinApplier] Found {template.Inventory.Items.Count} items in CharacterTemplate '{template.Name}' Inventory");
+                }
+
+                // Sammle Items aus allen SkinTemplates
+                if (template.SkinTemplates != null)
+                {
+                    foreach (SkinTemplate skinTemplate in template.SkinTemplates)
+                    {
+                        if (skinTemplate.Inventory != null && skinTemplate.Inventory.Items != null && skinTemplate.SkinName == skinName)
+                        {
+                            allItems.AddRange(skinTemplate.Inventory.Items);
+                            Debug.Log($"[PlayerSkinApplier] Found {skinTemplate.Inventory.Items.Count} items in SkinTemplate '{skinTemplate.SkinName}' Inventory");
+                        }
+                    }
+                }
+                
+                CharacterTemplate parentTemplate = m_Registry.GetCharacterTemplateByName(template.ParentTemplate);
+                Debug.Log($"[PlayerSkinApplier] ParentTemplate '{parentTemplate?.Name}' for CharacterTemplate '{template.Name}'");
+            }
+
+            Debug.Log($"[PlayerSkinApplier] Total items collected: {allItems.Count}");
+            // TODO: Hier mit den gesammelten Items arbeiten
+            foreach (InventoryItem item in allItems)
+            {
+                Debug.Log($"[PlayerSkinApplier] Item: Name='{item.Name}', Bolt='{item.Bolt}'");
+            }
+
+            /*Renderer[] allRenderers = prefab.GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer renderer in allRenderers)
+            {
+
+            }*/
         }
 
         public void DisableAndEnableSurfaces(GameObject prefab, SkinDefinition skinDefinition)

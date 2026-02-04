@@ -15,7 +15,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         internal readonly PlayerSkinLoadingState m_Loading = new();
         internal readonly PlayerSkinAppliedState m_Applied = new();
         internal readonly PlayerSkinErrorState m_Error = new();
-        
+
         private PlayerSkinDataRegistry m_PlayerSkinDataRegistry;
         private PlayerSkinLoader m_Loader;
         private PlayerSkinApplier m_Applier;
@@ -33,7 +33,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             m_PlayerSkinDataRegistry = new PlayerSkinDataRegistry();
             m_Loader = new PlayerSkinLoader(m_PlayerSkinDataRegistry);
             m_Applier = new PlayerSkinApplier(m_PlayerSkinDataRegistry);
-            
+
             Debug.Log("[PlayerSkinManager] Initialized");
         }
 
@@ -53,12 +53,13 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 return false;
             }
 
-            SkinDefinition skinDefinition = m_Loader.GetSkinByName(skinName);
+            SkinDefinition skinDefinition = m_Loader.GetSkinDefinitionByName(skinName);
             if (skinDefinition == null)
             {
                 OnSkinLoadFailure($"Skin definition file not found: {skinName}", PlayerSkinStatus.SkinNotFound);
                 return false;
             }
+            List<CharacterTemplate> characterTemplates = m_Loader.GetCharacterTemplatesBySkinName(skinName);
 
             string modelName = skinDefinition.GetModelName();
             if (string.IsNullOrEmpty(modelName))
@@ -85,6 +86,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             SetCurrentPlayerPrefab(prefab);
             m_Applier.ResetAllRenderersToActive(prefab);
             m_Applier.CreateMaterials(skinName, skinDefinition);
+            m_Applier.DisableAndEnableSurfaces(prefab, characterTemplates, skinName);
             m_Applier.DisableAndEnableSurfaces(prefab, skinDefinition);
             m_Applier.ApplyMaterialsToPrefab(prefab, skinName, skinDefinition);
 
@@ -135,7 +137,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             EventManager.Broadcast(new PlayerSkinErrorEvent { error = message, status = status });
             ChangeState(m_Error);
         }
-        
+
         /// <summary>
         /// Internal: Signal successful skin load (called by states)
         /// And update current client skin data
