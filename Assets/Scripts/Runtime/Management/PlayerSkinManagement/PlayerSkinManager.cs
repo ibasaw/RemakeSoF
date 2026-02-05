@@ -1,5 +1,9 @@
 using System.Collections.Generic;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.Core;
+using Tolik.RemakeSoF.Runtime.DataManagement;
+using Tolik.RemakeSoF.Runtime.PrefabManagement;
+using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
@@ -16,9 +20,8 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         internal readonly PlayerSkinAppliedState m_Applied = new();
         internal readonly PlayerSkinErrorState m_Error = new();
 
-        private PlayerSkinDataRegistry m_PlayerSkinDataRegistry;
-        private PlayerSkinLoader m_Loader;
-        private PlayerSkinApplier m_Applier;
+        // Internal service - pure asset application
+        private readonly PlayerSkinApplier m_Applier = new();
 
         // Current skin data
         private string m_CurrentSkinName;
@@ -30,17 +33,12 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             List<PlayerSkinState> states = new() { m_Idle, m_Loading, m_Applied, m_Error };
             InitializeStates(states, m_Idle);
 
-            m_PlayerSkinDataRegistry = new PlayerSkinDataRegistry();
-            m_Loader = new PlayerSkinLoader(m_PlayerSkinDataRegistry);
-            m_Applier = new PlayerSkinApplier(m_PlayerSkinDataRegistry);
-
             Debug.Log("[PlayerSkinManager] Initialized");
         }
 
         void OnDestroy()
         {
             Debug.Log("[PlayerSkinManager] Destroyed");
-            m_PlayerSkinDataRegistry.ClearAllCaches();
         }
 
         internal bool TryLoadAndApplySkin(string skinName, string animatorName, out GameObject prefab)
@@ -53,13 +51,22 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 return false;
             }
 
-            SkinDefinition skinDefinition = m_Loader.GetSkinDefinitionByName(skinName);
+            SkinDefinitionLoader skinLoader = ServiceLocator.Get<SkinDefinitionLoader>();
+            SkinDefinition skinDefinition = skinLoader.GetByName(skinName);
             if (skinDefinition == null)
             {
                 OnSkinLoadFailure($"Skin definition file not found: {skinName}", PlayerSkinStatus.SkinNotFound);
                 return false;
             }
-            List<CharacterTemplate> characterTemplates = m_Loader.GetCharacterTemplatesBySkinName(skinName);
+            if (skinDefinition?.materials == null || skinDefinition.materials.Count == 0)
+            {
+                Debug.LogError($"[PlayerSkinApplier] Keine 'materials' in skinDefinition JSON vorhanden: {skinName}");
+                //OnSkinLoadFailure($"Keine 'materials' in skinDefinition JSON vorhanden: {skinName}", PlayerSkinStatus.SkinDataParseError);
+                //TODO: anatoli - state machine auf failure setzen wenn nix vorhanden?
+                return false;
+            }
+            CharacterTemplateLoader templateLoader = ServiceLocator.Get<CharacterTemplateLoader>();
+            List<CharacterTemplate> characterTemplates = templateLoader.GetBySkinName(skinName);
 
             string modelName = skinDefinition.GetModelName();
             if (string.IsNullOrEmpty(modelName))
@@ -69,27 +76,35 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             }
 
             string prefabPath = $"characters/models/{modelName}";
-            prefab = m_Loader.LoadPrefabForModel(prefabPath);
+            prefab = ServiceLocator.Get<PrefabManager>().LoadPrefab<GameObject>(prefabPath);
             if (prefab == null)
             {
                 OnSkinLoadFailure($"Failed to load prefab for model: {modelName}", PlayerSkinStatus.PrefabNotFound);
                 return false;
             }
 
-            RuntimeAnimatorController controller = m_Loader.CreateAnimatorController($"models/animator/{animatorName}");
-            if (!prefab.TryGetComponent<Animator>(out var animator))
-            {
-                animator = prefab.AddComponent<Animator>();
-            }
-            animator.runtimeAnimatorController = controller;
-
             SetCurrentPlayerPrefab(prefab);
+            m_Applier.ApplyAnimatorController(prefab, $"models/animator/{animatorName}");
             m_Applier.ResetAllRenderersToActive(prefab);
-            m_Applier.CreateMaterials(skinName, skinDefinition);
+
+            LegacyShaderLoader shaderLoader = ServiceLocator.Get<LegacyShaderLoader>();
+            Dictionary<string, ShaderEntry> shaderDefinition = shaderLoader.GetForModel(modelName);
+            ServiceLocator.Get<TextureManager>().CreateMaterialsFromSkinDefinition(shaderDefinition, skinDefinition);
             m_Applier.DisableAndEnableSurfaces(prefab, characterTemplates, skinName);
             m_Applier.DisableAndEnableSurfaces(prefab, skinDefinition);
-            m_Applier.ApplyMaterialsToPrefab(prefab, skinName, skinDefinition);
-
+            
+            // Manager holt konkrete Daten und übergibt sie
+            SurfaceDefinitionLoader surfaceLoader = ServiceLocator.Get<SurfaceDefinitionLoader>();
+            SkinSurfaceDefinition defaultSurface = surfaceLoader.GetByModelName("default");
+            SkinSurfaceDefinition modelSurface = surfaceLoader.GetByModelName(modelName);
+            if (defaultSurface != null)
+            {
+                m_Applier.ApplySurfaceDefinitions(prefab, skinName, "default", skinDefinition, defaultSurface);
+            }
+            if (modelSurface != null)
+            {
+                m_Applier.ApplySurfaceDefinitions(prefab, skinName, modelName, skinDefinition, modelSurface);
+            }
             return true;
         }
 
@@ -98,7 +113,8 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         /// </summary>
         public void LoadNextSkin()
         {
-            string nextName = m_PlayerSkinDataRegistry.GetNextSkinName(m_CurrentSkinName);
+            SkinDefinitionLoader skinLoader = ServiceLocator.Get<SkinDefinitionLoader>();
+            string nextName = skinLoader.GetNextSkinName(m_CurrentSkinName);
             if (!string.IsNullOrEmpty(nextName))
             {
                 ChangeSkin(nextName, "loadout_preview");
@@ -110,7 +126,8 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         /// </summary>
         public void LoadPreviousSkin()
         {
-            string prevName = m_PlayerSkinDataRegistry.GetPreviousSkinName(m_CurrentSkinName);
+            SkinDefinitionLoader skinLoader = ServiceLocator.Get<SkinDefinitionLoader>();
+            string prevName = skinLoader.GetPreviousSkinName(m_CurrentSkinName);
             if (!string.IsNullOrEmpty(prevName))
             {
                 ChangeSkin(prevName, "loadout_preview");

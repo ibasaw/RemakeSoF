@@ -9,6 +9,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using ConnectionEvent = Tolik.RemakeSoF.Runtime.ConnectionManagement.ConnectionEvent;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 
 namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 {
@@ -72,12 +73,27 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
             DontDestroyOnLoad(gameObject);
             Singleton = Singleton != null ? Singleton : this;
 
-            // 1. Services registrieren
+            // 1. Pure Services registrieren
             TextureManager textureManager = new();
             ServiceLocator.Register(textureManager);
 
             PrefabManager prefabManager = new();
             ServiceLocator.Register(prefabManager);
+
+            SkinDefinitionLoader skinLoader = new();
+            ServiceLocator.Register(skinLoader);
+
+            SurfaceDefinitionLoader surfaceLoader = new();
+            ServiceLocator.Register(surfaceLoader);
+
+            CharacterTemplateLoader templateLoader = new();
+            ServiceLocator.Register(templateLoader);
+
+            ItemDefinitionLoader itemLoader = new();
+            ServiceLocator.Register(itemLoader);
+
+            LegacyShaderLoader shaderLoader = new();
+            ServiceLocator.Register(shaderLoader);
 
             m_ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
 
@@ -9,17 +10,11 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 {
     /// <summary>
     /// Internal service responsible for applying materials and managing renderer state on player prefabs
+    /// Pure asset application service without data loading dependencies
     /// </summary>
     internal class PlayerSkinApplier
     {
-        private readonly PlayerSkinDataRegistry m_Registry;
-
-        public PlayerSkinApplier(PlayerSkinDataRegistry registry)
-        {
-            m_Registry = registry;
-        }
-
-        public void CreateMaterials(string skinName, SkinDefinition skinDefinition)
+        public void CreateMaterials(string skinName, SkinDefinition skinDefinition, Dictionary<string, ShaderEntry> shaderDefinition)
         {
             if (skinDefinition?.materials == null || skinDefinition.materials.Count == 0)
             {
@@ -27,24 +22,33 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 return;
             }
 
-            Dictionary<string, ShaderEntry> shaderDefinition = m_Registry.GetLegacyShaderDefinitionForModel(skinDefinition.GetModelName());
             ServiceLocator.Get<TextureManager>().CreateMaterialsFromSkinDefinition(shaderDefinition, skinDefinition);
         }
 
-        public void ApplyMaterialsToPrefab(GameObject prefab, string skinName, SkinDefinition skinDefinition)
+        public void ApplyAnimatorController(GameObject prefab, string animatorName)
         {
-            ApplySurfaceDefinitions(prefab, skinName, "default", skinDefinition);
-            string modelName = skinDefinition.GetModelName();
-            ApplySurfaceDefinitions(prefab, skinName, modelName, skinDefinition);
+            RuntimeAnimatorController controller = CreateAnimatorController(animatorName);
+            if (!prefab.TryGetComponent(out Animator animator))
+            {
+                animator = prefab.AddComponent<Animator>();
+            }
+            animator.runtimeAnimatorController = controller;
         }
 
-        private bool ApplySurfaceDefinitions(GameObject prefab, string skinName, string modelName, SkinDefinition skinDefinition)
+        private RuntimeAnimatorController CreateAnimatorController(string name)
         {
-            m_Registry.SkinSurfaceDefinitionsByModel.TryGetValue(modelName, out SkinSurfaceDefinition surfaceDefinitions);
+            AnimatorOverrideController controller = new();
+            RuntimeAnimatorController baseController = ServiceLocator.Get<PrefabManager>().LoadPrefab<RuntimeAnimatorController>(name);
+            controller.runtimeAnimatorController = baseController;
+            return controller;
+        }
+
+        public void ApplySurfaceDefinitions(GameObject prefab, string skinName, string modelName, SkinDefinition skinDefinition, SkinSurfaceDefinition surfaceDefinitions)
+        {
             if (surfaceDefinitions == null)
             {
                 Debug.LogWarning($"[PlayerSkinApplier] No surface definitions found for model: {modelName}");
-                return false;
+                return;
             }
 
             Renderer[] allRenderers = prefab.GetComponentsInChildren<Renderer>(true);
@@ -80,8 +84,6 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                     }
                 }
             }
-
-            return true;
         }
 
         private bool ApplyMaterialToRenderer(Renderer renderer, Material material, string surfaceName)
@@ -250,8 +252,9 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                     }
                 }
                 
-                CharacterTemplate parentTemplate = m_Registry.GetCharacterTemplateByName(template.ParentTemplate);
-                Debug.Log($"[PlayerSkinApplier] ParentTemplate '{parentTemplate?.Name}' for CharacterTemplate '{template.Name}'");
+                //TODO: anatoli - falls parent templates gebraucht werden:
+                //templatesByName.TryGetValue(template.ParentTemplate, out CharacterTemplate parentTemplate);
+                //Debug.Log($"[PlayerSkinApplier] ParentTemplate '{parentTemplate?.Name}' for CharacterTemplate '{template.Name}'");
             }
 
             Debug.Log($"[PlayerSkinApplier] Total items collected: {allItems.Count}");

@@ -5,8 +5,19 @@
 - NEVER use a `var` declaration. ALWAYS use explicit types for better readability and maintainability.
 - Always include XML documentation comments (`/// <summary>...</summary>`) for all classes, methods, and public members to ensure clarity of purpose and usage.
 - Always use `new(TypeName)` syntax for object instantiation instead of `new TypeName()`. This improves performance by reducing IL code size.
-- Always use expression-bodied members (`=>`) for simple getters, setters, and methods to enhance code conciseness.
 - Always follow the established project architecture and design patterns as outlined below.
+
+## Clean Coding Standards
+- **KISS (Keep It Simple, Stupid)**: Bevorzuge einfache, klare Lösungen gegenüber komplexen; vermeide Over-Engineering; jede Klasse/Methode sollte eine klare, verständliche Aufgabe haben.
+- **DRY (Don't Repeat Yourself)**: Keine Code-Duplikation; extrahiere wiederholte Logik in gemeinsame Methoden/Klassen; nutze Vererbung/Composition sinnvoll.
+- **YAGNI (You Aren't Gonna Need It)**: Implementiere nur Features, die aktuell benötigt werden; keine spekulativen Erweiterungen; halte Code fokussiert auf aktuelle Requirements.
+- **Single Responsibility Principle (SRP)**: Jede Klasse hat genau eine Verantwortung; Manager orchestrieren, Loader laden Daten, Applier wenden Assets an; keine Mixed Concerns.
+- **Separation of Concerns**: Klare Trennung zwischen Datenlogik (Loader), Asset-Anwendung (Applier), Orchestrierung (Manager), UI (View/Controller); siehe Service Decomposition Pattern.
+- **Clean Architecture**: Abhängigkeiten zeigen immer nach innen; Pure Services haben keine MonoBehaviour-Dependencies; Applier bekommen nur Daten, keine Loader-Referenzen; Manager orchestrieren, delegieren nicht ihre Verantwortung.
+- **Explicit over Implicit**: Keine magischen Strings/Numbers; explizite Typen statt `var`; klare Methodennamen; Konstanten für wiederholte Werte.
+- **Fail Fast**: Validierung früh durchführen; klare Error-Messages; Guard Clauses am Anfang von Methoden.
+- **Composition over Inheritance**: Bevorzuge Komposition (Service Decomposition) statt tiefe Vererbungshierarchien.
+- **Immutability where possible**: Readonly Fields/Properties wo sinnvoll; private Setter für interne State-Änderungen; keine unerwarteten Side Effects.
 
 ## Project Architecture
 - **Core Movement**: Quake III/SoF2 Bewegung mit Unity-Anpassungen (manuelle Physik bevorzugt).
@@ -26,10 +37,12 @@
   - **TextureManager**: Baut Materialien aus Skin-Definitionen, nutzt `TextureRegistry`, zugreifbar via ServiceLocator, `ClearCache()` delegiert.
   - **TextureRegistry**: Cache + Custom Loader (Default Lazy Loader), kein Observer-Pattern, `ClearCache()` zerstört Texturen/Materialien.
 - **MonoBehaviour Manager / State Machines**:
-  - **PlayerSkinManager**: StateMachine (Idle/Loading/Applied/Error); orchestriert Skin-Laden & -Anwenden via interne Services (`PlayerSkinLoader`, `PlayerSkinApplier`); Input via `IPlayerSkinChangeHandler` je State; Output-Events zentral im Manager (`OnSkinApplied()`, `OnSkinLoadFailure()` via `EventManager`); nutzt `PrefabManager`, `TextureManager` via ServiceLocator, `PlayerSkinDataRegistry` intern.
-  - **PlayerSkinLoader** (intern): Lädt Prefabs, Animatoren, Skin-Definitionen; delegiert zu `PlayerSkinDataRegistry`.
-  - **PlayerSkinApplier** (intern): Wendet Materialien & Surface-Definitionen auf Prefabs an; findet Renderer per Match-Logik, verwaltet Aktivierung.
-  - **PlayerSkinDataRegistry**: Lädt Skin-Definitionen, Shader-/Surface-Mappings, liefert Next/Prev Names; interne Registry nur für `PlayerSkinManager`.
+  - **PlayerSkinManager**: StateMachine (Idle/Loading/Applied/Error); orchestriert Skin-Laden & -Anwenden; lädt Daten via 4 interne Loader, übergibt konkrete Daten an `PlayerSkinApplier`; Input via `IPlayerSkinChangeHandler` je State; Output-Events zentral im Manager (`OnSkinApplied()`, `OnSkinLoadFailure()` via `EventManager`); nutzt `PrefabManager`, `TextureManager` via ServiceLocator.
+  - **SkinDefinitionLoader** (intern): Lädt Skin-Definitionen aus Resources; Methoden: `GetByName()`, `GetNextSkinName()`, `GetPreviousSkinName()`, `GetSkinsForModel()`, `GetAvailableModels()`.
+  - **SurfaceDefinitionLoader** (intern): Lädt NPC_definition.json; Methode: `GetByModelName()` liefert Surface-Definitionen.
+  - **CharacterTemplateLoader** (intern): Lädt SoF2_NPCs.json; Methoden: `GetBySkinName()`, `GetByName()`.
+  - **LegacyShaderLoader** (intern): Lädt .shader Files von Disk; Methode: `GetForModel()` liefert Shader-Definitionen.
+  - **PlayerSkinApplier** (intern): Reine Asset-Anwendung; bekommt nur konkrete Daten (keine Loader-Referenzen); Methoden: `ApplyAnimatorController()`, `ApplySurfaceDefinitions()`, `DisableAndEnableSurfaces()`; findet Renderer per Match-Logik, verwaltet Aktivierung.
   - **ConnectionManager**: StateMachine für NGO; leitet NetworkManager-Callbacks (OnConnectionEvent, OnServerStarted, ApprovalCheck, OnTransportFailure, OnServerStopped) an den aktuellen State weiter; Abos in `Awake`, Deregistrierung in `OnDestroy`.
   - **AuthenticationManager**: StateMachine (Unauthenticated/Authenticating/Authenticated/SessionExpired); Input via `IAuthenticationHandler` je State; Output-Events zentral im Manager (`OnAuthenticationSuccess()`, `OnAuthenticationFailure()`, `OnSessionExpired()`); verwaltet Authentifizierungsverlauf und Token-Refresh.
   - **ConsoleManager**: StateMachine (ConsoleInactive/ConsoleActive); leitet Kommandos und Aktivierungszustände an den aktuellen State; verwaltet Konsolen-UI und Befehlsausführung.
@@ -56,11 +69,12 @@
   - **Pure Services** (PrefabManager, TextureManager): Global verfügbar, Cache-first, Lifecycle-Management.
 - **Dependency Injection**: 
   - Pure Services (global verfügbar) immer über `ServiceLocator.Get<T>()` beziehen (z. B. `PrefabManager`, `TextureManager`).
-  - Interne Services (nur von einem Manager genutzt) via Constructor-Injection; keine ServiceLocator-Nutzung nötig.
+  - Interne Services (nur von einem Manager genutzt): Manager instanziiert Loader direkt; keine ServiceLocator-Nutzung.
+  - Daten-Services (Applier): Bekommen keine Loader-Referenzen, nur konkrete Daten als Parameter; Manager lädt Daten, übergibt sie an Applier.
   - Keine Singleton-Zugriffe über `ApplicationEntryPoint.Singleton` für Services.
 - **Cache-First**: Immer über `PrefabManager`/`TextureManager`; Registries nicht umgehen; Cache-Flush via `ClearCache()`/`ServiceLocator.ClearAll()`.
 - **State Machines**: Input über State-spezifische Interfaces; Events/Output werden vom Manager (nicht vom State) via `EventManager` gesendet; States steuern nur Transitionen.
-- **Service Decomposition**: Komplexe Manager können interne Services (keine MonoBehaviours) nutzen für bessere Separation of Concerns; z. B. `PlayerSkinManager` → `PlayerSkinLoader` + `PlayerSkinApplier`.
+- **Service Decomposition**: Komplexe Manager können interne Services (keine MonoBehaviours) nutzen für bessere Separation of Concerns; z. B. `PlayerSkinManager` → 4 Loader (SkinDefinition, SurfaceDefinition, CharacterTemplate, LegacyShader) + `PlayerSkinApplier`. Manager orchestriert, Loader laden Daten, Applier wendet Assets an.
 - **Addressables Only**: Prefab-Loading ausschließlich Addressables, keine Custom Prefab Loader; Custom Loader nur in `TextureRegistry` erlaubt.
 - **Lifecycle**: Externe Callbacks in `Awake` abonnieren und in `OnDestroy` sauber deregistrieren; `ServiceLocator.ClearAll()` beim Teardown.
 - **Manual Physics**: Für Kernbewegung explizite Physik-/Kollisionslogik bevorzugen.

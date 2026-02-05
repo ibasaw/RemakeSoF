@@ -9,9 +9,15 @@ using Tolik.RemakeSoF.Data;
 
 namespace Tolik.RemakeSoF.Runtime
 {
+	/// <summary>
+	/// Utility class for loading and parsing JSON data from Resources or disk.
+	/// Provides generic loading, parsing and SoF2-specific data loaders.
+	/// </summary>
 	public static class JsonDataReader
 	{
-		// Load a JSON file as text. Searches Resources/Data (TextAsset) first, then Assets/Data on disk
+		/// <summary>
+		/// Load a JSON file as text. Searches Resources/Data (TextAsset) first, then Assets/Data on disk
+		/// </summary>
 		public static string TryLoadJsonText(string fileNameWithoutExtension)
 		{
 			if (string.IsNullOrEmpty(fileNameWithoutExtension)) return null;
@@ -28,6 +34,29 @@ namespace Tolik.RemakeSoF.Runtime
 		}
 
 		/// <summary>
+		/// Generic JSON loading and parsing with error handling
+		/// </summary>
+		public static T TryLoadAndParse<T>(string fileNameWithoutExtension) where T : class
+		{
+			string json = TryLoadJsonText(fileNameWithoutExtension);
+			if (string.IsNullOrEmpty(json))
+			{
+				Debug.LogWarning($"[JsonDataReader] No JSON file found: {fileNameWithoutExtension}");
+				return null;
+			}
+
+			try
+			{
+				return JsonConvert.DeserializeObject<T>(json);
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"[JsonDataReader] Failed to parse {fileNameWithoutExtension}: {ex.Message}");
+				return null;
+			}
+		}
+
+		/// <summary>
 		/// Load all surface properties from Data/SoF2_data_per_surface.json
 		/// </summary>
 		public static Dictionary<string, MaterialInfo> LoadSurfaceData()
@@ -35,7 +64,7 @@ namespace Tolik.RemakeSoF.Runtime
 			string json = TryLoadJsonText("SoF2_data_per_surface");
 			if (string.IsNullOrEmpty(json))
 			{
-				Debug.LogWarning("[LoadSurfaceData] Keine JSON-Datei für Oberflächen-Daten gefunden!");
+				Debug.LogWarning("[JsonDataReader] Keine JSON-Datei für Oberflächen-Daten gefunden!");
 				return null;
 			}
 
@@ -46,17 +75,17 @@ namespace Tolik.RemakeSoF.Runtime
 			}
 			catch (Exception ex)
 			{
-				Debug.LogError("[LoadSurfaceData] JSON Parse Error: " + ex);
+				Debug.LogError("[JsonDataReader] JSON Parse Error: " + ex);
 				return null;
 			}
 
 			Dictionary<string, MaterialInfo> materialInfos = new();
-			foreach (var prop in root.Properties())
+			foreach (JProperty prop in root.Properties())
 			{
 				string materialName = prop.Name;
 				if (prop.Value is JObject matObj)
 				{
-					var info = new MaterialInfo
+					MaterialInfo info = new()
 					{
 						loudness = TryGetDouble(matObj, "loudness"),
 						density = TryGetDouble(matObj, "density"),
@@ -65,7 +94,7 @@ namespace Tolik.RemakeSoF.Runtime
 						damage = TryGetDouble(matObj, "damage")
 					};
 
-					foreach (var key in new[] { "footstep", "footstepStealth", "footstepProne" })
+					foreach (string key in new[] { "footstep", "footstepStealth", "footstepProne" })
 					{
 						if (matObj.TryGetValue(key, out JToken token) && token is JObject obj)
 						{
@@ -73,7 +102,7 @@ namespace Tolik.RemakeSoF.Runtime
 						}
 					}
 
-					foreach (var key in new[] { "land", "land_pain", "land_death" })
+					foreach (string key in new[] { "land", "land_pain", "land_death" })
 					{
 						if (matObj.TryGetValue(key, out JToken token) && token is JObject obj)
 						{
@@ -83,7 +112,7 @@ namespace Tolik.RemakeSoF.Runtime
 
 					if (matObj.TryGetValue("ammoTypes", out JToken ammoToken) && ammoToken is JObject ammoObj)
 					{
-						foreach (var ammoProp in ammoObj.Properties())
+						foreach (JProperty ammoProp in ammoObj.Properties())
 						{
 							string ammoName = ammoProp.Name;
 							if (ammoProp.Value is JObject ammoDataObj)
@@ -95,12 +124,14 @@ namespace Tolik.RemakeSoF.Runtime
 					materialInfos[materialName] = info;
 				}
 			}
-			Debug.Log($"[LoadSurfaceData] {materialInfos.Count} material definitions loaded.");
+			Debug.Log($"[JsonDataReader] {materialInfos.Count} material definitions loaded.");
 
 			return materialInfos;
 		}
 
-
+		/// <summary>
+		/// Try to extract a double value from a JObject property
+		/// </summary>
 		public static double? TryGetDouble(JObject obj, string key)
 		{
 			if (obj != null && obj.TryGetValue(key, StringComparison.OrdinalIgnoreCase, out JToken tok))
@@ -113,7 +144,4 @@ namespace Tolik.RemakeSoF.Runtime
 			return null;
 		}
 	}
-
 }
-
-
