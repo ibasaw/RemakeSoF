@@ -17,8 +17,8 @@
                     "hand_r",
                     "mitten_l_off",
                     "mitten_r_off",
-                    "sleeves_r",
-                    "sleeves_l"
+                    "sleeve_r",
+                    "sleeve_l"
                 ]
             },
             "body": {
@@ -47,7 +47,9 @@
                     "fcollar_l_off",
                     "fcollar_r_off",
                     "mcollar_l",
-                    "mcollar_r"
+                    "mcollar_r",
+                    "collar_l",
+                    "collar_r"
                 ]
             },
             "face": {
@@ -493,6 +495,7 @@
                     "head_bck_uppr_l_bun_off",
                     "head_bck_uppr_r_bun_off",
                     "head_side_l_bun_off",
+                    "head_side_r_bun_off",
                     "bun_off"
                 ]
             },
@@ -883,24 +886,35 @@
     "dog": {
         "description": "Dog model definition.",
         "parts": {
-            "body": {
+            "caps": {
+                "naming": "caps",
+                "description": "Shared gore cap shader. very model uses the same gore cap shader and texture. models/characters/caps/caps",
+                "required": true,
+                "material": [
+                    "cap_hip_body_off",
+                    "cap_head_body_off",
+                    "cap_body_head_off",
+                    "cap_body_hip_off"
+                ]
+            },
+            "dog": {
                 "naming": "b_xxx",
                 "description": "Body shader. (all models)",
                 "required": true,
                 "material": [
                     "body_l",
-                    "rot_lleg_front",
+                    "lleg_front",
                     "body_r",
-                    "rot_rleg_front",
+                    "rleg_front",
                     "bottom_jaw",
                     "fangs",
                     "head_l",
                     "head_r",
                     "hip_l",
-                    "rot_lleg_back",
+                    "hip_r",
+                    "rleg_back",
                     "tongue",
-                    "torso_r",
-                    "rot_rleg_back"
+                    "lleg_back"
                 ]
             }
         }

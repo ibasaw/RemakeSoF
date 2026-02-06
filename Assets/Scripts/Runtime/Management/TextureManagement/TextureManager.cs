@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
 
@@ -141,7 +142,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             }
         }
 
-        public void CreateMaterialsFromSkinDefinition(Dictionary<string, ShaderEntry> shaderDefinitionForModel,
+        public void CreateMaterialsFromSkinDefinition(Dictionary<string, Dictionary<string, ShaderEntry>> allShaderDefinitions,
             SkinDefinition skinDefinition)
         {
             foreach (var mdef in skinDefinition.materials)
@@ -170,10 +171,24 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                     }
                     else
                     { // try material from legacy shader definition
-                        shaderDefinitionForModel.TryGetValue(cacheKey, out ShaderEntry entry);
-                        if (entry != null)
+                        ShaderEntry foundEntry = null;
+                        
+                        // Durch alle Model-Shader-Dictionaries iterieren
+                        if (allShaderDefinitions != null)
                         {
-                            CreateMaterialFromShaderEntry(cacheKey, entry);
+                            foreach (var modelShaders in allShaderDefinitions.Values)
+                            {
+                                if (modelShaders.TryGetValue(cacheKey, out ShaderEntry entry))
+                                {
+                                    foundEntry = entry;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (foundEntry != null)
+                        {
+                            CreateMaterialFromShaderEntry(cacheKey, foundEntry);
                         }
                         else
                         {

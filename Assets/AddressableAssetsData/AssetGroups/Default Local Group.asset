@@ -50,6 +50,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 836bae8b96ffb2b439329e2828f701eb
+    m_Address: characters/models/dog
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: acae1b99ec54d864f99c3cdc6a5069b6
     m_Address: models/animator/loadout_preview
     m_ReadOnly: 0

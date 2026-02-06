@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
@@ -14,7 +15,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
     /// </summary>
     internal class PlayerSkinApplier
     {
-        public void CreateMaterials(string skinName, SkinDefinition skinDefinition, Dictionary<string, ShaderEntry> shaderDefinition)
+        public void CreateMaterials(string skinName, SkinDefinition skinDefinition, Dictionary<string, Dictionary<string, ShaderEntry>> allShaderDefinitions)
         {
             if (skinDefinition?.materials == null || skinDefinition.materials.Count == 0)
             {
@@ -22,7 +23,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 return;
             }
 
-            ServiceLocator.Get<TextureManager>().CreateMaterialsFromSkinDefinition(shaderDefinition, skinDefinition);
+            ServiceLocator.Get<TextureManager>().CreateMaterialsFromSkinDefinition(allShaderDefinitions, skinDefinition);
         }
 
         public void ApplyAnimatorController(GameObject prefab, string animatorName)
@@ -68,6 +69,12 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 {
                     Debug.Log($"[PlayerSkinApplier] Search by TextureData by alias for key: '{textureKey}' in skin definition: '{skinName}'");
                     textureData = ServiceLocator.Get<TextureManager>().GetTextureDataByAlias(textureKey);
+                }
+
+                if(textureData == null || !textureData.IsValid())
+                {
+                    Debug.LogError($"[PlayerSkinApplier] No valid TextureData found for key: '{textureKey}' in skin definition: '{skinName}'");
+                    continue;
                 }
 
                 Debug.Log($"[PlayerSkinApplier] TextureData for key '{textureKey}': {textureData}");
@@ -251,24 +258,57 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                         }
                     }
                 }
-                
+
                 //TODO: anatoli - falls parent templates gebraucht werden:
                 //templatesByName.TryGetValue(template.ParentTemplate, out CharacterTemplate parentTemplate);
                 //Debug.Log($"[PlayerSkinApplier] ParentTemplate '{parentTemplate?.Name}' for CharacterTemplate '{template.Name}'");
             }
 
-            Debug.Log($"[PlayerSkinApplier] Total items collected: {allItems.Count}");
             // TODO: Hier mit den gesammelten Items arbeiten
-            foreach (InventoryItem item in allItems)
+            allItems = allItems.GroupBy(i => i.Name).Select(g => g.First()).ToList();
+            Debug.Log($"[PlayerSkinApplier] Total items collected: {allItems.Count}");
+            ItemDefinitionLoader itemLoader = ServiceLocator.Get<ItemDefinitionLoader>();
+            //map collected items to item definitions and collect as list of item definitions to apply
+            List<Item> itemDefinitionsToApply = new();
+            foreach (InventoryItem inventoryItem in allItems)
             {
-                Debug.Log($"[PlayerSkinApplier] Item: Name='{item.Name}', Bolt='{item.Bolt}'");
+                if(inventoryItem.Name == null){
+                    Debug.LogWarning($"[PlayerSkinApplier] InventoryItem with null name found in CharacterTemplates/SkinTemplates, skipping.");
+                    continue;
+                }
+                Item itemDef = itemLoader.GetByName(inventoryItem.Name);
+                if (itemDef != null)
+                {
+                    itemDefinitionsToApply.Add(itemDef);
+                    Debug.Log($"[PlayerSkinApplier] Mapped InventoryItem '{inventoryItem.Name}' to Item definition '{itemDef.name}'");
+                }
+                else
+                {
+                    Debug.LogWarning($"[PlayerSkinApplier] No Item definition found for InventoryItem '{inventoryItem.Name}'");
+                }
             }
 
-            /*Renderer[] allRenderers = prefab.GetComponentsInChildren<Renderer>(true);
+            Renderer[] allRenderers = prefab.GetComponentsInChildren<Renderer>(true);
             foreach (Renderer renderer in allRenderers)
             {
+                // check if renderer name equals any item defs activeSurfaces(list) or inactiveSurfaces and set active/deactivate accordingly 
+                string rendererName = renderer.gameObject.name;
+                string cleanRendererName = System.Text.RegularExpressions.Regex.Replace(rendererName, @"_\d+$", "");
+                foreach (Item itemDef in itemDefinitionsToApply)
+                {
+                    if (itemDef.activeSurfaces != null && itemDef.activeSurfaces.Contains(cleanRendererName))
+                    {
+                        renderer.gameObject.SetActive(true);
+                        Debug.Log($"[PlayerSkinApplier] Activated renderer '{renderer.gameObject.name}' for item '{itemDef.name}' active surface '{cleanRendererName}'");
+                    }
+                    if (itemDef.inactiveSurfaces != null && itemDef.inactiveSurfaces.Contains(cleanRendererName))
+                    {
+                        renderer.gameObject.SetActive(false);
+                        Debug.Log($"[PlayerSkinApplier] Deactivated renderer '{renderer.gameObject.name}' for item '{itemDef.name}' inactive surface '{cleanRendererName}'");
+                    }
+                }
 
-            }*/
+            }
         }
 
         public void DisableAndEnableSurfaces(GameObject prefab, SkinDefinition skinDefinition)

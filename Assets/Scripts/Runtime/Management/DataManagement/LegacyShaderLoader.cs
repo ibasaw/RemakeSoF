@@ -84,15 +84,24 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             }
         }
 
-        public Dictionary<string, ShaderEntry> GetForModel(string modelName)
+        public Dictionary<string, ShaderEntry> GetByModelName(string modelName)
         {
             m_LegacyShaderEntriesByModel.TryGetValue(modelName, out Dictionary<string, ShaderEntry> shaderEntries);
             return shaderEntries;
         }
 
+        /// <summary>
+        /// Gibt alle geladenen Shader-Definitionen zurück
+        /// </summary>
+        public Dictionary<string, Dictionary<string, ShaderEntry>> GetAll()
+        {
+            return m_LegacyShaderEntriesByModel;
+        }
+
         public void ClearCache()
         {
             m_LegacyShaderEntriesByModel.Clear();
+            Debug.Log("[LegacyShaderLoader] Cache cleared.");
         }
     }
 }

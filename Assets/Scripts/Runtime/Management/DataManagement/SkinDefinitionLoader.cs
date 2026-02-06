@@ -122,6 +122,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         {
             m_SkinDefinitionsByModelName.Clear();
             m_SkinDefinitionByName.Clear();
+            Debug.Log("[SkinDefinitionLoader] Cache cleared.");
         }
     }
 }

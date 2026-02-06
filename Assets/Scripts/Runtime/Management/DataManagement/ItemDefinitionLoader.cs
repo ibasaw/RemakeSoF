@@ -109,6 +109,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         public void ClearCache()
         {
             m_ItemsByName.Clear();
+            Debug.Log("[ItemDefinitionLoader] Cache cleared.");
         }
 
         /// <summary>

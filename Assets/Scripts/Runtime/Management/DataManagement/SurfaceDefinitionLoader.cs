@@ -77,6 +77,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         public void ClearCache()
         {
             m_SkinSurfaceDefinitionsByModel.Clear();
+            Debug.Log("[SurfaceDefinitionLoader] Cache cleared.");
         }
     }
 }

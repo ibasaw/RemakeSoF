@@ -139,6 +139,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         {
             m_CharacterTemplatesByName.Clear();
             m_CharacterTemplatesBySkinName.Clear();
+            Debug.Log("[CharacterTemplateLoader] Cache cleared.");
         }
     }
 }
