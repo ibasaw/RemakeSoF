@@ -9,12 +9,10 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
     internal class PlayerSkinLoadingState : PlayerSkinState
     {
         private string m_LoadingSkinName;
-        private string m_LoadingAnimatorName;
 
-        public void Configure(string skinName, string animatorName)
+        public void Configure(string skinName)
         {
             m_LoadingSkinName = skinName;
-            m_LoadingAnimatorName = animatorName;
         }
 
         public override void Enter()
@@ -29,7 +27,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         {
             try
             {
-                if (Manager.TryLoadAndApplySkin(m_LoadingSkinName, m_LoadingAnimatorName, out GameObject prefab))
+                if (Manager.TryLoadAndApplySkin(m_LoadingSkinName, out GameObject prefab))
                 {
                     Debug.Log($"[PlayerSkinManager] Successfully loaded skin: {m_LoadingSkinName}");
                     Manager.OnSkinLoadSuccess(m_LoadingSkinName, prefab);

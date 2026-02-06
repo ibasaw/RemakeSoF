@@ -25,7 +25,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 
         // Current skin data
         private string m_CurrentSkinName;
-        private GameObject m_CurrentPlayerPrefab;
+        private GameObject m_CurrentPlayerPrefab; // Runtime instance of prefab
 
         void Awake()
         {
@@ -38,12 +38,14 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 
         void OnDestroy()
         {
+            CleanupCurrentInstance();
             Debug.Log("[PlayerSkinManager] Destroyed");
         }
 
-        internal bool TryLoadAndApplySkin(string skinName, string animatorName, out GameObject prefab)
+        internal bool TryLoadAndApplySkin(string skinName, out GameObject prefab)
         {
             prefab = null;
+            CleanupCurrentInstance();
 
             if (string.IsNullOrEmpty(skinName))
             {
@@ -74,17 +76,20 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 OnSkinLoadFailure($"No valid model name found in skin definition file: {skinName}", PlayerSkinStatus.ModelNameParseError);
                 return false;
             }
+            string animationSetName = skinLoader.GetAnimationSetNameForModelName(modelName);
 
             string prefabPath = $"characters/models/{modelName}";
-            prefab = ServiceLocator.Get<PrefabManager>().LoadPrefab<GameObject>(prefabPath);
-            if (prefab == null)
+            GameObject prefabAsset = ServiceLocator.Get<PrefabManager>().LoadPrefab<GameObject>(prefabPath);
+            if (prefabAsset == null)
             {
                 OnSkinLoadFailure($"Failed to load prefab for model: {modelName}", PlayerSkinStatus.PrefabNotFound);
                 return false;
             }
 
+            // Clone Asset für Modifikationen (nicht das Original bearbeiten)
+            prefab = CreatePrefabInstance(prefabAsset);
             SetCurrentPlayerPrefab(prefab);
-            m_Applier.ApplyAnimatorController(prefab, $"models/animator/{animatorName}");
+            m_Applier.ApplyAnimatorController(prefab, $"models/animator/loadout_{animationSetName}");
             m_Applier.ResetAllRenderersToActive(prefab);
 
             LegacyShaderLoader shaderLoader = ServiceLocator.Get<LegacyShaderLoader>();
@@ -117,7 +122,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             string nextName = skinLoader.GetNextSkinName(m_CurrentSkinName);
             if (!string.IsNullOrEmpty(nextName))
             {
-                ChangeSkin(nextName, "loadout_preview");
+                ChangeSkin(nextName);
             }
         }
 
@@ -130,18 +135,18 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             string prevName = skinLoader.GetPreviousSkinName(m_CurrentSkinName);
             if (!string.IsNullOrEmpty(prevName))
             {
-                ChangeSkin(prevName, "loadout_preview");
+                ChangeSkin(prevName);
             }
         }
 
         /// <summary>
         /// Request to change the player's skin
         /// </summary>
-        public void ChangeSkin(string skinName, string animatorName)
+        public void ChangeSkin(string skinName)
         {
             if (m_CurrentState is IPlayerSkinChangeHandler handler)
             {
-                handler.OnSkinChangeRequested(skinName, animatorName);
+                handler.OnSkinChangeRequested(skinName);
             }
         }
 
@@ -187,6 +192,31 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         internal GameObject GetCurrentPlayerPrefab()
         {
             return m_CurrentPlayerPrefab;
+        }
+
+        /// <summary>
+        /// Erstellt eine neue Instanz des Prefab-Assets und räumt die alte Instanz auf
+        /// </summary>
+        private GameObject CreatePrefabInstance(GameObject prefabAsset)
+        {
+            CleanupCurrentInstance();
+            GameObject instance = Instantiate(prefabAsset);
+            //instance.SetActive(false); // Nicht sofort sichtbar TODO: anatoli - evtl. inaktiv lassen bis alles angewendet ist?
+            Debug.Log($"[PlayerSkinManager] Created new prefab instance: {instance.name}");
+            return instance;
+        }
+
+        /// <summary>
+        /// Räumt die aktuelle Prefab-Instanz auf
+        /// </summary>
+        private void CleanupCurrentInstance()
+        {
+            if (m_CurrentPlayerPrefab != null)
+            {
+                Debug.Log($"[PlayerSkinManager] Cleaning up old prefab instance: {m_CurrentPlayerPrefab.name}");
+                Destroy(m_CurrentPlayerPrefab);
+                m_CurrentPlayerPrefab = null;
+            }
         }
     }
 }

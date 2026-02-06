@@ -22,6 +22,6 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
     /// </summary>
     internal interface IPlayerSkinChangeHandler
     {
-        void OnSkinChangeRequested(string skinName, string animatorName);
+        void OnSkinChangeRequested(string skinName);
     }
 }

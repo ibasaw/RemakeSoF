@@ -55,8 +55,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 946cfc264987bfa4db94ad069480e56a
+    m_Address: models/animator/loadout_female_pants
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: acae1b99ec54d864f99c3cdc6a5069b6
-    m_Address: models/animator/loadout_preview
+    m_Address: models/animator/loadout_average_sleeves
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -14,11 +14,11 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 
         public override void Exit() { }
 
-        public void OnSkinChangeRequested(string skinName, string animatorName)
+        public void OnSkinChangeRequested(string skinName)
         {
             // Allow retry from error state
             Debug.Log("[PlayerSkinManager] Retrying skin load after error");
-            Manager.m_Loading.Configure(skinName, animatorName);
+            Manager.m_Loading.Configure(skinName);
             Manager.ChangeState(Manager.m_Loading);
         }
     }

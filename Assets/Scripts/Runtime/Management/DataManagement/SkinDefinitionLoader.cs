@@ -92,6 +92,28 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             return skin;
         }
 
+        public string GetAnimationSetNameForModelName(string modelName)
+        {
+            //TODO: anatoli - improve this mapping, maybe also load it from a config file or scriptable object to avoid hardcoding?
+            var animationSetMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                {"average_sleeves", "average_sleeves" },
+                {"female_pants", "female_pants" },
+
+                { "chem_suit", "average_sleeves" },
+                { "suit_long_coat", "average_sleeves" },
+                {"suit_sleeves", "average_sleeves" },
+                {"fat", "average_sleeves" },
+                {"snow", "average_sleeves" },
+                {"average_armor", "average_sleeves" },
+                { "female_skirt", "female_pants" },
+                { "female_armor", "female_pants" }
+            };
+
+            animationSetMapping.TryGetValue(modelName, out string animationSetName);
+            return animationSetName;
+        }
+
         public List<SkinDefinition> GetSkinsForModel(string modelType)
         {
             if (m_SkinDefinitionsByModelName.TryGetValue(modelType, out List<SkinDefinition> skins))
