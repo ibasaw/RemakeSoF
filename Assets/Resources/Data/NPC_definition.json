@@ -577,6 +577,7 @@
                     "head_bck_uppr_l_bun_off",
                     "head_bck_uppr_r_bun_off",
                     "head_side_l_bun_off",
+                    "head_side_r_bun_off",
                     "bun_off"
                 ]
             },
@@ -650,6 +651,7 @@
                     "head_bck_uppr_l_bun_off",
                     "head_bck_uppr_r_bun_off",
                     "head_side_l_bun_off",
+                    "head_side_r_bun_off",
                     "bun_off"
                 ]
             },

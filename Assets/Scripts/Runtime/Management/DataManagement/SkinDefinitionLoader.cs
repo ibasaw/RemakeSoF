@@ -98,16 +98,20 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             var animationSetMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 {"average_sleeves", "average_sleeves" },
-                {"female_pants", "female_pants" },
-
                 { "chem_suit", "average_sleeves" },
                 { "suit_long_coat", "average_sleeves" },
                 {"suit_sleeves", "average_sleeves" },
                 {"fat", "average_sleeves" },
                 {"snow", "average_sleeves" },
                 {"average_armor", "average_sleeves" },
+
+                {"female_pants", "female_pants" },
                 { "female_skirt", "female_pants" },
-                { "female_armor", "female_pants" }
+                { "female_armor", "female_pants" },
+
+                //TODO: anatoli - missing animation sets for these models. 
+                //{ "dog", "dog" }, // TODO: blender fix animation skeleton and then add back to mapping
+                //{ "ospey", "ospey" },
             };
 
             animationSetMapping.TryGetValue(modelName, out string animationSetName);
