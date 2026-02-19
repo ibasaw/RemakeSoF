@@ -26,15 +26,17 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
             Debug.Log("[AuthenticationManager] Initialized");
         }
 
+        public bool IsAuthenticated()
+        {
+            return m_CurrentState == m_Authenticated && m_Authenticated.AuthResponse != null;
+        }
+
         /// <summary>
         /// Attempt to authenticate with the provided credentials.
         /// </summary>
         public void Authenticate(string username, string password)
         {
-            if (m_CurrentState is IAuthenticationHandler handler)
-            {
-                handler.OnAuthenticationAttempt(username, password);
-            }
+            m_CurrentState.OnAuthenticationAttempt(username, password);
         }
 
         /// <summary>

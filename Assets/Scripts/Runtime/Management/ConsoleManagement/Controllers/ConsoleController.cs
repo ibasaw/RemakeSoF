@@ -2,11 +2,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
-namespace Tolik.RemakeSoF.Runtime
+namespace Tolik.RemakeSoF.Runtime.ConsoleManagement
 {
-    internal class ConsoleController : Controller<MetagameApplication>
+    public class ConsoleController : Controller<ConsoleManager>
     {
-        ConsoleView View => App.View.ConsoleView;
+        ConsoleView View => App.View;
 
         public InputActionReference toggleConsoleAction;
 

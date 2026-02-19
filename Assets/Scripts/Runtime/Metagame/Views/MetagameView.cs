@@ -38,11 +38,6 @@ namespace Tolik.RemakeSoF.Runtime
         internal RegisterView RegisterView => m_RegisterView;
 
         [SerializeField]
-        ConsoleView m_ConsoleView;
-
-        internal ConsoleView ConsoleView => m_ConsoleView;
-
-        [SerializeField]
         LoadoutView m_LoadoutView;
 
         internal LoadoutView LoadoutView => m_LoadoutView;

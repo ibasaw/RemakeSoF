@@ -8,7 +8,7 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
     /// Connection state corresponding to when a client is attempting to connect to a server. Starts the client when
     /// entering. If successful, transitions to the ClientConnected state. If not, transitions to the Offline state.
     /// </summary>
-    class ClientConnectingState : OnlineState
+    class ClientConnectingState : ConnectionState
     {
         string m_IPAddress;
         ushort m_Port;
@@ -89,6 +89,18 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
             var payloadBytes = System.Text.Encoding.UTF8.GetBytes(payload);
 
             Manager.NetworkManager.NetworkConfig.ConnectionData = payloadBytes;
+        }
+
+        public override void OnTransportFailure()
+        {
+            // This behaviour will be the same for every online state
+            Manager.ChangeState(Manager.m_Offline);
+        }
+
+        public override void OnCancelClientConnectionAttempt()
+        {
+            Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.UserCancelledConnectionAttempt });
+            Manager.ChangeState(Manager.m_Offline);
         }
     }
 }

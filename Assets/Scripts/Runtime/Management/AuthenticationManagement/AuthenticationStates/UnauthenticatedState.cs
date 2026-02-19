@@ -4,7 +4,7 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
     /// Authentication state corresponding to when the user is not authenticated.
     /// From this state we can transition to the AuthenticatingState when attempting to login.
     /// </summary>
-    class UnauthenticatedState : AuthenticationState, IAuthenticationHandler
+    class UnauthenticatedState : AuthenticationState
     {
         public override void Enter()
         {

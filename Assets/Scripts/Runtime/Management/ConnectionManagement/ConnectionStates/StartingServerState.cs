@@ -13,7 +13,6 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
     /// </summary>
     class StartingServerState : OnlineState
     {
-        private Coroutine m_startServerCoroutine;
         string m_IPAddress;
         ushort m_Port;
 
@@ -49,21 +48,10 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 
         public void StartServer()
         {
-            Manager.NetworkManager.StartCoroutine(DelayedStart());
-        }
-
-        private IEnumerator DelayedStart()
-        {
-            yield return null; // warte 1 Frame
-            TryStartServer();
-        }
-
-        private void TryStartServer()
-        {
-            var utp = (UnityTransport)Manager.NetworkManager.NetworkConfig.NetworkTransport;
+            UnityTransport utp = (UnityTransport)Manager.NetworkManager.NetworkConfig.NetworkTransport;
             utp.SetConnectionData(m_IPAddress, m_Port);
-            Debug.Log($"Starting server on {m_IPAddress}:{m_Port}");
-            
+            Debug.Log($"Starting server on {m_IPAddress}:{m_Port} with target framerate {Application.targetFrameRate}");
+
             if (!Manager.NetworkManager.StartServer())
                 StartServerFailed();
         }

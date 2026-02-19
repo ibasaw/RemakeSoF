@@ -4,7 +4,7 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
     /// Authentication state corresponding to when the user's session has expired.
     /// From this state we can transition back to UnauthenticatedState or attempt to re-authenticate.
     /// </summary>
-    class SessionExpiredState : AuthenticationState, IAuthenticationHandler
+    class SessionExpiredState : AuthenticationState
     {
         private AuthenticationStatus m_ExpireReason;
 

@@ -13,14 +13,14 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 
         public override void OnClientDisconnect(ulong clientId)
         {
-            var disconnectReason = Manager.NetworkManager.DisconnectReason;
+            string disconnectReason = Manager.NetworkManager.DisconnectReason;
             if (string.IsNullOrEmpty(disconnectReason))
             {
                 Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.GenericDisconnect });
             }
             else
             {
-                var connectStatus = JsonUtility.FromJson<ConnectStatus>(disconnectReason);
+                ConnectStatus connectStatus = JsonUtility.FromJson<ConnectStatus>(disconnectReason);
                 Manager.EventManager.Broadcast(new ConnectionEvent { status = connectStatus });
             }
             Manager.ChangeState(Manager.m_Offline);

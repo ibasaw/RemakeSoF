@@ -41,7 +41,8 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
         /// <summary>
         /// Server failed to bind.
         /// </summary>
-        StartServerFailed
+        StartServerFailed,
+        UserCancelledConnectionAttempt
     }
 
     public class ConnectionEvent : AppEvent

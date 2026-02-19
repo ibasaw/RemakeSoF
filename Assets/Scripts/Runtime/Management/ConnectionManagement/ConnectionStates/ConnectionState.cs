@@ -26,6 +26,8 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 
         public virtual void OnUserRequestedShutdown() { }
 
+        public virtual void OnCancelClientConnectionAttempt() { }
+
         public virtual void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response) { }
 
         public virtual void OnTransportFailure() { }

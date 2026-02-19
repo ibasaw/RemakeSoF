@@ -3,10 +3,10 @@ using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using System.Linq;
 
-namespace Tolik.RemakeSoF.Runtime
+namespace Tolik.RemakeSoF.Runtime.ConsoleManagement
 {
     [RequireComponent(typeof(UIDocument))]
-    internal class ConsoleView : View<MetagameApplication>
+    public class ConsoleView : View<ConsoleManager>
     {
         UIDocument m_UIDocument;
         //VisualElement m_ConsoleRoot;

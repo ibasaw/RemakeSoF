@@ -21,9 +21,9 @@ namespace Tolik.RemakeSoF.Runtime
         Button m_LoadPreviousSkinButton;
         Button m_LoadNextSkinButton;
 
-        int m_PreviewLayer = 30;
+        readonly int m_PreviewLayer = 30;
         Vector3 m_CameraOffset = new(15f, 0, 0);
-        float m_CameraFov = 40f;
+        readonly float m_CameraFov = 40f;
         Color m_ClearColor = new(0, 0, 0, 0);
         Vector3 m_CharacterRotation = new(0, 90, 0); // Charakter-Rotation in Grad
         Vector3 m_CharacterPosition = new(0, -5f, 0); // Charakter-Position (Y nach unten)
@@ -56,13 +56,11 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnClickLoadNextSkin(ClickEvent evt)
         {
-            //ApplicationEntryPoint.Singleton.PlayerSkinManager.LoadNextSkin();
             Debug.Log("Load Next Skin clicked");
             Broadcast(new LoadNextSkinEvent());
         }
         void OnClickLoadPreviousSkin(ClickEvent evt)
         {
-            //ApplicationEntryPoint.Singleton.PlayerSkinManager.LoadPreviousSkin();
             Debug.Log("Load Previous Skin clicked");
             Broadcast(new LoadPreviousSkinEvent());
         }
@@ -113,8 +111,7 @@ namespace Tolik.RemakeSoF.Runtime
             if (m_CharacterPrefab == null) return;
 
             m_CharacterPreviewInstance = Instantiate(m_CharacterPrefab, m_CharacterPreviewStage.transform);
-            m_CharacterPreviewInstance.transform.position = m_CharacterPosition;
-            m_CharacterPreviewInstance.transform.rotation = Quaternion.Euler(m_CharacterRotation);
+            m_CharacterPreviewInstance.transform.SetPositionAndRotation(m_CharacterPosition, Quaternion.Euler(m_CharacterRotation));
             SetLayerRecursively(m_CharacterPreviewInstance, m_PreviewLayer);
         }
 
@@ -164,6 +161,8 @@ namespace Tolik.RemakeSoF.Runtime
             m_CharacterPreviewContainer?.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             if (m_CharacterPreviewRenderTexture != null) { m_CharacterPreviewRenderTexture.Release(); Destroy(m_CharacterPreviewRenderTexture); }
             if (m_CharacterPreviewStage != null) Destroy(m_CharacterPreviewStage);
+            m_LoadNextSkinButton.UnregisterCallback<ClickEvent>(OnClickLoadNextSkin);
+            m_LoadPreviousSkinButton.UnregisterCallback<ClickEvent>(OnClickLoadPreviousSkin);
         }
 
         void SetLayerRecursively(GameObject go, int layer)

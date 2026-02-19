@@ -39,6 +39,7 @@ namespace Tolik.RemakeSoF.Runtime
                 case ConnectStatus.ServerFull:
                 case ConnectStatus.IncompatibleVersions:
                 case ConnectStatus.UserRequestedDisconnect:
+                case ConnectStatus.UserCancelledConnectionAttempt:
                 case ConnectStatus.GenericDisconnect:
                 case ConnectStatus.ServerEndedSession:
                 case ConnectStatus.StartClientFailed:
@@ -51,7 +52,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnCancelConnection(CancelConnectionEvent evt)
         {
-            ConnectionManager.RequestShutdown();
+            ConnectionManager.CancelClientConnectionAttempt();
         }
     }
 }

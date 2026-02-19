@@ -20,6 +20,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0f67940ae0a19d243bde5abb10c9e400
+    m_Address: models/characters/gore/bone_long/bone_long_mp.glm
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 149316149895ca449a6e57daab337d8d
+    m_Address: models/characters/gore/bone_small/bone_small.glm
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1def85f5e74bda3409add6cd46509ca1
     m_Address: characters/models/average_armor
     m_ReadOnly: 0
@@ -65,6 +75,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b3ef09285648a90498fe8276eab4e975
+    m_Address: models/characters/gore/brain/g2brain.glm
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bbec368c1aac07241a140a8efe3b78ac
     m_Address: characters/models/suit_sleeves
     m_ReadOnly: 0
@@ -72,6 +87,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c64754162df1edd4bb9489d7742245db
     m_Address: characters/models/female_pants
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ca170c239dd44eb4a9f8653edb7f4ddf
+    m_Address: models/characters/gore/shoulder_bone/shoulder_bone.glm
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

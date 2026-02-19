@@ -102,5 +102,10 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
         {
             m_CurrentState.OnUserRequestedShutdown();
         }
+
+        public void CancelClientConnectionAttempt()
+        {
+            m_CurrentState.OnCancelClientConnectionAttempt();
+        }
     }
 }

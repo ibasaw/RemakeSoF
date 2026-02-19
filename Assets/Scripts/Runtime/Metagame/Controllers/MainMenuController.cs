@@ -24,6 +24,14 @@ namespace Tolik.RemakeSoF.Runtime
             AuthenticationManager.EventManager.AddListener<UserAuthenticatedEvent>(OnUserAuthenticatedEvent);
         }
 
+        void Start()
+        {
+            if (AuthenticationManager.IsAuthenticated())
+            {
+                OnUserAuthenticatedEvent(new UserAuthenticatedEvent(AuthenticationManager.m_Authenticated.AuthResponse));
+            }
+        }
+
         void OnDestroy()
         {
             RemoveListeners();

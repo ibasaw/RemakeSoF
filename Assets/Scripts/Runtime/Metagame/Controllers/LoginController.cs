@@ -30,6 +30,12 @@ namespace Tolik.RemakeSoF.Runtime
 
         void Start()
         {
+            if(AuthenticationManager.IsAuthenticated())
+            {
+                Debug.Log("User already authenticated at LoginController Start, hiding login view");
+                View.Hide();
+                return;
+            }
             PrepareViewTexturesAndShow();
         }
 

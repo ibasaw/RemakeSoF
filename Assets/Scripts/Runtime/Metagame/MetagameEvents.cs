@@ -81,4 +81,6 @@ namespace Tolik.RemakeSoF.Runtime
     
     internal class LoadNextSkinEvent : AppEvent { }
     internal class LoadPreviousSkinEvent : AppEvent { }
+    internal class CreateServerClickEvent : AppEvent { }
+    internal class JoinServerClickEvent : AppEvent { }
 }

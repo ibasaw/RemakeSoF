@@ -14,11 +14,7 @@
                     "fingers_l",
                     "fingers_r",
                     "hand_l",
-                    "hand_r",
-                    "mitten_l_off",
-                    "mitten_r_off",
-                    "sleeve_r",
-                    "sleeve_l"
+                    "hand_r"
                 ]
             },
             "body": {
@@ -35,21 +31,7 @@
                     "leg_uppr_l",
                     "leg_uppr_r",
                     "torso_l",
-                    "torso_r",
-                    "labcollar_r_off",
-                    "labcollar_l_off",
-                    "trenchcollar_r_off",
-                    "trenchcollar_l_off",
-                    "skirt_frnt_r",
-                    "skirt_frnt_l",
-                    "skirt_bck_l",
-                    "skirt_bck_r",
-                    "fcollar_l_off",
-                    "fcollar_r_off",
-                    "mcollar_l",
-                    "mcollar_r",
-                    "collar_l",
-                    "collar_r"
+                    "torso_r"
                 ]
             },
             "face": {
@@ -66,17 +48,9 @@
                     "head_frnt_mid_l",
                     "head_frnt_mid_r",
                     "head_frnt_uppr_l",
-                    "head_frnt_uppra_l_off",
                     "head_frnt_uppr_r",
-                    "head_frnt_uppra_r_off",
                     "mouth_l",
-                    "mouth_r",
-                    "head_frnt_mida_r_off",
-                    "head_frnt_mida_l_off",
-                    "beardhead_frnt_mid_l_off",
-                    "beardhead_frnt_mid_r_off",
-                    "beardhead_frnt_lwr_l_off",
-                    "beardhead_frnt_lwr_r_off"
+                    "mouth_r"
                 ]
             },
             "caps": {
@@ -121,23 +95,7 @@
                     "cap_torso_l_arm_off",
                     "cap_torso_l_off",
                     "cap_torso_r_arm_off",
-                    "cap_torso_r_off",
-                    "cap_fhead_bck_lwr_l_off",
-                    "cap_fhead_bck_lwr_r_off",
-                    "cap_fhead_bck_uppr_l_off",
-                    "cap_fhead_bck_uppr_r_off",
-                    "cap_fhead_frnt_lwr_l_off",
-                    "cap_fhead_frnt_lwr_r_off",
-                    "cap_fhead_frnt_mid_l_off",
-                    "cap_fhead_frnt_mid_r_off",
-                    "cap_fhead_frnt_uppr_l_off",
-                    "cap_fhead_frnt_uppr_r_off",
-                    "cap_fhead_side_l_off",
-                    "cap_fhead_side_r_off",
-                    "cap_beardhead_mid_l_off",
-                    "cap_beardhead_mid_r_off",
-                    "cap_beardhead_frnt_lwr_l_off",
-                    "cap_beardhead_frnt_lwr_r_off"
+                    "cap_torso_r_off"
                 ]
             },
             "head": {
@@ -158,6 +116,37 @@
     "average_sleeves": {
         "description": "Male, military fatigues silhouette with short sleeves.",
         "parts": {
+            "caps": {
+                "naming": "caps",
+                "description": "Shared gore cap shader. very model uses the same gore cap shader and texture. models/characters/caps/caps",
+                "required": true,
+                "material": [
+                    "cap_beardhead_frnt_mid_l_off",
+                    "cap_beardhead_frnt_mid_r_off",
+                    "cap_beardhead_frnt_lwr_l_off",
+                    "cap_beardhead_frnt_lwr_r_off"
+                ]
+            },
+            "body": {
+                "naming": "b_xxx",
+                "description": "Body shader. (all models)",
+                "required": true,
+                "material": [
+                    "collar_l",
+                    "collar_r"
+                ]
+            },
+            "face": {
+                "naming": "beardhead_xxx",
+                "description": "Beard surface group (optional). Texturen in models/characters/average_face.",
+                "required": false,
+                "material": [
+                    "beardhead_frnt_lwr_l_off",
+                    "beardhead_frnt_lwr_r_off",
+                    "beardhead_frnt_mid_l_off",
+                    "beardhead_frnt_mid_r_off"
+                ]
+            },
             "beard": {
                 "naming": "beardhead_xxx",
                 "description": "Beard surface group (optional). Texturen in models/characters/average_face.",
@@ -262,6 +251,15 @@
                     "teeth_r"
                 ]
             },
+            "body": {
+                "naming": "b_xxx",
+                "description": "Body shader. (all models)",
+                "required": true,
+                "material": [
+                    "collar_l",
+                    "collar_r"
+                ]
+            },
             "avmed": {
                 "naming": "h_avmed_xxx",
                 "description": "Medium length male hair. models/characters/average_face",
@@ -321,6 +319,45 @@
                     "teeth_r"
                 ]
             },
+            "body": {
+                "naming": "b_xxx",
+                "description": "Body shader. (all models)",
+                "required": true,
+                "material": [
+                    "fcollar_l_off",
+                    "fcollar_r_off",
+                    "mcollar_l",
+                    "mcollar_r"
+                ]
+            },
+            "face": {
+                "naming": "f_xxx",
+                "description": "These images are all found in models/characters/average_face or models/characters/female_face. The end of the name will have a race designation so skin tone organization is easier. The race designation is:  A = Asian  B = Black H = Hispanic W = White (all models)",
+                "required": true,
+                "material": [
+                    "head_frnt_uppra_l_off",
+                    "head_frnt_uppra_r_off"
+                ]
+            },
+            "caps": {
+                "naming": "caps",
+                "description": "Shared gore cap shader. very model uses the same gore cap shader and texture. models/characters/caps/caps",
+                "required": true,
+                "material": [
+                    "cap_fhead_bck_lwr_l_off",
+                    "cap_fhead_bck_lwr_r_off",
+                    "cap_fhead_bck_uppr_l_off",
+                    "cap_fhead_bck_uppr_r_off",
+                    "cap_fhead_frnt_lwr_l_off",
+                    "cap_fhead_frnt_lwr_r_off",
+                    "cap_fhead_frnt_mid_l_off",
+                    "cap_fhead_frnt_mid_r_off",
+                    "cap_fhead_frnt_uppr_l_off",
+                    "cap_fhead_frnt_uppr_r_off",
+                    "cap_fhead_side_l_off",
+                    "cap_fhead_side_r_off"
+                ]
+            },
             "eye_2sided": {
                 "naming": "f2_xxx",
                 "description": "Two-sided eye/face shader (females use eye_2sided; chem_suit verwendet f2_xxx too).",
@@ -330,8 +367,8 @@
                     "teeth_r",
                     "eyelash_l",
                     "eyelash_r",
-                    "eyelasha_l_off",
-                    "eyelasha_r_off",
+                    "feyelash_l_off",
+                    "feyelash_r_off",
                     "fteeth_l_off",
                     "fteeth_r_off"
                 ]
@@ -402,6 +439,24 @@
                     "teeth_r"
                 ]
             },
+            "body": {
+                "naming": "b_xxx",
+                "description": "Body shader. (all models)",
+                "required": true,
+                "material": [
+                    "collar_l",
+                    "collar_r"
+                ]
+            },
+            "face": {
+                "naming": "f_xxx",
+                "description": "These images are all found in models/characters/average_face or models/characters/female_face. The end of the name will have a race designation so skin tone organization is easier. The race designation is:  A = Asian  B = Black H = Hispanic W = White (all models)",
+                "required": true,
+                "material": [
+                    "head_frnt_uppra_l_off",
+                    "head_frnt_uppra_r_off"
+                ]
+            },
             "avmed": {
                 "naming": "h_avmed_xxx",
                 "description": "Medium male hair where supported.",
@@ -444,6 +499,17 @@
     "female_armor": {
         "description": "Female, armored, military fatigues silhouette.",
         "parts": {
+            "caps": {
+                "naming": "caps",
+                "description": "Shared gore cap shader. very model uses the same gore cap shader and texture. models/characters/caps/caps",
+                "required": true,
+                "material": [
+                    "cap_head_frnt_mida_r_off",
+                    "cap_head_frnt_mida_l_off",
+                    "cap_head_frnt_uppra_l_off",
+                    "cap_head_frnt_uppra_r_off"
+                ]
+            },
             "eye_2sided": {
                 "naming": "f2_xxx",
                 "description": "Double-sided face/eye shader für eyelashes/teeth bei Female models.",
@@ -454,9 +520,27 @@
                     "eyelash_l",
                     "eyelash_r",
                     "eyelasha_l_off",
-                    "eyelasha_r_off",
-                    "fteeth_l_off",
-                    "fteeth_r_off"
+                    "eyelasha_r_off"
+                ]
+            },
+            "face": {
+                "naming": "f_xxx",
+                "description": "These images are all found in models/characters/average_face or models/characters/female_face. The end of the name will have a race designation so skin tone organization is easier. The race designation is:  A = Asian  B = Black H = Hispanic W = White (all models)",
+                "required": true,
+                "material": [
+                    "head_frnt_mida_r_off",
+                    "head_frnt_mida_l_off",
+                    "head_frnt_uppra_l_off",
+                    "head_frnt_uppra_r_off"
+                ]
+            },
+            "body": {
+                "naming": "b_xxx",
+                "description": "Body shader. (all models)",
+                "required": true,
+                "material": [
+                    "collar_l",
+                    "collar_r"
                 ]
             },
             "fshort": {
@@ -526,6 +610,17 @@
     "female_pants": {
         "description": "Female, short sleeves, long pants silhouette.",
         "parts": {
+            "caps": {
+                "naming": "caps",
+                "description": "Shared gore cap shader. very model uses the same gore cap shader and texture. models/characters/caps/caps",
+                "required": true,
+                "material": [
+                    "cap_head_frnt_mida_r_off",
+                    "cap_head_frnt_mida_l_off",
+                    "cap_head_frnt_uppra_l_off",
+                    "cap_head_frnt_uppra_r_off"
+                ]
+            },
             "eye_2sided": {
                 "naming": "f2_xxx",
                 "description": "Double-sided eye/face shader for females.",
@@ -536,9 +631,36 @@
                     "eyelash_l",
                     "eyelash_r",
                     "eyelasha_l_off",
-                    "eyelasha_r_off",
-                    "fteeth_l_off",
-                    "fteeth_r_off"
+                    "eyelasha_r_off"
+                ]
+            },
+            "arms": {
+                "naming": "a_xxx",
+                "description": "Arms shader. (all models)",
+                "required": true,
+                "material": [
+                    "sleeve_r",
+                    "sleeve_l"
+                ]
+            },
+            "face": {
+                "naming": "f_xxx",
+                "description": "These images are all found in models/characters/average_face or models/characters/female_face. The end of the name will have a race designation so skin tone organization is easier. The race designation is:  A = Asian  B = Black H = Hispanic W = White (all models)",
+                "required": true,
+                "material": [
+                    "head_frnt_mida_r_off",
+                    "head_frnt_mida_l_off",
+                    "head_frnt_uppra_l_off",
+                    "head_frnt_uppra_r_off"
+                ]
+            },
+            "body": {
+                "naming": "b_xxx",
+                "description": "Body shader. (all models)",
+                "required": true,
+                "material": [
+                    "collar_l",
+                    "collar_r"
                 ]
             },
             "fshort": {
@@ -600,6 +722,17 @@
     "female_skirt": {
         "description": "Female, short sleeves, skirt silhouette.",
         "parts": {
+            "caps": {
+                "naming": "caps",
+                "description": "Shared gore cap shader. very model uses the same gore cap shader and texture. models/characters/caps/caps",
+                "required": true,
+                "material": [
+                    "cap_head_frnt_mida_r_off",
+                    "cap_head_frnt_mida_l_off",
+                    "cap_head_frnt_uppra_l_off",
+                    "cap_head_frnt_uppra_r_off"
+                ]
+            },
             "eye_2sided": {
                 "naming": "f2_xxx",
                 "description": "Double-sided face shader for females (lash/teeth).",
@@ -610,9 +743,40 @@
                     "eyelash_l",
                     "eyelash_r",
                     "eyelasha_l_off",
-                    "eyelasha_r_off",
-                    "fteeth_l_off",
-                    "fteeth_r_off"
+                    "eyelasha_r_off"
+                ]
+            },
+            "arms": {
+                "naming": "a_xxx",
+                "description": "Arms shader. (all models)",
+                "required": true,
+                "material": [
+                    "sleeve_r",
+                    "sleeve_l"
+                ]
+            },
+            "face": {
+                "naming": "f_xxx",
+                "description": "These images are all found in models/characters/average_face or models/characters/female_face. The end of the name will have a race designation so skin tone organization is easier. The race designation is:  A = Asian  B = Black H = Hispanic W = White (all models)",
+                "required": true,
+                "material": [
+                    "head_frnt_mida_r_off",
+                    "head_frnt_mida_l_off",
+                    "head_frnt_uppra_l_off",
+                    "head_frnt_uppra_r_off"
+                ]
+            },
+            "body": {
+                "naming": "b_xxx",
+                "description": "Body shader. (all models)",
+                "required": true,
+                "material": [
+                    "skirt_frnt_r",
+                    "skirt_frnt_l",
+                    "skirt_bck_l",
+                    "skirt_bck_r",
+                    "collar_l",
+                    "collar_r"
                 ]
             },
             "flong": {
@@ -681,6 +845,15 @@
                 "material": [
                     "teeth_l",
                     "teeth_r"
+                ]
+            },
+            "arms": {
+                "naming": "a_xxx",
+                "description": "Arms shader. (all models)",
+                "required": true,
+                "material": [
+                    "mitten_l_off",
+                    "mitten_r_off"
                 ]
             },
             "avmed": {
@@ -760,6 +933,30 @@
                     "beardhead_frnt_mid_r_off"
                 ]
             },
+            "caps": {
+                "naming": "caps",
+                "description": "Shared gore cap shader. very model uses the same gore cap shader and texture. models/characters/caps/caps",
+                "required": true,
+                "material": [
+                    "cap_beardhead_frnt_mid_l_off",
+                    "cap_beardhead_frnt_mid_r_off",
+                    "cap_beardhead_frnt_lwr_l_off",
+                    "cap_beardhead_frnt_lwr_r_off"
+                ]
+            },
+            "face": {
+                "naming": "f_xxx",
+                "description": "These images are all found in models/characters/average_face or models/characters/female_face. The end of the name will have a race designation so skin tone organization is easier. The race designation is:  A = Asian  B = Black H = Hispanic W = White (all models)",
+                "required": true,
+                "material": [
+                    "head_frnt_uppra_l_off",
+                    "head_frnt_uppra_r_off",
+                    "beardhead_frnt_lwr_l_off",
+                    "beardhead_frnt_lwr_r_off",
+                    "beardhead_frnt_mid_l_off",
+                    "beardhead_frnt_mid_r_off"
+                ]
+            },
             "coat_long": {
                 "naming": "lab_xxx / suit_xxx / trench_xxx",
                 "description": "Double-sided coat shader (cull disabled). Textures in models/characters/suit_long_coat.",
@@ -767,8 +964,12 @@
                 "material": [
                     "labcoat_r_off",
                     "labcoat_l_off",
+                    "labcollar_r_off",
+                    "labcollar_l_off",
                     "trenchcoat_r_off",
                     "trenchcoat_l_off",
+                    "trenchcollar_r_off",
+                    "trenchcollar_l_off",
                     "suitcoat_r_off",
                     "suitcoat_l_off"
                 ]
@@ -844,6 +1045,33 @@
                 "material": [
                     "teeth_l",
                     "teeth_r"
+                ]
+            },
+            "face": {
+                "naming": "f_xxx",
+                "description": "These images are all found in models/characters/average_face or models/characters/female_face. The end of the name will have a race designation so skin tone organization is easier. The race designation is:  A = Asian  B = Black H = Hispanic W = White (all models)",
+                "required": true,
+                "material": [
+                    "head_frnt_uppra_l_off",
+                    "head_frnt_uppra_r_off"
+                ]
+            },
+            "arms": {
+                "naming": "a_xxx",
+                "description": "Arms shader. (all models)",
+                "required": true,
+                "material": [
+                    "sleeve_r",
+                    "sleeve_l"
+                ]
+            },
+            "body": {
+                "naming": "b_xxx",
+                "description": "Body shader. (all models)",
+                "required": true,
+                "material": [
+                    "collar_l",
+                    "collar_r"
                 ]
             },
             "avmed": {

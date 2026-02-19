@@ -4,9 +4,11 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
     /// Authentication state corresponding to when the user is successfully authenticated.
     /// From this state we can transition to UnauthenticatedState on logout or SessionExpiredState if session expires.
     /// </summary>
-    class AuthenticatedState : AuthenticationState, IAuthenticationHandler
+    class AuthenticatedState : AuthenticationState
     {
         private AuthenticationResponse m_AuthResponse;
+
+        public AuthenticationResponse AuthResponse => m_AuthResponse;
 
         public void Configure(AuthenticationResponse response)
         {

@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using ConnectionEvent = Tolik.RemakeSoF.Runtime.ConnectionManagement.ConnectionEvent;
 using Tolik.RemakeSoF.Runtime.DataManagement;
+using Tolik.RemakeSoF.Runtime.ConsoleManagement;
 
 namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 {
@@ -49,6 +50,8 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
             }
         }
 
+        // refernces used in controllers to access important systems that must persist across scenes.
+        // These are set via the inspector to ensure they are present and to avoid issues with initialization order.
         [SerializeField]
         ConnectionManager m_ConnectionManager;
         public ConnectionManager ConnectionManager => m_ConnectionManager;
@@ -62,6 +65,10 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         public PlayerSkinManager PlayerSkinManager => m_PlayerSkinManager;
 
         [SerializeField]
+        ConsoleManager m_ConsoleManager;
+        public ConsoleManager ConsoleManager => m_ConsoleManager;
+
+        [SerializeField]
         internal int MinPlayers = 1;
         [SerializeField]
         internal int MaxPlayers = 2;
@@ -73,34 +80,14 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
             DontDestroyOnLoad(gameObject);
             Singleton = Singleton != null ? Singleton : this;
 
-            // 1. Pure Services registrieren
-            TextureManager textureManager = new();
-            ServiceLocator.Register(textureManager);
-
-            PrefabManager prefabManager = new();
-            ServiceLocator.Register(prefabManager);
-
-            SkinDefinitionLoader skinLoader = new();
-            ServiceLocator.Register(skinLoader);
-
-            SurfaceDefinitionLoader surfaceLoader = new();
-            ServiceLocator.Register(surfaceLoader);
-
-            CharacterTemplateLoader templateLoader = new();
-            ServiceLocator.Register(templateLoader);
-
-            ItemDefinitionLoader itemLoader = new();
-            ServiceLocator.Register(itemLoader);
-
-            LegacyShaderLoader shaderLoader = new();
-            ServiceLocator.Register(shaderLoader);
-
             m_ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
+            m_AuthenticationManager.EventManager.AddListener<AuthenticationEvent>(OnAuthenticationEvent);
         }
 
         void OnDestroy()
         {
             m_ConnectionManager.EventManager.RemoveListener<ConnectionEvent>(OnConnectionEvent);
+            m_AuthenticationManager.EventManager.RemoveListener<AuthenticationEvent>(OnAuthenticationEvent);
             ServiceLocator.ClearAll();
         }
 
@@ -134,7 +121,33 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                     break;
                 case MultiplayerRoleFlags.Client:
                     {
+                        // 1. Pure Services registrieren
+                        TextureManager textureManager = new();
+                        ServiceLocator.Register(textureManager);
+
+                        PrefabManager prefabManager = new();
+                        ServiceLocator.Register(prefabManager);
+
+                        SkinDefinitionLoader skinLoader = new();
+                        ServiceLocator.Register(skinLoader);
+
+                        SurfaceDefinitionLoader surfaceLoader = new();
+                        ServiceLocator.Register(surfaceLoader);
+
+                        CharacterTemplateLoader templateLoader = new();
+                        ServiceLocator.Register(templateLoader);
+
+                        ItemDefinitionLoader itemLoader = new();
+                        ServiceLocator.Register(itemLoader);
+
+                        LegacyShaderLoader shaderLoader = new();
+                        ServiceLocator.Register(shaderLoader);
+
+                        GoreDataLoader goreDataLoader = new();
+                        ServiceLocator.Register(goreDataLoader);
+                        
                         SceneManager.LoadScene("MetagameScene");
+                        Debug.Log($"[ApplicationEntryPoint] InitializeNetworkLogic - Client instance started, loaded MetagameScene. AutoConnectOnStartup is set to {AutoConnectOnStartup}");
                         if (AutoConnectOnStartup)
                         {
                             m_ConnectionManager.StartClient(k_DefaultClientAutoConnectServerAddress, listeningPort);
@@ -144,6 +157,11 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                 case MultiplayerRoleFlags.ClientAndServer:
                     throw new ArgumentOutOfRangeException("MultiplayerRole", "ClientAndServer is an invalid multiplayer role in this sample. Please select the Client or Server role.");
             }
+        }
+
+        void OnAuthenticationEvent(AuthenticationEvent evt)
+        {
+            Debug.Log($"[ApplicationEntryPoint] OnAuthenticationEvent - Received authentication event with status: {evt.status}");
         }
 
         void OnConnectionEvent(ConnectionEvent evt)
@@ -172,6 +190,7 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                     case ConnectStatus.UserRequestedDisconnect:
                     case ConnectStatus.ServerEndedSession:
                         // If client is disconnected, return to metagame scene
+                        Debug.Log($"[ApplicationEntryPoint] OnConnectionEvent - Client disconnected with status: {evt.status}, returning to metagame scene...");
                         SceneManager.LoadScene("MetagameScene");
                         break;
                 }

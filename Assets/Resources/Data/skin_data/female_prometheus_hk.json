@@ -36,6 +36,24 @@
       ]
     },
     {
+      "name": "pony",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_face/h_maid_pony"
+        }
+      ]
+    },
+    {
+      "name": "bun",
+      "groups": [
+        {
+          "name": "white",
+          "texture1": "models/characters/female_face/h_maid_bun"
+        }
+      ]
+    },
+    {
       "name": "eye_2sided",
       "groups": [
         {

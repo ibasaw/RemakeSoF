@@ -37,7 +37,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnPlayerSkinChanged(PlayerSkinChangedEvent evt)
         {
-            var prefab = PlayerSkinManager.GetCurrentPlayerPrefab();
+            GameObject prefab = PlayerSkinManager.GetCurrentPlayerPrefab();
             if (prefab == null)
             {
                 Debug.LogWarning($"[LoadoutController] OnPlayerSkinChanged - Current prefab is null for skin '{evt.skinName}'");
