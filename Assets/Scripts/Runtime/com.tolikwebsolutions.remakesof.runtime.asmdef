@@ -13,7 +13,8 @@
         "com.tolikwebsolutions.remakesof.shared",
         "com.tolikwebsolutions.remakesof.utils",
         "Unity.Addressables",
-        "Unity.ResourceManager"
+        "Unity.ResourceManager",
+        "Unity.Collections"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

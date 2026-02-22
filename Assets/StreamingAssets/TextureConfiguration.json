@@ -3,14 +3,29 @@
         "login": {
             "background": "ui/metagame/background",
             "logo": "ui/metagame/logo",
-            "buttonBackground": "ui/metagame/button_background2",
+            "buttonBackground": "ui/metagame/button_background",
             "inputBackground": "ui/metagame/input_background"
         },
         "mainMenu": {
-            "background": "ui/metagame/main_menu_background"
+            "background": "ui/metagame/main_menu_background",
+            "joinServerButton": "ui/metagame/icons/icon_join_server_mp",
+            "joinServerButtonGlow": "ui/metagame/icons/icon_join_server_glow_mp",
+            "createServerButton": "ui/metagame/icons/icon_create_server_mp",
+            "createServerButtonGlow": "ui/metagame/icons/icon_create_server_glow_mp",
+            "optionsButton": "ui/metagame/icons/icon_options_mp",
+            "optionsButtonGlow": "ui/metagame/icons/icon_options_glow_mp",
+            "loadoutButton": "ui/metagame/icons/icon_credits_mp",
+            "loadoutButtonGlow": "ui/metagame/icons/icon_credits_glow_mp",
+            "logoutButton": "ui/metagame/icons/icon_quit_mp",
+            "logoutButtonGlow": "ui/metagame/icons/icon_quit_glow_mp"
         }
     },
     "gameplay": {
         "playerAvatar": "ui/gameplay/player_avatar"
+    },
+    "console": {
+        "background": "ui/console/console",
+        "glowline": "ui/console/glowline",
+        "glowlineWide": "ui/console/glowline2"
     }
 }

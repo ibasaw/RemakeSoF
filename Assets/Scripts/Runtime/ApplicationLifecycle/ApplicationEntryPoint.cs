@@ -75,6 +75,8 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         [SerializeField]
         bool m_AutoconnectIfClient = false;
 
+        ServerCommandListener m_ServerCommandListener;
+
         void Awake()
         {
             DontDestroyOnLoad(gameObject);
@@ -82,6 +84,11 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 
             m_ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
             m_AuthenticationManager.EventManager.AddListener<AuthenticationEvent>(OnAuthenticationEvent);
+        }
+
+        void Update()
+        {
+            m_ServerCommandListener?.ProcessPendingCommands();
         }
 
         void OnDestroy()
@@ -117,6 +124,12 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                     //lock framerate on dedicated servers
                     Application.targetFrameRate = commandLineArgumentsParser.TargetFramerate;
                     QualitySettings.vSyncCount = 0;
+
+                    // Start CLI command listener for server
+                    m_ServerCommandListener = new ServerCommandListener();
+                    ServiceLocator.Register(m_ServerCommandListener);
+                    m_ServerCommandListener.Start();
+
                     m_ConnectionManager.StartServerIP(k_DefaultServerListenAddress, listeningPort);
                     break;
                 case MultiplayerRoleFlags.Client:
@@ -145,7 +158,7 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 
                         GoreDataLoader goreDataLoader = new();
                         ServiceLocator.Register(goreDataLoader);
-                        
+
                         SceneManager.LoadScene("MetagameScene");
                         Debug.Log($"[ApplicationEntryPoint] InitializeNetworkLogic - Client instance started, loaded MetagameScene. AutoConnectOnStartup is set to {AutoConnectOnStartup}");
                         if (AutoConnectOnStartup)

@@ -242,7 +242,6 @@
 }
 
 .logout-modal-content {
-    background-image: resource('uQuake/gfx/menus/scoreboard/scorelineheader');
     background-color: rgba(30, 30, 30, 0.95);
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;

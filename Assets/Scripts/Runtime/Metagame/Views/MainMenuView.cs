@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Reflection;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 namespace Tolik.RemakeSoF.Runtime
@@ -16,11 +18,11 @@ namespace Tolik.RemakeSoF.Runtime
         class ButtonConfig
         {
             public string Name;
-            public string HoverIconPath;
+            public Texture2D HoverIconPath;
             public System.Action<ButtonConfig> OnClick;
             public View<MetagameApplication> TargetView;
             public Button ButtonRef;
-            public string ActiveIconPath => HoverIconPath;
+            public Texture2D ActiveIconPath => HoverIconPath;
             public bool IsActive;
         }
         readonly List<ButtonConfig> m_ButtonConfigs = new();
@@ -29,34 +31,36 @@ namespace Tolik.RemakeSoF.Runtime
         {
             m_UIDocument = GetComponent<UIDocument>();
 
+            TextureConfiguration configuration = ServiceLocator.Get<TextureManager>().Configuration;
+
             m_ButtonConfigs.Add(new ButtonConfig
             {
                 Name = "joinServerButton",
-                HoverIconPath = "uQuake/gfx/menus/icons/icon_join_server_glow_mp",
+                HoverIconPath = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.joinServerButtonGlow)?.Texture,
                 TargetView = App.View.JoinServerView
             });
             m_ButtonConfigs.Add(new ButtonConfig
             {
                 Name = "createServerButton",
-                HoverIconPath = "uQuake/gfx/menus/icons/icon_create_server_glow_mp",
+                HoverIconPath = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.createServerButtonGlow)?.Texture,
                 TargetView = App.View.CreateServerView
             });
             m_ButtonConfigs.Add(new ButtonConfig
             {
                 Name = "optionsButton",
-                HoverIconPath = "uQuake/gfx/menus/icons/icon_options_glow_mp",
+                HoverIconPath = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.optionsButtonGlow)?.Texture,
                 TargetView = App.View.OptionsView
             });
             m_ButtonConfigs.Add(new ButtonConfig
             {
                 Name = "loadoutButton",
-                HoverIconPath = "uQuake/gfx/menus/icons/icon_credits_glow_mp",
+                HoverIconPath = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.loadoutButtonGlow)?.Texture,
                 TargetView = App.View.LoadoutView
             });
             m_ButtonConfigs.Add(new ButtonConfig
             {
                 Name = "logoutButton",
-                HoverIconPath = "uQuake/gfx/menus/icons/icon_quit_glow_mp",
+                HoverIconPath = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.logoutButtonGlow)?.Texture,
                 //TargetView = App.View.LogoutView
                 OnClick = (cfg) =>
                 {
@@ -71,10 +75,16 @@ namespace Tolik.RemakeSoF.Runtime
 
             m_ContentBackground = root.Q<VisualElement>("contentBackground");
             m_MainMenuBackground = root.Q<VisualElement>("mainMenu");
+            TextureConfiguration configuration = ServiceLocator.Get<TextureManager>().Configuration;
+
+            Texture2D mainMenuBackgroundTexture = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.background)?.Texture;
+            m_MainMenuBackground.style.backgroundImage = new StyleBackground(mainMenuBackgroundTexture);
+            
             // Buttons finden + callbacks registrieren
             foreach (var cfg in m_ButtonConfigs)
             {
                 cfg.ButtonRef = root.Q<Button>(cfg.Name);
+                cfg.ButtonRef.iconImage = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.GetType().GetField(cfg.Name).GetValue(configuration.metagame.mainMenu).ToString())?.Texture;
 
                 if (cfg.TargetView != null)
                 {
@@ -100,14 +110,6 @@ namespace Tolik.RemakeSoF.Runtime
             }
         }
 
-        public void SetBackgroundTexture(Texture2D texture)
-        {
-            if (texture != null)
-            {
-                m_MainMenuBackground.style.backgroundImage = new StyleBackground(texture);
-            }
-        }
-
         private void LoadSubView(ButtonConfig cfg)
         {
             if (cfg.IsActive) return;
@@ -130,8 +132,7 @@ namespace Tolik.RemakeSoF.Runtime
         void OnPointerEnterEvent(PointerEnterEvent evt, ButtonConfig cfg)
         {
             if (cfg.IsActive) return;
-            cfg.ButtonRef.style.backgroundImage = new StyleBackground(
-                Resources.Load<Texture2D>(cfg.HoverIconPath));
+            cfg.ButtonRef.style.backgroundImage = new StyleBackground(cfg.HoverIconPath);
         }
 
         void OnPointerLeaveEvent(PointerLeaveEvent evt, ButtonConfig cfg)
@@ -150,8 +151,7 @@ namespace Tolik.RemakeSoF.Runtime
 
             if (isActive)
             {
-                cfg.ButtonRef.style.backgroundImage = new StyleBackground(
-                    Resources.Load<Texture2D>(cfg.ActiveIconPath));
+                cfg.ButtonRef.style.backgroundImage = new StyleBackground(cfg.ActiveIconPath);
                 cfg.IsActive = true;
             }
             else

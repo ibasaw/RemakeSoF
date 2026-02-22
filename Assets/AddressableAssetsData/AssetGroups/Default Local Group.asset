@@ -65,6 +65,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 88ed268c36a8edf45b17dd6407819a8e
+    m_Address: maps/cem1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 946cfc264987bfa4db94ad069480e56a
     m_Address: models/animator/loadout_female_pants
     m_ReadOnly: 0

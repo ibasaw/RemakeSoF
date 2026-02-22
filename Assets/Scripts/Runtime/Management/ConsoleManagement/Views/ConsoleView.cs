@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using System.Linq;
+using Tolik.RemakeSoF.Runtime.TextureManagement;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 
 namespace Tolik.RemakeSoF.Runtime.ConsoleManagement
 {
@@ -9,7 +11,11 @@ namespace Tolik.RemakeSoF.Runtime.ConsoleManagement
     public class ConsoleView : View<ConsoleManager>
     {
         UIDocument m_UIDocument;
-        //VisualElement m_ConsoleRoot;
+        
+        VisualElement m_ConsoleRoot;
+        VisualElement m_Glowline;
+        VisualElement m_GlowlineWide;
+
         ScrollView m_Output;
         TextField m_Input;
 
@@ -24,11 +30,18 @@ namespace Tolik.RemakeSoF.Runtime.ConsoleManagement
         {
             var root = m_UIDocument.rootVisualElement;
 
-            //m_ConsoleRoot = root.Q<VisualElement>("console-root");
+            m_ConsoleRoot = root.Q<VisualElement>("console-root");
+            m_Glowline = root.Q<VisualElement>("glowline");
+            m_GlowlineWide = root.Q<VisualElement>("glowline-wide");
             m_Output = root.Q<ScrollView>("console-output");
             m_Input = root.Q<TextField>("console-input");
 
             Debug.Log("ConsoleView Enabled");
+
+            TextureConfiguration configuration = ServiceLocator.Get<TextureManager>().Configuration;
+            m_Glowline.style.backgroundImage = new StyleBackground(ServiceLocator.Get<TextureManager>().GetTextureData(configuration.console.glowline)?.Texture);
+            m_GlowlineWide.style.backgroundImage = new StyleBackground(ServiceLocator.Get<TextureManager>().GetTextureData(configuration.console.glowlineWide)?.Texture);
+            m_ConsoleRoot.style.backgroundImage = new StyleBackground(ServiceLocator.Get<TextureManager>().GetTextureData(configuration.console.background)?.Texture);
 
             m_Input.RegisterValueChangedCallback(OnCommandChanged);
             m_Input.RegisterCallback<KeyUpEvent>(OnInputSubmit);
@@ -69,7 +82,7 @@ namespace Tolik.RemakeSoF.Runtime.ConsoleManagement
             string cmd = m_Input.value.Trim();
             if (!string.IsNullOrEmpty(cmd))
             {
-                Debug.Log($"Key pressed: {evt.keyCode} cmd: {cmd}");
+                Debug.Log($"Command sent: {evt.keyCode} cmd: {cmd}");
                 m_Input.value = "";
                 Broadcast(new SubmitConsoleCommandEvent { command = cmd });
             }

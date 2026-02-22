@@ -1,9 +1,11 @@
 using System;
-using System.Collections;
+using Unity.Collections;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
+using Tolik.RemakeSoF.Runtime.Management.MapManagement;
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections;
 
 namespace Tolik.RemakeSoF.Runtime
 {
@@ -14,17 +16,34 @@ namespace Tolik.RemakeSoF.Runtime
     {
         internal NetworkVariable<uint> matchCountdown = new();
         internal NetworkVariable<int> playersConnected = new();
+
+        /// <summary>
+        /// Der aktuell geladene Map-Name, synchronisiert über das Netzwerk.
+        /// Nur der Server darf diesen Wert ändern.
+        /// </summary>
+        internal NetworkVariable<FixedString128Bytes> currentMapName = new(
+            default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
         bool m_MatchStarted;
         bool m_MatchEnded;
 
         internal event Action OnMatchStarted;
         internal event Action OnMatchEnded;
 
-
         const uint k_CountdownStartValue = 300;
         const float k_ShutdownDelayAfterCountdownEnd = 30;
 
+        const string k_DefaultMapName = "maps/cem1"; //TODO: Platzhalter, bis Map-Auswahl implementiert ist
+
         Coroutine m_CountdownRoutine;
+
+        /// <summary>
+        /// Interner MapLoader für clientseitiges Laden der Map.
+        /// </summary>
+        MapLoader m_ClientMapLoader;
 
         ConnectionManager ConnectionManager => ApplicationEntryPoint.Singleton.ConnectionManager;
 
@@ -38,6 +57,22 @@ namespace Tolik.RemakeSoF.Runtime
                 ConnectionManager.EventManager.AddListener<ClientConnectedEvent>(OnServerClientConnected);
                 ConnectionManager.EventManager.AddListener<ClientDisconnectedEvent>(OnServerClientDisconnected);
                 playersConnected.Value = NetworkManager.ConnectedClientsIds.Count;
+                currentMapName.Value = new FixedString128Bytes(k_DefaultMapName);
+                Debug.Log($"[NetworkedGameState] CurrentMapName set to: {k_DefaultMapName}");
+            }
+            else
+            {
+                // Client: Map laden, falls Server bereits einen Map-Namen gesetzt hat
+                m_ClientMapLoader = new MapLoader();
+                string mapName = currentMapName.Value.ToString();
+                if (!string.IsNullOrEmpty(mapName))
+                {
+                    Debug.Log($"[NetworkedGameState] Client loading initial map: {mapName}");
+                    _ = m_ClientMapLoader.LoadMapAsync(mapName);
+                }
+
+                // Auf zukünftige Map-Wechsel reagieren
+                currentMapName.OnValueChanged += OnClientMapNameChanged;
             }
         }
 
@@ -54,6 +89,60 @@ namespace Tolik.RemakeSoF.Runtime
                 ConnectionManager.EventManager.RemoveListener<ClientConnectedEvent>(OnServerClientConnected);
                 ConnectionManager.EventManager.RemoveListener<ClientDisconnectedEvent>(OnServerClientDisconnected);
             }
+            else
+            {
+                currentMapName.OnValueChanged -= OnClientMapNameChanged;
+            }
+        }
+
+        /// <summary>
+        /// Client-Callback wenn der Server den Map-Namen ändert.
+        /// Lädt die neue Map lokal auf dem Client.
+        /// </summary>
+        void OnClientMapNameChanged(FixedString128Bytes previousValue, FixedString128Bytes newValue)
+        {
+            string mapName = newValue.ToString();
+            if (string.IsNullOrEmpty(mapName))
+            {
+                return;
+            }
+
+            Debug.Log($"[NetworkedGameState] Client map changed: {previousValue} -> {mapName}");
+            _ = m_ClientMapLoader.LoadMapAsync(mapName);
+        }
+
+        /// <summary>
+        /// Setzt den aktuellen Map-Namen. Nur auf dem Server aufrufbar.
+        /// </summary>
+        /// <param name="mapName">Der Name der Map.</param>
+        public void SetCurrentMapName(string mapName)
+        {
+            if (!IsServer)
+            {
+                Debug.LogWarning("[NetworkedGameState] SetCurrentMapName can only be called on the server.");
+                return;
+            }
+
+            currentMapName.Value = new FixedString128Bytes(mapName);
+            Debug.Log($"[NetworkedGameState] CurrentMapName set to: {mapName}");
+        }
+
+        /// <summary>
+        /// Registriert einen Callback für Map-Änderungen.
+        /// </summary>
+        /// <param name="callback">Der Callback bei Änderung.</param>
+        public void RegisterOnMapChanged(NetworkVariable<FixedString128Bytes>.OnValueChangedDelegate callback)
+        {
+            currentMapName.OnValueChanged += callback;
+        }
+
+        /// <summary>
+        /// Deregistriert einen Callback für Map-Änderungen.
+        /// </summary>
+        /// <param name="callback">Der Callback.</param>
+        public void UnregisterOnMapChanged(NetworkVariable<FixedString128Bytes>.OnValueChangedDelegate callback)
+        {
+            currentMapName.OnValueChanged -= callback;
         }
 
         void OnServerMinNumberPlayersConnected(MinNumberPlayersConnectedEvent evt)
@@ -98,6 +187,7 @@ namespace Tolik.RemakeSoF.Runtime
             {
                 yield return CoroutinesHelper.OneSecond;
                 matchCountdown.Value--;
+                Debug.Log($"[Server] Countdown: {matchCountdown.Value} seconds remaining");
             }
             OnServerCountdownExpired();
         }
@@ -112,7 +202,7 @@ namespace Tolik.RemakeSoF.Runtime
             }
 
             ClientEndMatchRpc();
-            StartCoroutine(CoroutinesHelper.WaitAndDo(new WaitForSeconds(k_ShutdownDelayAfterCountdownEnd), () => ConnectionManager.RequestShutdown()));
+            //StartCoroutine(CoroutinesHelper.WaitAndDo(new WaitForSeconds(k_ShutdownDelayAfterCountdownEnd), () => ConnectionManager.RequestShutdown()));
         }
 
         [Rpc(SendTo.ClientsAndHost)]

@@ -53,23 +53,15 @@ namespace Tolik.RemakeSoF.Runtime.ConsoleManagement
 
             View.AddOutput($"> {cmd}");
 
-            switch (cmd.ToLower())
+            // Forward all commands to the server via NetworkedCommandBridge
+            if (NetworkedCommandBridge.Instance != null)
             {
-                case "help":
-                    View.AddOutput("Commands: help, ping, clear");
-                    break;
-
-                case "ping":
-                    View.AddOutput("pong");
-                    break;
-
-                case "clear":
-                    View.ClearConsole();
-                    break;
-
-                default:
-                    View.AddOutput($"Unknown command: '{cmd}'");
-                    break;
+                NetworkedCommandBridge.Instance.SendCommandToServer(cmd);
+            }
+            else
+            {
+                Debug.LogWarning("[ConsoleController] No NetworkedCommandBridge instance found. Cannot send command to server.");
+                View.AddWarningOutput("Not connected to a server. Command not sent.");
             }
         }      
     }

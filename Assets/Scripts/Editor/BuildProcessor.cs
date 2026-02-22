@@ -37,7 +37,7 @@ namespace Tolik.RemakeSoF.Editor
         public void OnPreprocessBuild(BuildReport report)
         {
             DisableBurstCompiler();
-            ApplyChangesToMetagameApplication();
+            //ApplyChangesToMetagameApplication();
 
             string definesString = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup));
             List<string> allDefines = definesString.Split(';').ToList();
@@ -71,7 +71,7 @@ namespace Tolik.RemakeSoF.Editor
         public void OnPostprocessBuild(BuildReport report)
         {
             DisableBurstCompiler();
-            RevertChangesToMetagameApplication();
+            //RevertChangesToMetagameApplication();
             string definesString = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup));
             List<string> allDefines = definesString.Split(';').ToList();
 

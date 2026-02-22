@@ -24,8 +24,17 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             public class MainMenuTextures
             {
                 public string background;
+                public string joinServerButtonGlow;
+                public string joinServerButton;
+                public string createServerButtonGlow;
+                public string createServerButton;
+                public string optionsButtonGlow;
+                public string optionsButton;
+                public string loadoutButtonGlow;
+                public string loadoutButton;
+                public string logoutButtonGlow;
+                public string logoutButton;
             }
-
             public LoginTextures login;
             public MainMenuTextures mainMenu;
         }
@@ -35,9 +44,17 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         {
             public string playerAvatar;
         }
+        [Serializable]
+        public class ConsoleTextures
+        {
+            public string background;
+            public string glowline;
+            public string glowlineWide;
+        }
 
         public MetagameConfiguration metagame;
         public GameplayConfiguration gameplay;
+        public ConsoleTextures console;
 
         /// <summary>
         /// Lädt die TextureConfiguration aus StreamingAssets/TextureConfiguration.json
@@ -53,6 +70,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             TextureConfiguration loadedConfig = JsonUtility.FromJson<TextureConfiguration>(json);
             metagame = loadedConfig.metagame;
             gameplay = loadedConfig.gameplay;
+            console = loadedConfig.console;
         }
 
     }

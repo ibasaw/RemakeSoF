@@ -1,4 +1,5 @@
 using UnityEngine.UIElements;
+using System.Text.RegularExpressions;
 
 namespace Tolik.RemakeSoF.Runtime
 {
@@ -158,7 +159,7 @@ namespace Tolik.RemakeSoF.Runtime
                 return false;
             }
 
-            if (!MyUtils.IsValidEmail(email))
+            if (!IsValidEmail(email))
             {
                 SetStatusMessage("Please enter a valid email address!", true);
                 return false;
@@ -179,6 +180,20 @@ namespace Tolik.RemakeSoF.Runtime
             }
 
             return true;
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                // Simple email validation regex
+                var emailRegex = new Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+                return emailRegex.IsMatch(email);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

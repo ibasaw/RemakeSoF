@@ -17,8 +17,13 @@ namespace Tolik.RemakeSoF.Runtime
 
         public NetworkVariable<int> PlayersConnected => m_NetworkedGameState.playersConnected;
 
-        public bool MenuVisible { get; set; } = false;
+        /// <summary>
+        /// Öffentlicher Zugriff auf den aktuellen Map-Namen.
+        /// </summary>
+        public string CurrentMapName => m_NetworkedGameState.currentMapName.Value.ToString();
 
+        public bool MenuVisible { get; set; } = false;
+        
         //public ClientPlayerCharacter PlayerCharacter { get; set; }
     }
 }

@@ -90,21 +90,8 @@ namespace Tolik.RemakeSoF.Runtime
 
             PlayerSkinManager.ChangeSkin(App.Model.PlayerData.CurrentSelectedSkinName);
 
-            PrepareViewTexturesAndShow();
-            View.LoadSubViewByName("loadoutButton"); // start Default to Loadout view
-        }
-
-        private void PrepareViewTexturesAndShow()
-        {
             View.Show();
-
-            TextureConfiguration configuration = ServiceLocator.Get<TextureManager>().Configuration;
-
-            // Texturen vom Manager holen (aus Art/Textures oder persistentDataPath/CustomTextures)
-            Texture2D mainMenuBackgroundTexture = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.background).Texture;
-
-            // An View übergeben
-            View.SetBackgroundTexture(mainMenuBackgroundTexture);
+            View.LoadSubViewByName("loadoutButton"); // start show Loadout view by default when player is authenticated and main menu is shown
         }
     }
 }
