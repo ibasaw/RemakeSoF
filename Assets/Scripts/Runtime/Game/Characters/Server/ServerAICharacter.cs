@@ -1,8 +1,9 @@
 using System;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace Tolik.RemakeSoF.Runtime
+namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
 {
     /// <summary>
     /// Handles the server-side logic of AI characters.

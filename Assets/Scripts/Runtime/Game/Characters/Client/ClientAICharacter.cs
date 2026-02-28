@@ -1,6 +1,7 @@
+using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using UnityEngine;
 
-namespace Tolik.RemakeSoF.Runtime
+namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 {
     [RequireComponent(typeof(NetworkedAICharacter))]
     public class ClientAICharacter : MonoBehaviour

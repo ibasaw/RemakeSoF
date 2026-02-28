@@ -62,6 +62,8 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
         public bool HasTexture() => Texture != null;
 
+        public bool HasMaterial() => Material != null;
+
         /// <summary>
         /// Erhöht den Referenzzähler.
         /// </summary>

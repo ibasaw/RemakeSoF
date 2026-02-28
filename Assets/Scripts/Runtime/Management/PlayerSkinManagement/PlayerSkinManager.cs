@@ -89,9 +89,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             m_Applier.ApplyAnimatorController(prefab, $"models/animator/loadout_{animationSetName}");
             m_Applier.ResetAllRenderersToActive(prefab);
 
-            LegacyShaderLoader shaderLoader = ServiceLocator.Get<LegacyShaderLoader>();
-            Dictionary<string, Dictionary<string, ShaderEntry>> allShaderDefinitions = shaderLoader.GetAll();
-            ServiceLocator.Get<TextureManager>().CreateMaterialsFromSkinDefinition(allShaderDefinitions, skinDefinition);
+            ServiceLocator.Get<TextureManager>().CreateMaterialsFromSkinDefinition(skinDefinition);
             m_Applier.DisableAndEnableSurfaces(prefab, skinDefinition);
             m_Applier.DisableAndEnableSurfaces(prefab, characterTemplates, skinName);
             

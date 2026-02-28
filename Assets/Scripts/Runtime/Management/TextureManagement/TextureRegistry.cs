@@ -108,7 +108,11 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 return null;
 
             if (m_TextureCache.TryGetValue(key, out TextureData cached) && cached.IsValid() && cached.HasTexture())
+            {
+                //Debug.Log($"[TextureRegistry] Returning cached texture: {key}");
                 return cached;
+            }
+                
 
             if (TryLoadFromLoaders(key, out TextureData customData))
             {

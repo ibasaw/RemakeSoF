@@ -118,6 +118,10 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         {
             var commandLineArgumentsParser = new CommandLineArgumentsParser();
             ushort listeningPort = (ushort)commandLineArgumentsParser.Port;
+            
+            PrefabManager prefabManager = new();
+            ServiceLocator.Register(prefabManager);
+
             switch (MultiplayerRolesManager.ActiveMultiplayerRoleMask)
             {
                 case MultiplayerRoleFlags.Server:
@@ -137,9 +141,6 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                         // 1. Pure Services registrieren
                         TextureManager textureManager = new();
                         ServiceLocator.Register(textureManager);
-
-                        PrefabManager prefabManager = new();
-                        ServiceLocator.Register(prefabManager);
 
                         SkinDefinitionLoader skinLoader = new();
                         ServiceLocator.Register(skinLoader);

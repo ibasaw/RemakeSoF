@@ -48,6 +48,7 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
             }
             else
             {
+                Debug.LogWarning($"Client failed to connect with disconnect reason: {disconnectReason}");
                 var connectStatus = JsonUtility.FromJson<ConnectStatus>(disconnectReason);
                 Manager.EventManager.Broadcast(new ConnectionEvent { status = connectStatus });
             }

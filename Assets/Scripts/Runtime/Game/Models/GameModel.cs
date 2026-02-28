@@ -1,3 +1,5 @@
+using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
+using Tolik.RemakeSoF.Runtime.Game.Networked;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -24,6 +26,6 @@ namespace Tolik.RemakeSoF.Runtime
 
         public bool MenuVisible { get; set; } = false;
         
-        //public ClientPlayerCharacter PlayerCharacter { get; set; }
+        public ClientPlayerCharacter PlayerCharacter { get; set; }
     }
 }

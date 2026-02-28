@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
@@ -142,9 +143,10 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             }
         }
 
-        public void CreateMaterialsFromSkinDefinition(Dictionary<string, Dictionary<string, ShaderEntry>> allShaderDefinitions,
-            SkinDefinition skinDefinition)
+        public void CreateMaterialsFromSkinDefinition(SkinDefinition skinDefinition)
         {
+            LegacyShaderLoader shaderLoader = ServiceLocator.Get<LegacyShaderLoader>();
+            Dictionary<string, Dictionary<string, ShaderEntry>> allShaderDefinitions = shaderLoader.GetAll();
             foreach (var mdef in skinDefinition.materials)
             {
                 string partName = mdef.name ?? "unnamed_part";
@@ -154,7 +156,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                     //Derzeit nur texture1 oder shader1 Key genutzt
                     string cacheKey = g.texture1 == null || g.texture1.Length == 0 ? g.shader1 : g.texture1;
                     if (m_Registry.TextureCache.ContainsKey(cacheKey))
-                    //TODO: das könnte bullshit logik sein im else, müsste evtl überschreiben! MUSS ICH TESTEN!
+                    //TODO: das könnte bullshit logik sein im else, müsste evtl cache überschreiben! MUSS ICH TESTEN!
                     { //try material from g2skin definition
                         TextureData textureData = GetTextureData(cacheKey);
                         if (textureData.IsValid() && textureData.HasTexture())
@@ -172,7 +174,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                     else
                     { // try material from legacy shader definition
                         ShaderEntry foundEntry = null;
-                        
+
                         // Durch alle Model-Shader-Dictionaries iterieren
                         if (allShaderDefinitions != null)
                         {
@@ -185,7 +187,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                                 }
                             }
                         }
-                        
+
                         if (foundEntry != null)
                         {
                             CreateMaterialFromShaderEntry(cacheKey, foundEntry);

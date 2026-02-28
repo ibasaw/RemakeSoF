@@ -7,7 +7,7 @@ using Unity.Netcode;
 using UnityEngine;
 using System.Collections;
 
-namespace Tolik.RemakeSoF.Runtime
+namespace Tolik.RemakeSoF.Runtime.Game.Networked
 {
     /// <summary>
     /// Holds the logical state of a game and synchronizes it across the network
@@ -34,22 +34,25 @@ namespace Tolik.RemakeSoF.Runtime
         internal event Action OnMatchEnded;
 
         const uint k_CountdownStartValue = 300;
-        const float k_ShutdownDelayAfterCountdownEnd = 30;
-
         const string k_DefaultMapName = "maps/cem1"; //TODO: Platzhalter, bis Map-Auswahl implementiert ist
 
         Coroutine m_CountdownRoutine;
 
         /// <summary>
-        /// Interner MapLoader für clientseitiges Laden der Map.
+        /// MapLoader wird auf Server UND Client verwendet.
+        /// Server: Braucht SpawnPoints, Kollision, Trigger-Zonen.
+        /// Client: Braucht Visuals + Struktur.
         /// </summary>
-        MapLoader m_ClientMapLoader;
+        MapLoader m_MapLoader;
 
         ConnectionManager ConnectionManager => ApplicationEntryPoint.Singleton.ConnectionManager;
 
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
+
+            m_MapLoader = new MapLoader();
+
             if (IsServer)
             {
                 m_MatchEnded = false;
@@ -58,26 +61,31 @@ namespace Tolik.RemakeSoF.Runtime
                 ConnectionManager.EventManager.AddListener<ClientDisconnectedEvent>(OnServerClientDisconnected);
                 playersConnected.Value = NetworkManager.ConnectedClientsIds.Count;
                 currentMapName.Value = new FixedString128Bytes(k_DefaultMapName);
-                Debug.Log($"[NetworkedGameState] CurrentMapName set to: {k_DefaultMapName}");
+
+                // Server lädt Map für SpawnPoints, Kollision, etc.
+                Debug.Log($"[NetworkedGameState] Server loading map: {k_DefaultMapName}");
+                _ = m_MapLoader.LoadMapAsync(k_DefaultMapName);
             }
-            else
+
+            if (!IsServer)
             {
                 // Client: Map laden, falls Server bereits einen Map-Namen gesetzt hat
-                m_ClientMapLoader = new MapLoader();
                 string mapName = currentMapName.Value.ToString();
                 if (!string.IsNullOrEmpty(mapName))
                 {
                     Debug.Log($"[NetworkedGameState] Client loading initial map: {mapName}");
-                    _ = m_ClientMapLoader.LoadMapAsync(mapName);
+                    _ = m_MapLoader.LoadMapAsync(mapName);
                 }
-
-                // Auf zukünftige Map-Wechsel reagieren
-                currentMapName.OnValueChanged += OnClientMapNameChanged;
             }
+
+            // Beide: Auf zukünftige Map-Wechsel reagieren (Client für Visuals, Server für neue SpawnPoints)
+            currentMapName.OnValueChanged += OnMapNameChanged;
         }
 
         public override void OnNetworkDespawn()
         {
+            currentMapName.OnValueChanged -= OnMapNameChanged;
+
             if (IsServer)
             {
                 if (m_CountdownRoutine != null)
@@ -89,17 +97,14 @@ namespace Tolik.RemakeSoF.Runtime
                 ConnectionManager.EventManager.RemoveListener<ClientConnectedEvent>(OnServerClientConnected);
                 ConnectionManager.EventManager.RemoveListener<ClientDisconnectedEvent>(OnServerClientDisconnected);
             }
-            else
-            {
-                currentMapName.OnValueChanged -= OnClientMapNameChanged;
-            }
         }
 
         /// <summary>
-        /// Client-Callback wenn der Server den Map-Namen ändert.
-        /// Lädt die neue Map lokal auf dem Client.
+        /// Callback wenn der Map-Name sich ändert.
+        /// Server: Lädt neue Map für SpawnPoints/Kollision.
+        /// Client: Lädt neue Map für Visuals.
         /// </summary>
-        void OnClientMapNameChanged(FixedString128Bytes previousValue, FixedString128Bytes newValue)
+        void OnMapNameChanged(FixedString128Bytes previousValue, FixedString128Bytes newValue)
         {
             string mapName = newValue.ToString();
             if (string.IsNullOrEmpty(mapName))
@@ -107,8 +112,8 @@ namespace Tolik.RemakeSoF.Runtime
                 return;
             }
 
-            Debug.Log($"[NetworkedGameState] Client map changed: {previousValue} -> {mapName}");
-            _ = m_ClientMapLoader.LoadMapAsync(mapName);
+            Debug.Log($"[NetworkedGameState] Map changed: {previousValue} -> {mapName} (IsServer={IsServer})");
+            _ = m_MapLoader.LoadMapAsync(mapName);
         }
 
         /// <summary>

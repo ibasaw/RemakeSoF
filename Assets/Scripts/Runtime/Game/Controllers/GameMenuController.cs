@@ -69,7 +69,7 @@ namespace Tolik.RemakeSoF.Runtime
                 View.Hide();
             }
             App.Model.MenuVisible = isMenuActive;
-            //App.Model.PlayerCharacter.SetInputsActive(!isMenuActive);
+            App.Model.PlayerCharacter.SetInputsActive(!isMenuActive);
         }
     }
 }

@@ -15,16 +15,6 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
     /// </summary>
     internal class PlayerSkinApplier
     {
-        public void CreateMaterials(string skinName, SkinDefinition skinDefinition, Dictionary<string, Dictionary<string, ShaderEntry>> allShaderDefinitions)
-        {
-            if (skinDefinition?.materials == null || skinDefinition.materials.Count == 0)
-            {
-                Debug.LogError($"[PlayerSkinApplier] Keine 'materials' in skinDefinition JSON vorhanden: {skinName}");
-                return;
-            }
-
-            ServiceLocator.Get<TextureManager>().CreateMaterialsFromSkinDefinition(allShaderDefinitions, skinDefinition);
-        }
 
         public void ApplyAnimatorController(GameObject prefab, string animatorName)
         {
@@ -60,14 +50,14 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 string textureKey = skinDefinition.GetTextureOrShadowForMaterialDefinitionName(partName);
                 if (string.IsNullOrEmpty(textureKey))
                 {
-                    Debug.LogWarning($"[PlayerSkinApplier] No texture/shader-key found for material definition name: '{partName}' in skin definition: '{skinName}'");
+                    //Debug.LogWarning($"[PlayerSkinApplier] No texture/shader-key found for material definition name: '{partName}' in skin definition: '{skinName}'");
                     continue;
                 }
 
                 TextureData textureData = ServiceLocator.Get<TextureManager>().GetTextureData(textureKey);
                 if (textureData == null || !textureData.IsValid())
                 {
-                    Debug.Log($"[PlayerSkinApplier] Search by TextureData by alias for key: '{textureKey}' in skin definition: '{skinName}'");
+                    Debug.Log($"[PlayerSkinApplier] Search by alias TextureData for key: '{textureKey}' in skin definition: '{skinName}'");
                     textureData = ServiceLocator.Get<TextureManager>().GetTextureDataByAlias(textureKey);
                 }
 
@@ -77,17 +67,17 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                     continue;
                 }
 
-                Debug.Log($"[PlayerSkinApplier] TextureData for key '{textureKey}': {textureData}");
-                Debug.Log($"[PlayerSkinApplier] [{modelName} , {skinName}] Processing part '{partName}' with texture/shader: {textureKey}");
+                //Debug.Log($"[PlayerSkinApplier] TextureData for key '{textureKey}': {textureData}");
+                //Debug.Log($"[PlayerSkinApplier] [{modelName} , {skinName}] Processing part '{partName}' with texture/shader: {textureKey}");
 
                 foreach (string surfaceName in surfaces)
                 {
                     List<Renderer> matches = FindRenderersForSurface(allRenderers, surfaceName);
-                    Debug.Log($"[PlayerSkinApplier] Found {matches.Count} renderers for surface '{surfaceName}' in part '{partName} for model '{modelName}'");
+                    //Debug.Log($"[PlayerSkinApplier] Found {matches.Count} renderers for surface '{surfaceName}' in part '{partName} for model '{modelName}'");
                     foreach (var renderer in matches)
                     {
                         ApplyMaterialToRenderer(renderer, textureData.Material, surfaceName);
-                        Debug.Log($"[PlayerSkinApplier] Applied material to renderer '{renderer.gameObject.name}' for surface '{surfaceName}' in part '{partName}'");
+                        //Debug.Log($"[PlayerSkinApplier] Applied material to renderer '{renderer.gameObject.name}' for surface '{surfaceName}' in part '{partName}'");
                     }
                 }
             }
@@ -243,7 +233,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 if (template.Inventory != null && template.Inventory.Items != null)
                 {
                     allItems.AddRange(template.Inventory.Items);
-                    Debug.Log($"[PlayerSkinApplier] Found {template.Inventory.Items.Count} items in CharacterTemplate '{template.Name}' Inventory");
+                    //Debug.Log($"[PlayerSkinApplier] Found {template.Inventory.Items.Count} items in CharacterTemplate '{template.Name}' Inventory");
                 }
 
                 // Sammle Items aus allen SkinTemplates
@@ -254,7 +244,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                         if (skinTemplate.Inventory != null && skinTemplate.Inventory.Items != null && skinTemplate.SkinName == skinName)
                         {
                             allItems.AddRange(skinTemplate.Inventory.Items);
-                            Debug.Log($"[PlayerSkinApplier] Found {skinTemplate.Inventory.Items.Count} items in SkinTemplate '{skinTemplate.SkinName}' Inventory");
+                            //Debug.Log($"[PlayerSkinApplier] Found {skinTemplate.Inventory.Items.Count} items in SkinTemplate '{skinTemplate.SkinName}' Inventory");
                         }
                     }
                 }
@@ -280,7 +270,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 if (itemDef != null)
                 {
                     itemDefinitionsToApply.Add(itemDef);
-                    Debug.Log($"[PlayerSkinApplier] Mapped InventoryItem '{inventoryItem.Name}' to Item definition '{itemDef.name}'");
+                    //Debug.Log($"[PlayerSkinApplier] Mapped InventoryItem '{inventoryItem.Name}' to Item definition '{itemDef.name}'");
                 }
                 else
                 {
@@ -299,12 +289,12 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                     if (itemDef.activeSurfaces != null && itemDef.activeSurfaces.Contains(cleanRendererName))
                     {
                         renderer.gameObject.SetActive(true);
-                        Debug.Log($"[PlayerSkinApplier] Activated renderer '{renderer.gameObject.name}' for item '{itemDef.name}' active surface '{cleanRendererName}'");
+                       // Debug.Log($"[PlayerSkinApplier] Activated renderer '{renderer.gameObject.name}' for item '{itemDef.name}' active surface '{cleanRendererName}'");
                     }
                     if (itemDef.inactiveSurfaces != null && itemDef.inactiveSurfaces.Contains(cleanRendererName))
                     {
                         renderer.gameObject.SetActive(false);
-                        Debug.Log($"[PlayerSkinApplier] Deactivated renderer '{renderer.gameObject.name}' for item '{itemDef.name}' inactive surface '{cleanRendererName}'");
+                       // Debug.Log($"[PlayerSkinApplier] Deactivated renderer '{renderer.gameObject.name}' for item '{itemDef.name}' inactive surface '{cleanRendererName}'");
                     }
                 }
 

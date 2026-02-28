@@ -1,15 +1,16 @@
 using System;
+using Tolik.RemakeSoF.Runtime.Game.Characters;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace Tolik.RemakeSoF.Runtime
+namespace Tolik.RemakeSoF.Runtime.Game.Networked
 {
     /// <summary>
     /// Contains both client and server logic for a door that is opened when a player asks to.
     /// The visuals of the door animate as "opening" and "closing", but for physics purposes this is an illusion:
     /// whenever the door is open on the server, the door's physics are disabled, and vice versa.
     /// </summary>
-    public class SwitchedDoor : NetworkBehaviour
+    public class NetworkedSwitchDoor : NetworkBehaviour
     {
         const string k_OpenDoorAction = "OpenDoor";
         static readonly int s_AnimatorDoorOpenBoolID = Animator.StringToHash("IsOpen");
@@ -62,7 +63,7 @@ namespace Tolik.RemakeSoF.Runtime
         {
             if (IsServer && IsSpawned)
             {
-                var forceOpen = false;
+                bool forceOpen = false;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 forceOpen |= m_ForceOpen;
@@ -131,7 +132,7 @@ namespace Tolik.RemakeSoF.Runtime
         void OnClientTriggerEnter(Collider other)
         {
             Debug.Log("[Client] Player entered!");
-            var character = other.GetComponent<ICharacter>();
+            ICharacter character = other.GetComponent<ICharacter>();
             if (character == null)
             {
                 return;
@@ -150,7 +151,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnClientTriggerExit(Collider other)
         {
-            var character = other.GetComponent<ICharacter>();
+            ICharacter character = other.GetComponent<ICharacter>();
             if (character == null)
             {
                 return;

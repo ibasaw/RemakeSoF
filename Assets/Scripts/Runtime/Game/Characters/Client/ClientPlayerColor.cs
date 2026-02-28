@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Unity.Netcode;
 
-namespace Tolik.RemakeSoF.Runtime
+namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 {
     class ClientPlayerColor : NetworkBehaviour
     {

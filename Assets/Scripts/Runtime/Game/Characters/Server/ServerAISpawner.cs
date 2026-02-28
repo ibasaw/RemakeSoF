@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
+using Tolik.RemakeSoF.Runtime.Game.Networked;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace Tolik.RemakeSoF.Runtime
+namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
 {
     public class ServerAISpawner : MonoBehaviour
     {

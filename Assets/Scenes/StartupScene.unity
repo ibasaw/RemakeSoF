@@ -610,7 +610,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 1465767988}
-    PlayerPrefab: {fileID: 0}
+    PlayerPrefab: {fileID: 8936796741541953394, guid: c67671f8f87bb974a94256a210c800f6, type: 3}
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: 97e4eb0592586894aad0dc6c039baac8, type: 2}
@@ -692,7 +692,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1490455697}
   - component: {fileID: 1490455696}
-  - component: {fileID: 1490455698}
   m_Layer: 0
   m_Name: PlayerSkinManager
   m_TagString: Untagged
@@ -727,15 +726,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1652712579 &1490455698
-MultiplayerRolesData:
-  m_ObjectHideFlags: 2
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1490455695}
-  m_GameObjectRolesMask: 1
-  m_ComponentsRolesMasks: []
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

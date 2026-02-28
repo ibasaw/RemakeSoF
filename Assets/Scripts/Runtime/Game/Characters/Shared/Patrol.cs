@@ -5,7 +5,7 @@ using UnityEditor;
 #endif
 using UnityEngine;
 
-namespace Tolik.RemakeSoF.Runtime
+namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 {
     /// <summary>
     /// Basic script to define a patrol made of a list of points. Handles drawing gizmos to make creation easier.
