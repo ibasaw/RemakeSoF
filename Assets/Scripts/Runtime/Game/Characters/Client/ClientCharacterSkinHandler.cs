@@ -1,3 +1,4 @@
+using System;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
@@ -27,6 +28,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         [SerializeField]
         private Transform m_VisualRoot;
+
+        /// <summary>
+        /// Event das nach erfolgreicher Visual-Instanziierung gefeuert wird.
+        /// Parameter: das instanziierte Visual-GameObject.
+        /// </summary>
+        public event Action<GameObject> OnVisualInstantiated;
 
         /// <summary>
         /// Aktuell instanziiertes Visual-GameObject.
@@ -149,6 +156,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_LoadedSkinName = skinName;
 
             Debug.Log($"[ClientCharacterSkinHandler] Skin applied: {skinName} (Owner={m_NetworkedCharacter.IsOwner}) on Character {m_NetworkedCharacter.CharacterId}");
+
+            // Listener benachrichtigen (z.B. ClientPlayerCharacter für Kamera-Targets)
+            OnVisualInstantiated?.Invoke(m_CurrentVisualInstance);
         }
 
         /// <summary>

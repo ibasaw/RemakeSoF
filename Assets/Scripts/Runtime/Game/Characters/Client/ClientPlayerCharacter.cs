@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Unity.Cinemachine;
+using Tolik.RemakeSoF.Runtime.Game.Camera;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
@@ -24,8 +24,32 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         [SerializeField]
         private CapsuleCollider m_CapsuleCollider;
 
+        /// <summary>
+        /// AimCameraController auf dem Player-Prefab. Steuert Kamera-Rotation (Yaw/Pitch).
+        /// Wird nur für den Owner aktiviert.
+        /// </summary>
         [SerializeField]
-        private Transform m_CameraFollow;
+        private AimCameraController m_AimCameraController;
+
+        /// <summary>
+        /// CameraSwitcher auf dem Player-Prefab. Umschalter zwischen First-Person und
+        /// Third-Person Kamera. Wird nur für den Owner aktiviert.
+        /// </summary>
+        [SerializeField]
+        private CameraSwitcher m_CameraSwitcher;
+
+        /// <summary>
+        /// SkinHandler-Referenz für das OnVisualInstantiated-Event.
+        /// Wird benötigt um Yaw/Pitch/CameraTarget nach Visual-Instanziierung zu finden.
+        /// </summary>
+        [SerializeField]
+        private ClientCharacterSkinHandler m_SkinHandler;
+
+        /// <summary>
+        /// YawTarget-Transform. Wird zur Laufzeit nach Visual-Instanziierung gesetzt.
+        /// Bestimmt die Blickrichtung (Yaw) und Bewegungsrichtung.
+        /// </summary>
+        private Transform m_YawTarget;
 
         [SerializeField]
         private float m_MoveSpeed = 7.5f;
@@ -39,18 +63,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         [SerializeField]
         private float m_Gravity = -15f;
 
-        [SerializeField]
-        private float m_MouseSensitivity = 2f;
-
         /// <summary>
         /// Aktuelle vertikale Geschwindigkeit (Gravity/Jump).
         /// </summary>
         private float m_VerticalVelocity;
-
-        /// <summary>
-        /// Vertikaler Kamerawinkel.
-        /// </summary>
-        private float m_CameraPitch;
 
         /// <summary>
         /// Auto-generierte Input Actions (AvatarActions.inputactions).
@@ -75,12 +91,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_CapsuleCollider.enabled = false;
             m_CharacterController.enabled = false;
 
+            // Kamera-Controller deaktiviert bis Owner-Entscheidung
+            m_AimCameraController.enabled = false;
+            m_CameraSwitcher.enabled = false;
+
             m_NetworkedPlayerCharacter.OnNetworkSpawnHook += OnNetworkSpawn;
         }
 
         private void OnDestroy()
         {
             m_NetworkedPlayerCharacter.OnNetworkSpawnHook -= OnNetworkSpawn;
+
+            // Visual-Event abmelden
+            if (m_SkinHandler != null)
+            {
+                m_SkinHandler.OnVisualInstantiated -= OnVisualInstantiated;
+            }
 
             // TogglePauseMenu Callback entfernen
             m_PlayerActions.TogglePauseMenu.performed -= OnMenuToggle;
@@ -115,11 +141,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // (sonst überschreibt CC die synchronisierte Position)
             m_CharacterController.enabled = true;
 
-            // Kamera-Follow setzen
-            CinemachineCamera cinemachineVirtualCamera = FindFirstObjectByType<CinemachineCamera>();
-            if (cinemachineVirtualCamera != null)
+            // Kamera-Controller für Owner aktivieren
+            m_AimCameraController.enabled = true;
+            m_CameraSwitcher.enabled = true;
+
+            // Auf Visual-Instanziierung lauschen (Yaw/Pitch/CameraTarget werden dort gefunden)
+            if (m_SkinHandler != null)
             {
-                cinemachineVirtualCamera.Follow = m_CameraFollow;
+                m_SkinHandler.OnVisualInstantiated += OnVisualInstantiated;
             }
 
             // GameModel updaten
@@ -135,29 +164,88 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return;
             }
 
-            HandleLookInput();
+            SyncCharacterRotation();
             HandleMovementInput();
             HandleActionInput();
         }
 
         /// <summary>
-        /// Mausbewegung für Kamera-Rotation (lokal, sofort responsiv).
+        /// Callback wenn das Visual-Prefab instanziiert wurde.
+        /// Sucht Yaw, Pitch und CameraTarget per Name und verdrahtet Kamera-Controller.
         /// </summary>
-        private void HandleLookInput()
+        private void OnVisualInstantiated(GameObject visualInstance)
         {
-            Vector2 lookDelta = m_PlayerActions.Look.ReadValue<Vector2>();
+            Transform yaw = FindDeepChild(visualInstance.transform, "Yaw");
+            Transform pitch = FindDeepChild(visualInstance.transform, "Pitch");
+            Transform cameraTarget = FindDeepChild(visualInstance.transform, "CameraTarget");
 
-            // Horizontale Rotation auf Character
-            transform.Rotate(Vector3.up, lookDelta.x * m_MouseSensitivity);
-
-            // Vertikale Rotation auf Kamera (clamped)
-            m_CameraPitch -= lookDelta.y * m_MouseSensitivity;
-            m_CameraPitch = Mathf.Clamp(m_CameraPitch, -80f, 80f);
-
-            if (m_CameraFollow != null)
+            if (yaw == null || pitch == null)
             {
-                m_CameraFollow.localRotation = Quaternion.Euler(m_CameraPitch, 0f, 0f);
+                Debug.LogWarning("[ClientPlayerCharacter] Yaw oder Pitch nicht im Visual gefunden!");
+                return;
             }
+
+            // Lokale Referenz für Bewegungsrichtung + Body-Rotation
+            m_YawTarget = yaw;
+
+            // AimCameraController verdrahten
+            m_AimCameraController.SetTargets(yaw, pitch);
+
+            // CameraSwitcher: Follow-Targets setzen
+            m_CameraSwitcher.SetAimCamFollowTarget(pitch);
+
+            if (cameraTarget != null)
+            {
+                m_CameraSwitcher.SetFirstPersonFollowTarget(cameraTarget);
+            }
+            else
+            {
+                Debug.LogWarning("[ClientPlayerCharacter] CameraTarget nicht im Visual gefunden, First-Person-Kamera hat kein Follow-Target.");
+            }
+
+            Debug.Log("[ClientPlayerCharacter] Kamera-Targets verdrahtet (Yaw/Pitch/CameraTarget)");
+        }
+
+        /// <summary>
+        /// Rekursive Tiefensuche nach einem Child-Transform mit dem angegebenen Namen.
+        /// </summary>
+        private static Transform FindDeepChild(Transform parent, string name)
+        {
+            foreach (Transform child in parent)
+            {
+                if (child.name == name)
+                {
+                    return child;
+                }
+
+                Transform result = FindDeepChild(child, name);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Synchronisiert die Character-Body-Rotation mit dem YawTarget.
+        /// Damit dreht sich das Character-Model in Blickrichtung (nur Yaw).
+        /// Nach dem Setzen der Body-Rotation wird die YawTarget-Weltrotation
+        /// wiederhergestellt, damit die Cinemachine-Kamera-Hierarchie konsistent bleibt.
+        /// </summary>
+        private void SyncCharacterRotation()
+        {
+            if (m_YawTarget == null)
+            {
+                return;
+            }
+
+            float yaw = m_YawTarget.eulerAngles.y;
+            transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+
+            // YawTarget-Weltrotation wiederherstellen (Parent-Rotation hat sich geändert)
+            m_YawTarget.rotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
         /// <summary>
@@ -165,7 +253,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         private void HandleMovementInput()
         {
-            if (m_CharacterController == null || !m_CharacterController.enabled)
+            if (m_CharacterController == null || !m_CharacterController.enabled || m_YawTarget == null)
             {
                 return;
             }
@@ -175,8 +263,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             bool isWalking = m_PlayerActions.Walk.IsPressed();
             bool jumpPressed = m_PlayerActions.Jump.WasPressedThisFrame();
 
-            // Bewegungsrichtung relativ zur Blickrichtung
-            Vector3 moveDirection = transform.right * moveInput.x + transform.forward * moveInput.y;
+            // Bewegungsrichtung relativ zum YawTarget (Kamera-Blickrichtung)
+            Vector3 moveDirection = m_YawTarget.right * moveInput.x + m_YawTarget.forward * moveInput.y;
             float speed = m_MoveSpeed * (isWalking ? m_WalkSpeedMultiplier : 1f);
 
             // Gravity
@@ -222,7 +310,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         }
 
         /// <summary>
-        /// Aktiviere oder deaktiviere Inputs.
+        /// Aktiviere oder deaktiviere Gameplay-Inputs und Kamera-Controller.
+        /// Wird vom Menü-System aufgerufen (Pause/Resume).
+        /// TogglePauseMenu bleibt immer aktiv, damit ESC auch im Menü funktioniert.
         /// </summary>
         public void SetInputsActive(bool active)
         {
@@ -232,7 +322,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
             else
             {
+                // Alle Actions deaktivieren, dann TogglePauseMenu gezielt re-aktivieren
                 m_PlayerActions.Disable();
+                m_PlayerActions.TogglePauseMenu.Enable();
+            }
+
+            // Kamera-Controller ein-/ausschalten (verhindert Mausbewegung im Menü)
+            if (m_AimCameraController != null)
+            {
+                m_AimCameraController.enabled = active;
+            }
+
+            if (m_CameraSwitcher != null)
+            {
+                m_CameraSwitcher.enabled = active;
             }
 
             Cursor.lockState = active ? CursorLockMode.Locked : CursorLockMode.None;
