@@ -1,6 +1,7 @@
 using System;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
+using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime
@@ -9,6 +10,7 @@ namespace Tolik.RemakeSoF.Runtime
     {
         JoinServerView View => App.View.JoinServerView;
         ConnectionManager ConnectionManager => ApplicationEntryPoint.Singleton.ConnectionManager;
+        PlayerSkinManager PlayerSkinManager => ApplicationEntryPoint.Singleton.PlayerSkinManager;
         void Awake()
         {
             ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
@@ -35,7 +37,7 @@ namespace Tolik.RemakeSoF.Runtime
                 "127.0.0.1",
                 7777,
                 App.Model.PlayerData.PlayerName,
-                App.Model.PlayerData.CurrentSelectedSkinName
+                PlayerSkinManager.CurrentSkinName
             );
         }
 

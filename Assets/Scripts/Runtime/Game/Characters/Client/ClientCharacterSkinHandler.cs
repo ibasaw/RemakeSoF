@@ -127,13 +127,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             GameObject prefabAsset = null;
 
-            // Owner-Optimierung: gecachtes Asset aus dem Metagame nutzen (bereits geladen)
-            if (m_NetworkedCharacter.IsOwner)
-            {
-                prefabAsset = skinManager.GetCurrentPlayerPrefab();
-            }
-
-            // Fallback / Remote: Skin frisch laden
+            // Remote: Skin frisch laden
             if (prefabAsset == null)
             {
                 bool success = skinManager.TryLoadAndApplySkin(skinName, out prefabAsset);

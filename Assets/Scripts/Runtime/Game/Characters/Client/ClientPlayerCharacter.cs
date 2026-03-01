@@ -25,6 +25,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private CapsuleCollider m_CapsuleCollider;
 
         /// <summary>
+        /// Root-GameObject des Kamera-Setups (CameraManager, Main Camera, etc.).
+        /// Wird bei Remote-Clients komplett deaktiviert, damit keine doppelten
+        /// Kameras/AudioListeners existieren.
+        /// </summary>
+        [SerializeField]
+        private GameObject m_CameraRoot;
+
+        /// <summary>
         /// AimCameraController auf dem Player-Prefab. Steuert Kamera-Rotation (Yaw/Pitch).
         /// Wird nur für den Owner aktiviert.
         /// </summary>
@@ -91,7 +99,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_CapsuleCollider.enabled = false;
             m_CharacterController.enabled = false;
 
-            // Kamera-Controller deaktiviert bis Owner-Entscheidung
+            // Kamera-Setup deaktiviert bis Owner-Entscheidung
+            m_CameraRoot.SetActive(false);
             m_AimCameraController.enabled = false;
             m_CameraSwitcher.enabled = false;
 
@@ -141,7 +150,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // (sonst überschreibt CC die synchronisierte Position)
             m_CharacterController.enabled = true;
 
-            // Kamera-Controller für Owner aktivieren
+            // Kamera-Setup nur für Owner aktivieren (verhindert doppelte Camera/AudioListener)
+            m_CameraRoot.SetActive(true);
             m_AimCameraController.enabled = true;
             m_CameraSwitcher.enabled = true;
 

@@ -192,7 +192,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             {
                 yield return CoroutinesHelper.OneSecond;
                 matchCountdown.Value--;
-                Debug.Log($"[Server] Countdown: {matchCountdown.Value} seconds remaining");
+                //Debug.Log($"[Server] Countdown: {matchCountdown.Value} seconds remaining");
             }
             OnServerCountdownExpired();
         }

@@ -27,6 +27,11 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
         private string m_CurrentSkinName;
         private GameObject m_CurrentPlayerPrefabAsset; // Asset reference, not instance
 
+        /// <summary>
+        /// Der aktuell geladene Skin-Name (Single Source of Truth).
+        /// </summary>
+        public string CurrentSkinName => m_CurrentSkinName;
+
         void Awake()
         {
             DontDestroyOnLoad(gameObject);

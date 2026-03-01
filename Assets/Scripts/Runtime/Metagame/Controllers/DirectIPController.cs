@@ -1,6 +1,7 @@
 using System;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
+using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime
@@ -9,6 +10,7 @@ namespace Tolik.RemakeSoF.Runtime
     {
         DirectIPView View => App.View.DirectIP;
         ConnectionManager ConnectionManager => ApplicationEntryPoint.Singleton.ConnectionManager;
+        PlayerSkinManager PlayerSkinManager => ApplicationEntryPoint.Singleton.PlayerSkinManager;
 
         void Awake()
         {
@@ -47,7 +49,7 @@ namespace Tolik.RemakeSoF.Runtime
                 evt.ipAddress,
                 evt.port,
                 App.Model.PlayerData.PlayerName,
-                App.Model.PlayerData.CurrentSelectedSkinName
+                PlayerSkinManager.CurrentSkinName
             );
         }
 
