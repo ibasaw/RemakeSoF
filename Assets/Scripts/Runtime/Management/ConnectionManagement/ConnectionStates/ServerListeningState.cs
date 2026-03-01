@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -14,10 +16,17 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
         const int k_MaxConnectPayload = 1024;
         bool m_MinPlayerConnected = false;
 
+        /// <summary>
+        /// Speichert den ConnectionPayload pro ClientId, damit in OnClientConnected
+        /// Name und Skin auf dem gespawnten NetworkedCharacterState gesetzt werden können.
+        /// </summary>
+        readonly Dictionary<ulong, ConnectionPayload> m_ClientPayloads = new();
+
         public override void Enter()
         {
             // todo setup gsh to receive matchmaker tickets
             m_MinPlayerConnected = false;
+            m_ClientPayloads.Clear();
         }
 
         public override void Exit() { }
@@ -26,6 +35,22 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
         {
             Debug.Log($"Client {clientId} connected to the server.");
             Manager.EventManager.Broadcast(new ClientConnectedEvent());
+
+            // Spieler-Identitätsdaten aus gecachtem Payload auf NetworkedCharacterState setzen
+            if (m_ClientPayloads.TryGetValue(clientId, out ConnectionPayload payload))
+            {
+                NetworkObject playerObject = Manager.NetworkManager.SpawnManager.GetPlayerNetworkObject(clientId);
+                if (playerObject != null && playerObject.TryGetComponent(out NetworkedCharacterState characterState))
+                {
+                    characterState.SetCharacterName(payload.playerName);
+                    characterState.SetCurrentSkinName(payload.skinName);
+                    Debug.Log($"[ServerListeningState] Set CharacterName='{payload.playerName}', SkinName='{payload.skinName}' for client {clientId}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[ServerListeningState] No NetworkedCharacterState found for client {clientId}");
+                }
+            }
 
             if (!m_MinPlayerConnected && Manager.NetworkManager.ConnectedClientsIds.Count >= ApplicationEntryPoint.Singleton.MinPlayers)
             {
@@ -37,6 +62,7 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
         public override void OnClientDisconnect(ulong clientId)
         {
             Debug.Log($"Client {clientId} disconnected from the server.");
+            m_ClientPayloads.Remove(clientId);
             Manager.EventManager.Broadcast(new ClientDisconnectedEvent());
             if (Manager.NetworkManager.ConnectedClientsIds.Count == 1 && Manager.NetworkManager.ConnectedClients.ContainsKey(clientId))
             {
@@ -97,6 +123,9 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 
             if (gameReturnStatus == ConnectStatus.Success)
             {
+                // Payload für OnClientConnected cachen, damit Name + Skin gesetzt werden können
+                m_ClientPayloads[request.ClientNetworkId] = connectionPayload;
+
                 // connection approval will create a player object for you
                 response.Approved = true;
                 response.CreatePlayerObject = true;

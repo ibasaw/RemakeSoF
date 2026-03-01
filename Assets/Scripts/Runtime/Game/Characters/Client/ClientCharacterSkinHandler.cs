@@ -136,15 +136,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     return;
                 }
             }
+            skinManager.TryApplyAnimationSet(prefabAsset, "game");
 
             // Altes Visual entfernen
             ClearCurrentVisual();
 
             // Neues Visual unter VisualRoot instanziieren
             m_CurrentVisualInstance = Instantiate(prefabAsset, m_VisualRoot);
-            m_CurrentVisualInstance.transform.localPosition = Vector3.zero;
-            m_CurrentVisualInstance.transform.localRotation = Quaternion.identity;
-            m_CurrentVisualInstance.transform.localScale = Vector3.one;
+            m_CurrentVisualInstance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            // m_CurrentVisualInstance.transform.localScale = Vector3.one;
 
             m_LoadedSkinName = skinName;
 

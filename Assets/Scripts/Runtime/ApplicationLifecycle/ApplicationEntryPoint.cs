@@ -22,34 +22,12 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
     public class ApplicationEntryPoint : MonoBehaviour
     {
         const string k_DefaultServerListenAddress = "0.0.0.0";
-        const string k_DefaultClientAutoConnectServerAddress = "127.0.0.1";
         public static ApplicationEntryPoint Singleton { get; private set; }
 
 #if UNITY_EDITOR
         public static bool s_AreTestsRunning = false;
         public bool AreTestsRunning => s_AreTestsRunning;
 #endif
-        bool AutoConnectOnStartup
-        {
-            get
-            {
-                bool startAutomatically = false;
-                switch (MultiplayerRolesManager.ActiveMultiplayerRoleMask)
-                {
-                    case MultiplayerRoleFlags.Server:
-                        startAutomatically = true;
-                        break;
-                    case MultiplayerRoleFlags.Client:
-                        startAutomatically = m_AutoconnectIfClient;
-                        break;
-                }
-#if UNITY_EDITOR
-                startAutomatically |= AreTestsRunning;
-#endif
-                return startAutomatically;
-            }
-        }
-
         // refernces used in controllers to access important systems that must persist across scenes.
         // These are set via the inspector to ensure they are present and to avoid issues with initialization order.
         [SerializeField]
@@ -72,9 +50,6 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         internal int MinPlayers = 1;
         [SerializeField]
         internal int MaxPlayers = 2;
-        [SerializeField]
-        bool m_AutoconnectIfClient = false;
-
         ServerCommandListener m_ServerCommandListener;
 
         void Awake()
@@ -84,11 +59,6 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 
             m_ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
             m_AuthenticationManager.EventManager.AddListener<AuthenticationEvent>(OnAuthenticationEvent);
-        }
-
-        void Update()
-        {
-            m_ServerCommandListener?.ProcessPendingCommands();
         }
 
         void OnDestroy()
@@ -118,7 +88,7 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         {
             var commandLineArgumentsParser = new CommandLineArgumentsParser();
             ushort listeningPort = (ushort)commandLineArgumentsParser.Port;
-            
+
             PrefabManager prefabManager = new();
             ServiceLocator.Register(prefabManager);
 
@@ -161,11 +131,7 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                         ServiceLocator.Register(goreDataLoader);
 
                         SceneManager.LoadScene("MetagameScene");
-                        Debug.Log($"[ApplicationEntryPoint] InitializeNetworkLogic - Client instance started, loaded MetagameScene. AutoConnectOnStartup is set to {AutoConnectOnStartup}");
-                        if (AutoConnectOnStartup)
-                        {
-                            m_ConnectionManager.StartClient(k_DefaultClientAutoConnectServerAddress, listeningPort);
-                        }
+                        Debug.Log($"[ApplicationEntryPoint] InitializeNetworkLogic - Client instance started, loaded MetagameScene.");
                         break;
                     }
                 case MultiplayerRoleFlags.ClientAndServer:

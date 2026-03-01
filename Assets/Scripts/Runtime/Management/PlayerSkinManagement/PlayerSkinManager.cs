@@ -41,6 +41,24 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             Debug.Log("[PlayerSkinManager] Destroyed");
         }
 
+        public bool TryApplyAnimationSet(GameObject prefab, string animatorControllerPath)
+        {
+            SkinDefinitionLoader skinLoader = ServiceLocator.Get<SkinDefinitionLoader>();
+            SkinDefinition skinDefinition = skinLoader.GetByName(m_CurrentSkinName);
+            if (skinDefinition == null)
+            {
+                return false;
+            }
+            string modelName = skinDefinition.GetModelName();
+            if (string.IsNullOrEmpty(modelName))
+            {
+                return false;
+            }
+            string animationSetName = skinLoader.GetAnimationSetNameForModelName(modelName);
+            m_Applier.ApplyAnimatorController(prefab, $"models/animator/{animatorControllerPath}_{animationSetName}");
+            return true;
+        }
+
         internal bool TryLoadAndApplySkin(string skinName, out GameObject prefab)
         {
             prefab = null;
@@ -92,7 +110,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             ServiceLocator.Get<TextureManager>().CreateMaterialsFromSkinDefinition(skinDefinition);
             m_Applier.DisableAndEnableSurfaces(prefab, skinDefinition);
             m_Applier.DisableAndEnableSurfaces(prefab, characterTemplates, skinName);
-            
+
             // Manager holt konkrete Daten und übergibt sie
             SurfaceDefinitionLoader surfaceLoader = ServiceLocator.Get<SurfaceDefinitionLoader>();
             SkinSurfaceDefinition defaultSurface = surfaceLoader.GetByModelName("default");

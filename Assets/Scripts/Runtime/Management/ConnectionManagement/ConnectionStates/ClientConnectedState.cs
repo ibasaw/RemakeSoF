@@ -20,9 +20,17 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
             }
             else
             {
-                Debug.Log($"Client disconnected with reason: {disconnectReason}");
-                ConnectStatus connectStatus = JsonUtility.FromJson<ConnectStatus>(disconnectReason);
-                Manager.EventManager.Broadcast(new ConnectionEvent { status = connectStatus });
+                try
+                {
+                    ConnectStatus connectStatus = JsonUtility.FromJson<ConnectStatus>(disconnectReason);
+                    Manager.EventManager.Broadcast(new ConnectionEvent { status = connectStatus });
+                }
+                catch
+                {
+                    // DisconnectReason ist kein gültiges JSON (z.B. TransportShutdown beim Exit Play Mode)
+                    Debug.LogWarning($"[ClientConnectedState] Could not parse disconnect reason as ConnectStatus: {disconnectReason}");
+                    Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.GenericDisconnect });
+                }
             }
             Manager.ChangeState(Manager.m_Offline);
         }

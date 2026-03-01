@@ -14,9 +14,9 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 
         public override void Exit() { }
 
-        public override void StartClient(string ipaddress, ushort port)
+        public override void StartClient(string ipaddress, ushort port, string playerName, string skinName)
         {
-            Manager.m_ClientConnecting.Configure(ipaddress, port);
+            Manager.m_ClientConnecting.Configure(ipaddress, port, playerName, skinName);
             Manager.ChangeState(Manager.m_ClientConnecting);
         }
 

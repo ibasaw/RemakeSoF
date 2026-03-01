@@ -31,7 +31,12 @@ namespace Tolik.RemakeSoF.Runtime
         void OnJoinServerClick(JoinServerClickEvent evt)
         {
             Debug.Log("[JoinServerController] OnJoinServerClick - Join Server button clicked, joining server...");
-            ConnectionManager.StartClient("127.0.0.1", 7777);
+            ConnectionManager.StartClient(
+                "127.0.0.1",
+                7777,
+                App.Model.PlayerData.PlayerName,
+                App.Model.PlayerData.CurrentSelectedSkinName
+            );
         }
 
         void OnConnectionEvent(ConnectionEvent evt)

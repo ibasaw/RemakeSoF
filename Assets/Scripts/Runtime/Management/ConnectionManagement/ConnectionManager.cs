@@ -83,9 +83,12 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
             m_CurrentState.OnServerStopped();
         }
 
-        public void StartClient(string ipaddress, ushort port)
+        /// <summary>
+        /// Startet die Client-Verbindung und übergibt Spieler-Identitätsdaten direkt an den ClientConnectingState.
+        /// </summary>
+        public void StartClient(string ipaddress, ushort port, string playerName, string skinName)
         {
-            m_CurrentState.StartClient(ipaddress, port);
+            m_CurrentState.StartClient(ipaddress, port, playerName, skinName);
         }
 
         public void StartServerMatchmaker()

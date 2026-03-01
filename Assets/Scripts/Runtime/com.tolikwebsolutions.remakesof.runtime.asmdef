@@ -14,7 +14,8 @@
         "com.tolikwebsolutions.remakesof.utils",
         "Unity.Addressables",
         "Unity.ResourceManager",
-        "Unity.Collections"
+        "Unity.Collections",
+        "Unity.Multiplayer.Tools.NetStatsMonitor.Component"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

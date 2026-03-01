@@ -12,11 +12,15 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
     {
         string m_IPAddress;
         ushort m_Port;
+        string m_PlayerName;
+        string m_SkinName;
 
-        public void Configure(string iPAddress, ushort port)
+        public void Configure(string iPAddress, ushort port, string playerName, string skinName)
         {
             m_IPAddress = iPAddress;
             m_Port = port;
+            m_PlayerName = playerName;
+            m_SkinName = skinName;
         }
 
         public override void Enter()
@@ -84,7 +88,9 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
         {
             var payload = JsonUtility.ToJson(new ConnectionPayload()
             {
-                applicationVersion = Application.version
+                applicationVersion = Application.version,
+                playerName = m_PlayerName ?? string.Empty,
+                skinName = m_SkinName ?? string.Empty
             });
 
             var payloadBytes = System.Text.Encoding.UTF8.GetBytes(payload);

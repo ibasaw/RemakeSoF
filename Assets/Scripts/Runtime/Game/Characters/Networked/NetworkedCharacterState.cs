@@ -81,12 +81,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>
         /// Der aktuelle Skin-Name des Characters.
-        /// Owner darf seinen eigenen Skin ändern (z.B. im Metagame).
+        /// Nur der Server schreibt diesen Wert (wird initial aus dem ConnectionPayload gesetzt).
+        /// Der Owner kann eine Änderung via <see cref="RequestSkinChangeServerRpc"/> anfragen.
         /// </summary>
         private NetworkVariable<FixedString128Bytes> m_CurrentSkinName = new(
             default,
             NetworkVariableReadPermission.Everyone,
-            NetworkVariableWritePermission.Owner
+            NetworkVariableWritePermission.Server
         );
 
         // ===== Public Properties =====
@@ -117,6 +118,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public event System.Action OnCharacterRespawned;
 
         /// <summary>
+        /// Event: Character-Name hat sich geändert.
+        /// </summary>
+        public event System.Action<string> OnCharacterNameChanged;
+
+        /// <summary>
         /// Event: Skin hat sich geändert (skinName).
         /// </summary>
         public event System.Action<string> OnSkinChanged;
@@ -127,14 +133,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             base.OnNetworkSpawn();
 
+            m_CharacterName.OnValueChanged += OnCharacterNameValueChanged;
             m_Health.OnValueChanged += OnHealthValueChanged;
             m_IsAlive.OnValueChanged += OnIsAliveValueChanged;
             m_CurrentSkinName.OnValueChanged += OnSkinNameValueChanged;
 
             Debug.Log($"[NetworkedCharacterState] OnNetworkSpawn | Name={CharacterName} | Health={Health} | Skin={CurrentSkinName}");
 
-            // Initiales Skin-Event feuern, falls bereits ein Skin-Name gesetzt ist
-            // (z.B. bei Late-Join, wenn Owner den Skin vor unserem Spawn gesetzt hat)
+            // Initiale Events feuern, falls bereits Werte gesetzt sind
+            // (z.B. bei Late-Join, wenn Server die Werte vor unserem Spawn gesetzt hat)
+            string initialName = CharacterName;
+            if (!string.IsNullOrEmpty(initialName))
+            {
+                OnCharacterNameChanged?.Invoke(initialName);
+            }
+
             string initialSkin = CurrentSkinName;
             if (!string.IsNullOrEmpty(initialSkin))
             {
@@ -146,6 +159,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             base.OnNetworkDespawn();
 
+            m_CharacterName.OnValueChanged -= OnCharacterNameValueChanged;
             m_Health.OnValueChanged -= OnHealthValueChanged;
             m_IsAlive.OnValueChanged -= OnIsAliveValueChanged;
             m_CurrentSkinName.OnValueChanged -= OnSkinNameValueChanged;
@@ -235,18 +249,28 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         // ===== Owner Setters (Skin) =====
 
         /// <summary>
-        /// Owner: Setzt den aktuellen Skin-Namen.
+        /// Server: Setzt den aktuellen Skin-Namen (initial aus ConnectionPayload oder Skin-Wechsel).
         /// </summary>
         public void SetCurrentSkinName(string skinName)
         {
-            if (!IsOwner)
+            if (!IsServer)
             {
-                Debug.LogWarning("[NetworkedCharacterState] SetCurrentSkinName can only be called by the owner.");
+                Debug.LogWarning("[NetworkedCharacterState] SetCurrentSkinName can only be called on the server.");
                 return;
             }
 
             m_CurrentSkinName.Value = new FixedString128Bytes(skinName);
-            Debug.Log($"[NetworkedCharacterState] Owner {OwnerClientId} set skin to: {skinName}");
+            Debug.Log($"[NetworkedCharacterState] Server set skin for client {OwnerClientId} to: {skinName}");
+        }
+
+        /// <summary>
+        /// Owner: Fordert den Server auf, den Skin zu wechseln (z.B. In-Game Skin-Wechsel).
+        /// </summary>
+        [ServerRpc]
+        public void RequestSkinChangeServerRpc(FixedString128Bytes skinName)
+        {
+            m_CurrentSkinName.Value = skinName;
+            Debug.Log($"[NetworkedCharacterState] Server applied skin change for client {OwnerClientId}: {skinName}");
         }
 
         /// <summary>
@@ -266,6 +290,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         // ===== Value Changed Handlers =====
+
+        private void OnCharacterNameValueChanged(FixedString64Bytes oldValue, FixedString64Bytes newValue)
+        {
+            Debug.Log($"[NetworkedCharacterState] Name changed: {oldValue} → {newValue}");
+            OnCharacterNameChanged?.Invoke(newValue.ToString());
+        }
 
         private void OnHealthValueChanged(int oldValue, int newValue)
         {

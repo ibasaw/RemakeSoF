@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0af4f13a340015f49bf37f2faf41bb9b
+    m_Address: models/animator/game_average_sleeves
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0f67940ae0a19d243bde5abb10c9e400
     m_Address: models/characters/gore/bone_long/bone_long_mp.glm
     m_ReadOnly: 0

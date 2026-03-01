@@ -111,7 +111,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
 
                 //TODO: anatoli - missing animation sets for these models. 
                 //{ "dog", "dog" }, // TODO: blender fix animation skeleton and then add back to mapping
-                //{ "ospey", "ospey" },
+                //{ "osprey", "osprey" },
             };
 
             animationSetMapping.TryGetValue(modelName, out string animationSetName);

@@ -43,7 +43,12 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnJoinGame(JoinThroughDirectIPEvent evt)
         {
-            ConnectionManager.StartClient(evt.ipAddress, evt.port);
+            ConnectionManager.StartClient(
+                evt.ipAddress,
+                evt.port,
+                App.Model.PlayerData.PlayerName,
+                App.Model.PlayerData.CurrentSelectedSkinName
+            );
         }
 
         void OnConnectionEvent(ConnectionEvent evt)
