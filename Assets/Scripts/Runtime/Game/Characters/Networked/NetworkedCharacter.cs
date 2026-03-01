@@ -1,5 +1,4 @@
 using System;
-using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -51,11 +50,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         protected const float k_MaxAllowedSpeed = 12f;
 
         /// <summary>
-        /// Lokale Bewegungs-/Physik-Komponente (kein Netcode).
-        /// </summary>
-        protected CharacterMotor m_Motor;
-
-        /// <summary>
         /// Invoked after OnNetworkSpawn to notify non-NetworkBehaviour components.
         /// </summary>
         public event Action OnNetworkSpawnHook;
@@ -74,8 +68,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             base.OnNetworkSpawn();
 
             Debug.Log($"[NetworkedCharacter] OnNetworkSpawn | IsServer={IsServer} | IsOwner={IsOwner} | ClientId={OwnerClientId}");
-
-            m_Motor = GetComponent<CharacterMotor>();
 
             if (IsServer)
             {
