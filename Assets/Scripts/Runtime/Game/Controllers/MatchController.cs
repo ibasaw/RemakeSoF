@@ -7,6 +7,21 @@ namespace Tolik.RemakeSoF.Runtime
     {
         MatchView View => App.View.Match;
 
+        /// <summary>
+        /// Intervall in Sekunden zwischen FPS-Updates in der View.
+        /// </summary>
+        private const float k_FpsUpdateInterval = 0.5f;
+
+        /// <summary>
+        /// Akkumulierte Zeit seit letztem FPS-Update.
+        /// </summary>
+        private float m_FpsTimer;
+
+        /// <summary>
+        /// Anzahl gerendeter Frames seit letztem FPS-Update.
+        /// </summary>
+        private int m_FrameCount;
+
         void Awake()
         {
             App.Model.Countdown.OnValueChanged += OnCountdownChanged;
@@ -50,6 +65,23 @@ namespace Tolik.RemakeSoF.Runtime
         {
             Broadcast(new StartMatchEvent());
             Debug.Log("[MatchController] Match started, broadcasting StartMatchEvent.");
+        }
+
+        /// <summary>
+        /// FPS berechnen und View aktualisieren in regelmäßigen Intervallen.
+        /// </summary>
+        private void Update()
+        {
+            m_FrameCount++;
+            m_FpsTimer += Time.unscaledDeltaTime;
+
+            if (m_FpsTimer >= k_FpsUpdateInterval)
+            {
+                float fps = m_FrameCount / m_FpsTimer;
+                View.OnFpsChanged(fps);
+                m_FrameCount = 0;
+                m_FpsTimer = 0f;
+            }
         }
     }
 }
