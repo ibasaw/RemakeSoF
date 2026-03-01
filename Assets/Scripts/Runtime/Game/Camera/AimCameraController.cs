@@ -115,16 +115,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
                 m_AccumulatedLookInput += look * m_GamepadSensitivity * Time.deltaTime;
             }
 
-            // Shoulder-Switch interpolieren (visuell, nicht physik-kritisch)
-            m_AimCam.CameraSide = Mathf.Lerp(m_AimCam.CameraSide, m_TargetCameraSide, Time.deltaTime * m_ShoulderSwitchSpeed);
-        }
-
-        /// <summary>
-        /// Rotation in FixedUpdate anwenden, synchron mit Physik-Bewegung.
-        /// Verhindert Stottern bei gleichzeitiger Rotation und Bewegung.
-        /// </summary>
-        private void FixedUpdate()
-        {
+            // Rotation sofort in Update anwenden — Cinemachine liest in LateUpdate,
+            // braucht daher jeden Frame frische Werte fuer stutter-freie Kamera.
+            // FixedUpdate wuerde nur 50Hz liefern → sichtbares Stottern.
             if (m_AccumulatedLookInput.sqrMagnitude > 0.0001f)
             {
                 m_Yaw += m_AccumulatedLookInput.x * m_Sensitivity;
@@ -144,6 +137,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
             {
                 m_PitchTarget.localRotation = Quaternion.Euler(m_Pitch, 0f, 0f);
             }
+
+            // Shoulder-Switch interpolieren (visuell, nicht physik-kritisch)
+            m_AimCam.CameraSide = Mathf.Lerp(m_AimCam.CameraSide, m_TargetCameraSide, Time.deltaTime * m_ShoulderSwitchSpeed);
         }
 
         /// <summary>

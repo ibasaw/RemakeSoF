@@ -54,7 +54,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         // ===== Movement Sync =====
 
         /// <summary>
-        /// Letzte Server-Position für Reconciliation.
+        /// Letzte Server-Position (Server-seitig fuer Validierung).
         /// </summary>
         private Vector3 m_LastServerPosition;
 
@@ -62,11 +62,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Zeitpunkt des letzten Server-Updates (Server-seitig).
         /// </summary>
         private float m_LastServerUpdateTime;
-
-        /// <summary>
-        /// Schwellwert für Position-Korrektur (wenn Prediction zu weit ab ist).
-        /// </summary>
-        private const float k_ReconciliationThreshold = 0.5f;
 
         /// <summary>
         /// Wird auf dem Server aufgerufen: Spawn-Point zuweisen und Server-Position setzen.
@@ -101,14 +96,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>
         /// Owner-Client: Client-Side Prediction starten.
-        /// CharacterController wird durch ClientPlayerCharacter aktiviert.
+        /// SoF2-Physik wird durch ClientPlayerCharacter aktiviert.
+        /// Reconciliation erfolgt ausschliesslich ueber CorrectionClientRpc (explizite Server-Ablehnung),
+        /// nicht ueber OnValueChanged — da die NetworkVariable-Aenderung erst nach Netzwerk-Roundtrip
+        /// ankommt und der Client sich bis dahin schon weiter bewegt hat (stale ack).
         /// </summary>
         protected override void OnOwnerSpawn()
         {
             base.OnOwnerSpawn();
-
-            // Registriere auf Server-Position-Änderungen für Reconciliation
-            m_ServerPosition.OnValueChanged += OnServerPositionCorrected;
 
             // Animator-Referenz nach Visual-Instanziierung setzen
             SubscribeToVisualInstantiated();
@@ -131,11 +126,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         public override void OnNetworkDespawn()
         {
-            if (IsOwner && !IsServer)
-            {
-                m_ServerPosition.OnValueChanged -= OnServerPositionCorrected;
-            }
-
             UnsubscribeFromVisualInstantiated();
 
             base.OnNetworkDespawn();
@@ -225,26 +215,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             transform.rotation = correctRotation;
 
             Debug.LogWarning($"[NetworkedPlayerCharacter] Owner: Position vom Server korrigiert auf {correctPosition}");
-        }
-
-        /// <summary>
-        /// Owner-Client: Reconciliation wenn Server-Position sich zu stark von Prediction unterscheidet.
-        /// </summary>
-        private void OnServerPositionCorrected(Vector3 oldPos, Vector3 newPos)
-        {
-            if (!IsOwner || IsServer)
-            {
-                return;
-            }
-
-            // Prüfe ob die Prediction zu weit von der Server-Position entfernt ist
-            float discrepancy = Vector3.Distance(transform.position, newPos);
-            if (discrepancy > k_ReconciliationThreshold)
-            {
-                // Snap zur Server-Position (Reconciliation)
-                transform.position = newPos;
-                Debug.Log($"[NetworkedPlayerCharacter] Owner: Reconciliation - Snap um {discrepancy:F2}m");
-            }
         }
 
         /// <summary>

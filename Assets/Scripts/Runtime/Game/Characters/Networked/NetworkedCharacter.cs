@@ -46,8 +46,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>
         /// Max erlaubte Geschwindigkeit in m/s (für Server-Validierung).
+        /// SoF2 phys_maxvelocity=32, plus Gravity kann hohe Fallgeschwindigkeiten erzeugen.
+        /// Grosszuegiger Wert fuer SoF2-Physik mit pm_gravity=80.
         /// </summary>
-        protected const float k_MaxAllowedSpeed = 12f;
+        protected const float k_MaxAllowedSpeed = 100f;
 
         /// <summary>
         /// Invoked after OnNetworkSpawn to notify non-NetworkBehaviour components.

@@ -344,8 +344,7 @@ GameObject:
   - component: {fileID: 792202953519434536}
   - component: {fileID: 5114413647346417949}
   - component: {fileID: 1529554341456710613}
-  - component: {fileID: 4981947975812757593}
-  - component: {fileID: 3335862627453882685}
+  - component: {fileID: 6896766392935963440}
   m_Layer: 0
   m_Name: PlayerCharacter
   m_TagString: Untagged
@@ -516,16 +515,53 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientPlayerCharacter
   m_NetworkedPlayerCharacter: {fileID: 3101344949267953411}
-  m_CharacterController: {fileID: 4981947975812757593}
-  m_CapsuleCollider: {fileID: 3335862627453882685}
+  m_ColliderSystem: {fileID: 6896766392935963440}
   m_CameraRoot: {fileID: 4225467907918778029}
   m_AimCameraController: {fileID: 1169665460083391825}
   m_CameraSwitcher: {fileID: 7263364175839438766}
   m_SkinHandler: {fileID: 792202953519434536}
-  m_MoveSpeed: 5
-  m_WalkSpeedMultiplier: 0.5
-  m_JumpForce: 5
-  m_Gravity: -15
+  m_PmAccelerate: 6
+  m_PmAirAccelerate: 1
+  m_PmFriction: 6
+  m_PmStopSpeed: 10
+  m_PmMaxSpeed: 28
+  m_PmGravity: 80
+  m_PhysMaxVelocity: 32
+  m_PhysMaxWalkVelocity: 32
+  m_JumpVelocity: 27
+  m_PmMaxSteepness: 0
+  m_PmMaxStep: 1.8
+  m_PmStepSize: 1.8
+  m_PmMaxBarrier: 3.2
+  m_JumpDebounceAfterMs: 0.25
+  m_GroundGracePeriod: 0.15
+  m_GroundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_LegsYawOffsetDegrees: 90
+  m_IdleYawByDir:
+  - 112
+  - 45
+  - 68
+  - 68
+  - 112
+  - 180
+  - 180
+  - 90
+  m_BaseLegsRotationSmooth: 8
+  m_TorsoFollowYawInfluence: 65
+  m_UpperLumbarYawOffset: -5
+  m_LowerLumbarYawOffset: 0
+  m_LumbarYawSmooth: 8
+  m_UpperLumbarPitchOffset: 0
+  m_LowerLumbarPitchOffset: 0
+  m_LumbarPitchSmooth: 8
+  m_RollLeanDegrees: 25
+  m_PitchLeanDegrees: 20
+  m_LeanSmooth: 8
+  m_StrafeYawDegrees: 12
+  m_MovementOffsets: 0000000000000000000000000000000000000000000000000000000000000000
+  m_MovementOffsetSmooth: 6
   m_AnimParamSmooth: 10
 --- !u!114 &792202953519434536
 MonoBehaviour:
@@ -570,51 +606,25 @@ MonoBehaviour:
   m_CharacterState: {fileID: 2107942443278687898}
   m_MaxHealth: 100
   m_RespawnTime: 5
---- !u!143 &4981947975812757593
-CharacterController:
+--- !u!114 &6896766392935963440
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8936796741541953394}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Height: 2
-  m_Radius: 0.5
-  m_SlopeLimit: 45
-  m_StepOffset: 0.3
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!136 &3335862627453882685
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8936796741541953394}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 1
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0269a4037a26e084eb821905bf8f8c5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.SoF2ColliderSystem
+  m_CapsuleRadius: 0
+  m_CapsuleHeight: 0
+  m_CapsuleCenter: {x: 0, y: 0, z: 0}
+  m_GroundCheckDistance: 1
+  m_AutoSizeCapsule: 1
+  m_DynamicCapsuleSizing: 1
+  m_ShowVisualCollider: 1
+  m_DrawCapsuleDebugGUI: 1
+  m_ColliderColor: {r: 0, g: 1, b: 0, a: 0.3}
+  m_ColliderMaterial: {fileID: 0}

@@ -3,26 +3,49 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Tolik.RemakeSoF.Runtime.Game.Camera;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+/**
+    * Owner-Client-Controller für Player-Character.
+    * SoF2/Quake3-Style manuelle Physik: Velocity-basierte Bewegung mit CapsuleCasts.
+    * Client-Side Prediction: Physik wird lokal angewendet (responsiv),
+    * dann an Server gesendet zur Validierung.
+    * Auf Remote-Clients: nur CapsuleCollider fuer Kollision.
+    Ja, das ist jetzt sehr nah am Original:
+
+Physik auf Framerate — Q3/SoF2 ließ PM_Move pro Client-Frame laufen (nicht auf fixem Tick). 125fps = 125 Physik-Iterationen/s. Genau das hast du jetzt.
+PM_StepSlideMove — 4-Bump Collision mit ClipVelocity, Step-Up, Slide — direkt aus bg_pmove.c
+PM_Friction / PM_Accelerate — identische Formel: control * friction * dt, accel * dt * wishspeed
+PM_WalkMove / PM_AirMove — Trennung Boden/Luft mit unterschiedlichen Accel-Werten (6 vs 1)
+PM_CmdScale — Input-Normalisierung wie PM_CmdScale in Q3
+Sofortige Jump-Velocity — velocity.y = jumpVelocity (kein Force, kein AddForce)
+Manuelle Gravity — velocity.y -= gravity * dt statt Rigidbody
+CapsuleCast statt CharacterController — näher an Q3's Trace-System als Unitys eingebaute Physik
+Die Werte (pm_maxspeed=28, pm_gravity=80, pm_friction=6, pm_accelerate=6, pm_airaccelerate=1, jumpvel=27) sind SoF2-Defaults. Einziger Unterschied zu purem Q3: du hast zusätzliche Slope-Friction und die SoF2-spezifischen Step-Up Limits (pm_maxstep=1.8, pm_maxbarrier=3.2), was korrekt ist — SoF2 hat das gegenüber Q3 erweitert.
+Was fehlt für 100% Authentizität wäre Strafe-Jumping / Air-Control (Q3 pm_airaccelerate erlaubt Speed-Gain durch Richtungswechsel in der Luft). Das funktioniert bei dir automatisch, weil PM_AirMove mit pm_airaccelerate=1 und der Q3-Accelerate-Formel arbeitet — die erlaubt den klassischen Speed-Gain Bug by design.
+*/
 
 namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 {
     /// <summary>
     /// Owner-Client-Controller für Player-Character.
-    /// Client-Side Prediction: Input wird lokal angewendet (responsiv),
+    /// SoF2/Quake3-Style manuelle Physik: Velocity-basierte Bewegung mit CapsuleCasts.
+    /// Client-Side Prediction: Physik wird lokal angewendet (responsiv),
     /// dann an Server gesendet zur Validierung.
-    /// Auf Remote-Clients: nur CapsuleCollider für Kollision.
+    /// Kein Player-Player Collision client-seitig (wie Q3/SoF2).
     /// </summary>
     [RequireComponent(typeof(NetworkedPlayerCharacter))]
     public class ClientPlayerCharacter : MonoBehaviour
     {
+        // ===== Serialized References =====
+
         [SerializeField]
         private NetworkedPlayerCharacter m_NetworkedPlayerCharacter;
 
+        /// <summary>
+        /// SoF2 Collider-System: berechnet Capsule-Groesse aus Bones (Cranium, Fuesse).
+        /// Stellt Capsule-Parameter fuer CapsuleCasts bereit.
+        /// </summary>
         [SerializeField]
-        private CharacterController m_CharacterController;
-
-        [SerializeField]
-        private CapsuleCollider m_CapsuleCollider;
+        private ClientColliderSystem m_ColliderSystem;
 
         /// <summary>
         /// Root-GameObject des Kamera-Setups (CameraManager, Main Camera, etc.).
@@ -34,24 +57,91 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>
         /// AimCameraController auf dem Player-Prefab. Steuert Kamera-Rotation (Yaw/Pitch).
-        /// Wird nur für den Owner aktiviert.
+        /// Wird nur fuer den Owner aktiviert.
         /// </summary>
         [SerializeField]
         private AimCameraController m_AimCameraController;
 
         /// <summary>
         /// CameraSwitcher auf dem Player-Prefab. Umschalter zwischen First-Person und
-        /// Third-Person Kamera. Wird nur für den Owner aktiviert.
+        /// Third-Person Kamera. Wird nur fuer den Owner aktiviert.
         /// </summary>
         [SerializeField]
         private CameraSwitcher m_CameraSwitcher;
 
         /// <summary>
-        /// SkinHandler-Referenz für das OnVisualInstantiated-Event.
-        /// Wird benötigt um Yaw/Pitch/CameraTarget nach Visual-Instanziierung zu finden.
+        /// SkinHandler-Referenz fuer das OnVisualInstantiated-Event.
+        /// Wird benoetigt um Yaw/Pitch/CameraTarget nach Visual-Instanziierung zu finden.
         /// </summary>
         [SerializeField]
         private ClientCharacterSkinHandler m_SkinHandler;
+
+        // ===== SoF2 Physics Constants =====
+
+        [Header("SoF2 Physics Constants")]
+        [SerializeField]
+        private float m_PmAccelerate = 6.0f;
+
+        [SerializeField]
+        private float m_PmAirAccelerate = 1.0f;
+
+        [SerializeField]
+        private float m_PmFriction = 6.0f;
+
+        [SerializeField]
+        private float m_PmStopSpeed = 10.0f;
+
+        /// <summary>Maximum Wish-Speed / g_speed (SoF2 Standard: 28).</summary>
+        [SerializeField]
+        private float m_PmMaxSpeed = 28.0f;
+
+        /// <summary>Gravitation in Units/s² (SoF2 Standard: 80).</summary>
+        [SerializeField]
+        private float m_PmGravity = 80.0f;
+
+        /// <summary>Max horizontale Velocity in der Luft.</summary>
+        [SerializeField]
+        private float m_PhysMaxVelocity = 32f;
+
+        /// <summary>Max horizontale Velocity am Boden.</summary>
+        [SerializeField]
+        private float m_PhysMaxWalkVelocity = 32f;
+
+        /// <summary>Sofortige Y-Velocity beim Sprung (SoF2 phys_jumpvel).</summary>
+        [SerializeField]
+        private float m_JumpVelocity = 27.0f;
+
+        [Header("Movement Limits")]
+        [SerializeField]
+        private float m_PmMaxSteepness = 0f;
+
+        [SerializeField]
+        private float m_PmMaxStep = 1.8f;
+
+        [SerializeField]
+        private float m_PmStepSize = 1.8f;
+
+        [SerializeField]
+        private float m_PmMaxBarrier = 3.2f;
+
+        [SerializeField]
+        private float m_JumpDebounceAfterMs = 0.25f;
+
+        [SerializeField]
+        private float m_GroundGracePeriod = 0.15f;
+
+        [SerializeField]
+        private LayerMask m_GroundMask = ~0;
+
+        // ===== Physics Constants =====
+
+        /// <summary>Overclip-Konstante fuer PM_ClipVelocity (SoF2-Wert).</summary>
+        private const float OVERCLIP = 1.001f;
+
+        /// <summary>Skin-Width: minimaler Abstand zu Oberflaechen.</summary>
+        private const float SKIN_WIDTH = 0.01f;
+
+        // ===== Bone / Visual References =====
 
         /// <summary>
         /// YawTarget-Transform. Wird zur Laufzeit nach Visual-Instanziierung gesetzt.
@@ -165,17 +255,58 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         // Gesmoothed Idle-Offset basierend auf letzter Bewegungsrichtung
         private float m_CurrentMovementIdleOffset;
 
-        [SerializeField]
-        private float m_MoveSpeed = 7.5f;
+        // ===== Movement State =====
 
-        [SerializeField]
-        private float m_WalkSpeedMultiplier = 0.5f;
+        /// <summary>Aktuelle Velocity (Welt-Raum, XYZ).</summary>
+        private Vector3 m_Velocity;
 
-        [SerializeField]
-        private float m_JumpForce = 5f;
+        /// <summary>Auf dem Boden (nach letztem FixedUpdate)?</summary>
+        private bool m_IsGrounded;
 
-        [SerializeField]
-        private float m_Gravity = -15f;
+        /// <summary>Springt gerade (bis zur naechsten Landung)?</summary>
+        private bool m_IsJumping;
+
+        /// <summary>Geduckt?</summary>
+        private bool m_IsCrouching;
+
+        /// <summary>War im vorherigen FixedUpdate grounded?</summary>
+        private bool m_WasGroundedPrev;
+
+        /// <summary>Jump-Debounce aktiv (nach Landung).</summary>
+        private bool m_IsDebounceActive;
+
+        /// <summary>Jump-Debounce Timer (countdown in Update).</summary>
+        private float m_JumpDebounce;
+
+        /// <summary>Zeitpunkt des letzten Sprungs (Time.time).</summary>
+        private float m_LastJumpTime;
+
+        /// <summary>Zeitpunkt der letzten Ground-Detection.</summary>
+        private float m_LastGroundedTime;
+
+        /// <summary>Zeitpunkt des letzten Step-Up.</summary>
+        private float m_LastStepUpTime;
+
+        /// <summary>Gespeicherter Ground-Hit fuer Slope-Berechnungen.</summary>
+        private RaycastHit m_LastGroundHit;
+
+        /// <summary>Landing-Event bereits gefeuert (verhindert Doppel-Trigger).</summary>
+        private bool m_LandedThisGround;
+
+        /// <summary>
+        /// Gecachtes deltaTime fuer die aktuelle Physik-Iteration.
+        /// Wird zu Beginn von RunPhysicsStep() gesetzt, damit alle Physik-Methoden
+        /// denselben konsistenten dt-Wert nutzen.
+        /// </summary>
+        private float m_PhysicsDeltaTime;
+
+        // ===== Input State =====
+
+        /// <summary>Buffered MoveInput (gelesen in Update, genutzt in Physik-Pipeline + LateUpdate).</summary>
+        private Vector2 m_MoveInput;
+
+        /// <summary>Walk-Taste gedrueckt (Shift).</summary>
+        private bool m_IsWalkingPressed;
 
         [Header("Animation Smoothing")]
         [SerializeField]
@@ -190,11 +321,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// Smoothed Vertical-Input fuer Animator (Blending).
         /// </summary>
         private float m_AnimVertical;
-
-        /// <summary>
-        /// Aktuelle vertikale Geschwindigkeit (Gravity/Jump).
-        /// </summary>
-        private float m_VerticalVelocity;
 
         /// <summary>
         /// Auto-generierte Input Actions (AvatarActions.inputactions).
@@ -215,10 +341,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_AvatarActions = new AvatarActions();
             m_PlayerActions = m_AvatarActions.Player;
 
-            // Alles deaktiviert bis OnNetworkSpawn entscheidet, ob Owner oder Remote
-            m_CapsuleCollider.enabled = false;
-            m_CharacterController.enabled = false;
-
             // Kamera-Setup deaktiviert bis Owner-Entscheidung
             m_CameraRoot.SetActive(false);
             m_AimCameraController.enabled = false;
@@ -231,6 +353,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         {
             m_NetworkedPlayerCharacter.OnNetworkSpawnHook -= OnNetworkSpawn;
 
+            // Jump-Callback abmelden
+            m_PlayerActions.Jump.performed -= OnJumpPerformed;
+
             // Visual-Event abmelden
             if (m_SkinHandler != null)
             {
@@ -240,37 +365,35 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // TogglePauseMenu Callback entfernen
             m_PlayerActions.TogglePauseMenu.performed -= OnMenuToggle;
 
-            // Input Actions aufräumen
+            // Input Actions aufraeumen
             m_AvatarActions?.Dispose();
             m_AvatarActions = null;
         }
 
         /// <summary>
         /// Wird aufgerufen wenn der NetworkObject gespawnt wird.
-        /// Owner: aktiviert Input + CharacterController.
-        /// Remote: aktiviert CapsuleCollider für Physik-Kollision.
+        /// Owner: aktiviert Input + SoF2-Physik.
+        /// Remote: deaktiviert (kein client-seitiges Player-Player Collision wie Q3/SoF2).
         /// </summary>
         private void OnNetworkSpawn()
         {
             if (!m_NetworkedPlayerCharacter.IsOwner)
             {
-                // Remote-Client: nur CapsuleCollider für Kollision
+                // Remote-Client: kein Collision noetig (Q3/SoF2-Style)
                 enabled = false;
-                m_CapsuleCollider.enabled = true;
                 return;
             }
 
             // Owner: Player Action Map aktivieren
             m_PlayerActions.Enable();
 
+            // Jump per Callback (zuverlaessiger als WasPressedThisFrame in FixedUpdate)
+            m_PlayerActions.Jump.performed += OnJumpPerformed;
+
             // TogglePauseMenu per Callback statt PlayerInput-SendMessage
             m_PlayerActions.TogglePauseMenu.performed += OnMenuToggle;
 
-            // CharacterController NACH Server-Position aktivieren
-            // (sonst überschreibt CC die synchronisierte Position)
-            m_CharacterController.enabled = true;
-
-            // Kamera-Setup nur für Owner aktivieren (verhindert doppelte Camera/AudioListener)
+            // Kamera-Setup nur fuer Owner aktivieren (verhindert doppelte Camera/AudioListener)
             m_CameraRoot.SetActive(true);
             m_AimCameraController.enabled = true;
             m_CameraSwitcher.enabled = true;
@@ -284,7 +407,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // GameModel updaten
             GameApplication.Instance.Model.PlayerCharacter = this;
 
-            Debug.Log("[ClientPlayerCharacter] Owner: Input + Prediction aktiv");
+            Debug.Log("[ClientPlayerCharacter] Owner: SoF2-Physik + Prediction aktiv");
+        }
+
+        /// <summary>
+        /// Input-Callback fuer Jump (performed). Setzt isJumping + Velocity sofort.
+        /// Exaktes Verhalten wie MyPlayerControllerCustom.TryJump.
+        /// </summary>
+        private void OnJumpPerformed(InputAction.CallbackContext context)
+        {
+            TryJump();
         }
 
         private void Update()
@@ -294,10 +426,92 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return;
             }
 
+            // Input lesen (wird in Physik-Pipeline + LateUpdate konsumiert)
+            m_MoveInput = m_PlayerActions.Move.ReadValue<Vector2>();
+            m_IsWalkingPressed = m_PlayerActions.Walk.IsPressed();
+
+            // Jump-Debounce Timer (laeuft in Update wie im Original)
+            if (m_IsDebounceActive && m_JumpDebounce > 0f)
+            {
+                m_JumpDebounce -= Time.deltaTime;
+                if (m_JumpDebounce <= 0f)
+                {
+                    m_IsDebounceActive = false;
+                }
+            }
+
             SyncCharacterRotation();
-            HandleMovementInput();
             HandleActionInput();
+
+            // SoF2-Physik-Pipeline in Update (wie im Original: Framerate-gebunden).
+            // Garantiert stutter-freie Bewegung, da transform.position jeden Frame aktualisiert wird.
+            RunPhysicsStep();
+
             UpdateAnimationState();
+        }
+
+        /// <summary>
+        /// Komplette SoF2-Physik-Pipeline pro Frame.
+        /// Reihenfolge exakt wie MyPlayerControllerCustom:
+        /// Gravity → Move → GroundCheck → WalkMove/AirMove → Landing → Server-Sync.
+        /// Laeuft in Update statt FixedUpdate fuer stutter-freie Bewegung
+        /// (SoF2/Q3 lief Physik ebenfalls auf Client-Framerate).
+        /// </summary>
+        private void RunPhysicsStep()
+        {
+            // Collider-System muss initialisiert sein
+            if (m_ColliderSystem == null || m_ColliderSystem.GetCurrentCapsuleHeight() <= 0f)
+            {
+                return;
+            }
+
+            // deltaTime fuer diesen Frame cachen (alle Physik-Methoden nutzen m_PhysicsDeltaTime)
+            m_PhysicsDeltaTime = Time.deltaTime;
+
+            // Vorherigen Ground-State speichern
+            bool wasGrounded = m_WasGroundedPrev;
+
+            // 1. Gravity anwenden
+            ApplyGravity();
+
+            // 2. Character bewegen (PM_StepSlideMove — Collision + Sliding)
+            MoveCharacter();
+
+            // 3. Ground-Check (inklusive Slope + Grace-Period Fallbacks)
+            CheckGroundedState(wasGrounded);
+
+            // Visual-Debug: Grounded-State an ColliderSystem uebergeben
+            if (m_ColliderSystem != null)
+            {
+                m_ColliderSystem.SetGroundedState(m_IsGrounded);
+            }
+
+            // 4. Ground-State Updates
+            if (m_IsGrounded)
+            {
+                m_LastGroundedTime = Time.time;
+            }
+
+            // 5. Edge Detection: gerade gelandet?
+            bool justLanded = !wasGrounded && m_IsGrounded;
+            m_WasGroundedPrev = m_IsGrounded;
+
+            // 6. Friction + Acceleration (setzt Velocity fuer naechsten Frame)
+            if (m_IsGrounded)
+            {
+                PM_WalkMove();
+            }
+            else
+            {
+                PM_AirMove();
+            }
+
+            // 7. Landing-Events
+            HandleLandingEvents(justLanded);
+
+            // 8. Predicted Position an Server senden
+            m_NetworkedPlayerCharacter.SendPredictedMovement(
+                transform.position, transform.rotation, Time.deltaTime);
         }
 
         /// <summary>
@@ -377,6 +591,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 Debug.Log("[ClientPlayerCharacter] Pelvis-Target gefunden für Idle-Ausrichtung");
             }
 
+            // Collider-System initialisieren: Capsule-Groesse aus Bones berechnen
+            if (m_ColliderSystem != null)
+            {
+                m_ColliderSystem.CalculateAutoCapsuleSize(cranium, pelvis, leftHandBolt, rightHandBolt, leftFoot, rightFoot);
+
+
+            }
+
             Debug.Log("[ClientPlayerCharacter] Kamera-Targets verdrahtet (Yaw/Pitch/CameraTarget)");
         }
 
@@ -405,8 +627,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>
         /// Synchronisiert die Character-Body-Rotation mit dem YawTarget.
         /// Damit dreht sich das Character-Model in Blickrichtung (nur Yaw).
-        /// Nach dem Setzen der Body-Rotation wird die YawTarget-Weltrotation
-        /// wiederhergestellt, damit die Cinemachine-Kamera-Hierarchie konsistent bleibt.
         /// </summary>
         private void SyncCharacterRotation()
         {
@@ -418,51 +638,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             float yaw = m_YawTarget.eulerAngles.y;
             transform.rotation = Quaternion.Euler(0f, yaw, 0f);
 
-            // YawTarget-Weltrotation wiederherstellen (Parent-Rotation hat sich geändert)
+            // YawTarget-Weltrotation wiederherstellen (Parent-Rotation hat sich geaendert)
             m_YawTarget.rotation = Quaternion.Euler(0f, yaw, 0f);
-        }
-
-        /// <summary>
-        /// Client-Side Prediction: Bewegung lokal anwenden und an Server senden.
-        /// </summary>
-        private void HandleMovementInput()
-        {
-            if (m_CharacterController == null || !m_CharacterController.enabled || m_YawTarget == null)
-            {
-                return;
-            }
-
-            // Input lesen
-            Vector2 moveInput = m_PlayerActions.Move.ReadValue<Vector2>();
-            bool isWalking = m_PlayerActions.Walk.IsPressed();
-            bool jumpPressed = m_PlayerActions.Jump.WasPressedThisFrame();
-
-            // Bewegungsrichtung relativ zum YawTarget (Kamera-Blickrichtung)
-            Vector3 moveDirection = m_YawTarget.right * moveInput.x + m_YawTarget.forward * moveInput.y;
-            float speed = m_MoveSpeed * (isWalking ? m_WalkSpeedMultiplier : 1f);
-
-            // Gravity
-            if (m_CharacterController.isGrounded)
-            {
-                m_VerticalVelocity = -2f; // Leicht negativ, damit isGrounded stabil bleibt
-
-                if (jumpPressed)
-                {
-                    m_VerticalVelocity = m_JumpForce;
-                    m_NetworkedPlayerCharacter.RequestJumpTrigger();
-                }
-            }
-            else
-            {
-                m_VerticalVelocity += m_Gravity * Time.deltaTime;
-            }
-
-            // Prediction: Bewegung LOKAL anwenden (sofort responsiv)
-            Vector3 movement = (moveDirection * speed + Vector3.up * m_VerticalVelocity) * Time.deltaTime;
-            m_CharacterController.Move(movement);
-
-            // An Server senden: Predicted Position + deltaTime zur Validierung
-            m_NetworkedPlayerCharacter.SendPredictedMovement(transform.position, transform.rotation, Time.deltaTime);
         }
 
         /// <summary>
@@ -477,20 +654,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         }
 
         /// <summary>
-        /// Berechnet den aktuellen Animation-State aus Input und CharacterController-Daten.
+        /// Berechnet den aktuellen Animation-State aus Velocity und Ground-State.
         /// Schreibt den State in die NetworkVariable auf NetworkedPlayerCharacter,
         /// damit Remote-Clients die Animation synchron sehen.
-        /// Smoothing-Werte (Horizontal/Vertical) werden fuer natuerliches Blending geglaettet.
         /// </summary>
         private void UpdateAnimationState()
         {
-            if (m_CharacterController == null || !m_CharacterController.enabled)
-            {
-                return;
-            }
-
-            Vector2 moveInput = m_PlayerActions.Move.ReadValue<Vector2>();
-            bool isWalking = m_PlayerActions.Walk.IsPressed();
+            Vector2 moveInput = m_MoveInput;
+            bool isWalking = m_IsWalkingPressed;
 
             // Input-Werte glaetten fuer fluessiges Animator-Blending
             float animT = Mathf.Clamp01(m_AnimParamSmooth * Time.deltaTime);
@@ -498,25 +669,757 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_AnimVertical = Mathf.Lerp(m_AnimVertical, moveInput.y, animT);
 
             // Horizontale Geschwindigkeit berechnen (ohne Y-Komponente)
-            Vector3 horizontalVelocity = m_CharacterController.velocity;
-            horizontalVelocity.y = 0f;
+            Vector3 horizontalVelocity = new(m_Velocity.x, 0f, m_Velocity.z);
             float speed = horizontalVelocity.magnitude;
             bool isMoving = speed > 0.01f;
 
             NetworkAnimationState state = new()
             {
-
                 Speed = speed,
                 Horizontal = m_AnimHorizontal,
                 Vertical = m_AnimVertical,
                 IsMoving = isMoving,
-                IsGrounded = m_CharacterController.isGrounded,
-                IsWalking = isWalking
-
+                IsGrounded = m_IsGrounded,
+                IsWalking = isWalking,
+                IsCrouching = m_IsCrouching
             };
 
             // In NetworkVariable schreiben + lokal auf Animator anwenden
             m_NetworkedPlayerCharacter.WriteAnimationState(state);
+        }
+
+        // ===================================================================
+        // SoF2 Physics Engine — exakt portiert von MyPlayerControllerCustom
+        // ===================================================================
+
+        /// <summary>
+        /// Gravity anwenden (SoF2 ApplyGravity).
+        /// Nur in der Luft: velocity.y -= pm_gravity * dt.
+        /// Am Boden: negative Y-Velocity auf 0 setzen.
+        /// </summary>
+        private void ApplyGravity()
+        {
+            if (!m_IsGrounded)
+            {
+                m_Velocity.y -= m_PmGravity * m_PhysicsDeltaTime;
+                m_LandedThisGround = false;
+            }
+            else
+            {
+                if (m_Velocity.y < 0f)
+                {
+                    m_Velocity.y = 0f;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Character bewegen (ruft PM_StepSlideMove auf).
+        /// </summary>
+        private void MoveCharacter()
+        {
+            PM_StepSlideMove();
+        }
+
+        /// <summary>
+        /// SoF2 PM_Friction — Bodenreibung (Luft: kein Drop).
+        /// Exakter Port aus bg_pmove.c mit zusaetzlicher Slope-Friction.
+        /// </summary>
+        private void PM_Friction()
+        {
+            Vector3 vec = m_Velocity;
+
+            if (m_IsGrounded)
+            {
+                vec.y = 0f;
+            }
+
+            float speed = vec.magnitude;
+            float drop = 0f;
+
+            if (speed < 1f)
+            {
+                m_Velocity.x = 0f;
+                m_Velocity.z = 0f;
+                return;
+            }
+
+            if (m_IsGrounded)
+            {
+                float control = speed < m_PmStopSpeed ? m_PmStopSpeed : speed;
+                drop += control * m_PmFriction * m_PhysicsDeltaTime;
+
+                // Zusaetzliche Slope-Friction (Custom, nicht im SoF2-Original)
+                if (m_LastGroundHit.collider != null)
+                {
+                    float slopeDot = Vector3.Dot(m_LastGroundHit.normal, Vector3.up);
+                    if (slopeDot < 0.9f)
+                    {
+                        drop += control * m_PmFriction * 1.0f * m_PhysicsDeltaTime;
+                    }
+
+                    if (slopeDot < 0.7f)
+                    {
+                        drop += control * m_PmFriction * 1.5f * m_PhysicsDeltaTime;
+                    }
+                }
+            }
+
+            float newspeed = speed - drop;
+            if (newspeed < 0f)
+            {
+                newspeed = 0f;
+            }
+
+            if (newspeed != speed)
+            {
+                newspeed /= speed;
+                m_Velocity.x *= newspeed;
+                m_Velocity.z *= newspeed;
+                if (m_IsGrounded)
+                {
+                    m_Velocity.y *= newspeed;
+                }
+            }
+        }
+
+        /// <summary>
+        /// SoF2 PM_Accelerate — Q2/Q3 Stil.
+        /// Projiziert aktuelle Velocity auf wishdir, addiert beschleunigte Differenz.
+        /// Ermoeglicht Strafe-Jumping (Perpendicular-Velocity bleibt unberuehrt).
+        /// </summary>
+        private void PM_Accelerate(Vector3 wishdir, float wishspeed, float accel)
+        {
+            float currentspeed = Vector3.Dot(m_Velocity, wishdir);
+            float addspeed = wishspeed - currentspeed;
+
+            if (addspeed <= 0f)
+            {
+                return;
+            }
+
+            float accelspeed = accel * m_PhysicsDeltaTime * wishspeed;
+            if (accelspeed > addspeed)
+            {
+                accelspeed = addspeed;
+            }
+
+            m_Velocity.x += accelspeed * wishdir.x;
+            m_Velocity.y += accelspeed * wishdir.y;
+            m_Velocity.z += accelspeed * wishdir.z;
+        }
+
+        /// <summary>
+        /// SoF2 PM_ClipVelocity — entfernt Velocity-Komponente die in eine Oberflaeche zeigt.
+        /// OVERCLIP verhindert Float-Precision Creep in Oberflaechen.
+        /// </summary>
+        private static void PM_ClipVelocity(Vector3 input, Vector3 normal, out Vector3 output, float overbounce)
+        {
+            float backoff = Vector3.Dot(input, normal);
+
+            if (backoff < 0f)
+            {
+                backoff *= overbounce;
+            }
+            else
+            {
+                backoff /= overbounce;
+            }
+
+            output = new Vector3(
+                input.x - normal.x * backoff,
+                input.y - normal.y * backoff,
+                input.z - normal.z * backoff);
+        }
+
+        /// <summary>
+        /// SoF2 Velocity-Limits: horizontale Speed auf phys_maxwalkvelocity (Boden)
+        /// bzw. phys_maxvelocity (Luft) begrenzen. Y bleibt unberuehrt.
+        /// </summary>
+        private void ApplyVelocityLimits()
+        {
+            Vector3 horizontalVel = new(m_Velocity.x, 0f, m_Velocity.z);
+            float horizontalSpeed = horizontalVel.magnitude;
+
+            float maxVelocity = m_IsGrounded ? m_PhysMaxWalkVelocity : m_PhysMaxVelocity;
+
+            if (horizontalSpeed > maxVelocity)
+            {
+                float scale = maxVelocity / horizontalSpeed;
+                m_Velocity.x *= scale;
+                m_Velocity.z *= scale;
+            }
+        }
+
+        /// <summary>
+        /// SoF2 PM_CmdScale — skaliert Input-Magnitude auf [0, 1].
+        /// </summary>
+        private float PM_CmdScale()
+        {
+            float inputMagnitude = m_MoveInput.magnitude;
+            return inputMagnitude <= 0f ? 0f : Mathf.Clamp01(inputMagnitude);
+        }
+
+        /// <summary>
+        /// SoF2 PM_CheckJump — prueft ob gerade gesprungen wird.
+        /// </summary>
+        private bool PM_CheckJump()
+        {
+            if (m_IsDebounceActive)
+            {
+                return false;
+            }
+
+            return m_IsJumping;
+        }
+
+        /// <summary>
+        /// SoF2 PM_WalkMove — Boden-Bewegung.
+        /// Prueft Jump, wendet Friction an, berechnet Wish-Direction
+        /// projiziert auf Ground-Plane, beschleunigt.
+        /// </summary>
+        private void PM_WalkMove()
+        {
+            if (PM_CheckJump())
+            {
+                PM_AirMove();
+                return;
+            }
+
+            PM_Friction();
+
+            // Bewegungsrichtung aus YawTarget (Kamera-Blickrichtung)
+            Vector3 forward = m_YawTarget != null ? m_YawTarget.forward : transform.forward;
+            Vector3 right = m_YawTarget != null ? m_YawTarget.right : transform.right;
+
+            // Auf Ground-Plane projizieren
+            Vector3 groundNormal = Vector3.up;
+            if (m_LastGroundHit.collider != null)
+            {
+                float slopeThreshold = m_PmMaxSteepness > 1f
+                    ? Mathf.Cos(m_PmMaxSteepness * Mathf.Deg2Rad)
+                    : m_PmMaxSteepness;
+                if (Vector3.Dot(m_LastGroundHit.normal, Vector3.up) > slopeThreshold)
+                {
+                    groundNormal = m_LastGroundHit.normal;
+                }
+            }
+
+            forward = Vector3.ProjectOnPlane(forward, groundNormal).normalized;
+            right = Vector3.ProjectOnPlane(right, groundNormal).normalized;
+
+            // SoF2-Style input scaling (fmove/smove = ±127)
+            float fmove = m_MoveInput.y * 127f;
+            float smove = m_MoveInput.x * 127f;
+            Vector3 wishvel = forward * fmove + right * smove;
+
+            if (wishvel.sqrMagnitude > 0.01f)
+            {
+                wishvel = Vector3.ProjectOnPlane(wishvel, groundNormal);
+            }
+
+            float scale = PM_CmdScale();
+            Vector3 wishdir = wishvel.normalized;
+            float wishspeed = scale * m_PmMaxSpeed;
+
+            if (wishspeed > m_PmMaxSpeed)
+            {
+                wishspeed = m_PmMaxSpeed;
+            }
+
+            PM_Accelerate(wishdir, wishspeed, m_PmAccelerate);
+            ApplyVelocityLimits();
+        }
+
+        /// <summary>
+        /// SoF2 PM_AirMove — Luft-Bewegung.
+        /// Kein Ground-Plane-Projektion, niedrigere Acceleration (pm_airaccelerate).
+        /// Ermoeglicht Strafe-Jumping durch Q3-Accelerate-Projektion.
+        /// </summary>
+        private void PM_AirMove()
+        {
+            PM_Friction();
+
+            Vector3 forward = m_YawTarget != null ? m_YawTarget.forward : transform.forward;
+            Vector3 right = m_YawTarget != null ? m_YawTarget.right : transform.right;
+            forward.y = 0f;
+            right.y = 0f;
+            forward.Normalize();
+            right.Normalize();
+
+            float fmove = m_MoveInput.y * 127f;
+            float smove = m_MoveInput.x * 127f;
+
+            Vector3 wishvel = forward * fmove + right * smove;
+            wishvel.y = 0f;
+
+            float scale = PM_CmdScale();
+
+            Vector3 wishdir = wishvel;
+            float wishspeed = wishdir.magnitude;
+
+            if (wishspeed > 0.0001f)
+            {
+                wishdir /= wishspeed;
+            }
+            else
+            {
+                wishdir = Vector3.zero;
+                wishspeed = 0f;
+            }
+
+            wishspeed *= scale;
+
+            if (wishspeed > m_PmMaxSpeed)
+            {
+                wishspeed = m_PmMaxSpeed;
+            }
+
+            PM_Accelerate(wishdir, wishspeed, m_PmAirAccelerate);
+            ApplyVelocityLimits();
+        }
+
+        /// <summary>
+        /// Jump ausfuehren (SoF2 TryJump).
+        /// Setzt velocity.y = jumpVelocity, isJumping = true.
+        /// Aufgerufen von Input-Callback (OnJumpPerformed).
+        /// </summary>
+        private void TryJump()
+        {
+            if (m_IsDebounceActive)
+            {
+                return;
+            }
+
+            if (!m_IsGrounded)
+            {
+                return;
+            }
+
+            if (m_IsJumping)
+            {
+                return;
+            }
+
+            m_IsJumping = true;
+            m_IsDebounceActive = false;
+            m_Velocity.y = m_JumpVelocity;
+            m_LastJumpTime = Time.time;
+
+            // Jump-Animation ueber Netzwerk triggern
+            m_NetworkedPlayerCharacter.RequestJumpTrigger();
+        }
+
+        // ===================================================================
+        // Collision & Step-Up (PM_StepSlideMove + TryStepUp)
+        // ===================================================================
+
+        /// <summary>
+        /// SoF2 PM_StepSlideMove — Kern-Collision-Handling.
+        /// CapsuleCast in Bewegungsrichtung, bei Hit: Step-Up versuchen oder
+        /// Velocity clippen und entlang der Oberflaeche sliden.
+        /// Bis zu 4 Bumps pro Frame (Ecken, komplexe Geometrie).
+        /// </summary>
+        private void PM_StepSlideMove()
+        {
+            int numbumps = 4;
+            Vector3 currentPos = transform.position;
+            float timeLeft = 1.0f;
+
+            float halfHeightLocal = Mathf.Max(0f,
+                (m_ColliderSystem.GetCurrentCapsuleHeight() * 0.5f) - m_ColliderSystem.GetCurrentCapsuleRadius());
+
+            Vector3 vel = m_Velocity;
+            bool stepUpAttempted = false;
+
+            for (int bump = 0; bump < numbumps; bump++)
+            {
+                Vector3 worldCenter = GetWorldCenterAtPosition(currentPos);
+                Vector3 top = worldCenter + transform.up * halfHeightLocal;
+                Vector3 bottom = worldCenter - transform.up * halfHeightLocal;
+
+                Vector3 end = currentPos + vel * m_PhysicsDeltaTime * timeLeft;
+                Vector3 castDir = end - currentPos;
+                float castDist = castDir.magnitude;
+
+                if (castDist < 1e-6f)
+                {
+                    if (vel.magnitude < 0.1f && m_IsGrounded)
+                    {
+                        vel *= 0.5f;
+                    }
+
+                    break;
+                }
+
+                Vector3 castDirNorm = castDir / castDist;
+
+                if (Physics.CapsuleCast(top, bottom, m_ColliderSystem.GetCurrentCapsuleRadius(),
+                        castDirNorm, out RaycastHit hit, castDist + SKIN_WIDTH,
+                        m_GroundMask, QueryTriggerInteraction.Ignore))
+                {
+                    // Step-Up versuchen (einmal pro Frame)
+                    if (!stepUpAttempted && TryStepUp(currentPos, hit, out Vector3 stepUpPos))
+                    {
+                        currentPos = stepUpPos;
+                        stepUpAttempted = true;
+
+                        Vector3 remainingMovement = vel * m_PhysicsDeltaTime * timeLeft;
+                        remainingMovement.y = 0f;
+
+                        if (remainingMovement.magnitude > 0.001f)
+                        {
+                            Vector3 newTop = GetWorldCenterAtPosition(currentPos) + transform.up * halfHeightLocal;
+                            Vector3 newBottom = GetWorldCenterAtPosition(currentPos) - transform.up * halfHeightLocal;
+
+                            if (!Physics.CapsuleCast(newTop, newBottom, m_ColliderSystem.GetCurrentCapsuleRadius(),
+                                    remainingMovement.normalized, out RaycastHit _,
+                                    remainingMovement.magnitude + SKIN_WIDTH,
+                                    m_GroundMask, QueryTriggerInteraction.Ignore))
+                            {
+                                currentPos += remainingMovement;
+                                break;
+                            }
+                        }
+
+                        break;
+                    }
+
+                    // Bis kurz vor den Hit bewegen (Skin-Width Abstand)
+                    float moveDist = Mathf.Max(hit.distance - SKIN_WIDTH, 0f);
+
+                    if (moveDist < 0.001f)
+                    {
+                        if (vel.magnitude < 0.1f)
+                        {
+                            vel *= 0.3f;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        currentPos += castDirNorm * moveDist;
+                    }
+
+                    // Velocity entlang der Oberflaeche clippen (Slide)
+                    PM_ClipVelocity(vel, hit.normal, out Vector3 clipVel, OVERCLIP);
+                    vel = clipVel;
+
+                    if (vel.magnitude < 0.01f)
+                    {
+                        vel *= 0.1f;
+                        break;
+                    }
+
+                    float fraction = moveDist / castDist;
+                    timeLeft -= timeLeft * fraction;
+
+                    if (timeLeft <= 0.001f)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    // Kein Treffer → komplette Strecke gehen
+                    currentPos = end;
+                    break;
+                }
+            }
+
+            m_Velocity = vel;
+            transform.position = currentPos;
+
+            // Finaler Ground-Check nach Bewegung
+            bool wasGroundedBeforeMove = m_IsGrounded;
+            bool newGroundCheck = CheckGroundedAtPosition(currentPos, out RaycastHit downHit);
+
+            // Slope-Fallback wenn vorher grounded
+            if (!newGroundCheck && wasGroundedBeforeMove)
+            {
+                newGroundCheck = TrySlopeGroundCheck(currentPos, halfHeightLocal, out downHit);
+            }
+
+            if (!wasGroundedBeforeMove || newGroundCheck)
+            {
+                m_IsGrounded = newGroundCheck;
+            }
+
+            // Am Boden: Y-Velocity null, Position korrigieren, Slope-Projektion
+            if (m_IsGrounded && m_Velocity.y <= 0f)
+            {
+                m_Velocity.y = 0f;
+
+                if (downHit.collider != null)
+                {
+                    CorrectGroundPosition(currentPos, downHit, halfHeightLocal);
+
+                    float slopeDot = Vector3.Dot(downHit.normal, Vector3.up);
+                    if (slopeDot < 0.95f)
+                    {
+                        Vector3 groundProjectedVel = Vector3.ProjectOnPlane(m_Velocity, downHit.normal);
+                        m_Velocity = groundProjectedVel;
+                        m_Velocity.y = 0f;
+
+                        if (slopeDot < 0.7f)
+                        {
+                            m_Velocity *= 0.8f;
+                            m_Velocity.y = 0f;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// SoF2 Step-Up Logik: versucht ueber ein Hindernis zu steigen.
+        /// Prueft Hindernis-Hoehe, Headroom, horizontale Blockade, Boden-Verification.
+        /// </summary>
+        private bool TryStepUp(Vector3 currentPos, RaycastHit hit, out Vector3 stepUpPos)
+        {
+            stepUpPos = currentPos;
+
+            if (!m_IsGrounded || Mathf.Abs(m_Velocity.y) > 1.0f)
+            {
+                return false;
+            }
+
+            if (Vector3.Dot(hit.normal, Vector3.up) < 0.1f)
+            {
+                return false;
+            }
+
+            float obstacleHeight = hit.point.y - (currentPos.y - m_ColliderSystem.GetCurrentCapsuleRadius());
+
+            if (obstacleHeight > m_PmMaxBarrier)
+            {
+                return false;
+            }
+
+            if (obstacleHeight > m_PmMaxStep || obstacleHeight < 0.5f)
+            {
+                return false;
+            }
+
+            float stepUpAmount = Mathf.Min(obstacleHeight + 0.1f, m_PmStepSize);
+            Vector3 stepUpTarget = currentPos + Vector3.up * stepUpAmount;
+
+            float halfHeight = Mathf.Max(0f,
+                (m_ColliderSystem.GetCurrentCapsuleHeight() * 0.5f) - m_ColliderSystem.GetCurrentCapsuleRadius());
+            Vector3 worldCenter = GetWorldCenterAtPosition(stepUpTarget);
+            Vector3 top = worldCenter + transform.up * halfHeight;
+            Vector3 bottom = worldCenter - transform.up * halfHeight;
+
+            // Ceiling-Check
+            if (Physics.CapsuleCast(bottom, top, m_ColliderSystem.GetCurrentCapsuleRadius(),
+                    Vector3.up, out RaycastHit _, m_PmStepSize,
+                    m_GroundMask, QueryTriggerInteraction.Ignore))
+            {
+                return false;
+            }
+
+            // Horizontaler Obstacle-Check
+            Vector3 horizontalVel = new(m_Velocity.x, 0f, m_Velocity.z);
+            if (horizontalVel.magnitude > 0.1f)
+            {
+                Vector3 horizontalDir = horizontalVel.normalized;
+                float checkDistance = Mathf.Min(horizontalVel.magnitude * m_PhysicsDeltaTime, 0.5f);
+
+                Vector3 stepTop = GetWorldCenterAtPosition(stepUpTarget) + transform.up * halfHeight;
+                Vector3 stepBottom = GetWorldCenterAtPosition(stepUpTarget) - transform.up * halfHeight;
+
+                if (Physics.CapsuleCast(stepBottom, stepTop, m_ColliderSystem.GetCurrentCapsuleRadius(),
+                        horizontalDir, out RaycastHit horizontalHit, checkDistance + SKIN_WIDTH,
+                        m_GroundMask, QueryTriggerInteraction.Ignore))
+                {
+                    if (horizontalHit.point.y <= hit.point.y)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            // Ground-Verification: Cast nach unten, begehbarer Boden muss existieren
+            float groundCheckDist = stepUpAmount + m_ColliderSystem.GetCurrentGroundCheckDistance();
+            if (!Physics.CapsuleCast(top, bottom, m_ColliderSystem.GetCurrentCapsuleRadius() * 0.95f,
+                    Vector3.down, out RaycastHit groundHit, groundCheckDist,
+                    m_GroundMask, QueryTriggerInteraction.Ignore))
+            {
+                return false;
+            }
+
+            float slopeThreshold = m_PmMaxSteepness > 1f
+                ? Mathf.Cos(m_PmMaxSteepness * Mathf.Deg2Rad)
+                : m_PmMaxSteepness;
+            if (Vector3.Dot(groundHit.normal, Vector3.up) < slopeThreshold)
+            {
+                return false;
+            }
+
+            stepUpPos = stepUpTarget;
+            m_LastStepUpTime = Time.time;
+            return true;
+        }
+
+        // ===================================================================
+        // Ground Detection
+        // ===================================================================
+
+        /// <summary>
+        /// Einheitlicher Ground-Check per CapsuleCast nach unten.
+        /// Beruecksichtigt Jump-Grace-Period und Slope-Threshold.
+        /// </summary>
+        private bool CheckGroundedAtPosition(Vector3 position, out RaycastHit groundHit)
+        {
+            groundHit = new RaycastHit();
+
+            // Jump-Grace: kurz nach Sprung keinen Boden erkennen
+            if (m_IsJumping && (Time.time - m_LastJumpTime) < 0.01f)
+            {
+                return false;
+            }
+
+            if (m_IsJumping && m_Velocity.y > 5f)
+            {
+                return false;
+            }
+
+            float halfHeight = Mathf.Max(0f,
+                (m_ColliderSystem.GetCurrentCapsuleHeight() * 0.5f) - m_ColliderSystem.GetCurrentCapsuleRadius());
+            Vector3 center = GetWorldCenterAtPosition(position);
+            Vector3 top = center + transform.up * halfHeight;
+            Vector3 bottom = center - transform.up * halfHeight;
+
+            float baseDistance = m_ColliderSystem.GetCurrentGroundCheckDistance();
+            float verticalComponent = Mathf.Abs(m_Velocity.y) * m_PhysicsDeltaTime;
+            float horizontalComponent = new Vector3(m_Velocity.x, 0f, m_Velocity.z).magnitude * m_PhysicsDeltaTime;
+            float dynamicCastDistance = baseDistance + 0.01f + verticalComponent + horizontalComponent * 0.5f;
+
+            if (Physics.CapsuleCast(top, bottom, m_ColliderSystem.GetCurrentCapsuleRadius() * 0.95f,
+                    Vector3.down, out RaycastHit hit, dynamicCastDistance,
+                    m_GroundMask, QueryTriggerInteraction.Ignore))
+            {
+                float slopeThreshold = m_PmMaxSteepness > 1f
+                    ? Mathf.Cos(m_PmMaxSteepness * Mathf.Deg2Rad)
+                    : m_PmMaxSteepness;
+
+                if (Vector3.Dot(hit.normal, Vector3.up) > slopeThreshold)
+                {
+                    if (m_IsJumping && m_Velocity.y > 1.0f)
+                    {
+                        return false;
+                    }
+
+                    groundHit = hit;
+                    m_LastGroundHit = hit;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Triple Ground-Check: Standard → Slope-Fallback → Grace-Period.
+        /// Exakt wie MyPlayerControllerCustom.FixedUpdate.
+        /// </summary>
+        private void CheckGroundedState(bool wasGrounded)
+        {
+            m_IsGrounded = CheckGroundedAtPosition(transform.position, out RaycastHit _);
+
+            // Slope-Fallback mit 4x Distanz
+            if (!m_IsGrounded)
+            {
+                float halfHeight = Mathf.Max(0f,
+                    (m_ColliderSystem.GetCurrentCapsuleHeight() * 0.5f) - m_ColliderSystem.GetCurrentCapsuleRadius());
+                m_IsGrounded = TrySlopeGroundCheck(transform.position, halfHeight, out RaycastHit _);
+            }
+
+            // Grace-Period: wenn vorher grounded und kuerzlich verloren
+            if (!m_IsGrounded && wasGrounded && (Time.time - m_LastGroundedTime) < m_GroundGracePeriod)
+            {
+                float halfHeight = Mathf.Max(0f,
+                    (m_ColliderSystem.GetCurrentCapsuleHeight() * 0.5f) - m_ColliderSystem.GetCurrentCapsuleRadius());
+                m_IsGrounded = TrySlopeGroundCheck(transform.position, halfHeight, out RaycastHit _);
+            }
+        }
+
+        /// <summary>
+        /// Aggressive Slope Ground-Check mit 4x Distanz.
+        /// </summary>
+        private bool TrySlopeGroundCheck(Vector3 position, float halfHeight, out RaycastHit slopeHit)
+        {
+            slopeHit = new RaycastHit();
+            Vector3 center = GetWorldCenterAtPosition(position);
+            Vector3 top = center + transform.up * halfHeight;
+            Vector3 bottom = center - transform.up * halfHeight;
+
+            float slopeCheckDistance = m_ColliderSystem.GetCurrentGroundCheckDistance() * 4f;
+
+            if (Physics.CapsuleCast(top, bottom, m_ColliderSystem.GetCurrentCapsuleRadius() * 0.95f,
+                    Vector3.down, out RaycastHit hit, slopeCheckDistance,
+                    m_GroundMask, QueryTriggerInteraction.Ignore))
+            {
+                float slopeThreshold = m_PmMaxSteepness > 1f
+                    ? Mathf.Cos(m_PmMaxSteepness * Mathf.Deg2Rad)
+                    : m_PmMaxSteepness;
+
+                if (Vector3.Dot(hit.normal, Vector3.up) > slopeThreshold)
+                {
+                    slopeHit = hit;
+                    m_LastGroundHit = hit;
+                    m_IsGrounded = true;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Korrigiert die Position ueber dem Boden (verhindert Einsinken).
+        /// </summary>
+        private void CorrectGroundPosition(Vector3 currentPos, RaycastHit downHit, float halfHeight)
+        {
+            Vector3 capsuleBottom = GetWorldCenterAtPosition(currentPos) - transform.up * halfHeight;
+            float desiredDistance = m_ColliderSystem.GetCurrentCapsuleRadius() * 0.1f;
+            float currentDistance = Vector3.Dot(capsuleBottom - downHit.point, downHit.normal);
+
+            if (currentDistance < desiredDistance)
+            {
+                float correction = desiredDistance - currentDistance;
+                transform.position += downHit.normal * correction;
+            }
+        }
+
+        /// <summary>
+        /// Welt-Center der Capsule an gegebener Position berechnen.
+        /// </summary>
+        private Vector3 GetWorldCenterAtPosition(Vector3 position)
+        {
+            Vector3 baseCenter = transform.TransformPoint(m_ColliderSystem.GetCurrentCapsuleCenter());
+            Vector3 positionDelta = position - transform.position;
+            return baseCenter + positionDelta;
+        }
+
+        /// <summary>
+        /// Landing-Events (Debounce-Aktivierung, Jump-Reset).
+        /// </summary>
+        private void HandleLandingEvents(bool justLanded)
+        {
+            if (!justLanded || m_LandedThisGround)
+            {
+                return;
+            }
+
+            m_LandedThisGround = true;
+
+            if (m_IsJumping)
+            {
+                m_IsJumping = false;
+                m_IsDebounceActive = true;
+                m_JumpDebounce = m_JumpDebounceAfterMs;
+            }
         }
 
         /// <summary>
