@@ -90,6 +90,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             NetworkVariableWritePermission.Server
         );
 
+        // ===== Weapon =====
+
+        /// <summary>
+        /// Der aktuelle Waffen-Name des Characters (Addressable-Key, z.B. "knife").
+        /// Server-autoritativ: Owner fragt Wechsel an, Server validiert und setzt.
+        /// Alle Clients reagieren auf Aenderung und laden/attachen die Waffe lokal.
+        /// </summary>
+        private readonly NetworkVariable<FixedString64Bytes> m_CurrentWeaponName = new(
+            default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
         // ===== Public Properties =====
 
         public string CharacterName => m_CharacterName.Value.ToString();
@@ -99,6 +112,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public int Kills => m_Kills.Value;
         public int Deaths => m_Deaths.Value;
         public string CurrentSkinName => m_CurrentSkinName.Value.ToString();
+        public string CurrentWeaponName => m_CurrentWeaponName.Value.ToString();
 
         // ===== Events =====
 
@@ -127,6 +141,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         public event System.Action<string> OnSkinChanged;
 
+        /// <summary>
+        /// Event: Waffe hat sich geändert (weaponName).
+        /// </summary>
+        public event System.Action<string> OnWeaponChanged;
+
         // ===== Lifecycle =====
 
         public override void OnNetworkSpawn()
@@ -137,8 +156,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_Health.OnValueChanged += OnHealthValueChanged;
             m_IsAlive.OnValueChanged += OnIsAliveValueChanged;
             m_CurrentSkinName.OnValueChanged += OnSkinNameValueChanged;
+            m_CurrentWeaponName.OnValueChanged += OnWeaponNameValueChanged;
 
-            Debug.Log($"[NetworkedCharacterState] OnNetworkSpawn | Name={CharacterName} | Health={Health} | Skin={CurrentSkinName}");
+            Debug.Log($"[NetworkedCharacterState] OnNetworkSpawn | Name={CharacterName} | Health={Health} | Skin={CurrentSkinName} | Weapon={CurrentWeaponName}");
 
             // Initiale Events feuern, falls bereits Werte gesetzt sind
             // (z.B. bei Late-Join, wenn Server die Werte vor unserem Spawn gesetzt hat)
@@ -153,6 +173,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             {
                 OnSkinChanged?.Invoke(initialSkin);
             }
+
+            string initialWeapon = CurrentWeaponName;
+            if (!string.IsNullOrEmpty(initialWeapon))
+            {
+                OnWeaponChanged?.Invoke(initialWeapon);
+            }
         }
 
         public override void OnNetworkDespawn()
@@ -163,6 +189,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_Health.OnValueChanged -= OnHealthValueChanged;
             m_IsAlive.OnValueChanged -= OnIsAliveValueChanged;
             m_CurrentSkinName.OnValueChanged -= OnSkinNameValueChanged;
+            m_CurrentWeaponName.OnValueChanged -= OnWeaponNameValueChanged;
         }
 
         // ===== Server Setters =====
@@ -321,6 +348,40 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             Debug.Log($"[NetworkedCharacterState] Skin changed: {oldValue} → {newValue}");
             OnSkinChanged?.Invoke(newValue.ToString());
+        }
+
+        private void OnWeaponNameValueChanged(FixedString64Bytes oldValue, FixedString64Bytes newValue)
+        {
+            Debug.Log($"[NetworkedCharacterState] Weapon changed: {oldValue} → {newValue}");
+            OnWeaponChanged?.Invoke(newValue.ToString());
+        }
+
+        // ===== Weapon Setters =====
+
+        /// <summary>
+        /// Server: Setzt die aktuelle Waffe (z.B. beim Spawn oder Waffen-Pickup).
+        /// </summary>
+        public void SetCurrentWeaponName(string weaponName)
+        {
+            if (!IsServer)
+            {
+                Debug.LogWarning("[NetworkedCharacterState] SetCurrentWeaponName can only be called on the server.");
+                return;
+            }
+
+            m_CurrentWeaponName.Value = new FixedString64Bytes(weaponName);
+            Debug.Log($"[NetworkedCharacterState] Server set weapon for client {OwnerClientId} to: {weaponName}");
+        }
+
+        /// <summary>
+        /// Owner: Fordert den Server auf, die Waffe zu wechseln.
+        /// Server kann hier spaeter Validierung einbauen (hat der Spieler die Waffe?).
+        /// </summary>
+        [ServerRpc]
+        public void RequestWeaponChangeServerRpc(FixedString64Bytes weaponName)
+        {
+            m_CurrentWeaponName.Value = weaponName;
+            Debug.Log($"[NetworkedCharacterState] Server applied weapon change for client {OwnerClientId}: {weaponName}");
         }
     }
 }

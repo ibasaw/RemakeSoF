@@ -95,6 +95,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be0359e19fa88f742846db940c2d9e1b
+    m_Address: knife
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c64754162df1edd4bb9489d7742245db
     m_Address: characters/models/female_pants
     m_ReadOnly: 0

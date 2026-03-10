@@ -381,7 +381,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3914805539
+  GlobalObjectIdHash: 2347466413
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -521,6 +521,7 @@ MonoBehaviour:
   m_AimCameraController: {fileID: 1169665460083391825}
   m_CameraSwitcher: {fileID: 7263364175839438766}
   m_SkinHandler: {fileID: 792202953519434536}
+  m_CharacterState: {fileID: 2107942443278687898}
   m_Simulation:
     PmAccelerate: 6
     PmAirAccelerate: 1
@@ -644,7 +645,7 @@ MonoBehaviour:
   m_CapsuleRadius: 0
   m_CapsuleHeight: 0
   m_CapsuleCenter: {x: 0, y: 0, z: 0}
-  m_GroundCheckDistance: 1
+  m_GroundCheckDistance: 0.1
   m_AutoSizeCapsule: 1
   m_DynamicCapsuleSizing: 1
   m_ShowVisualCollider: 1

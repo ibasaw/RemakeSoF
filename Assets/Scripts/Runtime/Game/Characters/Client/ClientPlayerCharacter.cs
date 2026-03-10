@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 using Tolik.RemakeSoF.Runtime.Game.Camera;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
+using Tolik.RemakeSoF.Runtime.Game.WeaponManagement;
 /**
     * Owner-Client-Controller fÃ¼r Player-Character.
     * SoF2/Quake3-Style manuelle Physik: Velocity-basierte Bewegung mit CapsuleCasts.
@@ -77,6 +78,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         [SerializeField]
         private ClientCharacterSkinHandler m_SkinHandler;
 
+        /// <summary>
+        /// NetworkedCharacterState-Referenz fuer Waffen-Sync (OnWeaponChanged).
+        /// </summary>
+        [SerializeField]
+        private NetworkedCharacterState m_CharacterState;
+
         // ===== Constants =====
 
         /// <summary>Reconciliation Threshold: ab dieser Abweichung wird korrigiert (Meter).</summary>
@@ -114,6 +121,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// Input/Physik sind deaktiviert. Daten kommen aus NetworkVariable.
         /// </summary>
         private bool m_IsRemoteMode;
+
+        // ===== Weapon =====
+
+        /// <summary>
+        /// Interner WeaponLoader: laedt Waffen-Prefabs und attached sie an den Hand-Bone.
+        /// Kein MonoBehaviour — wird hier orchestriert.
+        /// </summary>
+        private readonly WeaponLoader m_WeaponLoader = new();
+
+        /// <summary>
+        /// Pending Weapon-Name: gesetzt wenn OnWeaponChanged vor OnVisualInstantiated kommt.
+        /// Wird beim naechsten OnVisualInstantiated konsumiert.
+        /// </summary>
+        private string m_PendingWeaponName;
 
         // ===== Bone / Visual References =====
 
@@ -294,6 +315,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_SkinHandler.OnVisualInstantiated -= OnVisualInstantiated;
             }
 
+            // Waffen-Event abmelden
+            if (m_CharacterState != null)
+            {
+                m_CharacterState.OnWeaponChanged -= OnWeaponChanged;
+            }
+
+            // Waffe aufraeumen
+            m_WeaponLoader.ClearCurrentWeapon();
+
             // TogglePauseMenu Callback entfernen
             m_PlayerActions.TogglePauseMenu.performed -= OnMenuToggle;
 
@@ -309,6 +339,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         private void OnNetworkSpawn()
         {
+            // Waffen-Event fuer Owner UND Remote abonnieren (beide muessen Waffen laden/anzeigen)
+            if (m_CharacterState != null)
+            {
+                m_CharacterState.OnWeaponChanged += OnWeaponChanged;
+            }
+
             if (!m_NetworkedPlayerCharacter.IsOwner)
             {
                 // Remote-Client: nur Bone-Rotation, kein Input/Physik
@@ -586,6 +622,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     m_ColliderSystem.CalculateAutoCapsuleSize(craniumR, pelvis, leftHandBoltR, rightHandBoltR, leftFootR, rightFootR);
                 }
 
+                // Waffen-Attachment-Bone fuer Remote setzen
+                Transform remoteHandBolt = FindDeepChild(visualInstance.transform, "rhang_tag_bone");
+                if (remoteHandBolt != null)
+                {
+                    m_WeaponLoader.SetAttachmentBone(remoteHandBolt);
+                    TryLoadPendingWeapon();
+                }
+
                 return;
             }
 
@@ -636,6 +680,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             Debug.Log("[ClientPlayerCharacter] Kamera-Targets verdrahtet (Yaw/Pitch/CameraTarget)");
+
+            // Waffen-Attachment-Bone fuer Owner setzen
+            if (rightHandBolt != null)
+            {
+                m_WeaponLoader.SetAttachmentBone(rightHandBolt);
+                TryLoadPendingWeapon();
+            }
         }
 
         /// <summary>
@@ -686,6 +737,45 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (m_PlayerActions.Attack.WasPressedThisFrame())
             {
                 m_NetworkedPlayerCharacter.RequestAttack();
+            }
+        }
+
+        // ===== Weapon Loading =====
+
+        /// <summary>
+        /// Callback wenn sich die Waffe im NetworkedCharacterState aendert.
+        /// Laedt die neue Waffe sofort, falls das Visual bereits instanziiert ist
+        /// (AttachmentBone gesetzt). Andernfalls wird der Name als Pending gespeichert
+        /// und beim naechsten OnVisualInstantiated geladen.
+        /// </summary>
+        private void OnWeaponChanged(string weaponName)
+        {
+            if (string.IsNullOrEmpty(weaponName))
+            {
+                m_WeaponLoader.ClearCurrentWeapon();
+                m_PendingWeaponName = null;
+                return;
+            }
+
+            // Pending merken fuer den Fall dass Visual noch nicht instanziiert ist
+            m_PendingWeaponName = weaponName;
+            TryLoadPendingWeapon();
+        }
+
+        /// <summary>
+        /// Versucht die Pending-Waffe zu laden, falls AttachmentBone bereits gesetzt ist.
+        /// Wird sowohl von OnWeaponChanged als auch von OnVisualInstantiated aufgerufen.
+        /// </summary>
+        private void TryLoadPendingWeapon()
+        {
+            if (string.IsNullOrEmpty(m_PendingWeaponName))
+            {
+                return;
+            }
+
+            if (m_WeaponLoader.LoadAndAttachWeapon(m_PendingWeaponName))
+            {
+                m_PendingWeaponName = null;
             }
         }
 

@@ -22,7 +22,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>Ground-Check-Distanz fuer CapsuleCast nach unten.</summary>
         [SerializeField]
-        private float m_GroundCheckDistance = 1f;
+        private float m_GroundCheckDistance = 0.2f;
 
         [Header("Auto Capsule Sizing")]
         [SerializeField]

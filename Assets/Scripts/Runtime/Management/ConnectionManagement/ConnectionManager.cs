@@ -58,7 +58,12 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
                 case Unity.Netcode.ConnectionEvent.ClientDisconnected:
                     m_CurrentState.OnClientDisconnect(arg2.ClientId);
                     break;
-                default://PeerConnected, PeerDisconnected, ServerStarted, ServerStopped, TransportFailure are handled by their respective callbacks
+                case Unity.Netcode.ConnectionEvent.PeerConnected:
+                case Unity.Netcode.ConnectionEvent.PeerDisconnected:
+                    // Peer-Events sind normal: andere Clients verbinden/trennen sich.
+                    // Kein Handling noetig — Server-autoritatives Spawning regelt alles.
+                    break;
+                default:// TransportFailure are handled by their respective callbacks
                     Debug.LogWarning($"Unhandled ConnectionEvent of type {arg2.EventType} received in ConnectionManager.");
                     throw new ArgumentOutOfRangeException(nameof(arg2.EventType), arg2.EventType, "Unhandled ConnectionEvent encountered.");
             }

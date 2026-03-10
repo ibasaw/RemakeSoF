@@ -54,7 +54,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         public bool IsMoving
         {
-            get => (Flags & 0x01) != 0;
+            readonly get => (Flags & 0x01) != 0;
             set => Flags = (byte)(value ? Flags | 0x01 : Flags & ~0x01);
         }
 
@@ -63,7 +63,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         public bool IsGrounded
         {
-            get => (Flags & 0x02) != 0;
+            readonly get => (Flags & 0x02) != 0;
             set => Flags = (byte)(value ? Flags | 0x02 : Flags & ~0x02);
         }
 
@@ -72,7 +72,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         public bool IsWalking
         {
-            get => (Flags & 0x04) != 0;
+            readonly get => (Flags & 0x04) != 0;
             set => Flags = (byte)(value ? Flags | 0x04 : Flags & ~0x04);
         }
 
@@ -81,7 +81,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         public bool IsAttacking
         {
-            get => (Flags & 0x08) != 0;
+            readonly get => (Flags & 0x08) != 0;
             set => Flags = (byte)(value ? Flags | 0x08 : Flags & ~0x08);
         }
 
@@ -90,7 +90,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         public bool IsCrouching
         {
-            get => (Flags & 0x10) != 0;
+            readonly get => (Flags & 0x10) != 0;
             set => Flags = (byte)(value ? Flags | 0x10 : Flags & ~0x10);
         }
 
@@ -107,7 +107,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <inheritdoc/>
-        public bool Equals(NetworkAnimationState other)
+        public readonly bool Equals(NetworkAnimationState other)
         {
             return Mathf.Approximately(Speed, other.Speed) &&
                    Mathf.Approximately(Horizontal, other.Horizontal) &&
@@ -119,13 +119,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <inheritdoc/>
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             return obj is NetworkAnimationState other && Equals(other);
         }
 
         /// <inheritdoc/>
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             return HashCode.Combine(Speed, Horizontal, Vertical, MoveInputX, MoveInputY, PitchAngle, Flags);
         }

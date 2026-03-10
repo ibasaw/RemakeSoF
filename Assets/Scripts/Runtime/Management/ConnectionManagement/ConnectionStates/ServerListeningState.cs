@@ -44,7 +44,8 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
                 {
                     characterState.SetCharacterName(payload.playerName);
                     characterState.SetCurrentSkinName(payload.skinName);
-                    Debug.Log($"[ServerListeningState] Set CharacterName='{payload.playerName}', SkinName='{payload.skinName}' for client {clientId}");
+                    characterState.SetCurrentWeaponName("knife");
+                    Debug.Log($"[ServerListeningState] Set CharacterName='{payload.playerName}', SkinName='{payload.skinName}', Weapon='knife' for client {clientId}");
                 }
                 else
                 {

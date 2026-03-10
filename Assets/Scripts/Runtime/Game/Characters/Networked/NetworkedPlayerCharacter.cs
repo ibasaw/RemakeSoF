@@ -83,6 +83,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             base.OnServerSpawn();
 
+            // Server-seitige Physik + CapsuleCollider initialisieren
+            m_ServerPlayerCharacter.InitializeServer();
+
             // Spawn-Point vom Server zuweisen
             if (ServerPlayerSpawnPoints.Instance == null)
             {

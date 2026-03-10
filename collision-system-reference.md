@@ -315,3 +315,77 @@ GroundMask sollte NICHT enthalten:
 > Unity's PhysX-Engine liefert eine bessere Broadphase, Capsule statt AABB ist smoother,
 > und LayerMask ist das direkte Äquivalent zu Content Flags.
 > Ein eigenes Trace-System nachzubauen wäre Over-Engineering ohne Mehrwert.
+
+
+
+Nein — mit einem einzelnen CapsuleCollider pro Spieler kannst du keine Headshots erkennen. Der CapsuleCast trifft nur die äußere Capsule-Hülle und liefert einen einzigen RaycastHit-Punkt — du weißt nicht, ob Kopf, Torso oder Beine getroffen wurden.
+
+Lass mich kurz prüfen, was im Projekt bereits an Hit-Detection existiert und wie SoF2 das gelöst hat:
+
+Nein — mit einem einzelnen CapsuleCollider kannst du keine Headshots erkennen. Der liefert nur einen Hit-Punkt auf der Capsule-Oberfläche — du weißt nicht, welcher Körperteil getroffen wurde.
+
+Was du hast vs. was du brauchst
+System	Dein Setup (CapsuleCollider)	Headshot-Detection
+Bewegungs-Kollision	✅ CapsuleCast gegen Welt + Spieler	Bleibt so
+Waffen-Hit-Detection	❌ Gleicher CapsuleCollider	Braucht Per-Bone Hitbox Colliders
+Wie SoF2 das gelöst hat
+SoF2 hatte das detaillierteste Hit-Zonen-System seiner Zeit (GHOUL2):
+
+Jede Mesh-Surface hatte eine hitLocation-Textur (steht in deinen Shader-Dateien!):
+hitLocation  models/characters/female_face/f_female_hit
+hitLocation  models/characters/chem_suit/hood_chem_suit_hit
+Wenn ein trap_Trace einen Spieler traf, wurde die UV-Koordinate am Trefferpunkt ausgelesen
+Die hitLocation-Textur war eine Damage Map — Pixelfarbe = Körperzone (Kopf, Torso, Arm, Bein, etc.)
+So konnte SoF2 36+ verschiedene Hit-Zonen pro Charakter unterscheiden (Gore-System)
+Du hast diese Daten bereits im Projekt:
+
+ShaderEntry.HitLocation in ShaderEntry.cs
+hitLocation-Einträge in den Shader-Dateien
+Surface-Namen wie head_side_r, head_bck_uppr_l — anatomisch benannte Mesh-Segmente
+3 mögliche Ansätze
+1. Per-Bone Hitbox Colliders (Empfehlung — Standard für Multiplayer-Shooter)
+Character GameObject
+  ├─ CapsuleCollider (Layer: Player)     ← Bewegungs-Kollision (bleibt)
+  │
+  └─ Bone Hierarchy
+       ├─ cranium
+       │    └─ CapsuleCollider (Layer: Hitbox, Tag: "Head")
+       ├─ upper_lumbar
+       │    └─ BoxCollider (Layer: Hitbox, Tag: "Torso")
+       ├─ lower_lumbar
+       │    └─ BoxCollider (Layer: Hitbox, Tag: "Torso")
+       ├─ l_leg / r_leg
+       │    └─ CapsuleCollider (Layer: Hitbox, Tag: "Legs")
+       └─ l_arm / r_arm
+            └─ CapsuleCollider (Layer: Hitbox, Tag: "Arms")
+Bewegung: Physics.CapsuleCast gegen GroundMask (World + Player Layer) — wie bisher
+Waffen: Physics.Raycast gegen HitboxMask (nur Hitbox Layer)
+Hitbox-Collider sind Trigger (kein physisches Pushing), bewegen sich mit den Bones
+Treffer → collider.tag oder Component abfragen → Körperzone → Damage-Multiplikator
+Vorteile: Exakt, debugbar, Industrie-Standard (CS:GO, Valorant, Overwatch)
+Nachteile: Mehr Collider pro Spieler (~6-10), muss bei Skin-Wechsel angepasst werden
+
+2. Raycast + nächster Bone (einfacher, weniger genau)
+Waffen-Raycast trifft erst den CapsuleCollider (Player)
+Dann: Hit-Point gegen alle Bone-Positionen vergleichen → nächster Bone = Körperzone
+Kein extra Collider nötig
+Vorteile: Einfach, keine zusätzlichen Collider
+Nachteile: Ungenau bei Animationen, keine echte Hitbox-Form
+
+3. SoF2's GHOUL2 UV-Lookup (originalgetreu, aber komplex)
+Waffen-Raycast trifft Mesh-Surface → UV am Trefferpunkt auslesen
+hitLocation-Textur samplen → Farbe = Zone
+Du hast die Daten bereits (ShaderEntry.HitLocation)
+Vorteile: Originalgetreu, extrem präzise (36+ Zonen)
+Nachteile: Komplex, MeshCollider nötig (teuer), UV-Lookup zur Runtime
+
+Empfehlung
+Ansatz 1 (Per-Bone Hitboxes) — weil:
+
+Deine Bones existieren bereits (cranium, pelvis, lumbar, legs)
+Sauber getrennt von Bewegungs-Kollision (eigener Layer)
+Server-autoritativ: Server hat die gleichen Bones → Hitboxes auch serverseitig validierbar
+Einfach erweiterbar: Damage-Multiplikatoren pro Zone (Head: 4x, Torso: 1x, Legs: 0.75x)
+Industriestandard — jeder moderne Shooter macht es so
+Das CapsuleCollider-System für Bewegung bleibt unverändert. Die Hitboxes sind ein separates System auf einem eigenen Layer, nur für Waffen-Raycasts.
+

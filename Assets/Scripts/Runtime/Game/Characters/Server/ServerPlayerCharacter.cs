@@ -42,7 +42,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         /// </summary>
         private CapsuleCollider m_PhysicsCollider;
 
-        private void Awake()
+        /// <summary>
+        /// Initialisiert die Server-seitige Physik und den Collision-Collider.
+        /// Wird von NetworkedPlayerCharacter.OnServerSpawn() aufgerufen,
+        /// damit der CapsuleCollider nur auf dem Server erstellt wird.
+        /// </summary>
+        public void InitializeServer()
         {
             // Default Capsule-Dimensionen setzen (bis Client aktuelle Werte sendet)
             m_Simulation.SetCapsuleDimensions(
