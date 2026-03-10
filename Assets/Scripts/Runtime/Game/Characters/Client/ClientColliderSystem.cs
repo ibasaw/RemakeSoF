@@ -68,6 +68,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Gecachter Grounded-State fuer Visual-Farbe.</summary>
         private bool m_IsGroundedVisual;
 
+        /// <summary>Actual Physics CapsuleCollider fuer CapsuleCast-Detection durch andere Spieler.</summary>
+        private CapsuleCollider m_PhysicsCollider;
+
         // --- Public Getters ---
 
         /// <summary>Aktueller Capsule-Radius.</summary>
@@ -81,6 +84,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>Ground-Check-Distanz fuer CapsuleCast.</summary>
         public float GetCurrentGroundCheckDistance() => m_GroundCheckDistance;
+
+        /// <summary>
+        /// Physik-CapsuleCollider fuer temporaeres Deaktivieren waehrend eigener Simulation.
+        /// </summary>
+        public CapsuleCollider PhysicsCollider => m_PhysicsCollider;
 
         /// <summary>
         /// Setzt den Grounded-State fuer die Visual-Debug-Farbe.
@@ -166,6 +174,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_CapsuleRadius = newRadius;
             m_CapsuleCenter = m_BaseCapsuleCenter;
 
+            // Physics CapsuleCollider erstellen/aktualisieren
+            UpdatePhysicsCollider();
+
             // Visual Debug initialisieren (falls aktiviert)
             InitializeVisualCollider();
             InitializeVisualGroundCheck();
@@ -194,6 +205,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_CapsuleHeight = m_BaseCapsuleHeight;
                 m_CapsuleCenter = m_BaseCapsuleCenter;
             }
+
+            UpdatePhysicsCollider();
         }
 
         private void LateUpdate()
@@ -218,6 +231,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             {
                 Destroy(m_VisualGroundCheckObject);
             }
+        }
+
+        // ===================================================================
+        // Physics CapsuleCollider
+        // ===================================================================
+
+        /// <summary>
+        /// Erstellt oder aktualisiert den Physics-CapsuleCollider.
+        /// Dieser Collider wird von CapsuleCasts anderer Spieler erkannt
+        /// und ermoeglicht Player-Player Collision.
+        /// </summary>
+        private void UpdatePhysicsCollider()
+        {
+            if (m_PhysicsCollider == null)
+            {
+                m_PhysicsCollider = gameObject.AddComponent<CapsuleCollider>();
+            }
+
+            m_PhysicsCollider.height = m_CapsuleHeight;
+            m_PhysicsCollider.radius = m_CapsuleRadius;
+            m_PhysicsCollider.center = m_CapsuleCenter;
         }
 
         // ===================================================================

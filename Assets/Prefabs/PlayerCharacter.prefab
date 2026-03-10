@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5126821013092552409}
   - component: {fileID: 6793962416535179928}
   - component: {fileID: 1169665460083391825}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: AimCamera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -133,7 +133,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2242215691896723769}
   - component: {fileID: 7263364175839438766}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: CameraManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -181,7 +181,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1211031149505799473}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: VisualRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -215,7 +215,7 @@ GameObject:
   - component: {fileID: 2500566048307127719}
   - component: {fileID: 475778164284564793}
   - component: {fileID: 486976665569401168}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: FirstPersonCamera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -345,7 +345,7 @@ GameObject:
   - component: {fileID: 5114413647346417949}
   - component: {fileID: 1529554341456710613}
   - component: {fileID: 6896766392935963440}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PlayerCharacter
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -437,10 +437,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             };
             m_JumpRequested = false;
 
+            // Eigenen Collider deaktivieren damit CapsuleCast sich nicht selbst trifft
+            CapsuleCollider ownCollider = m_ColliderSystem != null ? m_ColliderSystem.PhysicsCollider : null;
+            if (ownCollider != null)
+            {
+                ownCollider.enabled = false;
+            }
+
             // Client-Side Prediction: lokale Physik ausfuehren (sofortige Reaktion)
             Vector3 position = transform.position;
             m_Simulation.Simulate(ref position, cmd);
             transform.position = position;
+
+            // Eigenen Collider wieder aktivieren
+            if (ownCollider != null)
+            {
+                ownCollider.enabled = true;
+            }
 
             // Jump-Animation ueber Netzwerk triggern
             if (m_Simulation.JumpTriggered)
@@ -558,9 +571,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 Debug.Log("[ClientPlayerCharacter] Pelvis-Target gefunden fuer Bone-Rotation");
             }
 
-            // Remote-Modus: nur Bone-Referenzen, kein Kamera/Collider Setup
+            // Remote-Modus: Bone-Referenzen + Collider, kein Kamera/Simulation Setup
             if (m_IsRemoteMode)
             {
+                // Collider auch fuer Remote initialisieren (Physics + Visual Debug)
+                if (m_ColliderSystem != null)
+                {
+                    Transform craniumR = FindDeepChild(visualInstance.transform, "cranium");
+                    Transform rightHandBoltR = FindDeepChild(visualInstance.transform, "rhang_tag_bone");
+                    Transform leftHandBoltR = FindDeepChild(visualInstance.transform, "lhand_tag_bone");
+                    Transform rightFootR = FindDeepChild(visualInstance.transform, "rtarsal");
+                    Transform leftFootR = FindDeepChild(visualInstance.transform, "ltarsal");
+
+                    m_ColliderSystem.CalculateAutoCapsuleSize(craniumR, pelvis, leftHandBoltR, rightHandBoltR, leftFootR, rightFootR);
+                }
+
                 return;
             }
 

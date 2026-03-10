@@ -36,6 +36,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         /// <summary>Default Ground-Check-Distanz bis Client aktuelle Werte sendet.</summary>
         private const float k_DefaultGroundCheckDistance = 0.1f;
 
+        /// <summary>
+        /// Physics CapsuleCollider fuer server-seitige Player-Player Collision.
+        /// Wird bei SetCapsuleDimensions aktualisiert.
+        /// </summary>
+        private CapsuleCollider m_PhysicsCollider;
+
         private void Awake()
         {
             // Default Capsule-Dimensionen setzen (bis Client aktuelle Werte sendet)
@@ -45,6 +51,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                 k_DefaultCapsuleCenter,
                 k_DefaultGroundCheckDistance
             );
+
+            // Physics CapsuleCollider fuer Player-Player Collision
+            m_PhysicsCollider = gameObject.AddComponent<CapsuleCollider>();
+            m_PhysicsCollider.height = k_DefaultCapsuleHeight;
+            m_PhysicsCollider.radius = k_DefaultCapsuleRadius;
+            m_PhysicsCollider.center = k_DefaultCapsuleCenter;
         }
 
         /// <summary>
@@ -59,9 +71,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
             cmd.DeltaTime = Mathf.Clamp(cmd.DeltaTime, 0f, 0.1f);
             cmd.MoveInput = Vector2.ClampMagnitude(cmd.MoveInput, 1f);
 
+            // Eigenen Collider deaktivieren damit CapsuleCast sich nicht selbst trifft
+            if (m_PhysicsCollider != null)
+            {
+                m_PhysicsCollider.enabled = false;
+            }
+
             Vector3 position = transform.position;
             m_Simulation.Simulate(ref position, cmd);
             transform.position = position;
+
+            // Eigenen Collider wieder aktivieren
+            if (m_PhysicsCollider != null)
+            {
+                m_PhysicsCollider.enabled = true;
+            }
 
             return new ServerMovementAck
             {
@@ -80,6 +104,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         public void SetCapsuleDimensions(float height, float radius, Vector3 center, float groundCheckDist)
         {
             m_Simulation.SetCapsuleDimensions(height, radius, center, groundCheckDist);
+
+            // Physics CapsuleCollider aktualisieren
+            if (m_PhysicsCollider != null)
+            {
+                m_PhysicsCollider.height = height;
+                m_PhysicsCollider.radius = radius;
+                m_PhysicsCollider.center = center;
+            }
+
             Debug.Log($"[ServerPlayerCharacter] Capsule-Dimensionen vom Client empfangen — Height: {height:F2}, Radius: {radius:F2}");
         }
 
