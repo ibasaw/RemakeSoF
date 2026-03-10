@@ -84,7 +84,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Nur der Server schreibt diesen Wert (wird initial aus dem ConnectionPayload gesetzt).
         /// Der Owner kann eine Änderung via <see cref="RequestSkinChangeServerRpc"/> anfragen.
         /// </summary>
-        private NetworkVariable<FixedString128Bytes> m_CurrentSkinName = new(
+        private readonly NetworkVariable<FixedString128Bytes> m_CurrentSkinName = new(
             default,
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server

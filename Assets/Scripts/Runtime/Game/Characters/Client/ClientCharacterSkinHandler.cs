@@ -150,6 +150,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_LoadedSkinName = skinName;
 
             Debug.Log($"[ClientCharacterSkinHandler] Skin applied: {skinName} (Owner={m_NetworkedCharacter.IsOwner}) on Character {m_NetworkedCharacter.CharacterId}");
+            Debug.Log($"[ClientCharacterSkinHandler] Networked Character State: Name {m_CharacterState.CharacterName}, Skin {m_CharacterState.CurrentSkinName}, Health {m_CharacterState.Health}");
 
             // Listener benachrichtigen (z.B. ClientPlayerCharacter für Kamera-Targets)
             OnVisualInstantiated?.Invoke(m_CurrentVisualInstance);

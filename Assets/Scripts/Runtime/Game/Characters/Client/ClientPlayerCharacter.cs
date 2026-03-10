@@ -113,7 +113,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         [Header("Movement Limits")]
         [SerializeField]
-        private float m_PmMaxSteepness = 0f;
+        private float m_PmMaxSteepness = 0.7f; // Entspricht ca. 45 Grad, wie in SoF2 (pm_maxsteepness = 0.7)
 
         [SerializeField]
         private float m_PmMaxStep = 1.8f;
@@ -123,6 +123,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         [SerializeField]
         private float m_PmMaxBarrier = 3.2f;
+
+        [SerializeField]
+        private float m_PmDuckScale = 0.25f; // SoF2 duckscale: 0.25 = 25%, sollte die Speed auf 25% reduziert werden.
 
         [SerializeField]
         private float m_JumpDebounceAfterMs = 0.25f;
@@ -852,12 +855,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         }
 
         /// <summary>
-        /// SoF2 PM_CmdScale — skaliert Input-Magnitude auf [0, 1].
+        /// SoF2 PM_CmdScale — normalisiert diagonale Inputs und skaliert mit g_speed.
+        /// Exakter Port: scale = speed * max / (127 * total).
+        /// Verhindert sqrt(2)-Speed-Boost bei diagonaler Eingabe
+        /// und erlaubt proportionale Geschwindigkeit bei partiellem Stick-Input.
         /// </summary>
         private float PM_CmdScale()
         {
-            float inputMagnitude = m_MoveInput.magnitude;
-            return inputMagnitude <= 0f ? 0f : Mathf.Clamp01(inputMagnitude);
+            float fmove = Mathf.Abs(m_MoveInput.y) * 127f;
+            float smove = Mathf.Abs(m_MoveInput.x) * 127f;
+
+            float max = Mathf.Max(fmove, smove);
+            if (max <= 0f)
+            {
+                return 0f;
+            }
+
+            float total = Mathf.Sqrt(fmove * fmove + smove * smove);
+            return m_PmMaxSpeed * max / (127f * total);
         }
 
         /// <summary>
@@ -919,8 +934,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             float scale = PM_CmdScale();
-            Vector3 wishdir = wishvel.normalized;
-            float wishspeed = scale * m_PmMaxSpeed;
+
+            Vector3 wishdir = wishvel;
+            float wishspeed = wishdir.magnitude;
+            if (wishspeed > 0.0001f)
+            {
+                wishdir /= wishspeed;
+            }
+            else
+            {
+                wishdir = Vector3.zero;
+                wishspeed = 0f;
+            }
+
+            wishspeed *= scale;
 
             if (wishspeed > m_PmMaxSpeed)
             {
@@ -928,6 +955,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             PM_Accelerate(wishdir, wishspeed, m_PmAccelerate);
+
+            // SoF2: Velocity auf Ground-Plane clippen + Speed erhalten.
+            // Verhindert Speed-Verlust auf Slopes (bg_pmove.c PM_WalkMove).
+            if (m_LastGroundHit.collider != null)
+            {
+                float vel = m_Velocity.magnitude;
+                PM_ClipVelocity(m_Velocity, m_LastGroundHit.normal, out Vector3 clipped, OVERCLIP);
+                m_Velocity = clipped;
+                float clippedMag = m_Velocity.magnitude;
+                if (clippedMag > 0.001f)
+                {
+                    m_Velocity = m_Velocity / clippedMag * vel;
+                }
+            }
+
+            // SoF2: nicht bewegen wenn stillstehend
+            if (Mathf.Abs(m_Velocity.x) < 0.001f && Mathf.Abs(m_Velocity.z) < 0.001f)
+            {
+                return;
+            }
+
             ApplyVelocityLimits();
         }
 
