@@ -613,13 +613,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 // Collider auch fuer Remote initialisieren (Physics + Visual Debug)
                 if (m_ColliderSystem != null)
                 {
+                    Transform highestPointR = FindDeepChild(visualInstance.transform, "*head_t_0");
                     Transform craniumR = FindDeepChild(visualInstance.transform, "cranium");
                     Transform rightHandBoltR = FindDeepChild(visualInstance.transform, "rhang_tag_bone");
                     Transform leftHandBoltR = FindDeepChild(visualInstance.transform, "lhand_tag_bone");
                     Transform rightFootR = FindDeepChild(visualInstance.transform, "rtarsal");
                     Transform leftFootR = FindDeepChild(visualInstance.transform, "ltarsal");
 
-                    m_ColliderSystem.CalculateAutoCapsuleSize(craniumR, pelvis, leftHandBoltR, rightHandBoltR, leftFootR, rightFootR);
+                    m_ColliderSystem.CalculateAutoCapsuleSize(highestPointR != null ? highestPointR : craniumR, pelvis, leftHandBoltR, rightHandBoltR, leftFootR, rightFootR);
                 }
 
                 // Waffen-Attachment-Bone fuer Remote setzen
@@ -636,6 +637,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // === Ab hier nur Owner ===
 
             Transform cameraTarget = FindDeepChild(visualInstance.transform, "CameraTarget");
+            Transform highestPoint = FindDeepChild(visualInstance.transform, "*head_t_0");
             Transform cranium = FindDeepChild(visualInstance.transform, "cranium");
             Transform rightHandBolt = FindDeepChild(visualInstance.transform, "rhang_tag_bone");
             Transform leftHandBolt = FindDeepChild(visualInstance.transform, "lhand_tag_bone");
@@ -660,7 +662,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Collider-System initialisieren: Capsule-Groesse aus Bones berechnen
             if (m_ColliderSystem != null)
             {
-                m_ColliderSystem.CalculateAutoCapsuleSize(cranium, pelvis, leftHandBolt, rightHandBolt, leftFoot, rightFoot);
+                m_ColliderSystem.CalculateAutoCapsuleSize(highestPoint != null ? highestPoint : cranium, pelvis, leftHandBolt, rightHandBolt, leftFoot, rightFoot);
 
                 // Simulation Capsule-Dimensionen setzen (fÃ¼r Client-Side Prediction)
                 m_Simulation.SetCapsuleDimensions(

@@ -18,7 +18,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
         private const float k_WeaponZRotation = -90f;
 
         /// <summary>
-        /// Scale-Override fuer SoF2-Waffen-Groessenkorrektur.
+        /// Scale-Override fuer SoF2-Waffen-Groessenkorrektur. TODO: derzeit nicht benötigt eventuell später nochmal schauen!
         /// </summary>
         private const float k_WeaponScale = 1f;
 

@@ -123,9 +123,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return;
             }
 
-            // Bone-Positionen in lokalen Raum konvertieren
-            Vector3 craniumLocal = transform.InverseTransformPoint(cranium.position);
-            float highestY = craniumLocal.y;
+            // Hoechsten Punkt bestimmen: SkinnedMeshRenderer-Bounds (falls vorhanden) statt Transform-Position.
+            // *head_t_0 hat einen SkinnedMeshRenderer dessen bounds.max.y den tatsaechlich gerenderten Scheitelpunkt liefert.
+            SkinnedMeshRenderer smr = cranium.GetComponent<SkinnedMeshRenderer>();
+            float highestY;
+            if (smr != null)
+            {
+                Vector3 boundsMaxLocal = transform.InverseTransformPoint(smr.bounds.max);
+                highestY = boundsMaxLocal.y;
+            }
+            else
+            {
+                Vector3 craniumLocal = transform.InverseTransformPoint(cranium.position);
+                highestY = craniumLocal.y;
+            }
 
             // Niedrigsten Y-Wert aus Fuessen bestimmen
             float lowestY = 0f;

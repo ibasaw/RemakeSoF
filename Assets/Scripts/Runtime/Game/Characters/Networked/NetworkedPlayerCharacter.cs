@@ -96,10 +96,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
 
             (Vector3 position, Quaternion rotation) = ServerPlayerSpawnPoints.Instance.ConsumeNextSpawnPoint();
-            transform.position = position;
-            transform.rotation = rotation;
+            transform.SetPositionAndRotation(position, rotation);
 
             // Server-Position als Source of Truth setzen
+
             m_ServerPosition.Value = position;
             m_ServerRotation.Value = rotation;
             Debug.Log($"[NetworkedPlayerCharacter] Server: Spieler gespawnt bei {position}");
@@ -259,9 +259,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private void CorrectionClientRpc(Vector3 correctPosition, Quaternion correctRotation)
         {
             // Owner-Client: Server hat die Position korrigiert → Prediction überschreiben
-            transform.position = correctPosition;
-            transform.rotation = correctRotation;
-
+            transform.SetPositionAndRotation(correctPosition, correctRotation);
             Debug.LogWarning($"[NetworkedPlayerCharacter] Owner: Position vom Server korrigiert auf {correctPosition}");
         }
 
@@ -270,17 +268,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         private void InterpolateRemotePosition()
         {
-            transform.position = Vector3.Lerp(
+            
+            transform.SetPositionAndRotation(Vector3.Lerp(
                 transform.position,
                 m_ServerPosition.Value,
                 Time.deltaTime * k_RemoteInterpolationSpeed
-            );
-
-            transform.rotation = Quaternion.Lerp(
+            ), Quaternion.Lerp(
                 transform.rotation,
                 m_ServerRotation.Value,
                 Time.deltaTime * k_RemoteInterpolationSpeed
-            );
+            ));
+
         }
 
         /// <summary>

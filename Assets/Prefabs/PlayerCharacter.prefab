@@ -645,7 +645,7 @@ MonoBehaviour:
   m_CapsuleRadius: 0
   m_CapsuleHeight: 0
   m_CapsuleCenter: {x: 0, y: 0, z: 0}
-  m_GroundCheckDistance: 0.1
+  m_GroundCheckDistance: 0.06
   m_AutoSizeCapsule: 1
   m_DynamicCapsuleSizing: 1
   m_ShowVisualCollider: 1
