@@ -44,12 +44,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         protected const float k_RemoteInterpolationSpeed = 15f;
 
-        /// <summary>
-        /// Max erlaubte Geschwindigkeit in m/s (für Server-Validierung).
-        /// SoF2 phys_maxvelocity=32, plus Gravity kann hohe Fallgeschwindigkeiten erzeugen.
-        /// Grosszuegiger Wert fuer SoF2-Physik mit pm_gravity=80.
-        /// </summary>
-        protected const float k_MaxAllowedSpeed = 100f;
+
 
         /// <summary>
         /// Invoked after OnNetworkSpawn to notify non-NetworkBehaviour components.
@@ -118,27 +113,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         protected virtual void OnRemoteSpawn()
         {
             Debug.Log("[NetworkedCharacter] Remote-Client: Interpolation aktiviert");
-        }
-
-        /// <summary>
-        /// Server: Validiert ob eine Bewegung physikalisch plausibel ist.
-        /// </summary>
-        /// <param name="currentPos">Aktuelle Server-Position.</param>
-        /// <param name="requestedPos">Vom Client angeforderte Position.</param>
-        /// <param name="deltaTime">Zeit seit letztem Update.</param>
-        /// <returns>True wenn Bewegung gültig ist.</returns>
-        protected bool ValidateMovement(Vector3 currentPos, Vector3 requestedPos, float deltaTime)
-        {
-            float distance = Vector3.Distance(currentPos, requestedPos);
-            float maxAllowed = k_MaxAllowedSpeed * Mathf.Max(deltaTime, 0.001f) * 1.5f; // 1.5x Toleranz
-
-            if (distance > maxAllowed)
-            {
-                Debug.LogWarning($"[NetworkedCharacter] Bewegung zu schnell: {distance:F2}m (Max: {maxAllowed:F2}m) für Client {OwnerClientId}");
-                return false;
-            }
-
-            return true;
         }
 
     }

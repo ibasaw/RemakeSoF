@@ -381,7 +381,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2347466413
+  GlobalObjectIdHash: 3914805539
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -409,6 +409,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   m_CharacterId:
     m_InternalValue: 0
+  m_ServerPlayerCharacter: {fileID: 5114413647346417949}
   m_SkinHandler: {fileID: 792202953519434536}
 --- !u!114 &2107942443278687898
 MonoBehaviour:
@@ -520,24 +521,26 @@ MonoBehaviour:
   m_AimCameraController: {fileID: 1169665460083391825}
   m_CameraSwitcher: {fileID: 7263364175839438766}
   m_SkinHandler: {fileID: 792202953519434536}
-  m_PmAccelerate: 6
-  m_PmAirAccelerate: 1
-  m_PmFriction: 6
-  m_PmStopSpeed: 10
-  m_PmMaxSpeed: 28
-  m_PmGravity: 80
-  m_PhysMaxVelocity: 32
-  m_PhysMaxWalkVelocity: 32
-  m_JumpVelocity: 27
-  m_PmMaxSteepness: 0
-  m_PmMaxStep: 1.8
-  m_PmStepSize: 1.8
-  m_PmMaxBarrier: 3.2
-  m_JumpDebounceAfterMs: 0.25
-  m_GroundGracePeriod: 0.15
-  m_GroundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
+  m_Simulation:
+    PmAccelerate: 6
+    PmAirAccelerate: 1
+    PmFriction: 6
+    PmStopSpeed: 10
+    PmMaxSpeed: 28
+    PmGravity: 80
+    PhysMaxVelocity: 32
+    PhysMaxWalkVelocity: 32
+    JumpVelocity: 27
+    PmMaxSteepness: 0.7
+    PmMaxStep: 1.8
+    PmStepSize: 1.8
+    PmMaxBarrier: 3.2
+    PmDuckScale: 0.25
+    JumpDebounceAfterMs: 0.25
+    GroundGracePeriod: 0.15
+    GroundMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
   m_LegsYawOffsetDegrees: 90
   m_IdleYawByDir:
   - 112
@@ -591,6 +594,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Server.ServerPlayerCharacter
   m_NetworkedPlayerCharacter: {fileID: 3101344949267953411}
+  m_Simulation:
+    PmAccelerate: 6
+    PmAirAccelerate: 1
+    PmFriction: 6
+    PmStopSpeed: 10
+    PmMaxSpeed: 28
+    PmGravity: 80
+    PhysMaxVelocity: 32
+    PhysMaxWalkVelocity: 32
+    JumpVelocity: 27
+    PmMaxSteepness: 0.7
+    PmMaxStep: 1.8
+    PmStepSize: 1.8
+    PmMaxBarrier: 3.2
+    PmDuckScale: 0.25
+    JumpDebounceAfterMs: 0.25
+    GroundGracePeriod: 0.15
+    GroundMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
 --- !u!114 &1529554341456710613
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -625,6 +648,5 @@ MonoBehaviour:
   m_AutoSizeCapsule: 1
   m_DynamicCapsuleSizing: 1
   m_ShowVisualCollider: 1
-  m_DrawCapsuleDebugGUI: 1
   m_ColliderColor: {r: 0, g: 1, b: 0, a: 0.3}
   m_ColliderMaterial: {fileID: 0}

@@ -1,6 +1,7 @@
 using System;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -8,13 +9,28 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 {
     /// <summary>
     /// Server Authority + Client-Side Prediction nach SoF2-Vorbild.
-    /// Owner: Input lokal anwenden (Prediction) + RPC an Server senden.
-    /// Server: Validiert Bewegung, setzt autoritative Position.
+    /// Owner: Baut PlayerCommand aus Input, führt lokale Prediction aus, sendet Command an Server.
+    /// Server: Führt identische SoF2-Physik-Simulation aus, sendet Acknowledgement zurück.
     /// Remote: Interpoliert von Server-Position.
-    /// Trebt Animator-Parameter auf allen Clients via NetworkVariable.
+    /// Treibt Animator-Parameter auf allen Clients via NetworkVariable.
     /// </summary>
     public class NetworkedPlayerCharacter : NetworkedCharacter, ICharacter
     {
+        // ===== Server-Side Processing =====
+
+        /// <summary>
+        /// ServerPlayerCharacter-Referenz für server-seitige Physik-Verarbeitung.
+        /// Existiert auf dem gleichen Prefab.
+        /// </summary>
+        [SerializeField]
+        private ServerPlayerCharacter m_ServerPlayerCharacter;
+
+        /// <summary>
+        /// Event: Server-Acknowledgement empfangen.
+        /// ClientPlayerCharacter abonniert dies für Reconciliation.
+        /// </summary>
+        public event Action<ServerMovementAck> OnMovementAcknowledged;
+
         // ===== Animation Sync =====
 
         /// <summary>
@@ -51,17 +67,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private static readonly int s_IsCrouchingHash = Animator.StringToHash("IsCrouching");
         private static readonly int s_JumpHash = Animator.StringToHash("Jump");
 
+        /// <summary>
+        /// Aktueller synchronisierter Animation-State (für Remote-Bone-Rotation).
+        /// </summary>
+        public NetworkAnimationState CurrentAnimationState => m_AnimationState.Value;
+
         // ===== Movement Sync =====
 
-        /// <summary>
-        /// Letzte Server-Position (Server-seitig fuer Validierung).
-        /// </summary>
-        private Vector3 m_LastServerPosition;
 
-        /// <summary>
-        /// Zeitpunkt des letzten Server-Updates (Server-seitig).
-        /// </summary>
-        private float m_LastServerUpdateTime;
 
         /// <summary>
         /// Wird auf dem Server aufgerufen: Spawn-Point zuweisen und Server-Position setzen.
@@ -76,8 +89,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 Debug.LogWarning("[NetworkedPlayerCharacter] ServerPlayerSpawnPoints nicht verfügbar! Spawne bei Origin.");
                 m_ServerPosition.Value = Vector3.zero;
                 m_ServerRotation.Value = Quaternion.identity;
-                m_LastServerPosition = Vector3.zero;
-                m_LastServerUpdateTime = Time.time;
                 return;
             }
 
@@ -88,9 +99,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Server-Position als Source of Truth setzen
             m_ServerPosition.Value = position;
             m_ServerRotation.Value = rotation;
-            m_LastServerPosition = position;
-            m_LastServerUpdateTime = Time.time;
-
             Debug.Log($"[NetworkedPlayerCharacter] Server: Spieler gespawnt bei {position}");
         }
 
@@ -147,20 +155,48 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
-        /// Owner-Client: Sendet die lokal vorhergesagte Position an den Server zur Validierung.
+        /// Owner-Client: Sendet einen PlayerCommand an den Server zur autoritativen Verarbeitung.
         /// Wird von ClientPlayerCharacter aufgerufen nachdem Input lokal angewendet wurde.
+        /// In Host-Mode: Physik läuft direkt, nur Server-Position aktualisieren.
         /// </summary>
-        /// <param name="predictedPosition">Die lokal vorhergesagte Position.</param>
-        /// <param name="predictedRotation">Die lokal vorhergesagte Rotation.</param>
-        /// <param name="clientDeltaTime">Die Zeit, die der Client für diese Bewegung brauchte (Time.deltaTime).</param>
-        public void SendPredictedMovement(Vector3 predictedPosition, Quaternion predictedRotation, float clientDeltaTime)
+        /// <param name="cmd">Der PlayerCommand mit Input-Daten und Sequenznummer.</param>
+        public void SendPlayerCommand(PlayerCommand cmd)
         {
-            if (!IsOwner || IsServer)
+            if (!IsOwner)
             {
                 return;
             }
 
-            SubmitMovementServerRpc(predictedPosition, predictedRotation, clientDeltaTime);
+            if (IsServer)
+            {
+                // Host-Mode: Physik läuft schon lokal, Server-Position direkt aktualisieren
+                m_ServerPosition.Value = transform.position;
+                m_ServerRotation.Value = transform.rotation;
+                return;
+            }
+
+            SubmitCommandServerRpc(cmd);
+        }
+
+        /// <summary>
+        /// Owner-Client: Sendet Capsule-Dimensionen an den Server (nach Bone-Berechnung).
+        /// Server benötigt diese für identische Physik-Simulation.
+        /// </summary>
+        public void SendCapsuleDimensions(float height, float radius, Vector3 center, float groundCheckDist)
+        {
+            if (!IsOwner)
+            {
+                return;
+            }
+
+            if (IsServer)
+            {
+                // Host-Mode: ServerPlayerCharacter direkt setzen
+                m_ServerPlayerCharacter.SetCapsuleDimensions(height, radius, center, groundCheckDist);
+                return;
+            }
+
+            SubmitCapsuleDimensionsServerRpc(height, radius, center, groundCheckDist);
         }
 
         /// <summary>
@@ -177,35 +213,44 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
-        /// Server: Empfängt die vorhergesagte Position vom Client und validiert.
+        /// Server: Empfängt einen PlayerCommand vom Client und führt identische Physik aus.
+        /// Sendet Acknowledgement mit autoritativer Position zurück.
         /// </summary>
         [Rpc(SendTo.Server)]
-        private void SubmitMovementServerRpc(Vector3 predictedPosition, Quaternion predictedRotation, float clientDeltaTime)
+        private void SubmitCommandServerRpc(PlayerCommand cmd)
         {
-            // Server validiert die Bewegung basierend auf der Client-seitigen deltaTime
-            // (nicht auf Netzwerk-Latenz, die ist in clientDeltaTime nicht enthalten)
-            if (ValidateMovement(m_ServerPosition.Value, predictedPosition, clientDeltaTime))
-            {
-                // Akzeptiert: Setze als autoritative Position (Source of Truth)
-                m_ServerPosition.Value = predictedPosition;
-                m_ServerRotation.Value = predictedRotation;
-                m_LastServerPosition = predictedPosition;
-                m_LastServerUpdateTime = Time.time;
+            // Server-seitige Physik-Simulation ausführen
+            ServerMovementAck ack = m_ServerPlayerCharacter.ProcessCommand(cmd);
 
-                // Server-Transform aktualisieren (für Kollisionserkennung etc.)
-                transform.position = predictedPosition;
-                transform.rotation = predictedRotation;
-            }
-            else
-            {
-                // Abgelehnt: Korrigiere den Client
-                Debug.LogWarning($"[NetworkedPlayerCharacter] Server: Ungültige Bewegung von Client {OwnerClientId}. Korrigiere.");
-                CorrectionClientRpc(m_ServerPosition.Value, m_ServerRotation.Value);
-            }
+            // Server-Position als Source of Truth aktualisieren
+            m_ServerPosition.Value = ack.Position;
+            m_ServerRotation.Value = Quaternion.Euler(0f, cmd.YawAngle, 0f);
+            // Acknowledgement an Owner-Client senden (für Reconciliation)
+            MovementAckClientRpc(ack);
         }
 
         /// <summary>
-        /// Server → Owner-Client: Position-Korrektur bei Cheat-Verdacht oder ungültiger Bewegung.
+        /// Server: Empfängt Capsule-Dimensionen vom Client und setzt sie auf der Server-Simulation.
+        /// </summary>
+        [Rpc(SendTo.Server)]
+        private void SubmitCapsuleDimensionsServerRpc(float height, float radius, Vector3 center, float groundCheckDist)
+        {
+            m_ServerPlayerCharacter.SetCapsuleDimensions(height, radius, center, groundCheckDist);
+        }
+
+        /// <summary>
+        /// Server → Owner-Client: Acknowledgement mit autoritativer Position und State.
+        /// Client nutzt dies für Prediction-Reconciliation (Vergleich + ggf. Replay).
+        /// </summary>
+        [Rpc(SendTo.Owner)]
+        private void MovementAckClientRpc(ServerMovementAck ack)
+        {
+            OnMovementAcknowledged?.Invoke(ack);
+        }
+
+        /// <summary>
+        /// Server → Owner-Client: Hard-Correction (Respawn, Teleport, Anti-Cheat).
+        /// Überschreibt Client-Position ohne Reconciliation.
         /// </summary>
         [Rpc(SendTo.Owner)]
         private void CorrectionClientRpc(Vector3 correctPosition, Quaternion correctRotation)
