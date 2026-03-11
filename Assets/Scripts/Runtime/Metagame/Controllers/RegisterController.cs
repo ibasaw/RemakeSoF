@@ -56,7 +56,7 @@ namespace Tolik.RemakeSoF.Runtime
             byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
             
             // Create UnityWebRequest
-            using (UnityWebRequest request = new UnityWebRequest("http://localhost:8000/api/registerUser", "POST"))
+            using (UnityWebRequest request = new("http://localhost:8000/api/registerUser", "POST"))
             {
                 request.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 request.downloadHandler = new DownloadHandlerBuffer();

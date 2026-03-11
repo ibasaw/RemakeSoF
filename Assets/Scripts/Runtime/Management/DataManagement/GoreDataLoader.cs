@@ -91,7 +91,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             m_GoreAreasByLocation.Clear();
             m_GorePiecesByName.Clear();
 
-            string json = JsonDataReader.TryLoadJsonText(fileNameWithoutExtension);
+            string json = "";//TODO: laden //JsonDataReader.TryLoadJsonText(fileNameWithoutExtension);
             if (string.IsNullOrEmpty(json))
             {
                 Debug.LogWarning($"[GoreDataLoader] JSON file not found: {fileNameWithoutExtension}");

@@ -9,7 +9,7 @@ namespace Tolik.RemakeSoF.Runtime
         public int Port { get; }
         const int k_DefaultPort = 7777;
         public int TargetFramerate { get; }
-        const int k_DefaultTargetFramerate = 30;
+        const int k_DefaultTargetFramerate = 30; // default server target framerate, can be overridden by command line argument
 
         readonly string[] m_Args;
 
