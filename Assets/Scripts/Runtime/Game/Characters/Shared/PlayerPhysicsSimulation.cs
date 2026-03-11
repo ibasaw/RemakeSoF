@@ -187,7 +187,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             }
 
             // Jump Command verarbeiten
-            if (cmd.Jump)
+            if (cmd.HasButton(CommandButtons.Jump))
             {
                 ProcessJump();
             }

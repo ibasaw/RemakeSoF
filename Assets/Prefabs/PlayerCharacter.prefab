@@ -345,6 +345,7 @@ GameObject:
   - component: {fileID: 5114413647346417949}
   - component: {fileID: 1529554341456710613}
   - component: {fileID: 6896766392935963440}
+  - component: {fileID: 2377830269377574819}
   m_Layer: 7
   m_Name: PlayerCharacter
   m_TagString: Untagged
@@ -517,6 +518,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientPlayerCharacter
   m_NetworkedPlayerCharacter: {fileID: 3101344949267953411}
   m_ColliderSystem: {fileID: 6896766392935963440}
+  m_HitboxSystem: {fileID: 2377830269377574819}
   m_CameraRoot: {fileID: 4225467907918778029}
   m_AimCameraController: {fileID: 1169665460083391825}
   m_CameraSwitcher: {fileID: 7263364175839438766}
@@ -651,3 +653,17 @@ MonoBehaviour:
   m_ShowVisualCollider: 1
   m_ColliderColor: {r: 0, g: 1, b: 0, a: 0.3}
   m_ColliderMaterial: {fileID: 0}
+--- !u!114 &2377830269377574819
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8936796741541953394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdc4f9747a1ba75418e5fc7800e8d322, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientHitboxSystem
+  m_ShowVisualHitboxes: 1
+  m_VisualAlpha: 0.3

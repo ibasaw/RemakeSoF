@@ -1,62 +1,209 @@
-Dein Setup vs. SoF2 — Vergleich
-PlayerCommand vs. SoF2 usercmd_t
-SoF2 usercmd_t Feld	Dein PlayerCommand	Status
-serverTime (int)	DeltaTime (float)	✅ Funktional äquivalent — SoF2 sendet Server-Timestamp, du sendest DeltaTime. Beides erlaubt Frame-genaue Simulation
-angles[3] (int) — Pitch, Yaw, Roll	YawAngle (float)	⚠️ Nur Yaw — Pitch fehlt (wird für Waffen-Aiming/Projectile-Direction gebraucht). Roll ist irrelevant
-forwardmove (signed byte)	MoveInput.y (float)	✅ Äquivalent (du skalierst mit *127 in PM_CmdScale)
-rightmove (signed byte)	MoveInput.x (float)	✅
-upmove (signed byte)	Jump + Crouch (bools)	✅ SoF2 kodiert Jump als upmove>0, Crouch als upmove<0. Deine Bools sind klarer
-buttons (int, bitfield)	Walk (bool) + Attack in HandleActionInput()	⚠️ Nur Walk — SoF2 packt Attack, Use, AnyButton etc. in Buttons-Bitfield. Du hast Attack separat per RPC, was ok ist für jetzt
-weapon (byte)	—	❌ Fehlt — wird gebraucht wenn du Waffen-Switching implementierst
-forcerun (byte)	—	❌ Fehlt, aber in SoF2 nur für Bots relevant → nicht kritisch
-ServerMovementAck vs. SoF2 playerState_t
-SoF2 playerState_t	Dein ServerMovementAck	Status
-origin[3]	Position	✅
-velocity[3]	Velocity	✅
-groundEntityNum	IsGrounded (bool)	✅ Vereinfacht aber ausreichend
-pm_flags (PM_JUMP_HELD etc.)	IsJumping (bool)	⚠️ SoF2 hat ~15 Flags (DUCKED, JUMP_HELD, TIME_KNOCKBACK, RESPAWNED...). Für Bewegung reicht dein Bool, aber für spätere Features (Knockback, Respawn-Invuln) brauchst du mehr
-pm_time	—	❌ Timer für Knockback/WaterJump Durations — brauchst du erst bei diesen Features
-viewangles[3]	—	⚠️ Du synchronisierst Rotation über m_ServerRotation NetworkVariable, nicht im Ack. Funktioniert, aber SoF2 hatte alles in einem Paket
-weaponstate	—	❌ Fehlt — wird gebraucht für Waffen-State-Sync
-stats[], persistant[], ammo[]	—	❌ Fehlt — wird gebraucht für HUD/Gameplay. Separate Structs/NetworkVars sind ok
-speed	—	✅ Du hast PmMaxSpeed als Parameter, nicht als State — korrekt
-gravity	—	✅ Als Param in Simulation
-legsAnim, torsoAnim	—	✅ Du löst das über NetworkAnimationState — sauberer als SoF2
-PlayerPhysicsSimulation vs. SoF2 bg_pmove.c
-SoF2 Pipeline-Schritt	Dein Code	Status
-PM_GroundTrace	CheckGroundedState() + CheckGroundedAtPosition()	✅
-PM_DropTimers	Jump-Debounce Timer	✅ Vereinfacht aber funktional
-PM_CheckDuck	cmd.Crouch wird gelesen, IsCrouching gesetzt	⚠️ Capsule-Resize fehlt — SoF2 ändert mins/maxs beim Ducken. Du setzt IsCrouching aber änderst nie die Capsule-Höhe
-PM_Footsteps	Extern (Animation-Events)	✅
-PM_WaterMove	—	❌ Fehlt — brauchst du erst bei Wasser-Gameplay
-PM_FlyMove	—	❌ Fehlt — Spectator/Noclip Modus
-PM_WalkMove	PM_WalkMove()	✅ Korrekt portiert
-PM_AirMove	PM_AirMove()	✅ Korrekt portiert
-PM_NoclipMove	—	❌ Optional für Debug
-PM_DeadMove	—	❌ Fehlt — Ragdoll/Death-Slide
-PM_CrashLand	Debounce + JustLanded	⚠️ SoF2 hat Falldamage-Berechnung in CrashLand. Du triggerst nur Landing-Event
-PM_Friction	PM_Friction()	✅ + Custom Slope-Friction
-PM_Accelerate	PM_Accelerate()	✅ Exakt Q3-Formel
-PM_ClipVelocity	PM_ClipVelocity()	✅
-PM_SlideMove (4-plane clip)	PM_StepSlideMove() (4-bump CapsuleCast)	✅ Äquivalent
-PM_StepSlideMove	TryStepUp()	✅
-PM_CmdScale	PM_CmdScale()	✅ Exakte Formel
-Zusammenfassung
-Was gut ist (Kern-Physik = komplett):
+# RemakeSoF
 
-PM_WalkMove, PM_AirMove, PM_Friction, PM_Accelerate, PM_ClipVelocity, PM_CmdScale — alles korrekt portiert
-PM_StepSlideMove mit 4-Bump + Step-Up — funktional äquivalent
-Strafe-Jumping funktioniert automatisch durch Q3-Accelerate-Formel
-Client-Side Prediction + Reconciliation + Server Authority — korrekt
-Was fehlt, aber für Bewegung unkritisch:
+A faithful recreation of **Soldier of Fortune II: Double Helix** in Unity 6, featuring server-authoritative Quake III/SoF2-style movement physics, Netcode for GameObjects multiplayer, and an advanced AI system built on EANN + GOAP + Boids.
 
-Feature	Priorität	Wann nötig
-Crouch/Duck Capsule-Resize	🔴 Hoch	Sobald du Ducken nutzt — ohne Capsule-Änderung hat Ducken keinen physischen Effekt
-Pitch-Angle im Command	🟡 Mittel	Für Projectile-Direction, Hitscan-Aim, Headshot-Detection
-Fall-Damage (PM_CrashLand)	🟡 Mittel	Gameplay-Feature
-pm_flags Bitfield im Ack	🟡 Mittel	Für Knockback, Respawn-Invuln, Time-Based States
-Weapon-State	🟡 Mittel	Für Waffen-Switching/Sync
-WaterMove	🟢 Niedrig	Nur wenn Wasser-Level
-FlyMove/Noclip	🟢 Niedrig	Debug/Spectator
-DeadMove	🟢 Niedrig	Death-Slide nach Tod
-Das Wichtigste was noch fehlt: Crouch-Capsule-Resize. Dein Crouch-Feld im Command existiert, und IsCrouching wird gesetzt, aber die Simulation ändert nie die Capsule-Höhe — der Spieler "duckt" sich visuell (Animation) aber sein Kollisions-Körper bleibt gleich groß. In SoF2 verkleinert PM_CheckDuck die mins/maxs auf ducked-Werte.
+---
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Engine | Unity 6000.3.8f1 |
+| Networking | Netcode for GameObjects 2.8.0 |
+| Server | Unity Dedicated Server 2.0.1 |
+| Rendering | Universal Render Pipeline 17.3.0 |
+| Assets | Addressables 2.8.1 |
+| Input | Input System 1.18.0 |
+| Camera | Cinemachine 3.1.4 |
+| Auth | Unity Authentication 3.6.0 |
+
+---
+
+## Architecture
+
+### MVC + State Machines + Service Locator
+
+```
+ApplicationEntryPoint (Singleton, DontDestroyOnLoad)
+ ├── ServiceLocator
+ │   ├── PrefabManager      (Addressables cache)
+ │   └── TextureManager     (Material/texture cache)
+ │
+ ├── ConnectionManager       (NGO lifecycle state machine)
+ ├── AuthenticationManager   (Auth flow state machine)
+ ├── PlayerSkinManager       (Skin load/apply state machine)
+ └── ConsoleManager          (Console toggle state machine)
+```
+
+- **MVC Pattern** — `BaseApplication<M,V,C>` discovers Model/View/Controller via DFS. Used per scene (`MetagameApplication`, `GameApplication`).
+- **State Machines** — `StateMachine<TState, TSelf>` with CRTP for type-safe state references. States handle `Enter()`/`Exit()`, managers orchestrate and own events.
+- **Service Locator** — Pure services (no MonoBehaviour) registered in `ApplicationEntryPoint.Awake()`, accessed via `ServiceLocator.Get<T>()`.
+- **Service Decomposition** — Complex managers delegate to internal Loaders/Appliers (e.g. `PlayerSkinManager` → 4 Loaders + `PlayerSkinApplier`).
+- **EventManager** — Type-safe event broadcasting for decoupled MVC communication.
+
+### Scenes
+
+| Scene | Purpose |
+|-------|---------|
+| **Startup** | Bootstrap, service registration, network init |
+| **Metagame** | Main menu, login, skin selection, matchmaking |
+| **Game** | Gameplay with Netcode integration |
+
+---
+
+## Movement Physics
+
+SoF2/Quake III movement ported from `bg_pmove.c` / `bg_slidemove.c` to C# (`PlayerPhysicsSimulation.cs`):
+
+- **Server-authoritative** with client-side prediction and reconciliation
+- **4-bump SlideMove** + step-up collision via `CapsuleCast`
+- Manual physics — no Rigidbody, no Unity CharacterController
+- Client sends `PlayerCommand` structs, server simulates and acknowledges via `ServerMovementAck`
+
+### Physics Parameters (SoF2 ÷ 10)
+
+| Parameter | Value | SoF2 Original |
+|-----------|-------|---------------|
+| Gravity | 80 | 800 |
+| Max Speed | 28 | 280 |
+| Jump Velocity | 27 | 270 |
+| Accelerate | 6 | — |
+| Air Accelerate | 1 | 1 |
+| Friction | 6 | 6 |
+| Max Steepness | 0.7 | 0.7 |
+
+---
+
+## Player Character Architecture
+
+```
+Player Prefab (NetworkObject)
+ ├── NetworkedPlayerCharacter    — Spawns Client/Server components
+ ├── NetworkedCharacterState     — NetworkVariables (skin, weapon, health)
+ ├── ClientPlayerCharacter       — Prediction, visual bone system, collider, weapon
+ ├── ServerPlayerCharacter       — Authoritative simulation, CapsuleCollider
+ └── ClientCharacterSkinHandler  — Skin instantiation via Addressables
+```
+
+- **Server** processes movement commands, owns physics collider
+- **Client (Owner)** predicts locally, reconciles on server ack, drives visual bones (pelvis/lumbar lean & twist)
+- **Client (Remote)** receives interpolated state, no prediction
+
+### Weapon System
+
+`WeaponLoader` loads weapons via Addressables and attaches to the `rhang_tag_bone` on the character skeleton. Weapon state synced via `NetworkedCharacterState.m_CurrentWeaponName`.
+
+---
+
+## Skin & Model System
+
+SoF2's character skin system faithfully recreated:
+
+- **SkinDefinitionLoader** — Loads skin definitions from Resources
+- **SurfaceDefinitionLoader** — Loads `NPC_definition.json` for mesh segments
+- **CharacterTemplateLoader** — Loads `SoF2_NPCs.json` for NPC templates
+- **LegacyShaderLoader** — Parses `.shader` files for material setup
+- **PlayerSkinApplier** — Applies materials, toggles mesh surfaces, sets animator controllers
+
+### Data Files
+
+| File | Content |
+|------|---------|
+| `SoF2_NPCs.json` | NPC templates, per-stance bounding boxes, mesh segments |
+| `SoF2_DATA.json` | 17 hit regions, weapon data, game constants |
+| `NPC_definition.json` | Surface definitions per model |
+| `average_sleeves.skl.json` | Skeleton animation actions, PCJ rotation limits |
+
+---
+
+## Hitbox System (Planned)
+
+Per-bone BoxColliders mapped to SoF2's 17 hit regions:
+
+| Region | Index | Bone Pair | Damage Multiplier |
+|--------|-------|-----------|-------------------|
+| Head | 0 | cranium → cervical | 1.75× |
+| Right Leg | 1 | rtibia → rtarsal | 0.7× |
+| Neck | 4 | cervical → thoracic | 1.75× |
+| Chest | 8 | thoracic → upper_lumbar | 1.0× |
+| Right Foot | 12 | rtarsal | 0.4× |
+| Left Shoulder | 16 | lclavical → lhumerus | 0.7× |
+| Left Arm | 20 | lhumerus → lradius | 0.7× |
+| Left Hand | 24 | lradius → lhand | 0.3× |
+| Right Shoulder | 28 | rclavical → rhumerus | 0.7× |
+| Right Arm | 32 | rhumerus → rradius | 0.7× |
+| Right Hand | 36 | rradius → rhand | 0.3× |
+| Gut | 40 | upper_lumbar → lower_lumbar | 1.0× |
+| Groin | 44 | lower_lumbar → pelvis | 1.0× |
+| Left Thigh | 48 | lfemurYZ → ltibia | 0.7× |
+| Left Leg | 52 | ltibia → ltarsal | 0.7× |
+| Left Foot | 56 | ltarsal | 0.4× |
+| Right Thigh | 60 | rfemurYZ → rtibia | 0.7× |
+
+Collider sizes auto-computed from bone-to-bone distances at runtime using the skeleton hierarchy from `TorsoMask.mask` / `LegsMask.mask`.
+
+---
+
+## AI System (Planned)
+
+Adaptive NPC intelligence stack as described in [AGENTS.md](AGENTS.md):
+
+```
+Evolution / Training (PSO / GA / NEAT)
+        ↓
+EANN (Neural Network) ←──── Global Memory (Heatmaps, Decay)
+        ↓
+GOAP (Goal-Oriented Action Planning)
+        ↓
+Boids / Steering (Separation, Cohesion, Alignment)
+        ↓
+Agent / Population (Emergent Behavior)
+```
+
+- **EANN** — Modular subnets for movement, aggression, team coordination
+- **GOAP** — Dynamic action planning with preconditions/effects (replaces FSM/BT)
+- **Boids** — Flocking and pursuit with parameters driven by EANN output
+- **Global Memory** — Persistent heatmaps, danger zones, player hotspots with decay
+- **Save/Load** — EANN weights + Global Memory + agent status persistable across sessions
+
+---
+
+## Dedicated Server
+
+Multiplayer roles via `Unity.DedicatedServer.MultiplayerRoles`:
+
+- **Server** — Headless, authoritative, spawns player characters, processes commands
+- **Client** — Renders, predicts, sends input
+- **Host mode explicitly unsupported** — `ClientAndServer` role throws an exception
+
+### Command Line Arguments
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `--port` | 7777 | Server listen port |
+| `--target-framerate` | 30 | Server tick rate |
+
+See [dedicatedgameserver.md](dedicatedgameserver.md) for detailed setup and testing instructions.
+
+---
+
+## Coding Conventions
+
+- **No `var`** — always explicit types
+- **`new(TypeName)`** syntax for instantiation
+- **XML doc comments** on all public members
+- **KISS, DRY, YAGNI, SRP** — no speculative features
+- **Composition over Inheritance** — Service Decomposition pattern
+- **Fail Fast** — guard clauses, early validation
+- **Cache-First** — always through PrefabManager/TextureManager, never bypass registries
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [dedicatedgameserver.md](dedicatedgameserver.md) | Dedicated server setup & multiplayer testing |
+| [AGENTS.md](AGENTS.md) | AI architecture (EANN + GOAP + Boids) |
+| [docs/](docs/) | SoF2 source code reference & PDF documentation |
+| [.github/copilot-instructions.md](.github/copilot-instructions.md) | Full architecture spec & coding rules |

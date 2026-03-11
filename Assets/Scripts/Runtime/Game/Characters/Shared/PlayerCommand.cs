@@ -4,6 +4,34 @@ using UnityEngine;
 namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 {
     /// <summary>
+    /// SoF2-Style Button-Flags fuer usercmd_t.buttons.
+    /// Entspricht den BUTTON_* Definitionen aus bg_public.h.
+    /// </summary>
+    public static class CommandButtons
+    {
+        /// <summary>Angriff / Feuer (BUTTON_ATTACK).</summary>
+        public const int Attack = 1 << 0;
+
+        /// <summary>Springen (BUTTON_JUMP).</summary>
+        public const int Jump = 1 << 1;
+
+        /// <summary>Walk / langsam (BUTTON_WALKING).</summary>
+        public const int Walk = 1 << 2;
+
+        /// <summary>Ducken (BUTTON_CROUCH).</summary>
+        public const int Crouch = 1 << 3;
+
+        /// <summary>Use / Interaktion (BUTTON_USE).</summary>
+        public const int Use = 1 << 4;
+
+        /// <summary>Alt-Attack / Sekundaerfeuer (BUTTON_ALT_ATTACK).</summary>
+        public const int AltAttack = 1 << 5;
+
+        /// <summary>Zoom / Scopeview.</summary>
+        public const int Zoom = 1 << 6;
+    }
+
+    /// <summary>
     /// SoF2-Style Player Command: Enthält den Input eines einzelnen Frames.
     /// Wird vom Client an den Server gesendet anstelle der fertigen Position.
     /// Server re-simuliert den Command mit identischer Physik für autoritative Bewegung.
@@ -17,20 +45,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Yaw-Winkel des Charakters in Grad (Kamera-Blickrichtung Y-Rotation).</summary>
         public float YawAngle;
 
-        /// <summary>Jump in diesem Frame angefordert.</summary>
-        public bool Jump;
-
-        /// <summary>Walk-Taste gedrückt (Shift).</summary>
-        public bool Walk;
-
-        /// <summary>Crouch-Taste gedrückt.</summary>
-        public bool Crouch;
+        /// <summary>
+        /// Button-Bitfield (SoF2 usercmd_t.buttons).
+        /// Verwendet CommandButtons-Konstanten fuer Attack, Jump, Walk, Crouch, etc.
+        /// </summary>
+        public int Buttons;
 
         /// <summary>DeltaTime des Client-Frames (Sekunden).</summary>
         public float DeltaTime;
 
         /// <summary>Sequenznummer für Client-Side Prediction Reconciliation.</summary>
         public uint SequenceNumber;
+
+        /// <summary>Prueft ob ein Button-Flag gesetzt ist.</summary>
+        public readonly bool HasButton(int button) => (Buttons & button) != 0;
 
         /// <summary>
         /// Serialisiert den Command für Netcode RPC-Transport.
@@ -39,9 +67,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         {
             serializer.SerializeValue(ref MoveInput);
             serializer.SerializeValue(ref YawAngle);
-            serializer.SerializeValue(ref Jump);
-            serializer.SerializeValue(ref Walk);
-            serializer.SerializeValue(ref Crouch);
+            serializer.SerializeValue(ref Buttons);
             serializer.SerializeValue(ref DeltaTime);
             serializer.SerializeValue(ref SequenceNumber);
         }

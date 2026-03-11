@@ -50,6 +50,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private ClientColliderSystem m_ColliderSystem;
 
         /// <summary>
+        /// SoF2 Hitbox-System: erstellt 17 per-bone BoxCollider fuer Hit Region Detection.
+        /// </summary>
+        [SerializeField]
+        private ClientHitboxSystem m_HitboxSystem;
+
+        /// <summary>
         /// Root-GameObject des Kamera-Setups (CameraManager, Main Camera, etc.).
         /// Wird bei Remote-Clients komplett deaktiviert, damit keine doppelten
         /// Kameras/AudioListeners existieren.
@@ -115,6 +121,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>Jump-Request aus Input-Callback (wird im nÃ¤chsten RunPhysicsStep konsumiert).</summary>
         private bool m_JumpRequested;
+
+        /// <summary>Ob der Character gerade angreift (fuer Animation + Netzwerk-Sync).</summary>
+        private bool m_IsAttacking;
+
+        /// <summary>Verbleibende Attack-Frames (Server-Frame-Counting, nicht zeit-basiert).</summary>
+        private int m_AttackFramesRemaining;
+
+        /// <summary>Frame-Akkumulator fuer frame-diskretes Attack-Timing.</summary>
+        private float m_AttackFrameAccumulator;
+
+        /// <summary>Anzahl Animation-Frames fuer einen Knife-Slash (aus average_sleeves_mp.frames).</summary>
+        private const int k_AttackFrames = 6;
+
+        /// <summary>FPS der Attack-Animation (aus average_sleeves_mp.frames: knifeslash01_mp = 20fps).</summary>
+        private const int k_AttackFps = 20;
 
         /// <summary>
         /// Remote-Modus: Component laeuft auf Remote-Clients nur fuer Bone-Rotation,
@@ -461,13 +482,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             // PlayerCommand aus aktuellem Input bauen (SoF2 usercmd_t)
+            int buttons = 0;
+            if (m_JumpRequested) buttons |= CommandButtons.Jump;
+            if (m_IsWalkingPressed) buttons |= CommandButtons.Walk;
+            if (m_IsAttacking) buttons |= CommandButtons.Attack;
+
             PlayerCommand cmd = new()
             {
                 MoveInput = m_MoveInput,
                 YawAngle = m_YawTarget != null ? m_YawTarget.eulerAngles.y : transform.eulerAngles.y,
-                Jump = m_JumpRequested,
-                Walk = m_IsWalkingPressed,
-                Crouch = false,
+                Buttons = buttons,
                 DeltaTime = Time.deltaTime,
                 SequenceNumber = m_NextSequenceNumber++,
             };
@@ -623,6 +647,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     m_ColliderSystem.CalculateAutoCapsuleSize(highestPointR != null ? highestPointR : craniumR, pelvis, leftHandBoltR, rightHandBoltR, leftFootR, rightFootR);
                 }
 
+                // Hitboxen fuer Remote erstellen (Schaden wird auf allen Clients erkannt)
+                if (m_HitboxSystem != null)
+                {
+                    m_HitboxSystem.BuildHitboxes(visualInstance.transform);
+                }
+
                 // Waffen-Attachment-Bone fuer Remote setzen
                 Transform remoteHandBolt = FindDeepChild(visualInstance.transform, "rhang_tag_bone");
                 if (remoteHandBolt != null)
@@ -681,6 +711,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 );
             }
 
+            // Hitboxen fuer Owner erstellen
+            if (m_HitboxSystem != null)
+            {
+                m_HitboxSystem.BuildHitboxes(visualInstance.transform);
+            }
+
             Debug.Log("[ClientPlayerCharacter] Kamera-Targets verdrahtet (Yaw/Pitch/CameraTarget)");
 
             // Waffen-Attachment-Bone fuer Owner setzen
@@ -736,9 +772,30 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         private void HandleActionInput()
         {
-            if (m_PlayerActions.Attack.WasPressedThisFrame())
+            // Attack-Frames herunterzaehlen (frame-diskret, wie SoF2 Animation-Frames)
+            if (m_IsAttacking)
             {
-                m_NetworkedPlayerCharacter.RequestAttack();
+                m_AttackFrameAccumulator += Time.deltaTime;
+                float frameInterval = 1f / k_AttackFps;
+                while (m_AttackFrameAccumulator >= frameInterval && m_AttackFramesRemaining > 0)
+                {
+                    m_AttackFrameAccumulator -= frameInterval;
+                    m_AttackFramesRemaining--;
+                }
+
+                if (m_AttackFramesRemaining <= 0)
+                {
+                    m_IsAttacking = false;
+                    m_AttackFrameAccumulator = 0f;
+                }
+            }
+
+            if (m_PlayerActions.Attack.WasPressedThisFrame() && !m_IsAttacking)
+            {
+                m_IsAttacking = true;
+                m_AttackFramesRemaining = k_AttackFrames;
+                m_AttackFrameAccumulator = 0f;
+                // Attack wird ueber CommandButtons.Attack im PlayerCommand an den Server gesendet
             }
         }
 
@@ -810,6 +867,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 IsMoving = isMoving,
                 IsGrounded = m_Simulation.IsGrounded,
                 IsWalking = isWalking,
+                IsAttacking = m_IsAttacking,
                 IsCrouching = m_Simulation.IsCrouching,
                 MoveInputX = moveInput.x,
                 MoveInputY = moveInput.y,

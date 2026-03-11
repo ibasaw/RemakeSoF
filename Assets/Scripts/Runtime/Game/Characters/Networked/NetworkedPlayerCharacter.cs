@@ -203,20 +203,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
-        /// Owner-Client: Sendet einen Attack-Request an den Server.
-        /// </summary>
-        public void RequestAttack()
-        {
-            if (!IsOwner || IsServer)
-            {
-                return;
-            }
-
-            PerformAttackServerRpc();
-        }
-
-        /// <summary>
         /// Server: Empfängt einen PlayerCommand vom Client und führt identische Physik aus.
+        /// Verarbeitet auch Button-Inputs (Attack, Use, etc.) wie SoF2 usercmd_t.
         /// Sendet Acknowledgement mit autoritativer Position zurück.
         /// </summary>
         [Rpc(SendTo.Server)]
@@ -228,6 +216,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Server-Position als Source of Truth aktualisieren
             m_ServerPosition.Value = ack.Position;
             m_ServerRotation.Value = Quaternion.Euler(0f, cmd.YawAngle, 0f);
+
+            // Button-Inputs verarbeiten (SoF2: FireWeapon aus usercmd_t.buttons)
+            if (cmd.HasButton(CommandButtons.Attack))
+            {
+                ProcessAttack(cmd);
+            }
+
             // Acknowledgement an Owner-Client senden (für Reconciliation)
             MovementAckClientRpc(ack);
         }
@@ -282,24 +277,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
-        /// Server: Validiert und verarbeitet einen Angriff.
+        /// Server: Verarbeitet einen Attack aus dem PlayerCommand.
+        /// Wie SoF2 FireWeapon() in g_weapon.c — wird aus dem usercmd_t gelesen,
+        /// nicht als separater RPC gesendet. Position + Blickrichtung sind exakt synchron.
         /// </summary>
-        [Rpc(SendTo.Server)]
-        private void PerformAttackServerRpc()
+        private void ProcessAttack(PlayerCommand cmd)
         {
-            Debug.Log($"[NetworkedPlayerCharacter] Server: Attack validiert für Client {OwnerClientId}");
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Attack aus Command #{cmd.SequenceNumber} für Client {OwnerClientId} bei Yaw {cmd.YawAngle:F1}");
 
-            // TODO: Server-seitige Hit-Detection hier
-            BroadcastAttackClientRpc();
-        }
-
-        /// <summary>
-        /// Alle Clients: Attack-Animation abspielen.
-        /// </summary>
-        [Rpc(SendTo.NotServer)]
-        private void BroadcastAttackClientRpc()
-        {
-            Debug.Log($"[NetworkedPlayerCharacter] Client: Attack-Animation für Character {CharacterId}");
+            // TODO: Server-seitige Hit-Detection (Raycast/SphereCast von Server-Position in Blickrichtung)
+            // TODO: Damage an getroffene Spieler via HitboxCollider.HitRegion + DamageMultiplier
         }
 
         // ===== Animation Sync =====
