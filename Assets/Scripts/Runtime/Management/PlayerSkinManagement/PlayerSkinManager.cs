@@ -60,6 +60,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 return false;
             }
             string animationSetName = skinLoader.GetAnimationSetNameForModelName(modelName);
+            //TODO: anatoli - Animator/animationset controller für female_pants und dog model fehlt aktuell. (LegsMask,TorsoMask für female? evtl. teilen sie beide die gleiche)
             m_Applier.ApplyAnimatorController(prefab, $"models/animator/{animatorControllerPath}_{animationSetName}");
             return true;
         }

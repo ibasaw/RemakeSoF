@@ -1,0 +1,12 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UIToolkit/UnityStyleSheet.uss?fileID=7433441132597879392&amp;guid=819e6491a1421a14db87a36e0c93b136&amp;type=3#UnityStyleSheet" />
+    <ui:VisualElement name="mapLoading" style="align-items: center; justify-content: center;">
+        <ui:VisualElement name="GroupBox" style="flex-grow: 0; align-self: center; justify-content: space-evenly; align-items: center; height: 530px;">
+            <ui:Label text="Loading Map" name="titleLabel" class="title" style="top: 0; align-self: center; font-size: 120px;" />
+            <ui:Label text="Preparing..." name="statusLabel" style="top: 0; align-self: center; font-size: 40px;" />
+            <ui:VisualElement name="progressBarContainer" style="width: 600px; height: 30px; background-color: rgba(50, 50, 50, 0.8); border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden;">
+                <ui:VisualElement name="progressBarFill" style="width: 0%; height: 100%; background-color: rgb(80, 180, 80); border-top-left-radius: 8px; border-bottom-left-radius: 8px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

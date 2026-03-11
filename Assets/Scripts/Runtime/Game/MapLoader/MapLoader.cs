@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
@@ -32,6 +33,23 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         private string m_LoadedMapName;
 
         /// <summary>
+        /// Interner Service für das Erstellen von Collidern auf Map-Elementen.
+        /// Wird auf Server UND Client ausgeführt.
+        /// </summary>
+        private readonly MapColliderApplier m_ColliderApplier = new();
+
+        /// <summary>
+        /// Interner Service für das Anwenden von Texturen auf Map-Elemente.
+        /// Wird nur auf dem Client ausgeführt (benötigt TextureManager).
+        /// </summary>
+        private readonly MapTextureApplier m_TextureApplier = new();
+
+        /// <summary>
+        /// Event das bei jeder Ladephase gefeuert wird.
+        /// </summary>
+        internal event Action<MapLoadPhase> OnProgress;
+
+        /// <summary>
         /// Lädt eine Map anhand ihres Namens über den PrefabManager.
         /// Idempotent: Gleiche Map wird nicht doppelt geladen.
         /// </summary>
@@ -56,19 +74,25 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             if (m_CurrentMapInstance != null)
             {
                 Debug.Log($"[MapLoader] Destroying previous map: {m_CurrentMapInstance.name}");
-                Object.Destroy(m_CurrentMapInstance);
+                UnityEngine.Object.Destroy(m_CurrentMapInstance);
                 m_CurrentMapInstance = null;
                 m_LoadedMapName = null;
             }
+
+            OnProgress?.Invoke(MapLoadPhase.Started);
 
             GameObject mapPrefab = await prefabManager.LoadPrefabAsync<GameObject>(mapName);
             if (mapPrefab == null)
             {
                 Debug.LogError($"[MapLoader] Failed to load map prefab: {mapName}");
+                OnProgress?.Invoke(MapLoadPhase.Failed);
                 return null;
             }
 
-            m_CurrentMapInstance = Object.Instantiate(mapPrefab, Vector3.zero, Quaternion.identity);
+            OnProgress?.Invoke(MapLoadPhase.PrefabLoaded);
+            await Task.Yield();
+
+            m_CurrentMapInstance = UnityEngine.Object.Instantiate(mapPrefab, Vector3.zero, Quaternion.identity);
             m_CurrentMapInstance.name = $"Map_{mapName}";
             m_LoadedMapName = mapName;
 
@@ -79,8 +103,25 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 SceneManager.MoveGameObjectToScene(m_CurrentMapInstance, activeScene);
             }
 
+            OnProgress?.Invoke(MapLoadPhase.Instantiated);
+            await Task.Yield();
+
+            // Collider auf Map-Elemente anwenden (Server + Client)
+            m_ColliderApplier.ApplyColliders(m_CurrentMapInstance);
+
+            OnProgress?.Invoke(MapLoadPhase.CollidersApplied);
+            await Task.Yield();
+
+            // Texturen auf Map-Elemente anwenden (nur Client, benötigt TextureManager)
+            m_TextureApplier.ApplyTextures(m_CurrentMapInstance);
+
+            OnProgress?.Invoke(MapLoadPhase.TexturesApplied);
+            await Task.Yield();
+
             // Server: SpawnPoints einrichten
             SetupServerSpawnPoints();
+
+            OnProgress?.Invoke(MapLoadPhase.Complete);
 
             Debug.Log($"[MapLoader] Map loaded and instantiated: {mapName} in scene: {activeScene.name} " +
                       $"| Position: {m_CurrentMapInstance.transform.position} " +

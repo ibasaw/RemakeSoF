@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using UnityEditor;
+using Tolik.RemakeSoF.Runtime.Management.MapManagement;
 using UnityEngine;
 
 public class FBXGhoul2PropsImporter : AssetPostprocessor

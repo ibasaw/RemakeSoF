@@ -360,6 +360,74 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2025705766
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2025705767}
+  - component: {fileID: 2025705769}
+  - component: {fileID: 2025705768}
+  m_Layer: 0
+  m_Name: MapLoadingView
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2025705767
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2025705766}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8250798609080194616}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2025705768
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2025705766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: 96ba4d0b9afc81f499e4e28bcc820697, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 5248718717f6cee4aba0e721fe425d3e, type: 3}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!114 &2025705769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2025705766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0452a43a7da70b94ea7645bcd053b58b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.MapLoadingView
 --- !u!1 &2085522098
 GameObject:
   m_ObjectHideFlags: 0
@@ -595,6 +663,7 @@ MonoBehaviour:
   m_MatchView: {fileID: 7301761699112349676}
   m_GameMenuView: {fileID: 3462914538769374884}
   m_MatchRecapView: {fileID: 8285259651046422994}
+  m_MapLoadingView: {fileID: 2025705769}
 --- !u!4 &3622663377580277535
 Transform:
   m_ObjectHideFlags: 0
@@ -726,6 +795,7 @@ GameObject:
   - component: {fileID: 7382415353554352506}
   - component: {fileID: 8812404669687589912}
   - component: {fileID: 5755178206208389231}
+  - component: {fileID: 8812404669687589913}
   m_Layer: 0
   m_Name: Controllers
   m_TagString: Untagged
@@ -838,6 +908,7 @@ Transform:
   - {fileID: 1727603050773313300}
   - {fileID: 3622663377580277535}
   - {fileID: 40822743853159880}
+  - {fileID: 2025705767}
   m_Father: {fileID: 9181020084512498403}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8285259651046422994
@@ -887,6 +958,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 719e07b3624c81140be71b4ef4f59064, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &8812404669687589913
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6011313939200055106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a24a63f5f02ee646ace9eddab43d3f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.MapLoadingController
 --- !u!114 &8997364811940093075
 MonoBehaviour:
   m_ObjectHideFlags: 0

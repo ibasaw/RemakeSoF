@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
@@ -100,22 +101,39 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Server-seitige Physik + CapsuleCollider initialisieren
             m_ServerPlayerCharacter.InitializeServer();
 
-            // Spawn-Point vom Server zuweisen
+            // Spawn-Point vom Server zuweisen — ggf. warten bis Map geladen ist
             if (ServerPlayerSpawnPoints.Instance == null)
             {
-                Debug.LogWarning("[NetworkedPlayerCharacter] ServerPlayerSpawnPoints nicht verfügbar! Spawne bei Origin.");
-                m_ServerPosition.Value = Vector3.zero;
-                m_ServerRotation.Value = Quaternion.identity;
+                Debug.Log("[NetworkedPlayerCharacter] ServerPlayerSpawnPoints noch nicht verfügbar — warte auf Map-Laden.");
+                StartCoroutine(WaitForMapAndPosition());
                 return;
             }
 
+            AssignSpawnPosition();
+        }
+
+        /// <summary>
+        /// Wartet bis die Map geladen ist und ServerPlayerSpawnPoints verfügbar sind,
+        /// weist dann die Spawn-Position zu.
+        /// </summary>
+        private IEnumerator WaitForMapAndPosition()
+        {
+            yield return new WaitUntil(() => ServerPlayerSpawnPoints.Instance != null);
+            AssignSpawnPosition();
+        }
+
+        /// <summary>
+        /// Weist dem Spieler einen Spawn-Point zu und aktiviert die Server-Physik.
+        /// </summary>
+        private void AssignSpawnPosition()
+        {
             (Vector3 position, Quaternion rotation) = ServerPlayerSpawnPoints.Instance.ConsumeNextSpawnPoint();
             transform.SetPositionAndRotation(position, rotation);
 
-            // Server-Position als Source of Truth setzen
-
             m_ServerPosition.Value = position;
             m_ServerRotation.Value = rotation;
+
+            m_ServerPlayerCharacter.SetReady();
             Debug.Log($"[NetworkedPlayerCharacter] Server: Spieler gespawnt bei {position}");
         }
 

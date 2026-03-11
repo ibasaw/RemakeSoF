@@ -33,6 +33,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         internal event Action OnMatchStarted;
         internal event Action OnMatchEnded;
 
+        /// <summary>
+        /// Event das bei jeder Map-Ladephase gefeuert wird (für UI-Fortschrittsanzeige).
+        /// </summary>
+        internal event Action<MapLoadPhase> OnMapLoadProgress;
+
         const uint k_CountdownStartValue = 300;
         const string k_DefaultMapName = "maps/cem1"; //TODO: Platzhalter, bis Map-Auswahl implementiert ist
 
@@ -52,6 +57,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             base.OnNetworkSpawn();
 
             m_MapLoader = new MapLoader();
+            m_MapLoader.OnProgress += phase => OnMapLoadProgress?.Invoke(phase);
 
             if (IsServer)
             {

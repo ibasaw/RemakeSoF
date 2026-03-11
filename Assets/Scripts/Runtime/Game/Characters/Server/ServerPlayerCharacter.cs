@@ -43,6 +43,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         private CapsuleCollider m_PhysicsCollider;
 
         /// <summary>
+        /// Gibt an ob der Server-Character bereit ist Commands zu verarbeiten.
+        /// Wird erst gesetzt nachdem die Map geladen und eine Spawn-Position zugewiesen wurde.
+        /// </summary>
+        private bool m_IsReady;
+
+        /// <summary>
         /// Initialisiert die Server-seitige Physik und den Collision-Collider.
         /// Wird von NetworkedPlayerCharacter.OnServerSpawn() aufgerufen,
         /// damit der CapsuleCollider nur auf dem Server erstellt wird.
@@ -70,8 +76,29 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         /// </summary>
         /// <param name="cmd">Der PlayerCommand vom Client (Input-Daten).</param>
         /// <returns>ServerMovementAck mit autoritativer Position und State.</returns>
+        /// <summary>
+        /// Markiert den Server-Character als bereit für Command-Verarbeitung.
+        /// Wird aufgerufen nachdem die Map geladen und die Spawn-Position zugewiesen wurde.
+        /// </summary>
+        public void SetReady()
+        {
+            m_IsReady = true;
+        }
+
         public ServerMovementAck ProcessCommand(PlayerCommand cmd)
         {
+            if (!m_IsReady)
+            {
+                return new ServerMovementAck
+                {
+                    LastProcessedSequence = cmd.SequenceNumber,
+                    Position = transform.position,
+                    Velocity = Vector3.zero,
+                    IsGrounded = true,
+                    IsJumping = false,
+                };
+            }
+
             // DeltaTime validieren (Anti-Cheat: unrealistische Werte clampen)
             cmd.DeltaTime = Mathf.Clamp(cmd.DeltaTime, 0f, 0.1f);
             cmd.MoveInput = Vector2.ClampMagnitude(cmd.MoveInput, 1f);

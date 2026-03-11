@@ -1,3 +1,4 @@
+using Tolik.RemakeSoF.Runtime.Management.MapManagement;
 using UnityEngine;
 
 public class WorldMaterialAssigner : MonoBehaviour

@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 
-/// <summary>
-/// Dynamic container to hold all custom properties from FBX files
-/// Automatically stores any custom property found during import
-/// </summary>
-[DisallowMultipleComponent]
-public class Ghoul2Meta : MonoBehaviour
+namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
+{
+    /// <summary>
+    /// Dynamic container to hold all custom properties from FBX files.
+    /// Automatically stores any custom property found during import.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public class Ghoul2Meta : MonoBehaviour
 {
     [Header("Dynamic Properties")]
     [SerializeField] private List<string> propertyNames = new();
@@ -17,6 +19,7 @@ public class Ghoul2Meta : MonoBehaviour
     
     // Dictionary for fast runtime access
     private readonly Dictionary<string, object> properties = new();
+    
     
     /// <summary>
     /// Set a property value dynamically during import
@@ -198,4 +201,5 @@ public class Ghoul2Meta : MonoBehaviour
             return valueStr; // Fallback to string
         }
     }
+}
 }
