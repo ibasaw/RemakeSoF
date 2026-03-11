@@ -72,6 +72,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         public NetworkAnimationState CurrentAnimationState => m_AnimationState.Value;
 
+        // ===== Server-Side Attack Gating (SoF2: weaponTime in playerState_t) =====
+
+        /// <summary>Verbleibende Attack-Frames auf dem Server (autoritativ, nicht manipulierbar).</summary>
+        private int m_ServerAttackFramesRemaining;
+
+        /// <summary>Frame-Akkumulator auf dem Server fuer frame-diskretes Timing.</summary>
+        private float m_ServerAttackFrameAccumulator;
+
+        /// <summary>Anzahl Animation-Frames fuer einen Knife-Slash (SoF2: knifeslash01_mp duration=6).</summary>
+        private const int k_ServerAttackFrames = 6;
+
+        /// <summary>FPS der Attack-Animation (SoF2: knifeslash01_mp fps=20).</summary>
+        private const int k_ServerAttackFps = 20;
+
         // ===== Movement Sync =====
 
 
@@ -217,8 +231,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_ServerPosition.Value = ack.Position;
             m_ServerRotation.Value = Quaternion.Euler(0f, cmd.YawAngle, 0f);
 
+            // Server-seitiges Attack-Frame-Counting herunterzaehlen (wie SoF2 weaponTime)
+            if (m_ServerAttackFramesRemaining > 0)
+            {
+                m_ServerAttackFrameAccumulator += cmd.DeltaTime;
+                float frameInterval = 1f / k_ServerAttackFps;
+                while (m_ServerAttackFrameAccumulator >= frameInterval && m_ServerAttackFramesRemaining > 0)
+                {
+                    m_ServerAttackFrameAccumulator -= frameInterval;
+                    m_ServerAttackFramesRemaining--;
+                }
+            }
+
             // Button-Inputs verarbeiten (SoF2: FireWeapon aus usercmd_t.buttons)
-            if (cmd.HasButton(CommandButtons.Attack))
+            // Server gated: Attack nur starten wenn keine Attacke laeuft (Anti-Cheat)
+            if (cmd.HasButton(CommandButtons.Attack) && m_ServerAttackFramesRemaining <= 0)
             {
                 ProcessAttack(cmd);
             }
@@ -283,7 +310,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         private void ProcessAttack(PlayerCommand cmd)
         {
-            Debug.Log($"[NetworkedPlayerCharacter] Server: Attack aus Command #{cmd.SequenceNumber} für Client {OwnerClientId} bei Yaw {cmd.YawAngle:F1}");
+            // Server startet Attack-Cooldown (frame-basiert, wie SoF2 weaponTime)
+            m_ServerAttackFramesRemaining = k_ServerAttackFrames;
+            m_ServerAttackFrameAccumulator = 0f;
+
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Attack aus Command #{cmd.SequenceNumber} für Client {OwnerClientId} bei Yaw {cmd.YawAngle:F1} — {k_ServerAttackFrames} Frames @ {k_ServerAttackFps}fps Cooldown");
 
             // TODO: Server-seitige Hit-Detection (Raycast/SphereCast von Server-Position in Blickrichtung)
             // TODO: Damage an getroffene Spieler via HitboxCollider.HitRegion + DamageMultiplier

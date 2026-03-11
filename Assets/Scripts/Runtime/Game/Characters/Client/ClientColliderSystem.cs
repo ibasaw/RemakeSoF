@@ -286,8 +286,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             m_VisualColliderObject = new("VisualCollider");
             m_VisualColliderObject.transform.SetParent(transform);
-            m_VisualColliderObject.transform.localPosition = Vector3.zero;
-            m_VisualColliderObject.transform.localRotation = Quaternion.identity;
+            m_VisualColliderObject.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             m_VisualColliderObject.transform.localScale = Vector3.one;
 
             m_VisualColliderMeshFilter = m_VisualColliderObject.AddComponent<MeshFilter>();
@@ -340,8 +339,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             m_VisualGroundCheckObject = new("VisualGroundCheck");
             m_VisualGroundCheckObject.transform.SetParent(transform);
-            m_VisualGroundCheckObject.transform.localPosition = Vector3.zero;
-            m_VisualGroundCheckObject.transform.localRotation = Quaternion.identity;
+            m_VisualGroundCheckObject.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             m_VisualGroundCheckObject.transform.localScale = Vector3.one;
 
             m_VisualGroundCheckMeshFilter = m_VisualGroundCheckObject.AddComponent<MeshFilter>();

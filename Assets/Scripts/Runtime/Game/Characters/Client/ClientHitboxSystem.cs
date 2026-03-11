@@ -195,9 +195,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             Vector3 boneDirection = startBone.InverseTransformPoint(endBone.position).normalized;
             Vector3 midpoint = startBone.InverseTransformPoint(endBone.position) * 0.5f;
 
-            hitboxGO.transform.localPosition = midpoint;
-            hitboxGO.transform.localRotation = Quaternion.FromToRotation(Vector3.up, boneDirection);
-
+            hitboxGO.transform.SetLocalPositionAndRotation(midpoint, Quaternion.FromToRotation(Vector3.up, boneDirection));
             BoxCollider boxCollider = hitboxGO.AddComponent<BoxCollider>();
             boxCollider.isTrigger = true;
             boxCollider.size = new Vector3(width, boneLength, width) / SCALE_DIVISOR;
@@ -251,9 +249,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             hitboxGO.transform.SetParent(endBone, false);
 
             // Fuss-Collider leicht nach vorne/unten versetzt
-            hitboxGO.transform.localPosition = new Vector3(0f, -estimatedLength * 0.3f, estimatedLength * 0.3f);
-            hitboxGO.transform.localRotation = Quaternion.identity;
-
+            hitboxGO.transform.SetLocalPositionAndRotation(new Vector3(0f, -estimatedLength * 0.3f, estimatedLength * 0.3f), Quaternion.identity);
             BoxCollider boxCollider = hitboxGO.AddComponent<BoxCollider>();
             boxCollider.isTrigger = true;
             boxCollider.size = new Vector3(width, estimatedLength * 0.5f, estimatedLength) / SCALE_DIVISOR;
@@ -318,8 +314,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             visualGO.transform.SetParent(hitboxGO.transform, false);
-            visualGO.transform.localPosition = Vector3.zero;
-            visualGO.transform.localRotation = Quaternion.identity;
+            visualGO.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             visualGO.transform.localScale = colliderSize;
 
             MeshRenderer meshRenderer = visualGO.GetComponent<MeshRenderer>();

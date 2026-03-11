@@ -104,8 +104,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
             // Instanziieren als Child des Hand-Bones
             m_CurrentWeaponInstance = Object.Instantiate(weaponPrefab, m_AttachmentBone);
             Transform weaponTransform = m_CurrentWeaponInstance.transform;
-            weaponTransform.localPosition = Vector3.zero;
-            weaponTransform.localRotation = Quaternion.Euler(0f, 0f, k_WeaponZRotation);
+            weaponTransform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0f, 0f, k_WeaponZRotation));
             //weaponTransform.localScale = Vector3.one * k_WeaponScale;
 
             m_CurrentWeaponName = weaponKey;

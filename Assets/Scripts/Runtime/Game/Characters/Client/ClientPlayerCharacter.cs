@@ -790,12 +790,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 }
             }
 
-            if (m_PlayerActions.Attack.WasPressedThisFrame() && !m_IsAttacking)
+            // SoF2: Maus gehalten = automatisch wiederholen nach Cooldown (wie BUTTON_ATTACK in usercmd_t)
+            if (m_PlayerActions.Attack.IsPressed() && !m_IsAttacking)
             {
                 m_IsAttacking = true;
                 m_AttackFramesRemaining = k_AttackFrames;
                 m_AttackFrameAccumulator = 0f;
-                // Attack wird ueber CommandButtons.Attack im PlayerCommand an den Server gesendet
             }
         }
 
