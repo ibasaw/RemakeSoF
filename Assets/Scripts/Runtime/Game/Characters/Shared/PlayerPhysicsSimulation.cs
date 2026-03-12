@@ -60,6 +60,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Jump-Debounce nach Landung (Sekunden).</summary>
         public float JumpDebounceAfterMs = 0.25f;
 
+        /// <summary>Höhen-Schwelle ab der ein Sprung als Step-Up gilt und Debounce übersprungen wird.</summary>
+        public float StepUpHeightThreshold = 0.7f;
+
         /// <summary>Ground Grace-Period (Sekunden).</summary>
         public float GroundGracePeriod = 0.15f;
 
@@ -128,6 +131,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         private float m_LastStepUpTime;
         private bool m_WasGroundedPrev;
         private float m_DeltaTime;
+        private float m_JumpStartY;
 
         // ===================================================================
         // Public API
@@ -192,6 +196,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 ProcessJump();
             }
 
+            // Jump-Startposition merken für Height-Based Debounce
+            if (JumpTriggered)
+            {
+                m_JumpStartY = position.y;
+            }
+
             bool wasGrounded = m_WasGroundedPrev;
 
             // 1. Gravity anwenden
@@ -224,7 +234,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             }
 
             // 7. Landing-Events
-            HandleLandingEvents(JustLanded);
+            HandleLandingEvents(JustLanded, position.y);
         }
 
         // ===================================================================
@@ -234,7 +244,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>
         /// Gravity anwenden (SoF2 ApplyGravity).
         /// Nur in der Luft: velocity.y -= pm_gravity * dt.
-        /// Am Boden: negative Y-Velocity auf 0 setzen.
+        /// Am Boden: Y-Velocity wird NICHT genullt, damit die Slope-Projektion
+        /// aus WalkMove's PM_ClipVelocity erhalten bleibt und StepSlideMove
+        /// der Schräge folgt statt horizontal zu laufen (Treppen-Effekt).
+        /// Y wird nach Bewegung in PM_StepSlideMove's Ground-Handling genullt.
         /// </summary>
         private void ApplyGravity()
         {
@@ -242,13 +255,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             {
                 Velocity.y -= PmGravity * m_DeltaTime;
                 LandedThisGround = false;
-            }
-            else
-            {
-                if (Velocity.y < 0f)
-                {
-                    Velocity.y = 0f;
-                }
             }
         }
 
@@ -411,24 +417,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         }
 
         /// <summary>
-        /// SoF2 PM_CmdScale — normalisiert diagonale Inputs und skaliert mit g_speed.
-        /// Exakter Port: scale = speed * max / (127 * total).
-        /// Verhindert sqrt(2)-Speed-Boost bei diagonaler Eingabe
-        /// und erlaubt proportionale Geschwindigkeit bei partiellem Stick-Input.
+        /// SoF2 PM_CmdScale — skaliert Input-Magnitude auf 0–1.
+        /// Unitys DigitalNormalized-Dpad liefert bei Diagonal bereits (0.707, 0.707)
+        /// mit Magnitude 1.0, daher reicht Clamp01 fuer konsistente Speed
+        /// in allen Bewegungsrichtungen (cardinal + diagonal).
         /// </summary>
         private float PM_CmdScale(Vector2 moveInput)
         {
-            float fmove = Mathf.Abs(moveInput.y) * 127f;
-            float smove = Mathf.Abs(moveInput.x) * 127f;
-
-            float max = Mathf.Max(fmove, smove);
-            if (max <= 0f)
+            float inputMagnitude = moveInput.magnitude;
+            if (inputMagnitude <= 0f)
             {
                 return 0f;
             }
 
-            float total = Mathf.Sqrt(fmove * fmove + smove * smove);
-            return PmMaxSpeed * max / (127f * total);
+            return Mathf.Clamp01(inputMagnitude);
         }
 
         /// <summary>
@@ -493,19 +495,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             float scale = PM_CmdScale(cmd.MoveInput);
 
-            Vector3 wishdir = wishvel;
-            float wishspeed = wishdir.magnitude;
-            if (wishspeed > 0.0001f)
-            {
-                wishdir /= wishspeed;
-            }
-            else
-            {
-                wishdir = Vector3.zero;
-                wishspeed = 0f;
-            }
-
-            wishspeed *= scale;
+            Vector3 wishdir = wishvel.sqrMagnitude > 0.0001f
+                ? wishvel.normalized
+                : Vector3.zero;
+            float wishspeed = scale * PmMaxSpeed;
 
             if (wishspeed > PmMaxSpeed)
             {
@@ -721,29 +714,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 IsGrounded = newGroundCheck;
             }
 
-            // Am Boden: Y-Velocity null, Position korrigieren, Slope-Projektion
-            if (IsGrounded && Velocity.y <= 0f)
+            // Am Boden: Position korrigieren (Einsinken verhindern).
+            // Y-Velocity wird NICHT genullt — WalkMove's PM_ClipVelocity + Speed-Restore
+            // setzt jeden Frame die korrekte Slope-Velocity (inkl. Y-Komponente).
+            // StepSlideMove braucht dieses Y um der Schräge zu folgen statt
+            // horizontal dagegen zu laufen (was zu Kollisionen + Speed-Verlust führt).
+            if (IsGrounded && downHit.collider != null)
             {
-                Velocity.y = 0f;
-
-                if (downHit.collider != null)
-                {
-                    CorrectGroundPosition(ref position, downHit, halfHeightLocal);
-
-                    float slopeDot = Vector3.Dot(downHit.normal, Vector3.up);
-                    if (slopeDot < 0.95f)
-                    {
-                        Vector3 groundProjectedVel = Vector3.ProjectOnPlane(Velocity, downHit.normal);
-                        Velocity = groundProjectedVel;
-                        Velocity.y = 0f;
-
-                        if (slopeDot < 0.7f)
-                        {
-                            Velocity *= 0.8f;
-                            Velocity.y = 0f;
-                        }
-                    }
-                }
+                CorrectGroundPosition(ref position, downHit, halfHeightLocal);
             }
         }
 
@@ -896,7 +874,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         }
 
         /// <summary>
-        /// Triple Ground-Check: Standard → Slope-Fallback → Grace-Period.
+        /// Triple Ground-Check: Standard → Slope-Fallback → Coyote Time.
         /// </summary>
         private void CheckGroundedState(Vector3 position, bool wasGrounded)
         {
@@ -910,12 +888,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 IsGrounded = TrySlopeGroundCheck(position, halfHeight, out RaycastHit _);
             }
 
-            // Grace-Period: wenn vorher grounded und kürzlich verloren
-            if (!IsGrounded && wasGrounded && (SimulationTime - m_LastGroundedTime) < GroundGracePeriod)
+            // Coyote Time: kurz nach Bodenverlust weiterhin als grounded behandeln.
+            // Verhindert Ground-Flicker auf Schrägen/unebenem Terrain und
+            // erlaubt Springen kurz nach Verlassen einer Kante.
+            // Nicht aktiv während eines echten Sprungs (IsJumping = true).
+            if (!IsGrounded && wasGrounded && !IsJumping &&
+                (SimulationTime - m_LastGroundedTime) < GroundGracePeriod)
             {
-                float halfHeight = Mathf.Max(0f,
-                    (CapsuleHeight * 0.5f) - CapsuleRadius);
-                IsGrounded = TrySlopeGroundCheck(position, halfHeight, out RaycastHit _);
+                IsGrounded = true;
             }
         }
 
@@ -978,8 +958,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
         /// <summary>
         /// Landing-Events (Debounce-Aktivierung, Jump-Reset).
+        /// Wenn der Spieler auf einer höheren Ebene landet (Step-Up),
+        /// wird der Debounce übersprungen damit sofort weitergesprungen werden kann.
         /// </summary>
-        private void HandleLandingEvents(bool justLanded)
+        private void HandleLandingEvents(bool justLanded, float currentY)
         {
             if (!justLanded || LandedThisGround)
             {
@@ -990,9 +972,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             if (IsJumping)
             {
+                float heightDifference = currentY - m_JumpStartY;
+                bool landedHigher = heightDifference > StepUpHeightThreshold;
+
                 IsJumping = false;
-                IsDebounceActive = true;
-                JumpDebounce = JumpDebounceAfterMs;
+
+                if (landedHigher)
+                {
+                    // Auf höherer Ebene gelandet → Debounce sofort aufheben
+                    JumpDebounce = 0f;
+                    IsDebounceActive = false;
+                }
+                else
+                {
+                    // Normal gelandet → Debounce aktivieren
+                    IsDebounceActive = true;
+                    JumpDebounce = JumpDebounceAfterMs;
+                }
             }
         }
     }

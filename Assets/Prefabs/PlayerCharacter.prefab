@@ -534,12 +534,13 @@ MonoBehaviour:
     PhysMaxVelocity: 32
     PhysMaxWalkVelocity: 32
     JumpVelocity: 27
-    PmMaxSteepness: 0.7
+    PmMaxSteepness: 0.8
     PmMaxStep: 1.8
     PmStepSize: 1.8
     PmMaxBarrier: 3.2
     PmDuckScale: 0.25
     JumpDebounceAfterMs: 0.25
+    StepUpHeightThreshold: 0.7
     GroundGracePeriod: 0.15
     GroundMask:
       serializedVersion: 2
@@ -613,6 +614,7 @@ MonoBehaviour:
     PmMaxBarrier: 3.2
     PmDuckScale: 0.25
     JumpDebounceAfterMs: 0.25
+    StepUpHeightThreshold: 0.5
     GroundGracePeriod: 0.15
     GroundMask:
       serializedVersion: 2
@@ -647,7 +649,7 @@ MonoBehaviour:
   m_CapsuleRadius: 0
   m_CapsuleHeight: 0
   m_CapsuleCenter: {x: 0, y: 0, z: 0}
-  m_GroundCheckDistance: 1
+  m_GroundCheckDistance: 0.2
   m_AutoSizeCapsule: 1
   m_DynamicCapsuleSizing: 1
   m_ShowVisualCollider: 0

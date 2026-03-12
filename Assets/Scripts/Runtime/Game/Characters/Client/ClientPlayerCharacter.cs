@@ -435,6 +435,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_MoveInput = m_PlayerActions.Move.ReadValue<Vector2>();
             m_IsWalkingPressed = m_PlayerActions.Walk.IsPressed();
 
+            // Hold-to-Jump: solange Jump gehalten wird, jeden Frame Jump-Request setzen
+            //if (m_PlayerActions.Jump.IsPressed())
+            //{
+            //    m_JumpRequested = true;
+            //}
+
             SyncCharacterRotation();
             HandleActionInput();
 
