@@ -98,6 +98,75 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>GrÃ¶sse des Prediction-Ringbuffers (Anzahl Commands).</summary>
         private const int k_PredictionBufferSize = 128;
 
+        // ===== Debug HUD Properties =====
+
+        /// <summary>Ob der Spieler am Boden ist.</summary>
+        internal bool IsGrounded => m_Simulation.IsGrounded;
+
+        /// <summary>Ob der Spieler gerade angreift.</summary>
+        internal bool IsAttacking => m_IsAttacking;
+
+        /// <summary>Ob der Spieler geduckt ist.</summary>
+        internal bool IsCrouching => m_Simulation.IsCrouching;
+
+        /// <summary>Aktuelle Velocity (XYZ) aus der Simulation.</summary>
+        internal Vector3 Velocity => m_Simulation.Velocity;
+
+        /// <summary>Horizontale Geschwindigkeit (XZ-Ebene).</summary>
+        internal float HorizontalSpeed
+        {
+            get
+            {
+                Vector3 v = m_Simulation.Velocity;
+                return new Vector3(v.x, 0f, v.z).magnitude;
+            }
+        }
+
+        /// <summary>Vertikale Geschwindigkeit (Y-Achse).</summary>
+        internal float VerticalSpeed => m_Simulation.Velocity.y;
+
+        /// <summary>Aktuelle Airtime in Sekunden (0 am Boden).</summary>
+        internal float CurrentAirtime => m_Simulation.CurrentAirtime;
+
+        /// <summary>Aktuelle Sprunghoehe in Metern (0 am Boden).</summary>
+        internal float CurrentJumpHeight => m_Simulation.CurrentJumpHeight;
+
+        /// <summary>Aktuelle Fallhoehe in Metern (0 am Boden).</summary>
+        internal float CurrentFallHeight => m_Simulation.CurrentFallHeight;
+
+        /// <summary>Aktuelle horizontale Distanz in der Luft (Meter).</summary>
+        internal float CurrentAirDistanceHoriz => m_Simulation.CurrentAirDistanceHoriz;
+
+        /// <summary>Aktuelle vertikale Distanz in der Luft (Meter).</summary>
+        internal float CurrentAirDistanceVert => m_Simulation.CurrentAirDistanceVert;
+
+        /// <summary>Gesamte Airtime der letzten Luftphase (Sekunden).</summary>
+        internal float FullAirtime => m_Simulation.FullAirtime;
+
+        /// <summary>Max Sprunghoehe der letzten Luftphase (Meter).</summary>
+        internal float FullJumpHeight => m_Simulation.FullJumpHeight;
+
+        /// <summary>Max Fallhoehe der letzten Luftphase (Meter).</summary>
+        internal float FullFallHeight => m_Simulation.FullFallHeight;
+
+        /// <summary>Horizontale Distanz der letzten Luftphase (Meter).</summary>
+        internal float FullAirDistanceHoriz => m_Simulation.FullAirDistanceHoriz;
+
+        /// <summary>Gesamte vertikale Weglaenge der letzten Luftphase (Meter).</summary>
+        internal float FullAirDistanceVert => m_Simulation.FullAirDistanceVert;
+
+        /// <summary>Airtime der Aufstiegsphase der letzten Luftphase (Sekunden).</summary>
+        internal float FullJumpPhaseAirtime => m_Simulation.FullJumpPhaseAirtime;
+
+        /// <summary>Airtime der Fallphase der letzten Luftphase (Sekunden).</summary>
+        internal float FullFallPhaseAirtime => m_Simulation.FullFallPhaseAirtime;
+
+        /// <summary>Aktuelle Airtime in der Aufstiegsphase (Sekunden).</summary>
+        internal float CurrentJumpPhaseAirtime => m_Simulation.CurrentJumpPhaseAirtime;
+
+        /// <summary>Aktuelle Airtime in der Fallphase (Sekunden).</summary>
+        internal float CurrentFallPhaseAirtime => m_Simulation.CurrentFallPhaseAirtime;
+
         // ===== Simulation + Prediction =====
 
         /// <summary>

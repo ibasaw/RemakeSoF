@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 
 namespace Tolik.RemakeSoF.Runtime
 {
@@ -13,6 +14,11 @@ namespace Tolik.RemakeSoF.Runtime
         private const float k_FpsUpdateInterval = 0.5f;
 
         /// <summary>
+        /// Intervall in Sekunden zwischen Debug-HUD-Updates.
+        /// </summary>
+        private const float k_DebugHudUpdateInterval = 0.05f;
+
+        /// <summary>
         /// Akkumulierte Zeit seit letztem FPS-Update.
         /// </summary>
         private float m_FpsTimer;
@@ -21,6 +27,11 @@ namespace Tolik.RemakeSoF.Runtime
         /// Anzahl gerendeter Frames seit letztem FPS-Update.
         /// </summary>
         private int m_FrameCount;
+
+        /// <summary>
+        /// Akkumulierte Zeit seit letztem Debug-HUD-Update.
+        /// </summary>
+        private float m_DebugHudTimer;
 
         void Awake()
         {
@@ -69,6 +80,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         /// <summary>
         /// FPS berechnen und View aktualisieren in regelmäßigen Intervallen.
+        /// Debug-HUD mit Spielerdaten aktualisieren.
         /// </summary>
         private void Update()
         {
@@ -82,6 +94,48 @@ namespace Tolik.RemakeSoF.Runtime
                 m_FrameCount = 0;
                 m_FpsTimer = 0f;
             }
+
+            m_DebugHudTimer += Time.unscaledDeltaTime;
+            if (m_DebugHudTimer >= k_DebugHudUpdateInterval)
+            {
+                m_DebugHudTimer = 0f;
+                UpdateDebugHud();
+            }
+        }
+
+        /// <summary>
+        /// Liest aktuelle Daten vom PlayerCharacter und aktualisiert das Debug-HUD.
+        /// </summary>
+        private void UpdateDebugHud()
+        {
+            ClientPlayerCharacter player = App.Model.PlayerCharacter;
+            if (player == null)
+            {
+                return;
+            }
+
+            View.UpdateDebugHud(
+                player.IsGrounded,
+                player.IsAttacking,
+                player.IsCrouching,
+                player.HorizontalSpeed,
+                player.VerticalSpeed,
+                player.transform.position,
+                player.CurrentAirtime,
+                player.CurrentJumpPhaseAirtime,
+                player.CurrentFallPhaseAirtime,
+                player.CurrentJumpHeight,
+                player.CurrentFallHeight,
+                player.CurrentAirDistanceHoriz,
+                player.CurrentAirDistanceVert,
+                player.FullAirtime,
+                player.FullJumpPhaseAirtime,
+                player.FullFallPhaseAirtime,
+                player.FullJumpHeight,
+                player.FullFallHeight,
+                player.FullAirDistanceHoriz,
+                player.FullAirDistanceVert
+            );
         }
     }
 }

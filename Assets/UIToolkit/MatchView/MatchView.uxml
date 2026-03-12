@@ -5,5 +5,32 @@
             <ui:Label text="Players connected: 0" display-tooltip-when-elided="true" name="playersConnectedLabel" style="-unity-text-align: middle-center; height: auto; width: auto; font-size: 24px; left: auto; top: auto;"/>
             <ui:Label text="FPS: 0" name="fpsLabel" style="width: auto; height: auto; font-size: 32px;"/>
         </ui:VisualElement>
+        <ui:VisualElement name="DebugInfoBox" style="flex-grow: 0; align-items: flex-start; top: 30px; right: 30px; position: absolute; right: 30px; background-color: rgba(0, 0, 0, 0.5); padding-left: 10px; padding-right: 10px; padding-top: 6px; padding-bottom: 6px; border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;">
+            <ui:Label text="--- State ---" name="debugStateHeader" style="font-size: 14px; color: rgb(200, 200, 200); -unity-font-style: bold;"/>
+            <ui:Label text="Grounded: -" name="groundedLabel" style="font-size: 13px; color: rgb(180, 255, 180);"/>
+            <ui:Label text="Attacking: -" name="attackingLabel" style="font-size: 13px; color: rgb(255, 180, 180);"/>
+            <ui:Label text="Crouching: -" name="crouchingLabel" style="font-size: 13px; color: rgb(180, 220, 255);"/>
+            <ui:Label text="--- Velocity ---" name="debugVelocityHeader" style="font-size: 14px; color: rgb(200, 200, 200); -unity-font-style: bold; margin-top: 6px;"/>
+            <ui:Label text="Horiz Speed: -" name="horizSpeedLabel" style="font-size: 13px; color: rgb(255, 255, 180);"/>
+            <ui:Label text="Vert Speed: -" name="vertSpeedLabel" style="font-size: 13px; color: rgb(255, 255, 180);"/>
+            <ui:Label text="--- Position ---" name="debugPositionHeader" style="font-size: 14px; color: rgb(200, 200, 200); -unity-font-style: bold; margin-top: 6px;"/>
+            <ui:Label text="Pos: -" name="positionLabel" style="font-size: 13px; color: rgb(220, 220, 220);"/>
+            <ui:Label text="--- Air (Live) ---" name="debugAirHeader" style="font-size: 14px; color: rgb(200, 200, 200); -unity-font-style: bold; margin-top: 6px;"/>
+            <ui:Label text="Airtime: -" name="airtimeLabel" style="font-size: 13px; color: rgb(200, 180, 255);"/>
+            <ui:Label text="Jump Phase: -" name="jumpPhaseLabel" style="font-size: 13px; color: rgb(200, 180, 255);"/>
+            <ui:Label text="Fall Phase: -" name="fallPhaseLabel" style="font-size: 13px; color: rgb(200, 180, 255);"/>
+            <ui:Label text="Jump Height: -" name="jumpHeightLabel" style="font-size: 13px; color: rgb(200, 180, 255);"/>
+            <ui:Label text="Fall Height: -" name="fallHeightLabel" style="font-size: 13px; color: rgb(200, 180, 255);"/>
+            <ui:Label text="Air Dist Horiz: -" name="airDistHorizLabel" style="font-size: 13px; color: rgb(200, 180, 255);"/>
+            <ui:Label text="Vert Path: -" name="vertPathLabel" style="font-size: 13px; color: rgb(200, 180, 255);"/>
+            <ui:Label text="--- Air (Full) ---" name="debugAirFullHeader" style="font-size: 14px; color: rgb(200, 200, 200); -unity-font-style: bold; margin-top: 6px;"/>
+            <ui:Label text="Full Airtime: -" name="fullAirtimeLabel" style="font-size: 13px; color: rgb(170, 150, 220);"/>
+            <ui:Label text="Full Jump Phase: -" name="fullJumpPhaseLabel" style="font-size: 13px; color: rgb(170, 150, 220);"/>
+            <ui:Label text="Full Fall Phase: -" name="fullFallPhaseLabel" style="font-size: 13px; color: rgb(170, 150, 220);"/>
+            <ui:Label text="Full Jump Height: -" name="fullJumpHeightLabel" style="font-size: 13px; color: rgb(170, 150, 220);"/>
+            <ui:Label text="Full Fall Height: -" name="fullFallHeightLabel" style="font-size: 13px; color: rgb(170, 150, 220);"/>
+            <ui:Label text="Full Dist Horiz: -" name="fullDistHorizLabel" style="font-size: 13px; color: rgb(170, 150, 220);"/>
+            <ui:Label text="Full Vert Path: -" name="fullVertPathLabel" style="font-size: 13px; color: rgb(170, 150, 220);"/>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

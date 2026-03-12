@@ -8,51 +8,51 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
     /// Serialisierbare C# Klasse (kein MonoBehaviour) — wird von Client (Prediction)
     /// und Server (Authority) mit identischem Code ausgeführt.
     /// Exakter Port der SoF2 bg_pmove.c Physik-Pipeline.
-    /// Alle linearen Werte sind /10 skaliert (SoF2 → Unity).
+    /// Alle linearen Werte sind ×0.0254 skaliert (1 SoF2-Unit = 1 Inch = 0.0254m).
     /// </summary>
     [Serializable]
     public class PlayerPhysicsSimulation
     {
-        // ===== Physics Parameters (SoF2 Defaults, /10 skaliert) =====
+        // ===== Physics Parameters (SoF2 Defaults, ×0.0254 Inches→Meter) =====
 
-        /// <summary>Boden-Beschleunigung (SoF2 pm_accelerate).</summary>
+        /// <summary>Boden-Beschleunigung (SoF2 pm_accelerate). Dimensionslos.</summary>
         public float PmAccelerate = 6.0f;
 
-        /// <summary>Luft-Beschleunigung (SoF2 pm_airaccelerate).</summary>
+        /// <summary>Luft-Beschleunigung (SoF2 pm_airaccelerate). Dimensionslos.</summary>
         public float PmAirAccelerate = 1.0f;
 
-        /// <summary>Boden-Reibung (SoF2 pm_friction).</summary>
+        /// <summary>Boden-Reibung (SoF2 pm_friction). Dimensionslos.</summary>
         public float PmFriction = 6.0f;
 
-        /// <summary>Stop-Speed Schwelle (SoF2 pm_stopspeed /10).</summary>
-        public float PmStopSpeed = 10.0f;
+        /// <summary>Stop-Speed Schwelle (SoF2: 100 × 0.0254 = 2.54 m/s).</summary>
+        public float PmStopSpeed = 2.54f;
 
-        /// <summary>Maximum Wish-Speed / g_speed (SoF2: 280/10 = 28).</summary>
-        public float PmMaxSpeed = 28.0f;
+        /// <summary>Maximum Wish-Speed / g_speed (SoF2: 280 × 0.0254 = 7.112 m/s).</summary>
+        public float PmMaxSpeed = 7.112f;
 
-        /// <summary>Gravitation in Units/s² (SoF2: 800/10 = 80).</summary>
-        public float PmGravity = 80.0f;
+        /// <summary>Gravitation in m/s² (SoF2: 800 × 0.0254 = 20.32).</summary>
+        public float PmGravity = 20.32f;
 
-        /// <summary>Max horizontale Velocity in der Luft (SoF2: 320/10 = 32).</summary>
-        public float PhysMaxVelocity = 32f;
+        /// <summary>Max horizontale Velocity in der Luft (SoF2: 320 × 0.0254 = 8.128 m/s).</summary>
+        public float PhysMaxVelocity = 8.128f;
 
-        /// <summary>Max horizontale Velocity am Boden (SoF2: 320/10 = 32).</summary>
-        public float PhysMaxWalkVelocity = 32f;
+        /// <summary>Max horizontale Velocity am Boden (SoF2: 320 × 0.0254 = 8.128 m/s).</summary>
+        public float PhysMaxWalkVelocity = 8.128f;
 
-        /// <summary>Sofortige Y-Velocity beim Sprung (SoF2: 270/10 = 27).</summary>
-        public float JumpVelocity = 27.0f;
+        /// <summary>Sofortige Y-Velocity beim Sprung (SoF2: 270 × 0.0254 = 6.858 m/s).</summary>
+        public float JumpVelocity = 6.858f;
 
-        /// <summary>Maximale Steigung (Dot mit Up). SoF2 MIN_WALK_NORMAL = 0.7.</summary>
+        /// <summary>Maximale Steigung (Dot mit Up). SoF2 MIN_WALK_NORMAL = 0.7. Dimensionslos.</summary>
         public float PmMaxSteepness = 0.7f;
 
-        /// <summary>Maximale Step-Hoehe (SoF2: 18/10 = 1.8).</summary>
-        public float PmMaxStep = 1.8f;
+        /// <summary>Maximale Step-Hoehe (SoF2: 18 × 0.0254 = 0.4572m).</summary>
+        public float PmMaxStep = 0.4572f;
 
-        /// <summary>Step-Size für Step-Up (SoF2 STEPSIZE: 18/10 = 1.8).</summary>
-        public float PmStepSize = 1.8f;
+        /// <summary>Step-Size für Step-Up (SoF2 STEPSIZE: 18 × 0.0254 = 0.4572m).</summary>
+        public float PmStepSize = 0.4572f;
 
-        /// <summary>Maximale Barriere-Hoehe (SoF2: 32/10 = 3.2).</summary>
-        public float PmMaxBarrier = 3.2f;
+        /// <summary>Maximale Barriere-Hoehe (SoF2: 32 × 0.0254 = 0.8128m).</summary>
+        public float PmMaxBarrier = 0.8128f;
 
         /// <summary>Duck Speed Scale (SoF2 PM_DUCKSCALE = 0.25).</summary>
         public float PmDuckScale = 0.25f;
@@ -60,8 +60,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Jump-Debounce nach Landung (Sekunden).</summary>
         public float JumpDebounceAfterMs = 0.25f;
 
-        /// <summary>Höhen-Schwelle ab der ein Sprung als Step-Up gilt und Debounce übersprungen wird.</summary>
-        public float StepUpHeightThreshold = 0.7f;
+        /// <summary>Höhen-Schwelle ab der ein Sprung als Step-Up gilt und Debounce übersprungen wird (SoF2: ~7 × 0.0254 = 0.178m).</summary>
+        public float StepUpHeightThreshold = 0.178f;
 
         /// <summary>Ground Grace-Period (Sekunden).</summary>
         public float GroundGracePeriod = 0.15f;
@@ -81,7 +81,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         [NonSerialized] public Vector3 CapsuleCenter;
 
         /// <summary>Ground-Check-Distanz für CapsuleCast nach unten.</summary>
-        [NonSerialized] public float GroundCheckDistance = 1f;
+        [NonSerialized] public float GroundCheckDistance = 0.254f;
 
         // ===== Constants =====
 
@@ -135,6 +135,69 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         private bool m_WasGroundedPrev;
         private float m_DeltaTime;
         private float m_JumpStartY;
+
+        // ===== Airtime / Distance / Height Tracking (fuer Debug-HUD) =====
+
+        /// <summary>Position (XZ + Y) beim Verlassen des Bodens.</summary>
+        private Vector3 m_AirStartPosition;
+
+        /// <summary>Hoechster Y-Wert waehrend des aktuellen Luftaufenthalts.</summary>
+        private float m_HighestYInAir;
+
+        /// <summary>Zeitpunkt (SimulationTime) beim Verlassen des Bodens.</summary>
+        private float m_AirStartTime;
+
+        /// <summary>Ob der Peak bereits ueberschritten wurde (Velocity.y wechselt zu <= 0 nach Aufstieg).</summary>
+        private bool m_InFallPhase;
+
+        /// <summary>SimulationTime beim Erreichen des Peaks.</summary>
+        private float m_PeakTime;
+
+        // --- Live-Werte (jeden Frame in der Luft aktualisiert, 0 am Boden) ---
+
+        /// <summary>Aktuelle Airtime seit Verlassen des Bodens (Sekunden). 0 am Boden.</summary>
+        [NonSerialized] public float CurrentAirtime;
+
+        /// <summary>Aktuelle Sprunghoehe ueber Startposition (Meter). 0 am Boden oder bei Fall.</summary>
+        [NonSerialized] public float CurrentJumpHeight;
+
+        /// <summary>Aktuelle Fallhoehe unter Peak/Startposition (Meter). 0 am Boden.</summary>
+        [NonSerialized] public float CurrentFallHeight;
+
+        /// <summary>Aktuelle horizontale Distanz seit Absprung (XZ, Meter). 0 am Boden.</summary>
+        [NonSerialized] public float CurrentAirDistanceHoriz;
+
+        /// <summary>Gesamte vertikale Weglaenge seit Absprung (JumpHeight + FallHeight, Meter). 0 am Boden.</summary>
+        [NonSerialized] public float CurrentAirDistanceVert;
+
+        /// <summary>Airtime in der Aufstiegsphase (Absprung bis Peak, Sekunden). 0 am Boden oder nach Peak.</summary>
+        [NonSerialized] public float CurrentJumpPhaseAirtime;
+
+        /// <summary>Airtime in der Fallphase (Peak bis jetzt, Sekunden). 0 am Boden oder im Aufstieg.</summary>
+        [NonSerialized] public float CurrentFallPhaseAirtime;
+
+        // --- Full-Werte (nach Landung gespeichert, persistieren bis zur naechsten Landung) ---
+
+        /// <summary>Gesamte Airtime der letzten Luftphase (Sekunden).</summary>
+        [NonSerialized] public float FullAirtime;
+
+        /// <summary>Maximale Sprunghoehe der letzten Luftphase (Meter).</summary>
+        [NonSerialized] public float FullJumpHeight;
+
+        /// <summary>Maximale Fallhoehe der letzten Luftphase (Meter).</summary>
+        [NonSerialized] public float FullFallHeight;
+
+        /// <summary>Horizontale Distanz der letzten Luftphase (XZ, Meter).</summary>
+        [NonSerialized] public float FullAirDistanceHoriz;
+
+        /// <summary>Gesamte vertikale Weglaenge der letzten Luftphase (FullJumpHeight + FullFallHeight, Meter).</summary>
+        [NonSerialized] public float FullAirDistanceVert;
+
+        /// <summary>Airtime der Aufstiegsphase beim letzten Sprung (Sekunden).</summary>
+        [NonSerialized] public float FullJumpPhaseAirtime;
+
+        /// <summary>Airtime der Fallphase beim letzten Sprung (Sekunden).</summary>
+        [NonSerialized] public float FullFallPhaseAirtime;
 
         // ===================================================================
         // Public API
@@ -222,9 +285,71 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 m_LastGroundedTime = SimulationTime;
             }
 
-            // 5. Edge Detection: gerade gelandet?
+            // 5. Airtime-Tracking: Boden gerade verlassen (nach Ground-Check!)
+            if (wasGrounded && !IsGrounded)
+            {
+                m_AirStartPosition = position;
+                m_HighestYInAir = position.y;
+                m_AirStartTime = SimulationTime;
+                m_InFallPhase = false;
+            }
+
+            // 6. Airtime-Tracking: Live-Werte jeden Frame in der Luft aktualisieren
+            if (!IsGrounded)
+            {
+                CurrentAirtime = SimulationTime - m_AirStartTime;
+                if (position.y > m_HighestYInAir)
+                {
+                    m_HighestYInAir = position.y;
+                }
+                CurrentJumpHeight = Mathf.Max(0f, position.y - m_AirStartPosition.y);
+                CurrentFallHeight = Mathf.Max(0f, m_HighestYInAir - position.y);
+                Vector3 hDelta = new(position.x - m_AirStartPosition.x, 0f, position.z - m_AirStartPosition.z);
+                CurrentAirDistanceHoriz = hDelta.magnitude;
+                CurrentAirDistanceVert = CurrentJumpHeight + CurrentFallHeight;
+
+                // Peak-Erkennung: Velocity.y wechselt von positiv zu <= 0
+                if (!m_InFallPhase && Velocity.y <= 0f)
+                {
+                    m_InFallPhase = true;
+                    m_PeakTime = SimulationTime;
+                }
+
+                if (m_InFallPhase)
+                {
+                    CurrentJumpPhaseAirtime = m_PeakTime - m_AirStartTime;
+                    CurrentFallPhaseAirtime = SimulationTime - m_PeakTime;
+                }
+                else
+                {
+                    CurrentJumpPhaseAirtime = CurrentAirtime;
+                    CurrentFallPhaseAirtime = 0f;
+                }
+            }
+
+            // 7. Edge Detection: gerade gelandet?
             JustLanded = !wasGrounded && IsGrounded;
             m_WasGroundedPrev = IsGrounded;
+
+            // 8. Airtime-Tracking: Landung → Full-Werte speichern, Live-Werte zuruecksetzen
+            if (JustLanded)
+            {
+                FullAirtime = CurrentAirtime;
+                FullJumpHeight = Mathf.Max(0f, m_HighestYInAir - m_AirStartPosition.y);
+                FullFallHeight = Mathf.Max(0f, m_HighestYInAir - position.y);
+                FullJumpPhaseAirtime = m_InFallPhase ? m_PeakTime - m_AirStartTime : FullAirtime;
+                FullFallPhaseAirtime = m_InFallPhase ? FullAirtime - FullJumpPhaseAirtime : 0f;
+                Vector3 hDeltaFull = new(position.x - m_AirStartPosition.x, 0f, position.z - m_AirStartPosition.z);
+                FullAirDistanceHoriz = hDeltaFull.magnitude;
+                FullAirDistanceVert = FullJumpHeight + FullFallHeight;
+                CurrentAirtime = 0f;
+                CurrentJumpHeight = 0f;
+                CurrentFallHeight = 0f;
+                CurrentAirDistanceHoriz = 0f;
+                CurrentAirDistanceVert = 0f;
+                CurrentJumpPhaseAirtime = 0f;
+                CurrentFallPhaseAirtime = 0f;
+            }
 
             // 6. Friction + Acceleration (setzt Velocity für nächsten Frame)
             if (IsGrounded)
@@ -305,7 +430,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             float speed = vec.magnitude;
             float drop = 0f;
 
-            if (speed < 1f)
+            if (speed < 0.254f)
             {
                 Velocity.x = 0f;
                 Velocity.z = 0f;
@@ -602,7 +727,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
                 if (castDist < 1e-6f)
                 {
-                    if (vel.magnitude < 0.1f && IsGrounded)
+                    if (vel.magnitude < 0.025f && IsGrounded)
                     {
                         vel *= 0.5f;
                     }
@@ -648,7 +773,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
                     if (moveDist < 0.001f)
                     {
-                        if (vel.magnitude < 0.1f)
+                        if (vel.magnitude < 0.025f)
                         {
                             vel *= 0.3f;
                             break;
@@ -663,7 +788,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                     PM_ClipVelocity(vel, hit.normal, out Vector3 clipVel, OVERCLIP);
                     vel = clipVel;
 
-                    if (vel.magnitude < 0.01f)
+                    if (vel.magnitude < 0.0025f)
                     {
                         vel *= 0.1f;
                         break;
@@ -726,7 +851,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         {
             stepUpPos = currentPos;
 
-            if (!IsGrounded || Mathf.Abs(Velocity.y) > 1.0f)
+            if (!IsGrounded || Mathf.Abs(Velocity.y) > 0.254f)
             {
                 return false;
             }
@@ -743,12 +868,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 return false;
             }
 
-            if (obstacleHeight > PmMaxStep || obstacleHeight < 0.5f)
+            if (obstacleHeight > PmMaxStep || obstacleHeight < 0.127f)
             {
                 return false;
             }
 
-            float stepUpAmount = Mathf.Min(obstacleHeight + 0.1f, PmStepSize);
+            float stepUpAmount = Mathf.Min(obstacleHeight + 0.025f, PmStepSize);
             Vector3 stepUpTarget = currentPos + Vector3.up * stepUpAmount;
 
             float halfHeight = Mathf.Max(0f,
@@ -767,10 +892,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             // Horizontaler Obstacle-Check
             Vector3 horizontalVel = new(Velocity.x, 0f, Velocity.z);
-            if (horizontalVel.magnitude > 0.1f)
+            if (horizontalVel.magnitude > 0.025f)
             {
                 Vector3 horizontalDir = horizontalVel.normalized;
-                float checkDistance = Mathf.Min(horizontalVel.magnitude * m_DeltaTime, 0.5f);
+                float checkDistance = Mathf.Min(horizontalVel.magnitude * m_DeltaTime, 0.127f);
 
                 Vector3 stepTop = GetWorldCenterAtPosition(stepUpTarget) + Vector3.up * halfHeight;
                 Vector3 stepBottom = GetWorldCenterAtPosition(stepUpTarget) - Vector3.up * halfHeight;
@@ -826,7 +951,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 return false;
             }
 
-            if (IsJumping && Velocity.y > 5f)
+            if (IsJumping && Velocity.y > 1.27f)
             {
                 return false;
             }
@@ -852,7 +977,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
                 if (Vector3.Dot(hit.normal, Vector3.up) > slopeThreshold)
                 {
-                    if (IsJumping && Velocity.y > 1.0f)
+                    if (IsJumping && Velocity.y > 0.254f)
                     {
                         return false;
                     }
