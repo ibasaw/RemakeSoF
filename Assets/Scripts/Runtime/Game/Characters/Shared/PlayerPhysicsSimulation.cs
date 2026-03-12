@@ -313,21 +313,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             {
                 float control = speed < PmStopSpeed ? PmStopSpeed : speed;
                 drop += control * PmFriction * m_DeltaTime;
-
-                // Zusätzliche Slope-Friction (Custom, nicht im SoF2-Original)
-                if (LastGroundHit.collider != null)
-                {
-                    float slopeDot = Vector3.Dot(LastGroundHit.normal, Vector3.up);
-                    if (slopeDot < 0.9f)
-                    {
-                        drop += control * PmFriction * 1.0f * m_DeltaTime;
-                    }
-
-                    if (slopeDot < 0.7f)
-                    {
-                        drop += control * PmFriction * 1.5f * m_DeltaTime;
-                    }
-                }
             }
 
             float newspeed = speed - drop;
@@ -508,7 +493,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             PM_Accelerate(wishdir, wishspeed, PmAccelerate);
 
             // SoF2: Velocity auf Ground-Plane clippen + Speed erhalten.
-            // Verhindert Speed-Verlust auf Slopes (bg_pmove.c PM_WalkMove).
+            // "don't decrease velocity when going up or down a slope"
+            // (bg_pmove.c PM_WalkMove — exakter Port)
             if (LastGroundHit.collider != null)
             {
                 float vel = Velocity.magnitude;

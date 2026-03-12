@@ -534,7 +534,7 @@ MonoBehaviour:
     PhysMaxVelocity: 32
     PhysMaxWalkVelocity: 32
     JumpVelocity: 27
-    PmMaxSteepness: 0.8
+    PmMaxSteepness: 0.7
     PmMaxStep: 1.8
     PmStepSize: 1.8
     PmMaxBarrier: 3.2
