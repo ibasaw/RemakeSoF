@@ -89,7 +89,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         private const float OVERCLIP = 1.001f;
 
         /// <summary>Skin-Width: minimaler Abstand zu Oberflächen.</summary>
-        private const float SKIN_WIDTH = 0.01f;
+        private const float SKIN_WIDTH = 0.02f;
+
+        /// <summary>Maximale Depenetration-Iterationen pro Frame.</summary>
+        private const int MAX_DEPENETRATION_ITERATIONS = 3;
 
         // ===== Simulation State (Runtime, nicht serialisiert) =====
 
@@ -685,14 +688,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             Velocity = vel;
             position = currentPos;
 
+            // Depenetration: Falls die Capsule nach Bewegung in Geometrie steckt,
+            // wird sie iterativ herausgeschoben. Fängt Tunneling-Edge-Cases ab.
+            ResolvePenetration(ref position);
+
             // Finaler Ground-Check nach Bewegung
             bool wasGroundedBeforeMove = IsGrounded;
-            bool newGroundCheck = CheckGroundedAtPosition(currentPos, out RaycastHit downHit);
+            bool newGroundCheck = CheckGroundedAtPosition(position, out RaycastHit downHit);
 
             // Slope-Fallback wenn vorher grounded
             if (!newGroundCheck && wasGroundedBeforeMove)
             {
-                newGroundCheck = TrySlopeGroundCheck(currentPos, halfHeightLocal, out downHit);
+                newGroundCheck = TrySlopeGroundCheck(position, halfHeightLocal, out downHit);
             }
 
             if (!wasGroundedBeforeMove || newGroundCheck)
@@ -940,6 +947,73 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         private Vector3 GetWorldCenterAtPosition(Vector3 position)
         {
             return position + CapsuleCenter;
+        }
+
+        /// <summary>
+        /// Depenetration nach PM_StepSlideMove.
+        /// Prüft per OverlapCapsule ob die Capsule in Geometrie steckt und
+        /// schiebt sie iterativ heraus. Clippt Velocity gegen die Trennungs-Normalen
+        /// damit der Spieler nicht sofort wieder hineinläuft.
+        /// </summary>
+        private void ResolvePenetration(ref Vector3 position)
+        {
+            float halfHeight = Mathf.Max(0f, (CapsuleHeight * 0.5f) - CapsuleRadius);
+
+            for (int iteration = 0; iteration < MAX_DEPENETRATION_ITERATIONS; iteration++)
+            {
+                Vector3 worldCenter = GetWorldCenterAtPosition(position);
+                Vector3 top = worldCenter + Vector3.up * halfHeight;
+                Vector3 bottom = worldCenter - Vector3.up * halfHeight;
+
+                Collider[] overlaps = Physics.OverlapCapsule(
+                    top, bottom, CapsuleRadius,
+                    GroundMask, QueryTriggerInteraction.Ignore);
+
+                if (overlaps.Length == 0)
+                {
+                    return;
+                }
+
+                bool resolved = false;
+
+                for (int i = 0; i < overlaps.Length; i++)
+                {
+                    // ComputePenetration braucht einen eigenen CapsuleCollider —
+                    // wir nutzen stattdessen ClosestPoint + manuelle Separation.
+                    Vector3 closestPoint = overlaps[i].ClosestPoint(worldCenter);
+                    Vector3 diff = worldCenter - closestPoint;
+
+                    // Falls Center exakt im Collider liegt, nach oben ausweichen
+                    if (diff.sqrMagnitude < 1e-8f)
+                    {
+                        diff = Vector3.up;
+                    }
+
+                    Vector3 normal = diff.normalized;
+                    float penetrationDepth = CapsuleRadius - diff.magnitude;
+
+                    if (penetrationDepth <= 0f)
+                    {
+                        continue;
+                    }
+
+                    // Position herausschieben
+                    position += normal * (penetrationDepth + SKIN_WIDTH);
+                    resolved = true;
+
+                    // Velocity gegen die Normale clippen damit kein Re-Entry passiert
+                    float velocityIntoSurface = Vector3.Dot(Velocity, -normal);
+                    if (velocityIntoSurface > 0f)
+                    {
+                        Velocity += normal * velocityIntoSurface;
+                    }
+                }
+
+                if (!resolved)
+                {
+                    return;
+                }
+            }
         }
 
         /// <summary>

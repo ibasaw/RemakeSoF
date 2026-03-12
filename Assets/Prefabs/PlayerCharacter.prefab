@@ -652,7 +652,7 @@ MonoBehaviour:
   m_GroundCheckDistance: 0.2
   m_AutoSizeCapsule: 1
   m_DynamicCapsuleSizing: 1
-  m_ShowVisualCollider: 0
+  m_ShowVisualCollider: 1
   m_ColliderColor: {r: 0, g: 1, b: 0, a: 0.3}
   m_ColliderMaterial: {fileID: 0}
 --- !u!114 &2377830269377574819
