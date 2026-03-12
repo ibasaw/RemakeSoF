@@ -60,12 +60,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Jump-Debounce nach harter Landung (SoF2: 250ms).</summary>
         public float JumpDebounceAfterMs = 0.25f;
 
-        /// <summary>Höhen-Schwelle ab der ein Sprung als Step-Up gilt (Legacy, nicht mehr aktiv).</summary>
-        public float StepUpHeightThreshold = 0.178f;
-
-        /// <summary>Ground Grace-Period (Legacy, nicht mehr aktiv — SoF2 hat keine Coyote Time).</summary>
-        public float GroundGracePeriod = 0.15f;
-
         /// <summary>LayerMask für Ground-Detection.</summary>
         public LayerMask GroundMask = ~0;
 
@@ -443,6 +437,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             {
                 IsGrounded = true;
                 IsJumping = false;
+
+                // Vertikale Velocity nullen bei Landung.
+                // In SoF2 ist die Ground-Trace-Distanz nur 0.25 QU (6mm),
+                // daher wird der Boden erst erkannt NACHDEM PM_SlideMove die
+                // Fall-Velocity bereits per Collision geclippt hat.
+                // Unsere groessere Trace-Distanz (0.08m, noetig fuer Unity-Mesh-
+                // Praezision) erkennt den Boden BEVOR SlideMove clippt.
+                // Ohne dieses Nullen wuerde PM_WalkMove's Speed-Restore die
+                // Fall-Geschwindigkeit in eine Aufwaerts-Geschwindigkeit umwandeln
+                // und den Spieler nach oben bouncen lassen.
+                Velocity.y = 0f;
 
                 // SoF2: previous_velocity[2] < -200 -> pm_time = 250
                 if (m_PreviousVelocity.y < -5.08f)
@@ -1122,14 +1127,33 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 {
                     Collider col = overlaps[i];
 
-                    // ClosestPoint unterstützt nur Box, Sphere, Capsule und convex Mesh.
-                    // Nicht-konvexe MeshCollider und TerrainCollider überspringen.
-                    if (col is MeshCollider mc && !mc.convex)
+                    // ClosestPoint unterstuetzt nur Box, Sphere, Capsule und convex Mesh.
+                    // Fuer nicht-konvexe MeshCollider und TerrainCollider: Raycast-Fallback.
+                    if ((col is MeshCollider mc && !mc.convex) || col is TerrainCollider)
                     {
-                        continue;
-                    }
-                    if (col is TerrainCollider)
-                    {
+                        // Raycast von oben nach unten um Boden-Oberflaeche zu finden.
+                        // Haeufigstes Szenario: Capsule steckt im Boden-Mesh.
+                        Vector3 rayOrigin = new(
+                            worldCenter.x,
+                            worldCenter.y + CapsuleHeight,
+                            worldCenter.z);
+
+                        if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit floorHit,
+                                CapsuleHeight * 2f, GroundMask, QueryTriggerInteraction.Ignore))
+                        {
+                            float capsuleBottomY = position.y + CapsuleCenter.y - CapsuleHeight * 0.5f;
+                            if (capsuleBottomY < floorHit.point.y)
+                            {
+                                position.y += floorHit.point.y - capsuleBottomY + SKIN_WIDTH;
+                                resolved = true;
+
+                                if (Velocity.y < 0f)
+                                {
+                                    Velocity.y = 0f;
+                                }
+                            }
+                        }
+
                         continue;
                     }
 
