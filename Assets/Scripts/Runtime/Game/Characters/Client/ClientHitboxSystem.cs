@@ -307,8 +307,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             visualGO.name = "Visual";
 
             // Primitive erzeugt automatisch einen Collider — entfernen
-            Collider primitiveCollider = visualGO.GetComponent<Collider>();
-            if (primitiveCollider != null)
+            if (visualGO.TryGetComponent<Collider>(out var primitiveCollider))
             {
                 Destroy(primitiveCollider);
             }
@@ -317,8 +316,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             visualGO.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             visualGO.transform.localScale = colliderSize;
 
-            MeshRenderer meshRenderer = visualGO.GetComponent<MeshRenderer>();
-            if (meshRenderer != null)
+            if (visualGO.TryGetComponent<MeshRenderer>(out var meshRenderer))
             {
                 Color regionColor = GetRegionColor(hitRegion);
                 regionColor.a = m_VisualAlpha;

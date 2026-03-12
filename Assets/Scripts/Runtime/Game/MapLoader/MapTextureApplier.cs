@@ -11,6 +11,8 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
     /// </summary>
     public class MapTextureApplier
     {
+        private const int k_MaxTextureSlots = 32; // Max Anzahl der Textur-Slots (mapped_texture_0..31)
+
         /// <summary>
         /// Prefix für die Textur-Properties in Ghoul2Meta.
         /// </summary>
@@ -30,6 +32,11 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         /// Prefix für Transparenz-Properties (is_transparent_0..is_transparent_N).
         /// </summary>
         private const string k_TransparentPrefix = "is_transparent_";
+
+        /// <summary>
+        /// Prefix für Surface-Type-Properties (surface_types_json_0..surface_types_json_N).
+        /// </summary>
+        private const string k_SurfaceTypesJsonPrefix = "surface_types_json_";
 
         /// <summary>
         /// Wendet Texturen auf alle Ghoul2Meta-Objekte in der Map-Instanz an.
@@ -59,6 +66,13 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                     continue;
                 }
 
+                // Skybox-Surfaces: Renderer unsichtbar machen, Collider bleibt aktiv
+                if (IsSkyboxSurface(meta))
+                {
+                    renderer.enabled = false;
+                    continue;
+                }
+
                 List<string> textureKeys = CollectTextureKeys(meta);
                 if (textureKeys.Count == 0)
                 {
@@ -79,7 +93,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         {
             List<string> keys = new();
 
-            for (int i = 0; i < 32; i++)
+            for (int i = 0; i < k_MaxTextureSlots; i++)
             {
                 string propertyName = k_MappedTexturePrefix + i;
                 if (!meta.HasProperty(propertyName))
@@ -286,6 +300,29 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             }
 
             return material;
+        }
+
+        /// <summary>
+        /// Prüft ob dieser Renderer ein Skybox-Surface ist (surface_types_json_N enthält "sky").
+        /// </summary>
+        private bool IsSkyboxSurface(Ghoul2Meta meta)
+        {
+            for (int i = 0; i < k_MaxTextureSlots; i++)
+            {
+                string propertyName = k_SurfaceTypesJsonPrefix + i;
+                if (!meta.HasProperty(propertyName))
+                {
+                    continue;
+                }
+
+                string jsonValue = meta.GetString(propertyName);
+                if (!string.IsNullOrEmpty(jsonValue) && jsonValue.Contains("sky", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

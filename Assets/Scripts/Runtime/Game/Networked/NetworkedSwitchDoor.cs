@@ -132,8 +132,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         void OnClientTriggerEnter(Collider other)
         {
             Debug.Log("[Client] Player entered!");
-            ICharacter character = other.GetComponent<ICharacter>();
-            if (character == null)
+            if (!other.TryGetComponent<ICharacter>(out var character))
             {
                 return;
             }
@@ -151,8 +150,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
         void OnClientTriggerExit(Collider other)
         {
-            ICharacter character = other.GetComponent<ICharacter>();
-            if (character == null)
+            if (!other.TryGetComponent<ICharacter>(out var character))
             {
                 return;
             }

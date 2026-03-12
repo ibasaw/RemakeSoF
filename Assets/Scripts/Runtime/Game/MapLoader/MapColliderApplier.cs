@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
@@ -9,14 +10,13 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
     public class MapColliderApplier
     {
         /// <summary>
-        /// Schwellwert unterhalb dessen eine Bounds-Achse als flach gilt.
+        /// Prefix für is_transparent Properties in Ghoul2Meta.
         /// </summary>
-        private const float k_FlatThreshold = 0.001f;
+        private const string k_TransparentPrefix = "is_transparent_";
 
         /// <summary>
         /// Erstellt Collider für alle Renderer mit MeshFilter in der Map-Instanz.
-        /// Flache Meshes (eine Achse ~0) erhalten einen BoxCollider,
-        /// volumetrische Meshes einen MeshCollider.
+        /// Transparente Surfaces (is_transparent_0..N) werden übersprungen.
         /// </summary>
         /// <param name="mapInstance">Die instanziierte Map.</param>
         public void ApplyColliders(GameObject mapInstance)
@@ -46,13 +46,18 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         }
 
         /// <summary>
-        /// Erstellt einen Collider für den Renderer. Flache Meshes (eine Achse ~0)
-        /// erhalten einen BoxCollider, volumetrische Meshes einen MeshCollider.
+        /// Erstellt einen MeshCollider für den Renderer.
+        /// Überspringt transparente Surfaces (Ghoul2Meta is_transparent_0..N).
         /// </summary>
         /// <returns>True wenn ein Collider erstellt wurde.</returns>
         private bool ApplyCollider(Renderer renderer)
         {
             if (!renderer.TryGetComponent(out MeshFilter meshFilter))
+            {
+                return false;
+            }
+
+            if (IsTransparent(renderer))
             {
                 return false;
             }
@@ -66,20 +71,23 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             GameObject go = renderer.gameObject;
             go.isStatic = true;
 
-            Vector3 size = mesh.bounds.size;
-            if (size.x < k_FlatThreshold || size.y < k_FlatThreshold || size.z < k_FlatThreshold)
-            {
-                BoxCollider box = go.AddComponent<BoxCollider>();
-                box.center = mesh.bounds.center;
-                box.size = size;
-            }
-            else
-            {
-                MeshCollider collider = go.AddComponent<MeshCollider>();
-                collider.sharedMesh = mesh;
-            }
+            MeshCollider collider = go.AddComponent<MeshCollider>();
+            collider.sharedMesh = mesh;
 
             return true;
+        }
+
+        /// <summary>
+        /// Prüft ob der Renderer als transparent markiert ist (via Ghoul2Meta is_transparent_0..N).
+        /// </summary>
+        private bool IsTransparent(Renderer renderer)
+        {
+            if (!renderer.TryGetComponent(out Ghoul2Meta meta))
+            {
+                return false;
+            }
+
+            return meta.GetPropertyNames().Any(name => name.StartsWith(k_TransparentPrefix));
         }
     }
 }

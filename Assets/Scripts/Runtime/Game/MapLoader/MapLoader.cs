@@ -45,6 +45,12 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         private readonly MapTextureApplier m_TextureApplier = new();
 
         /// <summary>
+        /// Interner Service für das Erstellen der Skybox aus SoF2 skyParms-Daten.
+        /// Wird nur auf dem Client ausgeführt (benötigt TextureManager).
+        /// </summary>
+        private readonly MapSkyboxApplier m_SkyboxApplier = new();
+
+        /// <summary>
         /// Event das bei jeder Ladephase gefeuert wird.
         /// </summary>
         internal event Action<MapLoadPhase> OnProgress;
@@ -118,6 +124,12 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             OnProgress?.Invoke(MapLoadPhase.TexturesApplied);
             await Task.Yield();
 
+            // Skybox aus skyParms-Daten erstellen (nur Client, benötigt TextureManager)
+            m_SkyboxApplier.ApplySkybox(m_CurrentMapInstance);
+
+            OnProgress?.Invoke(MapLoadPhase.SkyboxApplied);
+            await Task.Yield();
+
             // Server: SpawnPoints einrichten
             SetupServerSpawnPoints();
 
@@ -149,8 +161,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             }
 
             // ServerPlayerSpawnPoints anhängen (falls nicht bereits vorhanden)
-            ServerPlayerSpawnPoints existing = spawnPointsTransform.GetComponent<ServerPlayerSpawnPoints>();
-            if (existing == null)
+            if (!spawnPointsTransform.TryGetComponent<ServerPlayerSpawnPoints>(out var existing))
             {
                 spawnPointsTransform.gameObject.AddComponent<ServerPlayerSpawnPoints>();
                 Debug.Log($"[MapLoader] ServerPlayerSpawnPoints an '{k_SpawnPointsObjectName}' angehängt " +

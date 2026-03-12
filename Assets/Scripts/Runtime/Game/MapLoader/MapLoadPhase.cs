@@ -31,6 +31,11 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         TexturesApplied,
 
         /// <summary>
+        /// Skybox aus skyParms-Daten erstellt und zugewiesen.
+        /// </summary>
+        SkyboxApplied,
+
+        /// <summary>
         /// Spawn-Points eingerichtet (nur Server).
         /// </summary>
         SpawnPointsReady,
