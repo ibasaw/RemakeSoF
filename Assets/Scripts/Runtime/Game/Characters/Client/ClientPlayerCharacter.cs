@@ -641,12 +641,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_Simulation.SetState(ack.Velocity, ack.IsGrounded, ack.IsJumping);
             Vector3 replayPosition = ack.Position;
 
+            // Eigenen Collider deaktivieren damit ResolvePenetration's OverlapCapsule
+            // sich nicht selbst trifft (gleiche Pattern wie RunPhysicsStep)
+            CapsuleCollider ownCollider = m_ColliderSystem != null ? m_ColliderSystem.PhysicsCollider : null;
+            if (ownCollider != null)
+            {
+                ownCollider.enabled = false;
+            }
+
             // Unbestaetigte Commands replaying (Server hat diese noch nicht verarbeitet)
             for (uint seq = ack.LastProcessedSequence + 1; seq < m_NextSequenceNumber; seq++)
             {
                 int idx = (int)(seq % k_PredictionBufferSize);
                 m_Simulation.Simulate(ref replayPosition, m_PredictionCommands[idx]);
                 m_PredictedPositions[idx] = replayPosition;
+            }
+
+            if (ownCollider != null)
+            {
+                ownCollider.enabled = true;
             }
 
             transform.position = replayPosition;
