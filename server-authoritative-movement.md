@@ -69,7 +69,7 @@ Simulate(ref position, cmd):
 
 | Parameter | SoF2 Original (QU) | Unity-Wert (m) | Erklärung |
 |-----------|---------------------|----------------|-----------|
-| `PmAccelerate` | 10.0 | 10.0 | Boden-Beschleunigung (dimensionslos) |
+| `PmAccelerate` | 6.0 | 6.0 | Boden-Beschleunigung (dimensionslos) |
 | `PmAirAccelerate` | 1.0 | 1.0 | Luft-Beschleunigung (dimensionslos) |
 | `PmFriction` | 6.0 | 6.0 | Boden-Reibung (dimensionslos) |
 | `PmStopSpeed` | 100 | 2.54 | Stop-Speed Schwelle (100 × 0.0254) |

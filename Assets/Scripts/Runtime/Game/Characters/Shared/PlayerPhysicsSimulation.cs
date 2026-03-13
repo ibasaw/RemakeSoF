@@ -16,7 +16,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         // ===== Physics Parameters (SoF2 Defaults, ×0.0254 Inches→Meter) =====
 
         /// <summary>Boden-Beschleunigung (SoF2 pm_accelerate). Dimensionslos.</summary>
-        public float PmAccelerate = 10.0f;
+        public float PmAccelerate = 6.0f;
 
         /// <summary>Luft-Beschleunigung (SoF2 pm_airaccelerate). Dimensionslos.</summary>
         public float PmAirAccelerate = 1.0f;
@@ -94,7 +94,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>SoF2 Ground-Trace Distanz: 0.25 Quake-Units × 0.0254 = 0.00635m.
         /// Erhöht auf 0.08m für BoxCast-Präzision bei Unity-Meshes.
         /// Zu kleine Werte führen dazu, dass der Spieler beim Laufen durch den Boden fällt.</summary>
-        private const float GROUND_TRACE_DIST = 0.08f; //original: 0.00635f
+        private const float GROUND_TRACE_DIST = 0.08f;//original: 0.00635f
 
         // ===== Simulation State (Runtime, nicht serialisiert) =====
 
@@ -857,7 +857,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 }
             }
 
-            PM_Accelerate(wishdir, wishspeed, PmAccelerate);
+            // SoF2: accelerate faster when ducked (bg_pmove.c: accelerate *= 2)
+            float accelerate = PmAccelerate;
+            if (IsCrouching)
+            {
+                accelerate *= 2f;
+            }
+
+            PM_Accelerate(wishdir, wishspeed, accelerate);
 
             // SoF2: clip velocity to ground plane + speed restore
             // "don't decrease velocity when going up or down a slope"

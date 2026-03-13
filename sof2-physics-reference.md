@@ -12,7 +12,7 @@ Dimensionslose Werte: unverändert
 
 | Parameter | SoF2 (QU) | Unity (m) | Typ | SoF2 Quelle |
 |-----------|-----------|-----------|-----|-------------|
-| `PmAccelerate` | 10.0 | 10.0 | dimensionslos | `pm_accelerate` |
+| `PmAccelerate` | 6.0 | 6.0 | dimensionslos | `pm_accelerate` |
 | `PmAirAccelerate` | 1.0 | 1.0 | dimensionslos | `pm_airaccelerate` |
 | `PmFriction` | 6.0 | 6.0 | dimensionslos | `pm_friction` |
 | `PmStopSpeed` | 100 | 2.54 | m/s | `pm_stopspeed` |
@@ -100,7 +100,8 @@ PM_CheckJump() → falls ja: AirMove    PM_CheckJump(cmd, y) → falls true: Air
 PM_Friction()                          PM_Friction()
 forward/right auf Ground projizieren   ClipVelocity(forward/right, groundNormal)
 wishvel 3D (inkl. Y aus Slope)         wishvel mit Slope-Y
-PM_Accelerate(wishdir, wishspeed)      PM_Accelerate(wishdir, wishspeed, PmAccelerate)
+Duck: accelerate *= 2                  Duck: accelerate = PmAccelerate * 2
+PM_Accelerate(wishdir, wishspeed)      PM_Accelerate(wishdir, wishspeed, accelerate)
 ClipVelocity + Speed-Restore           ClipVelocity + Speed-Restore (identisch)
 PM_StepSlideMove(qfalse)              PM_StepSlideMove(ref pos, false)
 ```

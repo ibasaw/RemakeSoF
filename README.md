@@ -67,7 +67,7 @@ SoF2/Quake III movement ported from `bg_pmove.c` / `bg_slidemove.c` to C# (`Play
 | Gravity | 80 | 800 |
 | Max Speed | 28 | 280 |
 | Jump Velocity | 27 | 270 |
-| Accelerate | 10 | 10 |
+| Accelerate | 6 | 6 |
 | Air Accelerate | 1 | 1 |
 | Friction | 6 | 6 |
 | Max Steepness | 0.7 | 0.7 |
