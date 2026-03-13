@@ -21,7 +21,7 @@ PM_CmdScale â€” Input-Normalisierung wie PM_CmdScale in Q3
 Sofortige Jump-Velocity â€” velocity.y = jumpVelocity (kein Force, kein AddForce)
 Manuelle Gravity â€” velocity.y -= gravity * dt statt Rigidbody
 CapsuleCast statt CharacterController â€” nÃ¤her an Q3's Trace-System als Unitys eingebaute Physik
-Die Werte (pm_maxspeed=28, pm_gravity=80, pm_friction=6, pm_accelerate=6, pm_airaccelerate=1, jumpvel=27) sind SoF2-Defaults. Einziger Unterschied zu purem Q3: du hast zusÃ¤tzliche Slope-Friction und die SoF2-spezifischen Step-Up Limits (pm_maxstep=1.8, pm_maxbarrier=3.2), was korrekt ist â€” SoF2 hat das gegenÃ¼ber Q3 erweitert.
+Die Werte (pm_maxspeed=28, pm_gravity=80, pm_friction=6, pm_accelerate=10, pm_airaccelerate=1, jumpvel=27) sind SoF2-Defaults. Einziger Unterschied zu purem Q3: du hast zusÃ¤tzliche Slope-Friction und die SoF2-spezifischen Step-Up Limits (pm_maxstep=1.8, pm_maxbarrier=3.2), was korrekt ist â€” SoF2 hat das gegenÃ¼ber Q3 erweitert.
 Was fehlt fÃ¼r 100% AuthentizitÃ¤t wÃ¤re Strafe-Jumping / Air-Control (Q3 pm_airaccelerate erlaubt Speed-Gain durch Richtungswechsel in der Luft). Das funktioniert bei dir automatisch, weil PM_AirMove mit pm_airaccelerate=1 und der Q3-Accelerate-Formel arbeitet â€” die erlaubt den klassischen Speed-Gain Bug by design.
 */
 
@@ -366,6 +366,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Walk-Taste gedrueckt (Shift).</summary>
         private bool m_IsWalkingPressed;
 
+        /// <summary>Crouch-Taste gedrueckt (C, Hold-to-Crouch).</summary>
+        private bool m_IsCrouchPressed;
+
         [Header("Animation Smoothing")]
         [SerializeField]
         private float m_AnimParamSmooth = 10f;
@@ -521,6 +524,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Input lesen (wird in Physik-Pipeline + LateUpdate konsumiert)
             m_MoveInput = m_PlayerActions.Move.ReadValue<Vector2>();
             m_IsWalkingPressed = m_PlayerActions.Walk.IsPressed();
+            m_IsCrouchPressed = m_PlayerActions.Crouch.IsPressed();
 
             // Hold-to-Jump: solange Jump gehalten wird, jeden Frame Jump-Request setzen
             //if (m_PlayerActions.Jump.IsPressed())
@@ -579,6 +583,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (m_JumpRequested) buttons |= CommandButtons.Jump;
             if (m_IsWalkingPressed) buttons |= CommandButtons.Walk;
             if (m_IsAttacking) buttons |= CommandButtons.Attack;
+            if (m_IsCrouchPressed) buttons |= CommandButtons.Crouch;
 
             PlayerCommand cmd = new()
             {
@@ -606,6 +611,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (ownCollider != null)
             {
                 ownCollider.enabled = true;
+            }
+
+            // Crouch-Collider-Update: Simulation hat IsCrouching gesetzt (in PM_CheckDuck),
+            // ClientColliderSystem aktualisieren damit der visuelle + physische Collider passt
+            if (m_ColliderSystem != null)
+            {
+                m_ColliderSystem.UpdateCapsuleSizeForState(m_Simulation.IsCrouching);
             }
 
             // Jump-Animation ueber Netzwerk triggern
@@ -656,7 +668,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             // Reconciliation: Server-State uebernehmen
-            m_Simulation.SetState(ack.Velocity, ack.IsGrounded, ack.IsJumping);
+            m_Simulation.SetState(ack.Velocity, ack.IsGrounded, ack.IsJumping, ack.IsCrouching);
             Vector3 replayPosition = ack.Position;
 
             // Eigenen Collider deaktivieren damit ResolvePenetration's OverlapBox

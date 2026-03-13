@@ -2,7 +2,8 @@
 
 ## Übersicht
 
-Dieses Dokument vergleicht das originale SoF2/Quake3-Kollisionssystem mit der aktuellen Unity-Implementierung und gibt eine Empfehlung für den besseren Ansatz.
+Dieses Dokument vergleicht das originale SoF2/Quake3-Kollisionssystem mit der aktuellen Unity-Implementierung.
+Die Unity-Implementierung nutzt **BoxCast (AABB)** für maximale SoF2-Authentizität.
 
 ---
 
@@ -90,33 +91,33 @@ pm->trace(&trace, pm->ps->origin, pm->mins, pm->maxs, end,
 
 ---
 
-## Unity Implementierung (Aktuell)
+## Unity Implementierung (Aktuell — BoxCast AABB)
 
 ### Architektur
 
-Unity nutzt ein **physikbasiertes System** mit CapsuleCollider + CapsuleCast:
+Unity nutzt ein **physikbasiertes System** mit BoxCollider + BoxCast (AABB, SoF2-authentisch):
 
 ```
 Server (ServerPlayerCharacter)
-  ├─ CapsuleCollider (für andere Spieler sichtbar)
+  ├─ BoxCollider (für andere Spieler sichtbar)
   ├─ PlayerPhysicsSimulation.Simulate()
   │    ├─ Disable eigenen Collider
-  │    ├─ Physics.CapsuleCast(..., GroundMask)
-  │    │    └─ Unity Physics Engine
+  │    ├─ Physics.BoxCast(..., Quaternion.identity, GroundMask)
+  │    │    └─ Unity Physics Engine (AABB Sweep)
   │    │         ├─ World Colliders (Static)
-  │    │         ├─ Andere Spieler CapsuleColliders
+  │    │         ├─ Andere Spieler BoxColliders
   │    │         └─ LayerMask filtert
   │    └─ Enable eigenen Collider
   └─ Ergebnis → ServerMovementAck an Client
 
 Client (ClientPlayerCharacter + ClientColliderSystem)
-  ├─ CapsuleCollider (für Client-seitige Prediction)
+  ├─ BoxCollider (für Client-seitige Prediction)
   ├─ ClientColliderSystem.UpdatePhysicsCollider()
   └─ PlayerPhysicsSimulation.Simulate() (Prediction)
-       └─ Gleicher CapsuleCast-Mechanismus
+       └─ Gleicher BoxCast-Mechanismus
 ```
 
-### Kernkonzept: LayerMask + CapsuleCollider
+### Kernkonzept: LayerMask + BoxCollider
 
 Statt Content Flags nutzt Unity **Layers**:
 
@@ -128,26 +129,48 @@ Layer 8:  World          ← Statische Welt-Geometrie
 ...
 ```
 
-**GroundMask** (LayerMask) steuert, was CapsuleCast trifft:
+**GroundMask** (LayerMask) steuert, was BoxCast trifft:
 
 ```csharp
 // Muss Player-Layer inkludieren für Spieler-Spieler-Kollision
 public LayerMask GroundMask = ~0;  // Aktuell: ALLES
 ```
 
-### Spieler-Collider
+### Spieler-Collider (BoxCollider — SoF2 AABB)
 
 ```csharp
-// ClientColliderSystem — berechnet Capsule aus Bones
-CapsuleCollider m_PhysicsCollider;
-m_PhysicsCollider.height = capsuleHeight;   // aus Cranium-Bone
-m_PhysicsCollider.radius = capsuleRadius;   // aus Fuß-Abstand
-m_PhysicsCollider.center = capsuleCenter;   // Mitte
+// ClientColliderSystem — berechnet Box aus Bones oder SoF2-Fixwerte
+BoxCollider m_PhysicsCollider;
+m_PhysicsCollider.size = new Vector3(capsuleRadius * 2f, capsuleHeight, capsuleRadius * 2f);
+m_PhysicsCollider.center = capsuleCenter;
 
-// ServerPlayerCharacter — Default-Werte bis Client sendet
-m_PhysicsCollider.height = 1.8f;
-m_PhysicsCollider.radius = 0.25f;
-m_PhysicsCollider.center = (0, 0.9, 0);
+// SoF2-Fixwerte:
+// Standing:  height=2.2606m, radius=0.381m → size=(0.762, 2.2606, 0.762)
+// Crouching: height=1.6256m, radius=0.381m → size=(0.762, 1.6256, 0.762)
+
+// ServerPlayerCharacter — Default bis Client sendet
+m_PhysicsCollider.size = new Vector3(0.5f, 1.8f, 0.5f);
+m_PhysicsCollider.center = new Vector3(0, 0.9f, 0);
+```
+
+### BoxCast-Aufruf (AABB-Sweep)
+
+```csharp
+// BoxHalfExtents = (CapsuleRadius, CapsuleHeight * 0.5f, CapsuleRadius)
+Vector3 halfExtents = BoxHalfExtents;
+
+// Sweep: identisch mit SoF2 trap_Trace(mins, maxs, end)
+Physics.BoxCast(center, halfExtents, direction, out RaycastHit hit,
+    Quaternion.identity,  // ← AABB, keine Rotation
+    distance, GroundMask);
+
+// Ground Detection: leicht geschrumpft XZ
+Vector3 shrunkHalf = new Vector3(halfExtents.x * 0.95f, halfExtents.y, halfExtents.z * 0.95f);
+Physics.BoxCast(center, shrunkHalf, Vector3.down, out hit,
+    Quaternion.identity, GROUND_TRACE_DIST, GroundMask);
+
+// Depenetration: OverlapBox
+Collider[] overlaps = Physics.OverlapBox(center, halfExtents, Quaternion.identity, GroundMask);
 ```
 
 ### Self-Collision-Vermeidung
@@ -156,9 +179,9 @@ m_PhysicsCollider.center = (0, 0.9, 0);
 // SoF2: clientNum Parameter ignoriert eigenen Spieler automatisch
 // Unity: Manuell Collider deaktivieren/aktivieren
 
-m_PhysicsCollider.enabled = false;  // Vor CapsuleCast
-// ... CapsuleCast ...
-m_PhysicsCollider.enabled = true;   // Nach CapsuleCast
+m_PhysicsCollider.enabled = false;  // Vor BoxCast
+// ... BoxCast ...
+m_PhysicsCollider.enabled = true;   // Nach BoxCast
 ```
 
 ---
@@ -167,84 +190,63 @@ m_PhysicsCollider.enabled = true;   // Nach CapsuleCast
 
 | Aspekt | SoF2 (Quake3) | Unity (Aktuell) |
 |--------|---------------|-----------------|
-| **Trace-Funktion** | `trap_Trace(trace, origin, mins, maxs, end, clientNum, mask)` | `Physics.CapsuleCast(top, bottom, radius, dir, hit, dist, mask)` |
-| **Kollisionsform** | AABB (mins/maxs Box) | Capsule (Höhe + Radius) |
+| **Trace-Funktion** | `trap_Trace(trace, origin, mins, maxs, end, clientNum, mask)` | `Physics.BoxCast(center, halfExtents, dir, hit, Quaternion.identity, dist, mask)` |
+| **Kollisionsform** | AABB (mins/maxs Box) | AABB (BoxCast mit `Quaternion.identity`) |
 | **Filterung** | Content Flags (`MASK_PLAYERSOLID`) | LayerMask |
 | **Self-Collision** | `clientNum` Parameter — Engine ignoriert automatisch | Collider manuell disable/enable |
-| **Spieler-Registrierung** | Server registriert Clip-Model automatisch | CapsuleCollider als Component hinzufügen |
+| **Spieler-Registrierung** | Server registriert Clip-Model automatisch | BoxCollider als Component hinzufügen |
 | **Spieler-Spieler** | `CONTENTS_BODY` in `MASK_PLAYERSOLID` | Player-Layer in GroundMask |
 | **Zuschauer** | `MASK_PLAYERSOLID & ~CONTENTS_BODY` | GroundMask ohne Player-Layer |
 | **Slide-Move** | 4-Bump + PM_ClipVelocity | 4-Bump + PM_ClipVelocity (identisch) |
-| **Step-Up** | `maxs[2]` reduzieren + Trace | CapsuleCast hoch/vorwärts/runter |
-| **Ground-Check** | Trace nach unten + Normal prüfen | CapsuleCast nach unten + Normal + Grace Period |
+| **Step-Up** | Erhöhe origin + Trace + Step-Down + Distanzvergleich | BoxCast hoch/vorwärts/runter + Distanzvergleich |
+| **Ground-Check** | AABB-Trace nach unten + Normal prüfen | BoxCast nach unten + Normal prüfen |
 | **Autorität** | Nur Server | Server autoritativ + Client Prediction |
 | **Broadphase** | Custom BSP Tree | Unity PhysX (optimiert) |
+| **Depenetration** | BSP hat kein Tunneling | OverlapBox + iteratives Push-Out |
 
 ---
 
-## Welcher Ansatz ist besser?
+## Warum BoxCast (AABB) statt CapsuleCast
 
-### Empfehlung: **Unity-nativer Ansatz (CapsuleCollider + CapsuleCast)**
+### Entscheidung: **BoxCast = SoF2-authentisch**
 
-#### Warum:
+SoF2 nutzte AABB-Traces (`trap_Trace` mit `mins`/`maxs`). Für maximale Authentizität verwendet der Unity-Port ebenfalls AABB via `Physics.BoxCast` mit `Quaternion.identity`.
 
-1. **Konzeptuell identisch**
-   - SoF2's `trap_Trace` = Unity's `Physics.CapsuleCast` — beides Sweep-Tests gegen registrierte Geometrie
-   - SoF2's Content Flags = Unity's LayerMask — beides bitmaskenbasierte Filterung
-   - SoF2's clientNum-basierte Self-Exclusion = Unity's Collider disable/enable
-   - Das **Konzept** ist 1:1 das gleiche, nur die API ist anders
+#### Vorteile von BoxCast (AABB):
 
-2. **PhysX-Engine ist überlegen**
-   - Unity nutzt NVIDIA PhysX — hochoptimierte Broadphase (Sweep-and-Prune, BVH)
-   - Quake3's BSP-Trace ist schnell für statische Welt, aber nicht für viele dynamische Entitäten
-   - PhysX skaliert besser mit vielen Spielern
+1. **SoF2-Authentizität**
+   - Identische Kollisionsgeometrie wie das Original
+   - Strafe-Jumping, Bhop, Step-Up verhalten sich wie in SoF2
+   - Ecken-/Kantenverhalten ist identisch — keine Capsule-Rundung die Gameplay verändert
 
-3. **Capsule vs AABB**
-   - Capsule ist die **bessere Wahl** für Character-Collision in Unity
-   - Gleitet besser an Wänden/Ecken (keine AABB-Kanten-Artefakte)
-   - SoF2 nutzte AABB nur wegen Engine-Limitierung — die Engine konnte keine Capsule-Traces
+2. **Performance**
+   - BoxCast mit `Quaternion.identity` ist der schnellste Sweep-Test in PhysX (einfache SAT-Tests)
+   - Schneller als CapsuleCast (GJK/EPA) und schneller als rotierte BoxCasts
 
-4. **Integration**
-   - CapsuleCollider integriert sich nahtlos mit Unity's gesamtem Physik-Stack
-   - Raycasts, Trigger, Rigidbody-Interaktion — alles funktioniert automatisch
-   - Ein eigenes Trace-System zu bauen wäre Over-Engineering
+3. **Einfachheit**
+   - `BoxHalfExtents = (radius, height*0.5, radius)` — triviale Berechnung
+   - Keine Top/Bottom-Sphere-Berechnung wie bei CapsuleCast nötig
 
-5. **Server-autoritativ funktioniert identisch**
-   - Server hat CapsuleCollider für jeden Spieler → CapsuleCast trifft sie
-   - Client Prediction nutzt den gleichen Code → gleiche Ergebnisse
-   - Disable/Enable für Self-Collision ist minimalinvasiv
+#### Was CapsuleCast besser macht (aber hier nicht relevant):
 
-#### Was man NICHT nachbauen sollte:
-
-- ❌ **Eigenes Trace-System** — PhysX ist schneller und zuverlässiger als alles Selbstgebaute
-- ❌ **AABB statt Capsule** — Capsule ist in Unity die bessere Wahl
-- ❌ **Content Flags System** — LayerMask ist das Unity-Äquivalent und funktioniert identisch
-- ❌ **Zentrales Clip-Model-Management** — Unity's Physics Engine übernimmt das automatisch
-
-#### Was man beibehalten/portieren SOLL:
-
-- ✅ **4-Bump SlideMove** — exakt portiert, funktioniert identisch
-- ✅ **PM_ClipVelocity** — 1:1 identisch
-- ✅ **Step-Up Logik** — konzeptuell gleich, Unity-angepasst
-- ✅ **MASK_PLAYERSOLID-Konzept** — als LayerMask: GroundMask muss World + Player-Layer enthalten
-- ✅ **Disable/Enable für Self-Collision** — Unity-Äquivalent zu clientNum-Exclusion
-- ✅ **Server-autoritativ** — gleiche Architektur wie SoF2
+- Gleitet smoother an Ecken (Rundung) — aber SoF2 hat diese Rundung NICHT
+- Besser für Third-Person-Spiele mit modernem Character-Feel — nicht unser Ziel
 
 ---
 
 ## Aktuelle Implementierungsdetails
 
-### CapsuleCollider-Lifecycle
+### BoxCollider-Lifecycle
 
 ```
 Spieler spawnt
-  ├─ Server: ServerPlayerCharacter.Awake()
-  │    └─ AddComponent<CapsuleCollider>() mit Default-Werten (1.8m, 0.25r)
+  ├─ Server: ServerPlayerCharacter.InitializeServer()
+  │    └─ AddComponent<BoxCollider>() mit Default-Werten
   │
   └─ Client: ClientColliderSystem
        └─ CalculateAutoCapsuleSize() → UpdatePhysicsCollider()
-            └─ AddComponent<CapsuleCollider>() mit Bone-berechneten Werten
-            └─ SendCapsuleDimensions() → Server aktualisiert seine Werte
+            └─ AddComponent<BoxCollider>() mit Bone-berechneten Werten
+            └─ SendCapsuleDimensions(h, r, center) → Server aktualisiert
 ```
 
 ### Self-Collision-Flow (Server)
@@ -253,7 +255,7 @@ Spieler spawnt
 ProcessCommand(PlayerCommand cmd)
   1. m_PhysicsCollider.enabled = false
   2. m_Simulation.Simulate(ref position, cmd)
-     └─ CapsuleCast trifft NUR andere Spieler + Welt
+     └─ BoxCast trifft NUR andere Spieler + Welt
   3. m_PhysicsCollider.enabled = true
   4. return ServerMovementAck
 ```
@@ -264,7 +266,7 @@ ProcessCommand(PlayerCommand cmd)
 RunPhysicsStep()
   1. m_ColliderSystem.PhysicsCollider.enabled = false  (falls vorhanden)
   2. m_Simulation.Simulate(ref position, cmd)
-     └─ CapsuleCast trifft NUR andere Spieler + Welt
+     └─ BoxCast trifft NUR andere Spieler + Welt
   3. m_ColliderSystem.PhysicsCollider.enabled = true
   4. Position speichern für Reconciliation
 ```
@@ -289,15 +291,15 @@ GroundMask sollte NICHT enthalten:
 
 | SoF2 Konzept | Unity Äquivalent | Status |
 |---------------|-------------------|--------|
-| `trap_Trace()` | `Physics.CapsuleCast()` | ✅ Portiert |
+| `trap_Trace()` | `Physics.BoxCast()` | ✅ AABB-authentisch |
 | `MASK_PLAYERSOLID` | `GroundMask` (LayerMask) | ✅ Portiert |
 | `CONTENTS_BODY` | Player-Layer | ✅ Implementiert |
 | `CONTENTS_SOLID` | Default/World-Layer | ✅ Implementiert |
 | `clientNum` Self-Exclusion | Collider disable/enable | ✅ Implementiert |
-| `pm->mins/maxs` (AABB) | CapsuleCollider (Capsule) | ✅ Besser als Original |
-| `PM_SlideMove` 4-Bump | `PM_StepSlideMove` 4-Bump | ✅ Portiert |
+| `pm->mins/maxs` (AABB) | BoxCollider + BoxCast (AABB) | ✅ Identisch mit Original |
+| `PM_SlideMove` 4-Bump | `PM_SlideMove` 4-Bump | ✅ 1:1 Port |
 | `PM_ClipVelocity` | `PM_ClipVelocity` | ✅ 1:1 Identisch |
-| `STEPSIZE` (18) | `PmStepSize` (1.8f) | ✅ /10 skaliert |
+| `STEPSIZE` (18 QU) | `PmStepSize` (0.4572m) | ✅ Korrekt konvertiert |
 | `OVERCLIP` (1.001f) | `OVERCLIP` (1.001f) | ✅ Identisch |
 | `PM_AddTouchEnt()` | Nicht portiert | ⚠️ Für Trigger/Items nötig |
 | `MASK_PLAYERSOLID & ~CONTENTS_BODY` (Spectator) | GroundMask ohne Player-Layer | ⚠️ Noch nicht implementiert |
@@ -308,21 +310,13 @@ GroundMask sollte NICHT enthalten:
 
 ## Zusammenfassung
 
-> **Der Unity-Ansatz ist der richtige.** SoF2's Kollisionssystem und Unity's Physics.CapsuleCast sind
-> konzeptuell identisch — beide nutzen Sweep-Tests mit Masken-Filterung gegen registrierte Geometrie.
-> Der Unterschied ist nur die API, nicht die Architektur.
+> **BoxCast (AABB) ist die richtige Wahl für SoF2-Authentizität.** SoF2 nutzte AABB-Traces — der Unity-Port
+> bildet das 1:1 mit `Physics.BoxCast(center, halfExtents, dir, hit, Quaternion.identity, dist, mask)` ab.
+> LayerMask ist das Äquivalent zu Content Flags, Collider-Disable das Äquivalent zu clientNum.
 >
-> Unity's PhysX-Engine liefert eine bessere Broadphase, Capsule statt AABB ist smoother,
-> und LayerMask ist das direkte Äquivalent zu Content Flags.
-> Ein eigenes Trace-System nachzubauen wäre Over-Engineering ohne Mehrwert.
-
-
-
-Nein — mit einem einzelnen CapsuleCollider pro Spieler kannst du keine Headshots erkennen. Der CapsuleCast trifft nur die äußere Capsule-Hülle und liefert einen einzigen RaycastHit-Punkt — du weißt nicht, ob Kopf, Torso oder Beine getroffen wurden.
-
-Lass mich kurz prüfen, was im Projekt bereits an Hit-Detection existiert und wie SoF2 das gelöst hat:
-
-Nein — mit einem einzelnen CapsuleCollider kannst du keine Headshots erkennen. Der liefert nur einen Hit-Punkt auf der Capsule-Oberfläche — du weißt nicht, welcher Körperteil getroffen wurde.
+> Die Kernphysik (SlideMove, StepSlideMove, Accelerate, Friction, ClipVelocity) ist identischer C-zu-C#-Port
+> aus bg_pmove.c/bg_slidemove.c. Nur Unity-spezifische Anpassungen (OverlapBox-Depenetration,
+> CorrectGroundPosition, erhöhte GROUND_TRACE_DIST) wurden hinzugefügt.
 
 Was du hast vs. was du brauchst
 System	Dein Setup (CapsuleCollider)	Headshot-Detection

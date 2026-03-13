@@ -16,7 +16,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         // ===== Physics Parameters (SoF2 Defaults, ×0.0254 Inches→Meter) =====
 
         /// <summary>Boden-Beschleunigung (SoF2 pm_accelerate). Dimensionslos.</summary>
-        public float PmAccelerate = 6.0f;
+        public float PmAccelerate = 10.0f;
 
         /// <summary>Luft-Beschleunigung (SoF2 pm_airaccelerate). Dimensionslos.</summary>
         public float PmAirAccelerate = 1.0f;
@@ -47,6 +47,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
         /// <summary>Duck Speed Scale (SoF2 PM_DUCKSCALE = 0.25).</summary>
         public float PmDuckScale = 0.25f;
+
+        /// <summary>SoF2 Standing-Hoehe: 89 Units (-46 bis 43) × 0.0254 m/unit.</summary>
+        public float StandingHeight = 2.2606f;
+
+        /// <summary>SoF2 Crouching-Hoehe: 64 Units (-46 bis 18) × 0.0254 m/unit.</summary>
+        public float CrouchingHeight = 1.6256f;
 
         /// <summary>Jump-Debounce nach harter Landung (SoF2: 250ms).</summary>
         public float JumpDebounceAfterMs = 0.25f;
@@ -137,6 +143,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
         /// <summary>SoF2 pml.previous_velocity — Velocity vor diesem Frame (für CrashLand).</summary>
         private Vector3 m_PreviousVelocity;
+
+        /// <summary>SoF2 PMF_CROUCH_JUMP — In der Luft geduckt (Crouch-High-Jump).</summary>
+        private bool m_CrouchJumping;
 
         /// <summary>Scratch-Array für PM_SlideMove Clip-Planes (vermeidet Heap-Allokation).</summary>
         private readonly Vector3[] m_ClipPlanes = new Vector3[MAX_CLIP_PLANES];
@@ -252,11 +261,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// Setzt den Simulations-State extern (für Reconciliation).
         /// Client ruft dies auf wenn der Server eine Korrektur sendet.
         /// </summary>
-        public void SetState(Vector3 velocity, bool isGrounded, bool isJumping)
+        public void SetState(Vector3 velocity, bool isGrounded, bool isJumping, bool isCrouching)
         {
             Velocity = velocity;
             IsGrounded = isGrounded;
             IsJumping = isJumping;
+            IsCrouching = isCrouching;
         }
 
         // ===================================================================
@@ -298,8 +308,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             bool wasGrounded = IsGrounded;
 
+            // SoF2: PM_CheckDuck before PM_GroundTrace (sets mins/maxs)
+            PM_CheckDuck(ref position, cmd);
+
             // 1. Ground trace before movement (SoF2: PM_GroundTrace)
             PM_GroundTrace(ref position);
+
+            // SoF2: PM_CheckCrouchJump after PM_GroundTrace
+            PM_CheckCrouchJump(cmd);
 
             // 2. Movement (includes friction, acceleration, collision, gravity in air)
             if (m_Walking)
@@ -433,6 +449,80 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
                 Vector3 hDelta = new(position.x - m_BhopChainStartPosition.x, 0f, position.z - m_BhopChainStartPosition.z);
                 BhopChainDistance = hDelta.magnitude;
+            }
+        }
+
+        // ===================================================================
+        // SoF2 PM_CheckDuck / PM_CheckCrouchJump (bg_pmove.c)
+        // ===================================================================
+
+        /// <summary>
+        /// SoF2 PM_CheckDuck — exakter Port.
+        /// Setzt IsCrouching basierend auf Crouch-Button und Headroom-Trace.
+        /// Aktualisiert CapsuleHeight und CapsuleCenter fuer Standing/Crouching.
+        /// Wird VOR PM_GroundTrace aufgerufen (SoF2: PM_CheckDuck sets mins/maxs).
+        /// </summary>
+        private void PM_CheckDuck(ref Vector3 position, PlayerCommand cmd)
+        {
+            if (cmd.HasButton(CommandButtons.Crouch))
+            {
+                // SoF2: pm->ps->pm_flags |= PMF_DUCKED
+                IsCrouching = true;
+            }
+            else
+            {
+                // Aufstehen: pruefen ob genug Platz (SoF2: trace mit standing maxs)
+                if (IsCrouching)
+                {
+                    // Teste ob stehende Hoehe an aktueller Position passt
+                    Vector3 standingHalf = new(CapsuleRadius, StandingHeight * 0.5f, CapsuleRadius);
+                    Vector3 standingCenter = position + new Vector3(0f, StandingHeight * 0.5f, 0f);
+
+                    if (!Physics.CheckBox(standingCenter, standingHalf, Quaternion.identity, GroundMask, QueryTriggerInteraction.Ignore))
+                    {
+                        // SoF2: pm->ps->pm_flags &= ~PMF_DUCKED
+                        IsCrouching = false;
+                    }
+                    // Else: bleib geduckt, kein Platz zum Aufstehen
+                }
+            }
+
+            // Dimensionen setzen basierend auf Crouch-State
+            float targetHeight = IsCrouching ? CrouchingHeight : StandingHeight;
+
+            // Nur aktualisieren wenn sich die Hoehe tatsaechlich geaendert hat
+            if (Mathf.Abs(CapsuleHeight - targetHeight) > 0.001f)
+            {
+                CapsuleHeight = targetHeight;
+                CapsuleCenter = new Vector3(0f, targetHeight * 0.5f, 0f);
+            }
+        }
+
+        /// <summary>
+        /// SoF2 PM_CheckCrouchJump — exakter Port.
+        /// Erlaubt Crouching in der Luft waehrend eines Sprungs.
+        /// Zieht die Beine hoch (Box wird von oben gekuerzt) — ermoeglicht
+        /// das Springen durch niedrige Oeffnungen (Crouch-High-Jump).
+        /// </summary>
+        private void PM_CheckCrouchJump(PlayerCommand cmd)
+        {
+            // Bereits im Crouch-Jump: pruefen ob vorbei
+            if (m_CrouchJumping)
+            {
+                if (m_GroundPlane)
+                {
+                    // SoF2: pm->ps->pm_flags &= ~PMF_CROUCH_JUMP
+                    m_CrouchJumping = false;
+                }
+            }
+            else
+            {
+                // Nicht am Boden + springend + Crouch gedrueckt → Crouch-Jump
+                if (!m_GroundPlane && IsJumping && cmd.HasButton(CommandButtons.Crouch))
+                {
+                    // SoF2: pm->ps->pm_flags |= PMF_CROUCH_JUMP
+                    m_CrouchJumping = true;
+                }
             }
         }
 
@@ -741,6 +831,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             float scale = PM_CmdScale(cmd.MoveInput);
             wishspeed = scale * PmMaxSpeed;
+
+            // SoF2: Duck Speed Clamp — nur in WalkMove, NICHT in AirMove
+            // bg_pmove.c: if (pm->ps->pm_flags & PMF_DUCKED) wishspeed *= pm_duckScale
+            if (IsCrouching)
+            {
+                float duckMax = PmMaxSpeed * PmDuckScale;
+                if (wishspeed > duckMax)
+                {
+                    wishspeed = duckMax;
+                }
+            }
 
             PM_Accelerate(wishdir, wishspeed, PmAccelerate);
 

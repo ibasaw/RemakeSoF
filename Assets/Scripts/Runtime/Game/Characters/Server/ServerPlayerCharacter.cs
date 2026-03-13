@@ -91,6 +91,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                     Velocity = Vector3.zero,
                     IsGrounded = true,
                     IsJumping = false,
+                    IsCrouching = false,
                 };
             }
 
@@ -114,6 +115,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                 m_PhysicsCollider.enabled = true;
             }
 
+            // Server-Collider an Crouch-State anpassen
+            if (m_PhysicsCollider != null)
+            {
+                float h = m_Simulation.CapsuleHeight;
+                float r = m_Simulation.CapsuleRadius;
+                m_PhysicsCollider.size = new Vector3(r * 2f, h, r * 2f);
+                m_PhysicsCollider.center = m_Simulation.CapsuleCenter;
+            }
+
             return new ServerMovementAck
             {
                 LastProcessedSequence = cmd.SequenceNumber,
@@ -121,6 +131,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                 Velocity = m_Simulation.Velocity,
                 IsGrounded = m_Simulation.IsGrounded,
                 IsJumping = m_Simulation.IsJumping,
+                IsCrouching = m_Simulation.IsCrouching,
             };
         }
 

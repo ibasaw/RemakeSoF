@@ -17,12 +17,12 @@
 ┌────────────────────────────────────────────────────────────────────────────────┐
 │                      PlayerPhysicsSimulation   [Serializable]                  │
 │  Shared Pure C# Klasse — identischer Code auf Client + Server                 │
-│  ● PM_GroundTrace (Ground-Detection VOR + NACH Bewegung)                       │
+│  ● PM_GroundTrace (BoxCast Ground-Detection VOR + NACH Bewegung)               │
 │  ● PM_WalkMove / PM_AirMove (Friction + Accelerate + StepSlideMove)            │
 │  ● PM_SlideMove (Multi-Plane Clipping, Gravity Half-Step)                      │
 │  ● PM_StepSlideMove (SlideMove → Step-Up → SlideMove → Step-Down)              │
 │  ● PM_Friction / PM_Accelerate / PM_ClipVelocity / PM_CheckJump               │
-│  ● ResolvePenetration (Depenetration mit Raycast-Fallback)                     │
+│  ● ResolvePenetration (OverlapBox + Depenetration)                             │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -32,8 +32,9 @@
 |-------|-------------|
 | `Assets/Scripts/Runtime/Game/Characters/Shared/PlayerPhysicsSimulation.cs` | `[Serializable]` SoF2-Physik-Simulation. Wird inline auf Client und Server im Inspector serialisiert. Keine Duplikation der Parameter. |
 | `Assets/Scripts/Runtime/Game/Characters/Shared/PlayerCommand.cs` | `PlayerCommand` (Input-Struct) + `ServerMovementAck` (Bestätigung). Beide `INetworkSerializable`. |
-| `Assets/Scripts/Runtime/Game/Characters/Client/ClientPlayerCharacter.cs` | Owner-Client: Input → Prediction → Ringbuffer → RPC → Reconciliation. Hält `[SerializeField] PlayerPhysicsSimulation m_Simulation`. |
-| `Assets/Scripts/Runtime/Game/Characters/Server/ServerPlayerCharacter.cs` | Server: Empfängt Commands → `ProcessCommand()` → autoritative Position. Hält eigene `[SerializeField] PlayerPhysicsSimulation m_Simulation`. |
+| `Assets/Scripts/Runtime/Game/Characters/Client/ClientPlayerCharacter.cs` | Owner-Client: Input → Prediction → Ringbuffer → RPC → Reconciliation. Hält `[SerializeField] PlayerPhysicsSimulation m_Simulation`. BoxCollider disable/enable für Self-Collision. |
+| `Assets/Scripts/Runtime/Game/Characters/Server/ServerPlayerCharacter.cs` | Server: Empfängt Commands → `ProcessCommand()` → autoritative Position. Hält eigene `[SerializeField] PlayerPhysicsSimulation m_Simulation`. BoxCollider disable/enable für Self-Collision. |
+| `Assets/Scripts/Runtime/Game/Characters/Client/ClientColliderSystem.cs` | Box-Dimensionen aus Bones / SoF2-Fixwerte berechnen, Visual-Debug-Mesh. |
 | `Assets/Scripts/Runtime/Game/Characters/Networked/NetworkedPlayerCharacter.cs` | RPC-Bridge: `SubmitCommandServerRpc`, `MovementAckClientRpc`, `SubmitCapsuleDimensionsServerRpc`. |
 
 ## Physik-Pipeline (pro Frame) — SoF2 PmoveSingle Exact Port
@@ -51,13 +52,11 @@ Simulate(ref position, cmd):
      │         ├─ Forward/Right via ClipVelocity auf Ground projizieren
      │         ├─ PM_Accelerate(wishdir, wishspeed, PmAccelerate)
      │         ├─ ClipVelocity + Speed-Restore (Slope-Speed erhalten)
-     │         ├─ ApplyVelocityLimits
      │         └─ PM_StepSlideMove(ref position, gravity=false)
      └─ Nein: PM_AirMove(ref position, cmd)
                ├─ PM_Friction (kein Drop in Luft)
                ├─ PM_Accelerate(wishdir, wishspeed, PmAirAccelerate)
                ├─ Clip gegen steile GroundPlane (falls vorhanden)
-               ├─ ApplyVelocityLimits
                └─ PM_StepSlideMove(ref position, gravity=true)
                     └─ PM_SlideMove: Gravity Half-Step Integration
                        endVel.y = vel.y - g*dt
@@ -70,17 +69,14 @@ Simulate(ref position, cmd):
 
 | Parameter | SoF2 Original (QU) | Unity-Wert (m) | Erklärung |
 |-----------|---------------------|----------------|-----------|
-| `PmAccelerate` | 6.0 | 6.0 | Boden-Beschleunigung (dimensionslos) |
+| `PmAccelerate` | 10.0 | 10.0 | Boden-Beschleunigung (dimensionslos) |
 | `PmAirAccelerate` | 1.0 | 1.0 | Luft-Beschleunigung (dimensionslos) |
 | `PmFriction` | 6.0 | 6.0 | Boden-Reibung (dimensionslos) |
 | `PmStopSpeed` | 100 | 2.54 | Stop-Speed Schwelle (100 × 0.0254) |
 | `PmMaxSpeed` | 280 (g_speed) | 7.112 | Wish-Speed (280 × 0.0254) |
 | `PmGravity` | 800 | 20.32 | Gravitation (800 × 0.0254) |
-| `PhysMaxVelocity` | 320 | 8.128 | Max Luft-Velocity (320 × 0.0254) |
-| `PhysMaxWalkVelocity` | 320 | 8.128 | Max Boden-Velocity (320 × 0.0254) |
 | `JumpVelocity` | 270 | 6.858 | Sprung-Y-Velocity (270 × 0.0254) |
 | `PmMaxSteepness` | 0.7 | 0.7 | MIN_WALK_NORMAL (dimensionslos) |
-| `PmMaxStep` | 18 | 0.4572 | Step-Höhe (18 × 0.0254) |
 | `PmStepSize` | 18 | 0.4572 | STEPSIZE (18 × 0.0254) |
 | `PmMaxBarrier` | 32 | 0.8128 | Max Barriere (32 × 0.0254) |
 | `PmDuckScale` | 0.25 | 0.25 | Duck Speed Scale (dimensionslos) |
@@ -92,7 +88,7 @@ Simulate(ref position, cmd):
 | `OVERCLIP` | 1.001 | 1.001 | Float-Precision Guard in ClipVelocity |
 | `SKIN_WIDTH` | 0.02m | — | Minimaler Abstand zu Oberflächen (Unity-spezifisch) |
 | `MAX_CLIP_PLANES` | 5 | 5 | Max Planes in PM_SlideMove |
-| `GROUND_TRACE_DIST` | 0.08m | 0.00635m (0.25 QU) | Ground-Trace Distanz (erhöht für Unity CapsuleCast) |
+| `GROUND_TRACE_DIST` | 0.08m | 0.00635m (0.25 QU) | Ground-Trace Distanz (erhöht für Unity BoxCast) |
 | `MAX_DEPENETRATION_ITERATIONS` | 3 | — | Depenetration Loops (Unity-spezifisch) |
 
 ### Sprung-Physik — Theoretisch vs Gemessen
@@ -134,7 +130,7 @@ Client (bei Empfang):
 | `SubmitCommandServerRpc(PlayerCommand)` | Client → Server | Input-Daten für einen Frame |
 | `MovementAckClientRpc(ServerMovementAck)` | Server → Client | Autoritative Position + State |
 | `CorrectionClientRpc(Vector3, Quaternion)` | Server → Client | Hard-Correction (Respawn/Teleport) |
-| `SubmitCapsuleDimensionsServerRpc(h, r, cx, cy, cz, gcd)` | Client → Server | Capsule-Daten vom Bone-System |
+| `SubmitCapsuleDimensionsServerRpc(h, r, cx, cy, cz)` | Client → Server | Box-Dimensionen vom Bone-System |
 
 ## Vorher → Nachher
 
@@ -146,6 +142,27 @@ Client (bei Empfang):
 | Physik-Parameter | Dupliziert (Client-Fields + Simulation) | Einmal in `[Serializable] PlayerPhysicsSimulation` |
 | Client-Korrektur | Keine | Reconciliation mit Command-Replay |
 | Cheat-Schutz | Minimal | Server-autoritativ, Input-Clamping |
+| Kollisionsform | CapsuleCast (nicht authentisch) | BoxCast AABB (SoF2-authentisch) |
+| Velocity-Capping | `ApplyVelocityLimits()` | Entfernt — SoF2 hat keinen Hard-Cap |
+
+## SoF2-Authentizitäts-Vergleich
+
+| Aspekt | SoF2 Original | Unity Port | Status |
+|--------|---------------|-----------|--------|
+| Shared Simulation Code | `bg_pmove.c` auf Client + Server | `PlayerPhysicsSimulation` auf Client + Server | ✅ Identisch |
+| Server Authority | Server führt `Pmove()` aus | Server führt `Simulate()` aus | ✅ Identisch |
+| Client Prediction | `cg_predict.c` → `Pmove()` | `ClientPlayerCharacter` → `Simulate()` | ✅ Identisch |
+| Input-Only Networking | Client sendet usercmd_t | Client sendet PlayerCommand | ✅ Identisch |
+| Server Acknowledges | Server sendet playerState_t | Server sendet ServerMovementAck | ✅ Identisch |
+| Reconciliation | Client replays ab letztem Ack | Client replays ab letztem Ack | ✅ Identisch |
+| Kollision: BoxCast AABB | `trap_Trace(mins, maxs)` AABB | `Physics.BoxCast(halfExtents, identity)` | ✅ Identisch |
+| Self-Collision | `clientNum` Skip | BoxCollider disable/enable | ✅ Konzeptuell identisch |
+| Gravity Half-Step | `(vel + endVel) * 0.5` | `(Velocity.y + endVelocity.y) * 0.5f` | ✅ Identisch |
+| 4-Bump SlideMove | `PM_SlideMove` | `PM_SlideMove` | ✅ 1:1 Port |
+| StepSlideMove + Distanzvergleich | Step-Up → SlideMove → Step-Down → Compare | Identisch | ✅ 1:1 Port |
+| Jump Debounce | `PMD_JUMP` + `pm_time` | `IsDebounceActive` + `JumpDebounce` | ✅ Identisch |
+| Quake-Accelerate (ermöglicht Strafe-Jumping) | `PM_Accelerate` | `PM_Accelerate` | ✅ 1:1 Port |
+| Velocity-Capping | Keiner (nur wishspeed Clamp) | Keiner (nur wishspeed Clamp) | ✅ Identisch |
 
 ## Inspector-Hinweise
 

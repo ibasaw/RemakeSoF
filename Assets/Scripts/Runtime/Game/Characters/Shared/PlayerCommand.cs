@@ -94,6 +94,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Autoritative Jump-State vom Server.</summary>
         public bool IsJumping;
 
+        /// <summary>Autoritativer Crouch-State vom Server.</summary>
+        public bool IsCrouching;
+
         /// <summary>
         /// Serialisiert das Acknowledgement für Netcode RPC-Transport.
         /// </summary>
@@ -104,6 +107,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             serializer.SerializeValue(ref Velocity);
             serializer.SerializeValue(ref IsGrounded);
             serializer.SerializeValue(ref IsJumping);
+            serializer.SerializeValue(ref IsCrouching);
         }
     }
 }
