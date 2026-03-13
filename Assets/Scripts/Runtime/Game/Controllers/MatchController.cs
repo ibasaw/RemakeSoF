@@ -136,6 +136,16 @@ namespace Tolik.RemakeSoF.Runtime
                 player.FullAirDistanceHoriz,
                 player.FullAirDistanceVert
             );
+
+            View.UpdateBhopDisplay(
+                player.HorizontalSpeed,
+                player.BhopChainCount,
+                player.BhopChainPeakSpeed,
+                player.BhopChainDistance,
+                player.LastBhopChainCount,
+                player.LastBhopChainPeakSpeed,
+                player.LastBhopChainDistance
+            );
         }
     }
 }

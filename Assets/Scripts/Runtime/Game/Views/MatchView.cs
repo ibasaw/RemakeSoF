@@ -34,6 +34,9 @@ namespace Tolik.RemakeSoF.Runtime
         Label m_FullFallHeightLabel;
         Label m_FullDistHorizLabel;
         Label m_FullVertPathLabel;
+        Label m_BhopSpeedLabel;
+        Label m_BhopChainLabel;
+        Label m_BhopLastChainLabel;
 
         void Awake()
         {
@@ -68,6 +71,9 @@ namespace Tolik.RemakeSoF.Runtime
             m_FullFallHeightLabel = root.Query<Label>("fullFallHeightLabel");
             m_FullDistHorizLabel = root.Query<Label>("fullDistHorizLabel");
             m_FullVertPathLabel = root.Query<Label>("fullVertPathLabel");
+            m_BhopSpeedLabel = root.Query<Label>("bhopSpeedLabel");
+            m_BhopChainLabel = root.Query<Label>("bhopChainLabel");
+            m_BhopLastChainLabel = root.Query<Label>("bhopLastChainLabel");
         }
 
         internal void OnCountdownChanged(uint newValue)
@@ -130,6 +136,39 @@ namespace Tolik.RemakeSoF.Runtime
             m_FullFallHeightLabel.text = $"Full Fall Height: {fullFallHeight:F1}m";
             m_FullDistHorizLabel.text = $"Full Dist Horiz: {fullAirDistHoriz:F1}m";
             m_FullVertPathLabel.text = $"Full Vert Path: {fullVertPath:F1}m";
+        }
+
+        /// <summary>
+        /// Aktualisiert die Bhop-Chain-Anzeige am unteren Bildschirmrand.
+        /// </summary>
+        internal void UpdateBhopDisplay(
+            float horizSpeed,
+            int chainCount,
+            float chainPeakSpeed,
+            float chainDistance,
+            int lastChainCount,
+            float lastChainPeakSpeed,
+            float lastChainDistance)
+        {
+            m_BhopSpeedLabel.text = $"{horizSpeed:F1}";
+
+            if (chainCount > 1)
+            {
+                m_BhopChainLabel.text = $"Bhop x{chainCount}  |  Peak: {chainPeakSpeed:F1}  |  Dist: {chainDistance:F1}m";
+            }
+            else
+            {
+                m_BhopChainLabel.text = "";
+            }
+
+            if (lastChainCount > 1 && chainCount <= 1)
+            {
+                m_BhopLastChainLabel.text = $"Last: x{lastChainCount}  |  Peak: {lastChainPeakSpeed:F1}  |  Dist: {lastChainDistance:F1}m";
+            }
+            else
+            {
+                m_BhopLastChainLabel.text = "";
+            }
         }
     }
 }

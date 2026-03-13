@@ -3,9 +3,9 @@ using UnityEngine;
 namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 {
     /// <summary>
-    /// Berechnet Capsule-Parameter aus Character-Bones (Cranium, Fuesse).
-    /// Stellt Capsule-Daten fuer die SoF2-Physik (CapsuleCasts) bereit.
-    /// Optionaler Visual-Debug: zeichnet Capsule + Ground-Check-Disk zur Laufzeit im Editor.
+    /// Berechnet Box-Parameter aus Character-Bones (Cranium, Fuesse).
+    /// Stellt Box-Daten fuer die SoF2-Physik (BoxCasts / AABB) bereit.
+    /// Optionaler Visual-Debug: zeichnet Box + Ground-Check-Disk zur Laufzeit im Editor.
     /// </summary>
     [DisallowMultipleComponent]
     public class ClientColliderSystem : MonoBehaviour
@@ -19,10 +19,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         [SerializeField]
         private Vector3 m_CapsuleCenter;
-
-        /// <summary>Ground-Check-Distanz fuer CapsuleCast nach unten.</summary>
-        [SerializeField]
-        private float m_GroundCheckDistance = 0.2f;
 
         [Header("Auto Capsule Sizing")]
         [SerializeField]
@@ -87,8 +83,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Gecachter Grounded-State fuer Visual-Farbe.</summary>
         private bool m_IsGroundedVisual;
 
-        /// <summary>Actual Physics CapsuleCollider fuer CapsuleCast-Detection durch andere Spieler.</summary>
-        private CapsuleCollider m_PhysicsCollider;
+        /// <summary>Physics BoxCollider fuer BoxCast-Detection durch andere Spieler (SoF2 AABB).</summary>
+        private BoxCollider m_PhysicsCollider;
 
         // --- Public Getters ---
 
@@ -101,13 +97,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Aktuelles Capsule-Center (lokal).</summary>
         public Vector3 GetCurrentCapsuleCenter() => m_CapsuleCenter;
 
-        /// <summary>Ground-Check-Distanz fuer CapsuleCast.</summary>
-        public float GetCurrentGroundCheckDistance() => m_GroundCheckDistance;
-
         /// <summary>
-        /// Physik-CapsuleCollider fuer temporaeres Deaktivieren waehrend eigener Simulation.
+        /// Physik-BoxCollider fuer temporaeres Deaktivieren waehrend eigener Simulation.
         /// </summary>
-        public CapsuleCollider PhysicsCollider => m_PhysicsCollider;
+        public BoxCollider PhysicsCollider => m_PhysicsCollider;
 
         /// <summary>
         /// Setzt den Grounded-State fuer die Visual-Debug-Farbe.
@@ -210,7 +203,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_CapsuleRadius = newRadius;
             m_CapsuleCenter = m_BaseCapsuleCenter;
 
-            // Physics CapsuleCollider erstellen/aktualisieren
+            // Physics BoxCollider erstellen/aktualisieren
             UpdatePhysicsCollider();
 
             // Visual Debug initialisieren (falls aktiviert)
@@ -304,32 +297,31 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         }
 
         // ===================================================================
-        // Physics CapsuleCollider
+        // Physics BoxCollider (SoF2 AABB)
         // ===================================================================
 
         /// <summary>
-        /// Erstellt oder aktualisiert den Physics-CapsuleCollider.
-        /// Dieser Collider wird von CapsuleCasts anderer Spieler erkannt
-        /// und ermoeglicht Player-Player Collision.
+        /// Erstellt oder aktualisiert den Physics-BoxCollider.
+        /// Dieser Collider wird von BoxCasts anderer Spieler erkannt
+        /// und ermoeglicht Player-Player Collision (SoF2 AABB).
         /// </summary>
         private void UpdatePhysicsCollider()
         {
             if (m_PhysicsCollider == null)
             {
-                m_PhysicsCollider = gameObject.AddComponent<CapsuleCollider>();
+                m_PhysicsCollider = gameObject.AddComponent<BoxCollider>();
             }
 
-            m_PhysicsCollider.height = m_CapsuleHeight;
-            m_PhysicsCollider.radius = m_CapsuleRadius;
+            m_PhysicsCollider.size = new Vector3(m_CapsuleRadius * 2f, m_CapsuleHeight, m_CapsuleRadius * 2f);
             m_PhysicsCollider.center = m_CapsuleCenter;
         }
 
         // ===================================================================
-        // Visual Debug — Capsule + Ground-Check-Disk
+        // Visual Debug — Box + Ground-Check-Disk
         // ===================================================================
 
         /// <summary>
-        /// Erstellt das Visual-Collider-Mesh-GameObject (Capsule).
+        /// Erstellt das Visual-Collider-Mesh-GameObject (Box / SoF2 AABB).
         /// </summary>
         private void InitializeVisualCollider()
         {
@@ -351,7 +343,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_VisualColliderMeshFilter = m_VisualColliderObject.AddComponent<MeshFilter>();
             m_VisualColliderRenderer = m_VisualColliderObject.AddComponent<MeshRenderer>();
 
-            m_VisualColliderMeshFilter.mesh = CreateCapsuleMesh();
+            m_VisualColliderMeshFilter.mesh = CreateBoxMesh();
 
             if (m_ColliderMaterial == null)
             {
@@ -414,7 +406,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         }
 
         /// <summary>
-        /// Aktualisiert Position, Mesh und Farbe des Visual-Capsule.
+        /// Aktualisiert Position, Mesh und Farbe der Visual-Box.
         /// </summary>
         private void UpdateVisualCollider()
         {
@@ -428,7 +420,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             if (m_VisualColliderMeshFilter != null)
             {
-                m_VisualColliderMeshFilter.mesh = CreateCapsuleMesh();
+                m_VisualColliderMeshFilter.mesh = CreateBoxMesh();
             }
 
             if (m_VisualColliderRenderer != null && m_VisualColliderRenderer.material != null)
@@ -473,174 +465,47 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         // ===================================================================
 
         /// <summary>
-        /// Erstellt ein Capsule-Mesh (Top-Hemi + Zylinder + Bottom-Hemi + Bottom-Cap).
-        /// Capsule geht von Y=0 bis Y=height.
+        /// Erstellt ein Box-Mesh (SoF2 AABB).
+        /// Box geht von Y=0 bis Y=height, Breite/Tiefe = radius*2.
         /// </summary>
-        private Mesh CreateCapsuleMesh()
+        private Mesh CreateBoxMesh()
         {
-            Mesh mesh = new() { name = "CapsuleVisual" };
+            Mesh mesh = new() { name = "BoxVisual" };
 
-            int segments = 16;
-            int hemiRings = 8;
-            int cylRings = 4;
             float radius = Mathf.Max(0.01f, m_CapsuleRadius);
             float height = Mathf.Max(0.01f, m_CapsuleHeight);
+            float halfW = radius;
 
-            if (radius <= 0f || height <= 0f)
+            Vector3[] verts = new Vector3[8]
             {
-                return mesh;
-            }
+                new(-halfW, 0f,     -halfW), // 0: left-bottom-back
+                new( halfW, 0f,     -halfW), // 1: right-bottom-back
+                new( halfW, 0f,      halfW), // 2: right-bottom-front
+                new(-halfW, 0f,      halfW), // 3: left-bottom-front
+                new(-halfW, height, -halfW), // 4: left-top-back
+                new( halfW, height, -halfW), // 5: right-top-back
+                new( halfW, height,  halfW), // 6: right-top-front
+                new(-halfW, height,  halfW), // 7: left-top-front
+            };
 
-            System.Collections.Generic.List<Vector3> verts = new();
-            System.Collections.Generic.List<Vector2> uvs = new();
-            System.Collections.Generic.List<int> tris = new();
-
-            float cylHeight = Mathf.Max(0f, height - radius * 2f);
-            float cylBottom = radius;
-            float cylTop = height - radius;
-
-            // --- Top hemisphere ---
-            for (int ring = 0; ring <= hemiRings; ring++)
+            int[] tris = new int[]
             {
-                float v = (float)ring / hemiRings;
-                float phi = v * Mathf.PI / 2f;
+                // Bottom (Y=0) — winding outward (down)
+                0, 1, 2,  0, 2, 3,
+                // Top (Y=height) — winding outward (up)
+                4, 6, 5,  4, 7, 6,
+                // Front (Z+)
+                3, 2, 6,  3, 6, 7,
+                // Back (Z-)
+                0, 5, 1,  0, 4, 5,
+                // Left (X-)
+                0, 3, 7,  0, 7, 4,
+                // Right (X+)
+                1, 6, 2,  1, 5, 6,
+            };
 
-                for (int seg = 0; seg <= segments; seg++)
-                {
-                    float u = (float)seg / segments;
-                    float theta = u * Mathf.PI * 2f;
-
-                    float x = Mathf.Cos(theta) * Mathf.Sin(phi) * radius;
-                    float y = cylTop + Mathf.Cos(phi) * radius;
-                    float z = Mathf.Sin(theta) * Mathf.Sin(phi) * radius;
-
-                    verts.Add(new Vector3(x, y, z));
-                    uvs.Add(new Vector2(u, v));
-                }
-            }
-
-            // --- Cylinder ---
-            int cylVertOffset = verts.Count;
-            if (cylHeight > 0f)
-            {
-                for (int ring = 0; ring <= cylRings; ring++)
-                {
-                    float v = (float)ring / cylRings;
-                    float y = Mathf.Lerp(cylBottom, cylTop, v);
-
-                    for (int seg = 0; seg <= segments; seg++)
-                    {
-                        float u = (float)seg / segments;
-                        float theta = u * Mathf.PI * 2f;
-
-                        verts.Add(new Vector3(Mathf.Cos(theta) * radius, y, Mathf.Sin(theta) * radius));
-                        uvs.Add(new Vector2(u, v));
-                    }
-                }
-            }
-
-            // --- Bottom hemisphere ---
-            int botVertOffset = verts.Count;
-            for (int ring = 0; ring <= hemiRings; ring++)
-            {
-                float v = (float)ring / hemiRings;
-                float phi = (1f - v) * Mathf.PI / 2f;
-
-                for (int seg = 0; seg <= segments; seg++)
-                {
-                    float u = (float)seg / segments;
-                    float theta = u * Mathf.PI * 2f;
-
-                    float x = Mathf.Cos(theta) * Mathf.Sin(phi) * radius;
-                    float y = Mathf.Cos(phi) * radius;
-                    float z = Mathf.Sin(theta) * Mathf.Sin(phi) * radius;
-
-                    verts.Add(new Vector3(x, y, z));
-                    uvs.Add(new Vector2(u, v));
-                }
-            }
-
-            // Triangles — top hemisphere
-            for (int ring = 0; ring < hemiRings; ring++)
-            {
-                for (int seg = 0; seg < segments; seg++)
-                {
-                    int cur = ring * (segments + 1) + seg;
-                    int nxt = (ring + 1) * (segments + 1) + seg;
-
-                    tris.Add(cur); tris.Add(nxt); tris.Add(cur + 1);
-                    tris.Add(cur + 1); tris.Add(nxt); tris.Add(nxt + 1);
-                }
-            }
-
-            // Triangles — cylinder
-            if (cylHeight > 0f)
-            {
-                for (int ring = 0; ring < cylRings; ring++)
-                {
-                    for (int seg = 0; seg < segments; seg++)
-                    {
-                        int cur = cylVertOffset + ring * (segments + 1) + seg;
-                        int nxt = cylVertOffset + (ring + 1) * (segments + 1) + seg;
-
-                        tris.Add(cur); tris.Add(nxt); tris.Add(cur + 1);
-                        tris.Add(cur + 1); tris.Add(nxt); tris.Add(nxt + 1);
-                    }
-                }
-            }
-            else
-            {
-                // No cylinder — connect top to bottom directly
-                int topLast = hemiRings;
-                for (int seg = 0; seg < segments; seg++)
-                {
-                    int tc = topLast * (segments + 1) + seg;
-                    int tn = tc + 1;
-                    int bc = botVertOffset + seg;
-                    int bn = bc + 1;
-
-                    tris.Add(tc); tris.Add(bn); tris.Add(tn);
-                    tris.Add(tc); tris.Add(bc); tris.Add(bn);
-                }
-            }
-
-            // Triangles — bottom hemisphere
-            for (int ring = 0; ring < hemiRings; ring++)
-            {
-                for (int seg = 0; seg < segments; seg++)
-                {
-                    int cur = botVertOffset + ring * (segments + 1) + seg;
-                    int nxt = botVertOffset + (ring + 1) * (segments + 1) + seg;
-
-                    tris.Add(cur); tris.Add(cur + 1); tris.Add(nxt);
-                    tris.Add(cur + 1); tris.Add(nxt + 1); tris.Add(nxt);
-                }
-            }
-
-            // Bottom cap
-            int capCenter = verts.Count;
-            verts.Add(new Vector3(0f, 0f, 0f));
-            uvs.Add(new Vector2(0.5f, 0.5f));
-
-            int capStart = verts.Count;
-            for (int seg = 0; seg <= segments; seg++)
-            {
-                float u = (float)seg / segments;
-                float theta = u * Mathf.PI * 2f;
-                verts.Add(new Vector3(Mathf.Cos(theta) * radius, 0f, Mathf.Sin(theta) * radius));
-                uvs.Add(new Vector2(u, 0.5f));
-            }
-
-            for (int seg = 0; seg < segments; seg++)
-            {
-                tris.Add(capCenter);
-                tris.Add(capStart + seg + 1);
-                tris.Add(capStart + seg);
-            }
-
-            mesh.vertices = verts.ToArray();
-            mesh.uv = uvs.ToArray();
-            mesh.triangles = tris.ToArray();
+            mesh.vertices = verts;
+            mesh.triangles = tris;
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
 

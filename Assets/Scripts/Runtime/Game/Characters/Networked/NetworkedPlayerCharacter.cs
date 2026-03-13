@@ -98,7 +98,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             base.OnServerSpawn();
 
-            // Server-seitige Physik + CapsuleCollider initialisieren
+            // Server-seitige Physik + BoxCollider initialisieren
             m_ServerPlayerCharacter.InitializeServer();
 
             // Spawn-Point vom Server zuweisen — ggf. warten bis Map geladen ist
@@ -217,7 +217,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Owner-Client: Sendet Capsule-Dimensionen an den Server (nach Bone-Berechnung).
         /// Server benötigt diese für identische Physik-Simulation.
         /// </summary>
-        public void SendCapsuleDimensions(float height, float radius, Vector3 center, float groundCheckDist)
+        public void SendCapsuleDimensions(float height, float radius, Vector3 center)
         {
             if (!IsOwner)
             {
@@ -227,11 +227,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             if (IsServer)
             {
                 // Host-Mode: ServerPlayerCharacter direkt setzen
-                m_ServerPlayerCharacter.SetCapsuleDimensions(height, radius, center, groundCheckDist);
+                m_ServerPlayerCharacter.SetCapsuleDimensions(height, radius, center);
                 return;
             }
 
-            SubmitCapsuleDimensionsServerRpc(height, radius, center, groundCheckDist);
+            SubmitCapsuleDimensionsServerRpc(height, radius, center);
         }
 
         /// <summary>
@@ -276,9 +276,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Server: Empfängt Capsule-Dimensionen vom Client und setzt sie auf der Server-Simulation.
         /// </summary>
         [Rpc(SendTo.Server)]
-        private void SubmitCapsuleDimensionsServerRpc(float height, float radius, Vector3 center, float groundCheckDist)
+        private void SubmitCapsuleDimensionsServerRpc(float height, float radius, Vector3 center)
         {
-            m_ServerPlayerCharacter.SetCapsuleDimensions(height, radius, center, groundCheckDist);
+            m_ServerPlayerCharacter.SetCapsuleDimensions(height, radius, center);
         }
 
         /// <summary>

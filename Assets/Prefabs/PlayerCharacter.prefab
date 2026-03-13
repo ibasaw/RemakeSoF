@@ -531,17 +531,12 @@ MonoBehaviour:
     PmStopSpeed: 2.54
     PmMaxSpeed: 7.112
     PmGravity: 20.32
-    PhysMaxVelocity: 8.128
-    PhysMaxWalkVelocity: 8.128
     JumpVelocity: 6.858
     PmMaxSteepness: 0.7
-    PmMaxStep: 0.4572
     PmStepSize: 0.4572
     PmMaxBarrier: 0.8128
     PmDuckScale: 0.25
     JumpDebounceAfterMs: 0.25
-    StepUpHeightThreshold: 0.178
-    GroundGracePeriod: 0.15
     GroundMask:
       serializedVersion: 2
       m_Bits: 4294967295
@@ -605,17 +600,12 @@ MonoBehaviour:
     PmStopSpeed: 2.54
     PmMaxSpeed: 7.112
     PmGravity: 20.32
-    PhysMaxVelocity: 8.128
-    PhysMaxWalkVelocity: 8.128
     JumpVelocity: 6.858
     PmMaxSteepness: 0.7
-    PmMaxStep: 0.4572
     PmStepSize: 0.4572
     PmMaxBarrier: 0.8128
     PmDuckScale: 0.25
     JumpDebounceAfterMs: 0.25
-    StepUpHeightThreshold: 0.178
-    GroundGracePeriod: 0.15
     GroundMask:
       serializedVersion: 2
       m_Bits: 4294967295
@@ -652,6 +642,7 @@ MonoBehaviour:
   m_GroundCheckDistance: 0.2
   m_AutoSizeCapsule: 1
   m_DynamicCapsuleSizing: 1
+  m_UseFixedSoF2Size: 1
   m_ShowVisualCollider: 1
   m_ColliderColor: {r: 0, g: 1, b: 0, a: 0.3}
   m_ColliderMaterial: {fileID: 0}
@@ -667,5 +658,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdc4f9747a1ba75418e5fc7800e8d322, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientHitboxSystem
-  m_ShowVisualHitboxes: 1
+  m_ShowVisualHitboxes: 0
   m_VisualAlpha: 0.3

@@ -33,12 +33,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Gravitation in m/s² (SoF2: 800 × 0.0254 = 20.32).</summary>
         public float PmGravity = 20.32f;
 
-        /// <summary>Max horizontale Velocity in der Luft (SoF2: 320 × 0.0254 = 8.128 m/s).</summary>
-        public float PhysMaxVelocity = 8.128f;
-
-        /// <summary>Max horizontale Velocity am Boden (SoF2: 320 × 0.0254 = 8.128 m/s).</summary>
-        public float PhysMaxWalkVelocity = 8.128f;
-
         /// <summary>Sofortige Y-Velocity beim Sprung (SoF2: 270 × 0.0254 = 6.858 m/s).</summary>
         public float JumpVelocity = 6.858f;
 
@@ -71,8 +65,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Capsule-Center (lokaler Offset relativ zur Character-Position).</summary>
         [NonSerialized] public Vector3 CapsuleCenter;
 
-        /// <summary>Ground-Check-Distanz (Legacy-Feld, nicht mehr intern genutzt).</summary>
-        [NonSerialized] public float GroundCheckDistance = 0.254f;
+        /// <summary>Box half-extents fuer AABB-Casts (SoF2 playerMins/playerMaxs). X=Radius, Y=Height/2, Z=Radius.</summary>
+        private Vector3 BoxHalfExtents => new(CapsuleRadius, CapsuleHeight * 0.5f, CapsuleRadius);
 
         // ===== Constants =====
 
@@ -89,7 +83,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         private const int MAX_CLIP_PLANES = 5;
 
         /// <summary>SoF2 Ground-Trace Distanz: 0.25 Quake-Units × 0.0254 = 0.00635m.
-        /// Erhöht auf 0.08m für CapsuleCast-Präzision bei Unity-Meshes.
+        /// Erhöht auf 0.08m für BoxCast-Präzision bei Unity-Meshes.
         /// Zu kleine Werte führen dazu, dass der Spieler beim Laufen durch den Boden fällt.</summary>
         private const float GROUND_TRACE_DIST = 0.08f; //original: 0.00635f
 
@@ -210,6 +204,35 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Airtime der Fallphase beim letzten Sprung (Sekunden).</summary>
         [NonSerialized] public float FullFallPhaseAirtime;
 
+        // ===== Bhop Chain Tracking =====
+
+        /// <summary>Max erlaubte Boden-Zeit um die Chain nicht zu brechen (Sekunden).</summary>
+        private const float BHOP_CHAIN_GROUND_TIMEOUT = 0.3f;
+
+        /// <summary>Startposition (XZ) der aktuellen Bhop-Chain.</summary>
+        private Vector3 m_BhopChainStartPosition;
+
+        /// <summary>Wie lange der Spieler seit letzter Landung am Boden ist (Sekunden).</summary>
+        private float m_GroundTime;
+
+        /// <summary>Anzahl Spruenge in der aktuellen Bhop-Chain.</summary>
+        [NonSerialized] public int BhopChainCount;
+
+        /// <summary>Hoechste horizontale Speed waehrend der aktuellen Bhop-Chain (m/s).</summary>
+        [NonSerialized] public float BhopChainPeakSpeed;
+
+        /// <summary>Gesamte horizontale Distanz seit Start der Bhop-Chain (Meter).</summary>
+        [NonSerialized] public float BhopChainDistance;
+
+        /// <summary>Letzte abgeschlossene Bhop-Chain: Anzahl Spruenge.</summary>
+        [NonSerialized] public int LastBhopChainCount;
+
+        /// <summary>Letzte abgeschlossene Bhop-Chain: Peak Speed (m/s).</summary>
+        [NonSerialized] public float LastBhopChainPeakSpeed;
+
+        /// <summary>Letzte abgeschlossene Bhop-Chain: Distanz (Meter).</summary>
+        [NonSerialized] public float LastBhopChainDistance;
+
         // ===================================================================
         // Public API
         // ===================================================================
@@ -218,12 +241,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// Setzt Capsule-Dimensionen (wird vom Client nach Bone-Berechnung
         /// und vom Server nach Empfang der Client-Daten aufgerufen).
         /// </summary>
-        public void SetCapsuleDimensions(float height, float radius, Vector3 center, float groundCheckDist)
+        public void SetCapsuleDimensions(float height, float radius, Vector3 center)
         {
             CapsuleHeight = height;
             CapsuleRadius = radius;
             CapsuleCenter = center;
-            GroundCheckDistance = groundCheckDist;
         }
 
         /// <summary>
@@ -357,6 +379,61 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 LandedThisGround = true;
             }
 
+            // 8. Bhop chain tracking
+            UpdateBhopChainTracking(position);
+
+        }
+
+        /// <summary>
+        /// Trackt Bhop-Chains: aufeinanderfolgende Spruenge ohne lange Bodenkontaktzeit.
+        /// Chain bricht ab wenn der Spieler laenger als BHOP_CHAIN_GROUND_TIMEOUT am Boden bleibt.
+        /// </summary>
+        private void UpdateBhopChainTracking(Vector3 position)
+        {
+            if (IsGrounded)
+            {
+                m_GroundTime += m_DeltaTime;
+
+                // Chain brechen wenn zu lange am Boden ohne zu springen
+                if (m_GroundTime > BHOP_CHAIN_GROUND_TIMEOUT && BhopChainCount > 0)
+                {
+                    // Speichere letzte Chain bevor sie resettet wird
+                    LastBhopChainCount = BhopChainCount;
+                    LastBhopChainPeakSpeed = BhopChainPeakSpeed;
+                    LastBhopChainDistance = BhopChainDistance;
+                    BhopChainCount = 0;
+                    BhopChainPeakSpeed = 0f;
+                    BhopChainDistance = 0f;
+                }
+            }
+            else
+            {
+                m_GroundTime = 0f;
+            }
+
+            // Neuer Jump: Chain erweitern oder starten
+            if (JumpTriggered)
+            {
+                if (BhopChainCount == 0)
+                {
+                    m_BhopChainStartPosition = position;
+                }
+
+                BhopChainCount++;
+            }
+
+            // Peak Speed und Distanz live updaten waehrend Chain aktiv
+            if (BhopChainCount > 0)
+            {
+                float horizSpeed = new Vector3(Velocity.x, 0f, Velocity.z).magnitude;
+                if (horizSpeed > BhopChainPeakSpeed)
+                {
+                    BhopChainPeakSpeed = horizSpeed;
+                }
+
+                Vector3 hDelta = new(position.x - m_BhopChainStartPosition.x, 0f, position.z - m_BhopChainStartPosition.z);
+                BhopChainDistance = hDelta.magnitude;
+            }
         }
 
         // ===================================================================
@@ -372,13 +449,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// </summary>
         private void PM_GroundTrace(ref Vector3 position)
         {
-            float halfHeight = Mathf.Max(0f, (CapsuleHeight * 0.5f) - CapsuleRadius);
             Vector3 center = GetWorldCenterAtPosition(position);
-            Vector3 top = center + Vector3.up * halfHeight;
-            Vector3 bottom = center - Vector3.up * halfHeight;
+            Vector3 halfExtents = BoxHalfExtents;
+            // XZ leicht schrumpfen um angrenzende Flaechen nicht zu fangen (wie 0.95f Radius bei CapsuleCast)
+            Vector3 groundHalfExtents = new(halfExtents.x * 0.95f, halfExtents.y, halfExtents.z * 0.95f);
 
-            if (!Physics.CapsuleCast(top, bottom, CapsuleRadius * 0.95f,
-                    Vector3.down, out RaycastHit hit, GROUND_TRACE_DIST,
+            if (!Physics.BoxCast(center, groundHalfExtents,
+                    Vector3.down, out RaycastHit hit, Quaternion.identity, GROUND_TRACE_DIST,
                     GroundMask, QueryTriggerInteraction.Ignore))
             {
                 if (IsGrounded)
@@ -422,6 +499,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 IsGrounded = true;
                 IsJumping = false;
 
+                // SoF2: previous_velocity[2] < -200 -> pm_time = 250
+                // In SoF2 (GROUND_TRACE_DIST = 0.25 QU = 0.006m) war die Fall-Velocity
+                // beim Ground-Detect bereits durch PM_SlideMove Kollision reduziert.
+                // Unsere groessere Trace-Distanz (0.08m) erkennt den Boden frueher,
+                // daher ist die gemessene Fall-Velocity hoeher als in SoF2.
+                // Threshold angepasst: Zusaetzliche Gravity ueber die extra Distanz
+                // (v² = v0² + 2*g*d → ~1.8 m/s extra bei 0.074m Differenz).
+                if (m_PreviousVelocity.y < -6.86f)
+                {
+                    JumpDebounce = JumpDebounceAfterMs;
+                }
+
                 // Vertikale Velocity nullen bei Landung.
                 // In SoF2 ist die Ground-Trace-Distanz nur 0.25 QU (6mm),
                 // daher wird der Boden erst erkannt NACHDEM PM_SlideMove die
@@ -432,16 +521,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 // Fall-Geschwindigkeit in eine Aufwaerts-Geschwindigkeit umwandeln
                 // und den Spieler nach oben bouncen lassen.
                 Velocity.y = 0f;
-
-                // SoF2: previous_velocity[2] < -200 -> pm_time = 250
-                if (m_PreviousVelocity.y < -5.08f)
-                {
-                    JumpDebounce = JumpDebounceAfterMs;
-                }
             }
 
             // Position auf Boden korrigieren (Einsinken verhindern)
-            CorrectGroundPosition(ref position, hit, halfHeight);
+            CorrectGroundPosition(ref position, hit);
         }
 
         // ===================================================================
@@ -587,24 +670,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 input.z - normal.z * backoff);
         }
 
-        /// <summary>
-        /// SoF2 Velocity-Limits: horizontale Speed auf phys_maxwalkvelocity (Boden)
-        /// bzw. phys_maxvelocity (Luft) begrenzen. Y bleibt unberührt.
-        /// </summary>
-        private void ApplyVelocityLimits()
-        {
-            Vector3 horizontalVel = new(Velocity.x, 0f, Velocity.z);
-            float horizontalSpeed = horizontalVel.magnitude;
 
-            float maxVelocity = IsGrounded ? PhysMaxWalkVelocity : PhysMaxVelocity;
-
-            if (horizontalSpeed > maxVelocity)
-            {
-                float scale = maxVelocity / horizontalSpeed;
-                Velocity.x *= scale;
-                Velocity.z *= scale;
-            }
-        }
 
         /// <summary>
         /// SoF2 PM_CmdScale — skaliert Input-Magnitude auf 0–1.
@@ -695,8 +761,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 return;
             }
 
-            ApplyVelocityLimits();
-
             // SoF2: PM_StepSlideMove(qfalse) — kein Gravity für Boden
             PM_StepSlideMove(ref position, false);
         }
@@ -747,8 +811,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 Velocity = cv;
             }
 
-            ApplyVelocityLimits();
-
             // SoF2: PM_StepSlideMove(qtrue) — Gravity wird in PM_SlideMove integriert
             PM_StepSlideMove(ref position, true);
         }
@@ -770,8 +832,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             int numPlanes;
             Vector3 primalVelocity = Velocity;
             Vector3 endVelocity = Velocity;
-
-            float halfHeight = Mathf.Max(0f, (CapsuleHeight * 0.5f) - CapsuleRadius);
 
             // SoF2: gravity half-step integration
             if (gravity)
@@ -815,12 +875,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 }
 
                 Vector3 center = GetWorldCenterAtPosition(position);
-                Vector3 top = center + Vector3.up * halfHeight;
-                Vector3 bottom = center - Vector3.up * halfHeight;
                 Vector3 castDirNorm = castDir / castDist;
 
-                if (!Physics.CapsuleCast(top, bottom, CapsuleRadius,
-                        castDirNorm, out RaycastHit trace, castDist + SKIN_WIDTH,
+                if (!Physics.BoxCast(center, BoxHalfExtents,
+                        castDirNorm, out RaycastHit trace, Quaternion.identity, castDist + SKIN_WIDTH,
                         GroundMask, QueryTriggerInteraction.Ignore))
                 {
                     // No hit — moved entire distance
@@ -958,6 +1016,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>
         /// SoF2 PM_StepSlideMove — exakter Port.
         /// Versucht zuerst PM_SlideMove. Bei Kollision: Step-Up + SlideMove + Step-Down.
+        /// Vergleicht horizontal distance: nimmt die bessere der beiden Optionen.
         /// </summary>
         private void PM_StepSlideMove(ref Vector3 position, bool gravity)
         {
@@ -972,15 +1031,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 return;
             }
 
-            float halfHeight = Mathf.Max(0f, (CapsuleHeight * 0.5f) - CapsuleRadius);
-
             // SoF2: trace down from start position to check for ground
             Vector3 center = GetWorldCenterAtPosition(startO);
-            Vector3 top = center + Vector3.up * halfHeight;
-            Vector3 bottom = center - Vector3.up * halfHeight;
+            Vector3 halfExtents = BoxHalfExtents;
+            Vector3 groundHalfExtents = new(halfExtents.x * 0.95f, halfExtents.y, halfExtents.z * 0.95f);
 
-            bool hasGroundBelow = Physics.CapsuleCast(top, bottom, CapsuleRadius * 0.95f,
-                Vector3.down, out RaycastHit downFromStart, PmStepSize,
+            bool hasGroundBelow = Physics.BoxCast(center, groundHalfExtents,
+                Vector3.down, out RaycastHit downFromStart, Quaternion.identity, PmStepSize,
                 GroundMask, QueryTriggerInteraction.Ignore);
 
             // SoF2: never step up when going up and (no ground or too steep)
@@ -1000,12 +1057,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             // Step up
             center = GetWorldCenterAtPosition(position);
-            top = center + Vector3.up * halfHeight;
-            bottom = center - Vector3.up * halfHeight;
 
             float stepSize = PmStepSize;
-            if (Physics.CapsuleCast(bottom, top, CapsuleRadius,
-                    Vector3.up, out RaycastHit upTrace, PmStepSize,
+            if (Physics.BoxCast(center, halfExtents,
+                    Vector3.up, out RaycastHit upTrace, Quaternion.identity, PmStepSize,
                     GroundMask, QueryTriggerInteraction.Ignore))
             {
                 if (upTrace.distance < SKIN_WIDTH)
@@ -1026,26 +1081,30 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             // Push down the final amount
             center = GetWorldCenterAtPosition(position);
-            top = center + Vector3.up * halfHeight;
-            bottom = center - Vector3.up * halfHeight;
 
-            if (Physics.CapsuleCast(top, bottom, CapsuleRadius * 0.95f,
-                    Vector3.down, out RaycastHit stepDownTrace, stepSize + 0.01f,
+            if (Physics.BoxCast(center, groundHalfExtents,
+                    Vector3.down, out RaycastHit stepDownTrace, Quaternion.identity, stepSize + 0.01f,
                     GroundMask, QueryTriggerInteraction.Ignore))
             {
                 float dropDist = Mathf.Max(stepDownTrace.distance - SKIN_WIDTH, 0f);
                 position += Vector3.down * dropDist;
-
-                if (stepDownTrace.normal.y >= PmMaxSteepness)
-                {
-                    PM_ClipVelocity(Velocity, stepDownTrace.normal, out Vector3 cv, OVERCLIP);
-                    Velocity = cv;
-                }
             }
             else
             {
                 // Nothing below — drop full step (SoF2: trace.fraction == 1)
                 position.y -= stepSize;
+            }
+
+            // SoF2: compare horizontal distance — use whichever moved farther
+            float downDist = (downO.x - startO.x) * (downO.x - startO.x)
+                           + (downO.z - startO.z) * (downO.z - startO.z);
+            float upDist = (position.x - startO.x) * (position.x - startO.x)
+                         + (position.z - startO.z) * (position.z - startO.z);
+
+            if (downDist > upDist)
+            {
+                position = downO;
+                Velocity = downV;
             }
 
             ResolvePenetration(ref position);
@@ -1057,12 +1116,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
         /// <summary>
         /// Korrigiert die Position über dem Boden (verhindert Einsinken).
+        /// Box-Bottom = Center - halfExtents.y.
         /// </summary>
-        private void CorrectGroundPosition(ref Vector3 position, RaycastHit downHit, float halfHeight)
+        private void CorrectGroundPosition(ref Vector3 position, RaycastHit downHit)
         {
-            Vector3 capsuleBottom = GetWorldCenterAtPosition(position) - Vector3.up * halfHeight;
-            float desiredDistance = CapsuleRadius * 0.1f;
-            float currentDistance = Vector3.Dot(capsuleBottom - downHit.point, downHit.normal);
+            Vector3 boxBottom = GetWorldCenterAtPosition(position) - Vector3.up * BoxHalfExtents.y;
+            float desiredDistance = SKIN_WIDTH;
+            float currentDistance = Vector3.Dot(boxBottom - downHit.point, downHit.normal);
 
             if (currentDistance < desiredDistance)
             {
@@ -1081,21 +1141,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
         /// <summary>
         /// Depenetration nach Bewegung.
-        /// Prüft per OverlapCapsule ob die Capsule in Geometrie steckt und
+        /// Prüft per OverlapBox ob die Box in Geometrie steckt und
         /// schiebt sie iterativ heraus. Clippt Velocity gegen die Trennungs-Normalen.
         /// </summary>
         private void ResolvePenetration(ref Vector3 position)
         {
-            float halfHeight = Mathf.Max(0f, (CapsuleHeight * 0.5f) - CapsuleRadius);
+            Vector3 halfExtents = BoxHalfExtents;
 
             for (int iteration = 0; iteration < MAX_DEPENETRATION_ITERATIONS; iteration++)
             {
                 Vector3 worldCenter = GetWorldCenterAtPosition(position);
-                Vector3 top = worldCenter + Vector3.up * halfHeight;
-                Vector3 bottom = worldCenter - Vector3.up * halfHeight;
 
-                Collider[] overlaps = Physics.OverlapCapsule(
-                    top, bottom, CapsuleRadius,
+                Collider[] overlaps = Physics.OverlapBox(
+                    worldCenter, halfExtents, Quaternion.identity,
                     GroundMask, QueryTriggerInteraction.Ignore);
 
                 if (overlaps.Length == 0)
@@ -1114,7 +1172,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                     if ((col is MeshCollider mc && !mc.convex) || col is TerrainCollider)
                     {
                         // Raycast von oben nach unten um Boden-Oberflaeche zu finden.
-                        // Haeufigstes Szenario: Capsule steckt im Boden-Mesh.
+                        // Haeufigstes Szenario: Box steckt im Boden-Mesh.
                         Vector3 rayOrigin = new(
                             worldCenter.x,
                             worldCenter.y + CapsuleHeight,
@@ -1123,10 +1181,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                         if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit floorHit,
                                 CapsuleHeight * 2f, GroundMask, QueryTriggerInteraction.Ignore))
                         {
-                            float capsuleBottomY = position.y + CapsuleCenter.y - CapsuleHeight * 0.5f;
-                            if (capsuleBottomY < floorHit.point.y)
+                            float boxBottomY = position.y + CapsuleCenter.y - CapsuleHeight * 0.5f;
+                            if (boxBottomY < floorHit.point.y)
                             {
-                                position.y += floorHit.point.y - capsuleBottomY + SKIN_WIDTH;
+                                position.y += floorHit.point.y - boxBottomY + SKIN_WIDTH;
                                 resolved = true;
 
                                 if (Velocity.y < 0f)
@@ -1148,7 +1206,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                     }
 
                     Vector3 normal = diff.normalized;
-                    float penetrationDepth = CapsuleRadius - diff.magnitude;
+
+                    // Box-Penetrationstiefe: Projektion der half-extents auf die Trennungsnormale
+                    // ergibt den Box-Rand-Abstand vom Center in Normalenrichtung.
+                    float boxExtentAlongNormal = Mathf.Abs(halfExtents.x * normal.x)
+                                               + Mathf.Abs(halfExtents.y * normal.y)
+                                               + Mathf.Abs(halfExtents.z * normal.z);
+                    float penetrationDepth = boxExtentAlongNormal - diff.magnitude;
 
                     if (penetrationDepth <= 0f)
                     {

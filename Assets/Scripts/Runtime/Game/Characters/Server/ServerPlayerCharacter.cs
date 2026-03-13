@@ -33,14 +33,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         /// <summary>Default Capsule-Center bis Client aktuelle Werte sendet.</summary>
         private static readonly Vector3 k_DefaultCapsuleCenter = new(0f, 0.9f, 0f);
 
-        /// <summary>Default Ground-Check-Distanz bis Client aktuelle Werte sendet.</summary>
-        private const float k_DefaultGroundCheckDistance = 0.1f;
-
         /// <summary>
-        /// Physics CapsuleCollider fuer server-seitige Player-Player Collision.
+        /// Physics BoxCollider fuer server-seitige Player-Player Collision (SoF2 AABB).
         /// Wird bei SetCapsuleDimensions aktualisiert.
         /// </summary>
-        private CapsuleCollider m_PhysicsCollider;
+        private BoxCollider m_PhysicsCollider;
 
         /// <summary>
         /// Gibt an ob der Server-Character bereit ist Commands zu verarbeiten.
@@ -51,7 +48,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         /// <summary>
         /// Initialisiert die Server-seitige Physik und den Collision-Collider.
         /// Wird von NetworkedPlayerCharacter.OnServerSpawn() aufgerufen,
-        /// damit der CapsuleCollider nur auf dem Server erstellt wird.
+        /// damit der BoxCollider nur auf dem Server erstellt wird.
         /// </summary>
         public void InitializeServer()
         {
@@ -59,14 +56,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
             m_Simulation.SetCapsuleDimensions(
                 k_DefaultCapsuleHeight,
                 k_DefaultCapsuleRadius,
-                k_DefaultCapsuleCenter,
-                k_DefaultGroundCheckDistance
+                k_DefaultCapsuleCenter
             );
 
-            // Physics CapsuleCollider fuer Player-Player Collision
-            m_PhysicsCollider = gameObject.AddComponent<CapsuleCollider>();
-            m_PhysicsCollider.height = k_DefaultCapsuleHeight;
-            m_PhysicsCollider.radius = k_DefaultCapsuleRadius;
+            // Physics BoxCollider fuer Player-Player Collision (SoF2 AABB)
+            m_PhysicsCollider = gameObject.AddComponent<BoxCollider>();
+            m_PhysicsCollider.size = new Vector3(k_DefaultCapsuleRadius * 2f, k_DefaultCapsuleHeight, k_DefaultCapsuleRadius * 2f);
             m_PhysicsCollider.center = k_DefaultCapsuleCenter;
         }
 
@@ -103,7 +98,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
             cmd.DeltaTime = Mathf.Clamp(cmd.DeltaTime, 0f, 0.1f);
             cmd.MoveInput = Vector2.ClampMagnitude(cmd.MoveInput, 1f);
 
-            // Eigenen Collider deaktivieren damit CapsuleCast sich nicht selbst trifft
+            // Eigenen Collider deaktivieren damit BoxCast sich nicht selbst trifft
             if (m_PhysicsCollider != null)
             {
                 m_PhysicsCollider.enabled = false;
@@ -133,15 +128,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         /// Setzt Capsule-Dimensionen auf der Server-Simulation.
         /// Wird aufgerufen wenn der Client seine Bone-berechneten Capsule-Daten sendet.
         /// </summary>
-        public void SetCapsuleDimensions(float height, float radius, Vector3 center, float groundCheckDist)
+        public void SetCapsuleDimensions(float height, float radius, Vector3 center)
         {
-            m_Simulation.SetCapsuleDimensions(height, radius, center, groundCheckDist);
+            m_Simulation.SetCapsuleDimensions(height, radius, center);
 
-            // Physics CapsuleCollider aktualisieren
+            // Physics BoxCollider aktualisieren
             if (m_PhysicsCollider != null)
             {
-                m_PhysicsCollider.height = height;
-                m_PhysicsCollider.radius = radius;
+                m_PhysicsCollider.size = new Vector3(radius * 2f, height, radius * 2f);
                 m_PhysicsCollider.center = center;
             }
 

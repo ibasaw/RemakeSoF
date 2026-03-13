@@ -6,11 +6,11 @@ using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
 using Tolik.RemakeSoF.Runtime.Game.WeaponManagement;
 /**
-    * Owner-Client-Controller fÃ¼r Player-Character.
-    * SoF2/Quake3-Style manuelle Physik: Velocity-basierte Bewegung mit CapsuleCasts.
+    * Owner-Client-Controller fuer Player-Character.
+    * SoF2/Quake3-Style manuelle Physik: Velocity-basierte Bewegung mit BoxCasts (AABB).
     * Client-Side Prediction: Physik wird lokal angewendet (responsiv),
     * dann an Server gesendet zur Validierung.
-    * Auf Remote-Clients: nur CapsuleCollider fuer Kollision.
+    * Auf Remote-Clients: nur BoxCollider fuer Kollision.
     Ja, das ist jetzt sehr nah am Original:
 
 Physik auf Framerate â€” Q3/SoF2 lieÃŸ PM_Move pro Client-Frame laufen (nicht auf fixem Tick). 125fps = 125 Physik-Iterationen/s. Genau das hast du jetzt.
@@ -28,8 +28,8 @@ Was fehlt fÃ¼r 100% AuthentizitÃ¤t wÃ¤re Strafe-Jumping / Air-Control (Q3 
 namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 {
     /// <summary>
-    /// Owner-Client-Controller fÃ¼r Player-Character.
-    /// SoF2/Quake3-Style manuelle Physik: Velocity-basierte Bewegung mit CapsuleCasts.
+    /// Owner-Client-Controller fuer Player-Character.
+    /// SoF2/Quake3-Style manuelle Physik: Velocity-basierte Bewegung mit BoxCasts (AABB).
     /// Client-Side Prediction: Physik wird lokal angewendet (responsiv),
     /// dann an Server gesendet zur Validierung.
     /// Kein Player-Player Collision client-seitig (wie Q3/SoF2).
@@ -43,8 +43,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private NetworkedPlayerCharacter m_NetworkedPlayerCharacter;
 
         /// <summary>
-        /// SoF2 Collider-System: berechnet Capsule-Groesse aus Bones (Cranium, Fuesse).
-        /// Stellt Capsule-Parameter fuer CapsuleCasts bereit.
+        /// SoF2 Collider-System: berechnet Box-Groesse aus Bones (Cranium, Fuesse).
+        /// Stellt Box-Parameter fuer BoxCasts (AABB) bereit.
         /// </summary>
         [SerializeField]
         private ClientColliderSystem m_ColliderSystem;
@@ -166,6 +166,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>Aktuelle Airtime in der Fallphase (Sekunden).</summary>
         internal float CurrentFallPhaseAirtime => m_Simulation.CurrentFallPhaseAirtime;
+
+        /// <summary>Anzahl Spruenge in der aktuellen Bhop-Chain.</summary>
+        internal int BhopChainCount => m_Simulation.BhopChainCount;
+
+        /// <summary>Peak Speed der aktuellen Bhop-Chain (m/s).</summary>
+        internal float BhopChainPeakSpeed => m_Simulation.BhopChainPeakSpeed;
+
+        /// <summary>Distanz der aktuellen Bhop-Chain (Meter).</summary>
+        internal float BhopChainDistance => m_Simulation.BhopChainDistance;
+
+        /// <summary>Letzte Chain: Anzahl Spruenge.</summary>
+        internal int LastBhopChainCount => m_Simulation.LastBhopChainCount;
+
+        /// <summary>Letzte Chain: Peak Speed (m/s).</summary>
+        internal float LastBhopChainPeakSpeed => m_Simulation.LastBhopChainPeakSpeed;
+
+        /// <summary>Letzte Chain: Distanz (Meter).</summary>
+        internal float LastBhopChainDistance => m_Simulation.LastBhopChainDistance;
 
         // ===== Simulation + Prediction =====
 
@@ -572,8 +590,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             };
             m_JumpRequested = false;
 
-            // Eigenen Collider deaktivieren damit CapsuleCast sich nicht selbst trifft
-            CapsuleCollider ownCollider = m_ColliderSystem != null ? m_ColliderSystem.PhysicsCollider : null;
+            // Eigenen Collider deaktivieren damit BoxCast sich nicht selbst trifft
+            BoxCollider ownCollider = m_ColliderSystem != null ? m_ColliderSystem.PhysicsCollider : null;
             if (ownCollider != null)
             {
                 ownCollider.enabled = false;
@@ -641,9 +659,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_Simulation.SetState(ack.Velocity, ack.IsGrounded, ack.IsJumping);
             Vector3 replayPosition = ack.Position;
 
-            // Eigenen Collider deaktivieren damit ResolvePenetration's OverlapCapsule
+            // Eigenen Collider deaktivieren damit ResolvePenetration's OverlapBox
             // sich nicht selbst trifft (gleiche Pattern wie RunPhysicsStep)
-            CapsuleCollider ownCollider = m_ColliderSystem != null ? m_ColliderSystem.PhysicsCollider : null;
+            BoxCollider ownCollider = m_ColliderSystem != null ? m_ColliderSystem.PhysicsCollider : null;
             if (ownCollider != null)
             {
                 ownCollider.enabled = false;
@@ -786,16 +804,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_Simulation.SetCapsuleDimensions(
                     m_ColliderSystem.GetCurrentCapsuleHeight(),
                     m_ColliderSystem.GetCurrentCapsuleRadius(),
-                    m_ColliderSystem.GetCurrentCapsuleCenter(),
-                    m_ColliderSystem.GetCurrentGroundCheckDistance()
+                    m_ColliderSystem.GetCurrentCapsuleCenter()
                 );
 
                 // Capsule-Dimensionen an Server senden (fÃ¼r Server-Side Simulation)
                 m_NetworkedPlayerCharacter.SendCapsuleDimensions(
                     m_ColliderSystem.GetCurrentCapsuleHeight(),
                     m_ColliderSystem.GetCurrentCapsuleRadius(),
-                    m_ColliderSystem.GetCurrentCapsuleCenter(),
-                    m_ColliderSystem.GetCurrentGroundCheckDistance()
+                    m_ColliderSystem.GetCurrentCapsuleCenter()
                 );
             }
 

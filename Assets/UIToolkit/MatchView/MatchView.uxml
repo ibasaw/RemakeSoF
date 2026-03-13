@@ -32,5 +32,10 @@
             <ui:Label text="Full Dist Horiz: -" name="fullDistHorizLabel" style="font-size: 13px; color: rgb(170, 150, 220);"/>
             <ui:Label text="Full Vert Path: -" name="fullVertPathLabel" style="font-size: 13px; color: rgb(170, 150, 220);"/>
         </ui:VisualElement>
+        <ui:VisualElement name="BhopDisplayContainer" style="position: absolute; bottom: 40px; left: 0; right: 0; align-items: center; justify-content: center;">
+            <ui:Label text="" name="bhopSpeedLabel" style="font-size: 48px; color: rgb(255, 255, 255); -unity-font-style: bold; -unity-text-align: middle-center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);"/>
+            <ui:Label text="" name="bhopChainLabel" style="font-size: 20px; color: rgb(200, 200, 200); -unity-text-align: middle-center; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8); margin-top: 2px;"/>
+            <ui:Label text="" name="bhopLastChainLabel" style="font-size: 16px; color: rgb(150, 150, 150); -unity-text-align: middle-center; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8); margin-top: 4px;"/>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
