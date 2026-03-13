@@ -277,6 +277,50 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private Transform m_PitchTarget;
 
         /// <summary>
+        /// Skeleton-Root-Bone: oberster Bone im SoF2-Skeleton.
+        /// LocalPosition wird in LateUpdate auf Vector3.zero gesetzt,
+        /// damit Animations-Keyframes das Mesh nicht vom Physik-Collider wegbewegen.
+        /// </summary>
+        private Transform m_SkeletonRoot;
+
+        /// <summary>
+        /// Model-Root-Bone: direktes Kind von skeleton_root.
+        /// Einige Animationen haben Root-Motion-Daten auf diesem Bone.
+        /// XZ-Position wird in LateUpdate auf Bind-Pose-Wert zurueckgesetzt.
+        /// </summary>
+        private Transform m_ModelRoot;
+
+        /// <summary>
+        /// Bind-Pose localPosition des pelvis-Bones bei Instantiierung.
+        /// Wird als Referenz verwendet: in LateUpdate werden XZ auf diesen Wert
+        /// zurueckgesetzt, damit Animations-Drift entfernt wird ohne den
+        /// strukturellen Offset zu zerstoeren.
+        /// </summary>
+        private Vector3 m_PelvisBindLocalPos;
+
+        /// <summary>
+        /// Ob die Bind-Pose-Referenzwerte bereits erfasst wurden
+        /// (nach erster Animator-Evaluation).
+        /// </summary>
+        private bool m_HasBindPoseReference;
+
+        /// <summary>
+        /// Linker Fuss-Bone fuer dynamische Y-Offset-Berechnung.
+        /// </summary>
+        private Transform m_LeftFoot;
+
+        /// <summary>
+        /// Rechter Fuss-Bone fuer dynamische Y-Offset-Berechnung.
+        /// </summary>
+        private Transform m_RightFoot;
+
+        /// <summary>
+        /// Transform des Visual-Prefab-Instanz (Root des Skins).
+        /// Wird in LateUpdate vertikal korrigiert.
+        /// </summary>
+        private Transform m_VisualInstance;
+
+        /// <summary>
         /// Gesmoothed Legs-Forward Vektor (Slerp-basiert, nie sprunghaft).
         /// </summary>
         private Vector3 m_SmoothedLegsForward = Vector3.forward;
@@ -707,8 +751,87 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return;
             }
 
+            ResetRootBonePositions();
+            AdjustVisualYOffset();
             UpdatePelvisRotation();
             UpdateLumbarRotation();
+        }
+
+        /// <summary>
+        /// Korrigiert die Y-Position des Visual-Prefabs sodass die Fuesse am Boden (Y=0) stehen.
+        /// Berechnet den niedrigsten Fuss-Bone in lokalem Raum des Player-Transforms
+        /// und verschiebt das Visual entsprechend nach oben.
+        /// Funktioniert dynamisch fuer Standing und Crouching.
+        /// </summary>
+        private void AdjustVisualYOffset()
+        {
+            if (m_VisualInstance == null || (m_LeftFoot == null && m_RightFoot == null))
+            {
+                return;
+            }
+
+            float lowestFootY = float.MaxValue;
+            if (m_LeftFoot != null)
+            {
+                float y = transform.InverseTransformPoint(m_LeftFoot.position).y;
+                lowestFootY = Mathf.Min(lowestFootY, y);
+            }
+            if (m_RightFoot != null)
+            {
+                float y = transform.InverseTransformPoint(m_RightFoot.position).y;
+                lowestFootY = Mathf.Min(lowestFootY, y);
+            }
+
+            // Verschiebe Visual nach oben sodass Fuesse bei Y=0 (Boden) landen
+            Vector3 visPos = m_VisualInstance.localPosition;
+            m_VisualInstance.localPosition = new Vector3(visPos.x, visPos.y - lowestFootY, visPos.z);
+        }
+
+        /// <summary>
+        /// Setzt die lokale XZ-Position der Root-Bones und des Pelvis auf Null.
+        /// SoF2-Animationen enthalten Positions-Keyframes auf dem pelvis-Bone
+        /// die das Mesh vom Physik-Collider wegbewegen. Da Bewegung komplett
+        /// ueber PlayerPhysicsSimulation laeuft (applyRootMotion = false),
+        /// muss die XZ-Position nach Animator-Evaluation korrigiert werden.
+        /// Y bleibt erhalten (Crouch-Hoehe etc.).
+        /// </summary>
+        private void ResetRootBonePositions()
+        {
+            if (m_SkeletonRoot != null)
+            {
+                Vector3 skPos = m_SkeletonRoot.localPosition;
+                m_SkeletonRoot.localPosition = new Vector3(0f, skPos.y, 0f);
+            }
+
+            if (m_ModelRoot != null)
+            {
+                Vector3 mrPos = m_ModelRoot.localPosition;
+                m_ModelRoot.localPosition = new Vector3(0f, mrPos.y, 0f);
+            }
+
+            if (m_PelvisTarget == null)
+            {
+                return;
+            }
+
+            // Erste Animator-Evaluation: Bind-Pose-Referenz erfassen.
+            // Erst jetzt sind die Bone-Positionen korrekt (nicht T-Pose).
+            if (!m_HasBindPoseReference)
+            {
+                m_PelvisBindLocalPos = m_PelvisTarget.localPosition;
+                m_HasBindPoseReference = true;
+                return;
+            }
+
+            // Pelvis XZ auf Bind-Pose-Wert zuruecksetzen, Y vom Animator behalten.
+            // Der strukturelle Offset (z.B. X=0.45) bleibt erhalten,
+            // nur Animations-Drift (Walk/Crouch-Verschiebung) wird entfernt.
+            Vector3 pelPos = m_PelvisTarget.localPosition;
+            m_PelvisTarget.localPosition = new Vector3(
+                m_PelvisBindLocalPos.x,
+                pelPos.y,
+                m_PelvisBindLocalPos.z
+            );
         }
 
         /// <summary>
@@ -735,6 +858,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_PelvisTarget = pelvis;
             m_LowerLumbar = lowerLumbar;
             m_UpperLumbar = upperLumbar;
+            m_SkeletonRoot = FindDeepChild(visualInstance.transform, "skeleton_root");
+            m_ModelRoot = FindDeepChild(visualInstance.transform, "model_root");
+            m_LeftFoot = FindDeepChild(visualInstance.transform, "ltarsal");
+            m_RightFoot = FindDeepChild(visualInstance.transform, "rtarsal");
+            m_VisualInstance = visualInstance.transform;
+            m_HasBindPoseReference = false;
 
             // SmoothedLegsForward initialisieren auf aktuelle Blickrichtung
             Vector3 initialForward = yaw.forward;

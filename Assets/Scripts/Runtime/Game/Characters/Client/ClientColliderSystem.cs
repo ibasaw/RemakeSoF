@@ -98,6 +98,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         public Vector3 GetCurrentCapsuleCenter() => m_CapsuleCenter;
 
         /// <summary>
+        /// Lokaler Y-Wert der Fuesse relativ zum Player-Transform.
+        /// Negativ wenn der Skeleton-Ursprung (Pelvis) ueber den Fuessen liegt.
+        /// Wird verwendet um das Visual vertikal zu korrigieren.
+        /// </summary>
+        public float FeetYLocal => m_FeetYLocal;
+
+        /// <summary>
         /// Physik-BoxCollider fuer temporaeres Deaktivieren waehrend eigener Simulation.
         /// </summary>
         public BoxCollider PhysicsCollider => m_PhysicsCollider;
