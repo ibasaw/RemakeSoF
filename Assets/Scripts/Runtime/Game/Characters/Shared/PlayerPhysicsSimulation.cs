@@ -92,8 +92,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         private const int MAX_CLIP_PLANES = 5;
 
         /// <summary>SoF2 Ground-Trace Distanz: 0.25 Quake-Units × 0.0254 = 0.00635m.
-        /// Erhöht auf 0.08m für BoxCast-Präzision bei Unity-Meshes.
-        /// Zu kleine Werte führen dazu, dass der Spieler beim Laufen durch den Boden fällt.</summary>
+        /// Erhöht auf 0.08m weil Unity BoxCast auf Slopes bei kleineren Werten
+        /// den Bodenkontakt verliert. CorrectGroundPosition gleicht das Schweben aus.</summary>
         private const float GROUND_TRACE_DIST = 0.08f;//original: 0.00635f
 
         // ===== Simulation State (Runtime, nicht serialisiert) =====
@@ -221,6 +221,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Max erlaubte Boden-Zeit um die Chain nicht zu brechen (Sekunden).</summary>
         private const float BHOP_CHAIN_GROUND_TIMEOUT = 0.3f;
 
+        /// <summary>Minimale horizontale Speed damit ein Jump als Bhop zählt (m/s).</summary>
+        private const float BHOP_MIN_SPEED = 1.0f;
+
         /// <summary>Startposition (XZ) der aktuellen Bhop-Chain.</summary>
         private Vector3 m_BhopChainStartPosition;
 
@@ -303,12 +306,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 IsDebounceActive = false;
             }
 
-            // SoF2: pm_time countdown (landing lockout)
-            if (JumpDebounce > 0f)
-            {
-                JumpDebounce -= m_DeltaTime;
-            }
-
             bool wasGrounded = IsGrounded;
 
             // SoF2: PM_CheckDuck before PM_GroundTrace (sets mins/maxs)
@@ -317,8 +314,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             // 1. Ground trace before movement (SoF2: PM_GroundTrace)
             PM_GroundTrace(ref position);
 
+            // Landing detection BEFORE PM_CheckJump can clear IsGrounded again.
+            // Beim Sprung-Spam landet und springt der Spieler im selben Frame —
+            // ohne fruehe Erkennung wuerde JustLanded nie true werden und die
+            // Animation bekaeme nie IsGrounded=true (→ "Bouncing"-Effekt).
+            JustLanded = !wasGrounded && IsGrounded;
+
             // SoF2: PM_CheckCrouchJump after PM_GroundTrace
             PM_CheckCrouchJump(cmd);
+
+            // SoF2: PM_DropTimers — pm_time countdown (landing lockout)
+            // Runs AFTER ground checks but BEFORE movement, matching SoF2 pipeline.
+            if (JumpDebounce > 0f)
+            {
+                JumpDebounce -= m_DeltaTime;
+            }
 
             // 2. Movement (includes friction, acceleration, collision, gravity in air)
             if (m_Walking)
@@ -333,11 +343,37 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             // 3. Ground trace after movement (SoF2: second PM_GroundTrace)
             PM_GroundTrace(ref position);
 
-            // 4. Landing detection
-            JustLanded = !wasGrounded && IsGrounded;
+            // Landing detection nach 2. GroundTrace: Normale Landungen werden hier
+            // erkannt, weil der Spieler oft erst NACH AirMove (Gravity) den Boden
+            // erreicht — die 1. GroundTrace sah ihn noch in der Luft.
+            // Die 1. GroundTrace erkennt nur Same-Frame-Landungen (Jump-Spam).
+            if (!JustLanded && !wasGrounded && IsGrounded)
+            {
+                JustLanded = true;
+            }
 
             // 5. Airtime tracking: leaving ground
-            if (wasGrounded && !IsGrounded)
+            // JustLanded && !IsGrounded = Same-Frame Land+Jump: behandle als
+            // "erst gelandet, dann abgehoben" — Full-Werte sichern, dann neuen
+            // Luftstart tracken.
+            bool leftGround = (wasGrounded && !IsGrounded)
+                           || (JustLanded && !IsGrounded);
+
+            // Same-Frame Land+Jump: Full-Werte sichern bevor neuer Start
+            if (JustLanded && !IsGrounded)
+            {
+                FullAirtime = CurrentAirtime;
+                FullJumpHeight = Mathf.Max(0f, m_HighestYInAir - m_AirStartPosition.y);
+                FullFallHeight = Mathf.Max(0f, m_HighestYInAir - position.y);
+                FullJumpPhaseAirtime = m_InFallPhase ? m_PeakTime - m_AirStartTime : FullAirtime;
+                FullFallPhaseAirtime = m_InFallPhase ? FullAirtime - FullJumpPhaseAirtime : 0f;
+                Vector3 hDeltaSF = new(position.x - m_AirStartPosition.x, 0f, position.z - m_AirStartPosition.z);
+                FullAirDistanceHoriz = hDeltaSF.magnitude;
+                FullAirDistanceVert = FullJumpHeight + FullFallHeight;
+                LandedThisGround = true;
+            }
+
+            if (leftGround)
             {
                 m_AirStartPosition = position;
                 m_HighestYInAir = position.y;
@@ -378,7 +414,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             }
 
             // 7. Landing: save full values, reset live values
-            if (JustLanded)
+            // Same-Frame Land+Jump bereits oben in Punkt 5 behandelt — nur
+            // ausfuehren wenn wir tatsaechlich am Boden gelandet SIND (nicht
+            // schon wieder in der Luft).
+            if (JustLanded && IsGrounded)
             {
                 FullAirtime = CurrentAirtime;
                 FullJumpHeight = Mathf.Max(0f, m_HighestYInAir - m_AirStartPosition.y);
@@ -430,15 +469,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 m_GroundTime = 0f;
             }
 
-            // Neuer Jump: Chain erweitern oder starten
+            // Neuer Jump: Chain erweitern oder starten (nur mit Mindest-Speed)
             if (JumpTriggered)
             {
-                if (BhopChainCount == 0)
+                float horizSpeed = new Vector3(Velocity.x, 0f, Velocity.z).magnitude;
+                if (horizSpeed >= BHOP_MIN_SPEED)
                 {
-                    m_BhopChainStartPosition = position;
-                }
+                    if (BhopChainCount == 0)
+                    {
+                        m_BhopChainStartPosition = position;
+                    }
 
-                BhopChainCount++;
+                    BhopChainCount++;
+                }
             }
 
             // Peak Speed und Distanz live updaten waehrend Chain aktiv
@@ -544,10 +587,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         {
             Vector3 center = GetWorldCenterAtPosition(position);
             Vector3 halfExtents = BoxHalfExtents;
-            // XZ leicht schrumpfen um angrenzende Flaechen nicht zu fangen (wie 0.95f Radius bei CapsuleCast)
-            Vector3 groundHalfExtents = new(halfExtents.x * 0.95f, halfExtents.y, halfExtents.z * 0.95f);
+            // SoF2 benutzt die volle Bounding Box fuer Ground-Traces (kein Shrink).
+            // Der Slope-Check (normal.y < PmMaxSteepness) filtert Wand-Hits bereits.
 
-            if (!Physics.BoxCast(center, groundHalfExtents,
+            if (!Physics.BoxCast(center, halfExtents,
                     Vector3.down, out RaycastHit hit, Quaternion.identity, GROUND_TRACE_DIST,
                     GroundMask, QueryTriggerInteraction.Ignore))
             {
@@ -593,26 +636,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 IsJumping = false;
 
                 // SoF2: previous_velocity[2] < -200 -> pm_time = 250
-                // In SoF2 (GROUND_TRACE_DIST = 0.25 QU = 0.006m) war die Fall-Velocity
-                // beim Ground-Detect bereits durch PM_SlideMove Kollision reduziert.
+                // SoF2 Threshold: -200 QU/s × 0.0254 = -5.08 m/s
                 // Unsere groessere Trace-Distanz (0.08m) erkennt den Boden frueher,
                 // daher ist die gemessene Fall-Velocity hoeher als in SoF2.
-                // Threshold angepasst: Zusaetzliche Gravity ueber die extra Distanz
-                // (v² = v0² + 2*g*d → ~1.8 m/s extra bei 0.074m Differenz).
+                // Kompensation: v² = v0² + 2*g*d → ~1.8 m/s extra bei 0.074m Differenz.
                 if (m_PreviousVelocity.y < -6.86f)
                 {
                     JumpDebounce = JumpDebounceAfterMs;
                 }
 
                 // Vertikale Velocity nullen bei Landung.
-                // In SoF2 ist die Ground-Trace-Distanz nur 0.25 QU (6mm),
-                // daher wird der Boden erst erkannt NACHDEM PM_SlideMove die
-                // Fall-Velocity bereits per Collision geclippt hat.
-                // Unsere groessere Trace-Distanz (0.08m, noetig fuer Unity-Mesh-
-                // Praezision) erkennt den Boden BEVOR SlideMove clippt.
-                // Ohne dieses Nullen wuerde PM_WalkMove's Speed-Restore die
-                // Fall-Geschwindigkeit in eine Aufwaerts-Geschwindigkeit umwandeln
-                // und den Spieler nach oben bouncen lassen.
+                // Unsere Trace-Distanz (0.08m) erkennt den Boden BEVOR SlideMove
+                // die Fall-Velocity per Collision clippt. Ohne dieses Nullen wuerde
+                // PM_WalkMove's Speed-Restore die Fall-Geschwindigkeit in eine
+                // Aufwaerts-Geschwindigkeit umwandeln und den Spieler bouncen lassen.
                 Velocity.y = 0f;
             }
 
@@ -633,6 +670,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         {
             // SoF2: pm_time lockout (hard landing)
             if (JumpDebounce > 0f)
+            {
+                return false;
+            }
+
+            // SoF2: Can't jump when ducked (PMF_DUCKED check)
+            if (IsCrouching)
             {
                 return false;
             }
@@ -1156,9 +1199,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             // SoF2: trace down from start position to check for ground
             Vector3 center = GetWorldCenterAtPosition(startO);
             Vector3 halfExtents = BoxHalfExtents;
-            Vector3 groundHalfExtents = new(halfExtents.x * 0.95f, halfExtents.y, halfExtents.z * 0.95f);
 
-            bool hasGroundBelow = Physics.BoxCast(center, groundHalfExtents,
+            bool hasGroundBelow = Physics.BoxCast(center, halfExtents,
                 Vector3.down, out RaycastHit downFromStart, Quaternion.identity, PmStepSize,
                 GroundMask, QueryTriggerInteraction.Ignore);
 
@@ -1204,7 +1246,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             // Push down the final amount
             center = GetWorldCenterAtPosition(position);
 
-            if (Physics.BoxCast(center, groundHalfExtents,
+            if (Physics.BoxCast(center, halfExtents,
                     Vector3.down, out RaycastHit stepDownTrace, Quaternion.identity, stepSize + 0.01f,
                     GroundMask, QueryTriggerInteraction.Ignore))
             {
@@ -1237,19 +1279,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         // ===================================================================
 
         /// <summary>
-        /// Korrigiert die Position über dem Boden (verhindert Einsinken).
+        /// Korrigiert die Position auf den Boden (verhindert Einsinken UND Schweben).
         /// Box-Bottom = Center - halfExtents.y.
+        /// Noetig weil GROUND_TRACE_DIST (0.08m) groesser ist als SoF2 (0.00635m),
+        /// wodurch der Boden erkannt wird bevor die Box ihn tatsaechlich beruehrt.
+        /// Korrektur erfolgt NUR vertikal, um seitliches Driften auf Slopes zu vermeiden.
         /// </summary>
         private void CorrectGroundPosition(ref Vector3 position, RaycastHit downHit)
         {
             Vector3 boxBottom = GetWorldCenterAtPosition(position) - Vector3.up * BoxHalfExtents.y;
             float desiredDistance = SKIN_WIDTH;
-            float currentDistance = Vector3.Dot(boxBottom - downHit.point, downHit.normal);
+            // Vertikaler Abstand zum Hitpoint (nicht entlang der Normale)
+            float verticalGap = boxBottom.y - downHit.point.y;
 
-            if (currentDistance < desiredDistance)
+            if (Mathf.Abs(verticalGap - desiredDistance) > 0.001f)
             {
-                float correction = desiredDistance - currentDistance;
-                position += downHit.normal * correction;
+                float correction = desiredDistance - verticalGap;
+                position.y += correction;
             }
         }
 

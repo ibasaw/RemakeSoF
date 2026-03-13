@@ -525,7 +525,7 @@ MonoBehaviour:
   m_SkinHandler: {fileID: 792202953519434536}
   m_CharacterState: {fileID: 2107942443278687898}
   m_Simulation:
-    PmAccelerate: 10
+    PmAccelerate: 6
     PmAirAccelerate: 1
     PmFriction: 6
     PmStopSpeed: 2.54
@@ -536,6 +536,7 @@ MonoBehaviour:
     PmStepSize: 0.4572
     PmMaxBarrier: 0.8128
     PmDuckScale: 0.25
+    PmWalkScale: 0.5
     StandingHeight: 2.2606
     CrouchingHeight: 1.6256
     JumpDebounceAfterMs: 0.25
@@ -596,7 +597,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Server.ServerPlayerCharacter
   m_NetworkedPlayerCharacter: {fileID: 3101344949267953411}
   m_Simulation:
-    PmAccelerate: 10
+    PmAccelerate: 6
     PmAirAccelerate: 1
     PmFriction: 6
     PmStopSpeed: 2.54
@@ -607,6 +608,7 @@ MonoBehaviour:
     PmStepSize: 0.4572
     PmMaxBarrier: 0.8128
     PmDuckScale: 0.25
+    PmWalkScale: 0.5
     StandingHeight: 2.2606
     CrouchingHeight: 1.6256
     JumpDebounceAfterMs: 0.25

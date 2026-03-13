@@ -975,13 +975,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             float speed = horizontalVelocity.magnitude;
             bool isMoving = speed > 0.01f;
 
+            // Beim Sprung-Spam landet und springt der Spieler im selben Frame.
+            // IsGrounded ist am Frame-Ende false, aber JustLanded sagt der Animation
+            // "wir haben den Boden beruehrt" → Jump→Idle Transition feuert korrekt.
+            bool animGrounded = m_Simulation.IsGrounded || m_Simulation.JustLanded;
+
             NetworkAnimationState state = new()
             {
                 Speed = speed,
                 Horizontal = m_AnimHorizontal,
                 Vertical = m_AnimVertical,
                 IsMoving = isMoving,
-                IsGrounded = m_Simulation.IsGrounded,
+                IsGrounded = animGrounded,
                 IsWalking = isWalking,
                 IsAttacking = m_IsAttacking,
                 IsCrouching = m_Simulation.IsCrouching,

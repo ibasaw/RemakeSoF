@@ -39,7 +39,7 @@ Dimensionslose Werte: unverändert
 
 | Konstante | Wert | Grund |
 |-----------|------|-------|
-| `GROUND_TRACE_DIST` | 0.08m | SoF2: 0.25 QU = 0.00635m. Erhöht weil Unity BoxCast auf Meshes unzuverlässig bei <1cm. |
+| `GROUND_TRACE_DIST` | 0.08m | SoF2: 0.25 QU = 0.00635m. Erhöht weil Unity BoxCast auf Slopes bei kleineren Werten den Kontakt verliert. |
 | `SKIN_WIDTH` | 0.02m | Minimaler Abstand zu Oberflächen (Unity hat keine globale skin width wie Quake). |
 | `MAX_DEPENETRATION_ITERATIONS` | 3 | Iterative Depenetration via OverlapBox (SoF2 braucht das nicht — BSP hat kein Tunneling). |
 
