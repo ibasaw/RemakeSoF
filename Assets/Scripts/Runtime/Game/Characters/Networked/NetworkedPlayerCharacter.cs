@@ -377,7 +377,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
             else
             {
-                Debug.Log($"[NetworkedPlayerCharacter] Animator gefunden auf Visual für Character {CharacterId}");
+                // Root Motion deaktivieren: Vertikale Positionierung kommt
+                // ausschliesslich aus der SoF2-Physik-Simulation (PlayerPhysicsSimulation).
+                // Ohne dies wuerde die Jump-Animation die Visual-Position ueber die
+                // Physik-Capsule hinaus nach oben verschieben.
+                m_Animator.applyRootMotion = false;
+                Debug.Log($"[NetworkedPlayerCharacter] Animator gefunden auf Visual für Character {CharacterId} (Root Motion deaktiviert)");
             }
         }
 

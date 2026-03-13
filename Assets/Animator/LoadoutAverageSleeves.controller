@@ -6,7 +6,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: LoadoutPreviewAnimationController
+  m_Name: LoadoutAverageSleeves
   serializedVersion: 5
   m_AnimatorParameters:
   - m_Name: Speed
@@ -84,7 +84,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Start
-  m_Speed: 0.5
+  m_Speed: 0.6
   m_CycleOffset: 0
   m_Transitions: []
   m_StateMachineBehaviours: []
@@ -96,7 +96,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 6250740319275697514, guid: d67a39a1e9ee9ac42b32666fda3b2a4d, type: 3}
+  m_Motion: {fileID: 6250740319275697514, guid: 32bf07c554bd77346b7282d6526529bf, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 

@@ -31,6 +31,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         [SerializeField]
         private bool m_DynamicCapsuleSizing = true;
 
+        /// <summary>Verwendet feste SoF2-authentische Capsule-Dimensionen statt Bone-basierter Berechnung.</summary>
+        [SerializeField]
+        private bool m_UseFixedSoF2Size = true;
+
         [Header("Visual Collider Debug")]
         [SerializeField]
         private bool m_ShowVisualCollider;
@@ -55,6 +59,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>Breite zwischen linkem und rechtem Fuss.</summary>
         private float m_FeetWidth;
+
+        /// <summary>Minimaler Capsule-Radius (SoF2-proportional).</summary>
+        private const float k_MinCapsuleRadius = 0.20f;
+
+        /// <summary>Maximaler Capsule-Radius (verhindert zu breite Capsule bei T-Pose).</summary>
+        private const float k_MaxCapsuleRadius = 0.40f;
+
+        /// <summary>SoF2 Standing-Hoehe: 89 Units (-46 bis 43) * 0.0254 m/unit.</summary>
+        private const float k_SoF2StandingHeight = 2.2606f;
+
+        /// <summary>SoF2 Crouching-Hoehe: 64 Units (-46 bis 18) * 0.0254 m/unit.</summary>
+        private const float k_SoF2CrouchingHeight = 1.6256f;
+
+        /// <summary>SoF2 Capsule-Radius: 15 Units * 0.0254 m/unit.</summary>
+        private const float k_SoF2Radius = 0.381f;
 
         // Visual Collider GameObjects + Components
         private GameObject m_VisualColliderObject;
@@ -117,6 +136,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return;
             }
 
+            if (m_UseFixedSoF2Size)
+            {
+                ApplyFixedSoF2Size(false);
+                return;
+            }
+
             if (cranium == null)
             {
                 Debug.LogWarning("[ClientColliderSystem] Cranium bone nicht zugewiesen! Verwende Standard-Capsule.");
@@ -157,8 +182,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             float newHeight = highestY - lowestY;
 
-            // Breite aus Fuss-Abstand berechnen
-            float newRadius = CalculateRadiusFromFeet(leftFoot, rightFoot);
+            // Breite aus SkinnedMeshRenderer-Bounds berechnen (Fuss-Abstand als Fallback)
+            float newRadius = CalculateRadiusFromBounds(leftFoot, rightFoot);
 
             // Fuss-Daten speichern
             m_FeetYLocal = lowestY;
@@ -197,12 +222,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>
         /// Setzt Capsule-Groesse fuer Standing / Crouching.
-        /// Crouch = 60% der Standing-Hoehe.
+        /// Bei fixem SoF2-Modus werden authentische Dimensionen verwendet.
+        /// Anderenfalls Crouch = 60% der Standing-Hoehe.
         /// </summary>
         public void UpdateCapsuleSizeForState(bool isCrouching)
         {
             if (!m_DynamicCapsuleSizing || !m_AutoSizeCapsule)
             {
+                return;
+            }
+
+            if (m_UseFixedSoF2Size)
+            {
+                ApplyFixedSoF2Size(isCrouching);
                 return;
             }
 
@@ -218,6 +250,33 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             UpdatePhysicsCollider();
+        }
+
+        /// <summary>
+        /// Setzt feste SoF2-authentische Capsule-Dimensionen.
+        /// Standing: 89 Units = 2.26m Hoehe, 15 Units = 0.381m Radius.
+        /// Crouching: 64 Units = 1.63m Hoehe, gleicher Radius.
+        /// Quelle: bg_public.h playerMins/playerMaxs + PM_CheckDuck.
+        /// </summary>
+        private void ApplyFixedSoF2Size(bool isCrouching)
+        {
+            float height = isCrouching ? k_SoF2CrouchingHeight : k_SoF2StandingHeight;
+            float centerY = height * 0.5f;
+
+            m_BaseCapsuleHeight = k_SoF2StandingHeight;
+            m_BaseCapsuleRadius = k_SoF2Radius;
+            m_BaseCapsuleCenter = new Vector3(0f, k_SoF2StandingHeight * 0.5f, 0f);
+
+            m_CapsuleHeight = height;
+            m_CapsuleRadius = k_SoF2Radius;
+            m_CapsuleCenter = new Vector3(0f, centerY, 0f);
+
+            m_FeetYLocal = 0f;
+            m_FeetWidth = k_SoF2Radius * 2f;
+
+            UpdatePhysicsCollider();
+            InitializeVisualCollider();
+            InitializeVisualGroundCheck();
         }
 
         private void LateUpdate()
@@ -676,31 +735,39 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>
         /// Berechnet Capsule-Radius aus Fuss-Abstand.
         /// </summary>
-        private float CalculateRadiusFromFeet(Transform leftFoot, Transform rightFoot)
+        /// <summary>
+        /// Berechnet den Capsule-Radius aus SkinnedMeshRenderer-Bounds.
+        /// Faellt auf Fuss-Abstand zurueck falls keine Renderer gefunden werden.
+        /// Ergebnis wird auf [k_MinCapsuleRadius, k_MaxCapsuleRadius] geklemmt fuer realistische SoF2-Proportionen.
+        /// </summary>
+        private float CalculateRadiusFromBounds(Transform leftFoot, Transform rightFoot)
         {
+            // Primary: SkinnedMeshRenderer-Bounds (Surface-Meshes des Character-Models)
+            SkinnedMeshRenderer[] renderers = GetComponentsInChildren<SkinnedMeshRenderer>();
+            if (renderers.Length > 0)
+            {
+                Bounds bounds = renderers[0].bounds;
+                for (int i = 1; i < renderers.Length; i++)
+                {
+                    bounds.Encapsulate(renderers[i].bounds);
+                }
+
+                float boundsRadius = Mathf.Max(bounds.size.x, bounds.size.z) * 0.5f;
+                return Mathf.Clamp(boundsRadius, k_MinCapsuleRadius, k_MaxCapsuleRadius);
+            }
+
+            // Fallback: Fuss-Abstand
             if (leftFoot != null && rightFoot != null)
             {
                 Vector3 diff = new(
                     leftFoot.position.x - rightFoot.position.x,
                     0f,
                     leftFoot.position.z - rightFoot.position.z);
-                return diff.magnitude * 0.5f;
+                float feetRadius = diff.magnitude * 0.5f;
+                return Mathf.Clamp(feetRadius, k_MinCapsuleRadius, k_MaxCapsuleRadius);
             }
 
-            // Fallback: Renderer-Bounds
-            Renderer[] renderers = GetComponentsInChildren<Renderer>();
-            if (renderers.Length > 0)
-            {
-                Bounds bounds = renderers[0].bounds;
-                foreach (Renderer r in renderers)
-                {
-                    bounds.Encapsulate(r.bounds);
-                }
-
-                return Mathf.Max(bounds.size.x, bounds.size.z) * 0.5f;
-            }
-
-            return m_CapsuleRadius > 0f ? m_CapsuleRadius : 0.5f;
+            return m_CapsuleRadius > 0f ? m_CapsuleRadius : k_MinCapsuleRadius;
         }
     }
 }

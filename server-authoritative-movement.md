@@ -17,11 +17,12 @@
 ┌────────────────────────────────────────────────────────────────────────────────┐
 │                      PlayerPhysicsSimulation   [Serializable]                  │
 │  Shared Pure C# Klasse — identischer Code auf Client + Server                 │
-│  ● PM_StepSlideMove (4-Bump CapsuleCast + Step-Up)                             │
-│  ● PM_WalkMove / PM_AirMove                                                    │
-│  ● PM_Friction / PM_Accelerate / PM_ClipVelocity                               │
-│  ● ApplyGravity / ProcessJump                                                   │
-│  ● CheckGroundedState / TrySlopeGroundCheck                                     │
+│  ● PM_GroundTrace (Ground-Detection VOR + NACH Bewegung)                       │
+│  ● PM_WalkMove / PM_AirMove (Friction + Accelerate + StepSlideMove)            │
+│  ● PM_SlideMove (Multi-Plane Clipping, Gravity Half-Step)                      │
+│  ● PM_StepSlideMove (SlideMove → Step-Up → SlideMove → Step-Down)              │
+│  ● PM_Friction / PM_Accelerate / PM_ClipVelocity / PM_CheckJump               │
+│  ● ResolvePenetration (Depenetration mit Raycast-Fallback)                     │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -35,39 +36,74 @@
 | `Assets/Scripts/Runtime/Game/Characters/Server/ServerPlayerCharacter.cs` | Server: Empfängt Commands → `ProcessCommand()` → autoritative Position. Hält eigene `[SerializeField] PlayerPhysicsSimulation m_Simulation`. |
 | `Assets/Scripts/Runtime/Game/Characters/Networked/NetworkedPlayerCharacter.cs` | RPC-Bridge: `SubmitCommandServerRpc`, `MovementAckClientRpc`, `SubmitCapsuleDimensionsServerRpc`. |
 
-## Physik-Pipeline (pro Frame)
+## Physik-Pipeline (pro Frame) — SoF2 PmoveSingle Exact Port
 
 ```
-1. Input sammeln (MoveInput, YawAngle, Jump, Walk, Crouch)
-2. PM_CmdScale → Wish-Speed berechnen
-3. CheckGroundedState → Ground/Air unterscheiden
-4. Grounded?
-   ├─ Ja: PM_Friction → PM_WalkMove → PM_Accelerate → PM_ClipVelocity (Ground-Plane)
-   └─ Nein: ApplyGravity → PM_AirMove → PM_Accelerate
-5. ProcessJump (falls Jump + Grounded + kein Debounce)
-6. PM_StepSlideMove (4-Bump + Step-Up)
-7. ApplyVelocityLimits
-8. HandleLandingEvents
+Simulate(ref position, cmd):
+  1. m_PreviousVelocity = Velocity  (für CrashLand)
+  2. PMD_JUMP release: Button losgelassen → IsDebounceActive = false
+  3. pm_time countdown (Landing-Lockout)
+  4. PM_GroundTrace(ref position)   ← Boden VOR Bewegung prüfen
+  5. m_Walking?
+     ├─ Ja:  PM_WalkMove(ref position, cmd)
+     │         ├─ PM_CheckJump → falls ja: PM_AirMove + return
+     │         ├─ PM_Friction
+     │         ├─ Forward/Right via ClipVelocity auf Ground projizieren
+     │         ├─ PM_Accelerate(wishdir, wishspeed, PmAccelerate)
+     │         ├─ ClipVelocity + Speed-Restore (Slope-Speed erhalten)
+     │         ├─ ApplyVelocityLimits
+     │         └─ PM_StepSlideMove(ref position, gravity=false)
+     └─ Nein: PM_AirMove(ref position, cmd)
+               ├─ PM_Friction (kein Drop in Luft)
+               ├─ PM_Accelerate(wishdir, wishspeed, PmAirAccelerate)
+               ├─ Clip gegen steile GroundPlane (falls vorhanden)
+               ├─ ApplyVelocityLimits
+               └─ PM_StepSlideMove(ref position, gravity=true)
+                    └─ PM_SlideMove: Gravity Half-Step Integration
+                       endVel.y = vel.y - g*dt
+                       vel.y = (vel.y + endVel.y) * 0.5
+  6. PM_GroundTrace(ref position)   ← Boden NACH Bewegung prüfen
+  7. Landing-Detection + Airtime-Tracking
 ```
 
-## Physik-Parameter (SoF2 Defaults, ÷10 skaliert)
+## Physik-Parameter (SoF2 Defaults, ×0.0254 Inches→Meter)
 
-| Parameter | SoF2 Original | Unity-Wert | Erklärung |
-|-----------|---------------|-----------|-----------|
-| `PmAccelerate` | 10 | 6.0 | Boden-Beschleunigung |
-| `PmAirAccelerate` | 1 | 1.0 | Luft-Beschleunigung |
-| `PmFriction` | 6 | 6.0 | Boden-Reibung |
-| `PmStopSpeed` | 100 | 10.0 | Stop-Speed Schwelle |
-| `PmMaxSpeed` | 280 | 28.0 | g_speed / Wish-Speed |
-| `PmGravity` | 800 | 80.0 | Gravitation |
-| `PhysMaxVelocity` | 320 | 32.0 | Max Luft-Velocity |
-| `PhysMaxWalkVelocity` | 320 | 32.0 | Max Boden-Velocity |
-| `JumpVelocity` | 270 | 27.0 | Sprung-Y-Velocity |
+| Parameter | SoF2 Original (QU) | Unity-Wert (m) | Erklärung |
+|-----------|---------------------|----------------|-----------|
+| `PmAccelerate` | 6.0 | 6.0 | Boden-Beschleunigung (dimensionslos) |
+| `PmAirAccelerate` | 1.0 | 1.0 | Luft-Beschleunigung (dimensionslos) |
+| `PmFriction` | 6.0 | 6.0 | Boden-Reibung (dimensionslos) |
+| `PmStopSpeed` | 100 | 2.54 | Stop-Speed Schwelle (100 × 0.0254) |
+| `PmMaxSpeed` | 280 (g_speed) | 7.112 | Wish-Speed (280 × 0.0254) |
+| `PmGravity` | 800 | 20.32 | Gravitation (800 × 0.0254) |
+| `PhysMaxVelocity` | 320 | 8.128 | Max Luft-Velocity (320 × 0.0254) |
+| `PhysMaxWalkVelocity` | 320 | 8.128 | Max Boden-Velocity (320 × 0.0254) |
+| `JumpVelocity` | 270 | 6.858 | Sprung-Y-Velocity (270 × 0.0254) |
 | `PmMaxSteepness` | 0.7 | 0.7 | MIN_WALK_NORMAL (dimensionslos) |
-| `PmMaxStep` | 18 | 1.8 | Step-Höhe |
-| `PmStepSize` | 18 | 1.8 | STEPSIZE |
-| `PmMaxBarrier` | 32 | 3.2 | Max Barriere |
+| `PmMaxStep` | 18 | 0.4572 | Step-Höhe (18 × 0.0254) |
+| `PmStepSize` | 18 | 0.4572 | STEPSIZE (18 × 0.0254) |
+| `PmMaxBarrier` | 32 | 0.8128 | Max Barriere (32 × 0.0254) |
 | `PmDuckScale` | 0.25 | 0.25 | Duck Speed Scale (dimensionslos) |
+
+### Interne Konstanten
+
+| Konstante | Wert | SoF2 Original | Erklärung |
+|-----------|------|---------------|-----------|
+| `OVERCLIP` | 1.001 | 1.001 | Float-Precision Guard in ClipVelocity |
+| `SKIN_WIDTH` | 0.02m | — | Minimaler Abstand zu Oberflächen (Unity-spezifisch) |
+| `MAX_CLIP_PLANES` | 5 | 5 | Max Planes in PM_SlideMove |
+| `GROUND_TRACE_DIST` | 0.08m | 0.00635m (0.25 QU) | Ground-Trace Distanz (erhöht für Unity CapsuleCast) |
+| `MAX_DEPENETRATION_ITERATIONS` | 3 | — | Depenetration Loops (Unity-spezifisch) |
+
+### Sprung-Physik — Theoretisch vs Gemessen
+
+| Wert | SoF2 Theorie | Unity Gemessen | Abweichung |
+|------|--------------|----------------|------------|
+| Airtime (Stillstand) | 0.675s | 0.64–0.65s | -4% (GROUND_TRACE_DIST) |
+| Jump Phase | 0.338s | 0.32–0.33s | -3% |
+| Fall Phase | 0.338s | 0.32s | -5% |
+| Jump Height | 1.157m | 1.0m | -13% (Ground early detect) |
+| Vert Path (Stillstand) | ~2.3m | 2.2m | -4% |
 
 ## Client-Side Prediction & Reconciliation
 
@@ -122,9 +158,16 @@ Client (bei Empfang):
 | SoF2 (C) | Unity (C#) |
 |-----------|------------|
 | `bg_pmove.c` / `bg_slidemove.c` | `PlayerPhysicsSimulation.cs` |
+| `PmoveSingle()` Pipeline | `Simulate()` — exakte Pipeline: GroundTrace → Walk/AirMove → GroundTrace |
+| `PM_GroundTrace()` Trace 0.25 QU down | `PM_GroundTrace()` CapsuleCast 0.08m down |
+| `PM_WalkMove()` CheckJump→Friction→Accel→Clip | `PM_WalkMove()` exakt gleiche Reihenfolge |
+| `PM_AirMove()` Friction→Accel→Clip steep | `PM_AirMove()` exakt gleiche Reihenfolge |
+| `PM_SlideMove()` 4-plane multi-clip + gravity half-step | `PM_SlideMove()` exakter Port: 5 clip-planes, crease-sliding |
+| `PM_StepSlideMove()` slide→stepup→slide→stepdown | `PM_StepSlideMove()` exakter Port |
+| `PM_ClipVelocity()` OVERCLIP=1.001 | `PM_ClipVelocity()` identisch |
+| `PM_CheckJump()` PMD_JUMP debounce | `PM_CheckJump()` exakter Port |
 | `usercmd_t` | `PlayerCommand` (INetworkSerializable) |
 | Server berechnet Physik, sendet `playerState_t` | Server berechnet Physik, sendet `ServerMovementAck` |
 | Client prediction + correction in `cg_predict.c` | Prediction in `ClientPlayerCharacter`, Reconciliation via Ringbuffer |
-| `PM_SlideMove` (4-plane clip) | `PM_StepSlideMove` (4-bump CapsuleCast) |
-| Trace-basierte Kollision | `Physics.CapsuleCast` |
-| Alle Werte in Quake Units | Alle Werte ÷10 für Unity |
+| Trace-basierte Kollision (BSP) | `Physics.CapsuleCast` (Unity Meshes) |
+| Alle Werte in Quake Units (Inches) | Alle Werte ×0.0254 für Meter |

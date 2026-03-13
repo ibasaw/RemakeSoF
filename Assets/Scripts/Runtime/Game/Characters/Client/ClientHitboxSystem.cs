@@ -21,9 +21,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Anzahl der SoF2 Hit Regions.</summary>
         private const int HITBOX_COUNT = 17;
 
-        /// <summary>SoF2-zu-Unity Skalierungsfaktor (1 SoF2-Unit = 1 Inch = 0.0254m).</summary>
-        private const float SCALE_FACTOR = 0.0254f;
-
         [Header("Visual Hitbox Debug")]
         [SerializeField]
         private bool m_ShowVisualHitboxes;
@@ -198,7 +195,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             hitboxGO.transform.SetLocalPositionAndRotation(midpoint, Quaternion.FromToRotation(Vector3.up, boneDirection));
             BoxCollider boxCollider = hitboxGO.AddComponent<BoxCollider>();
             boxCollider.isTrigger = true;
-            boxCollider.size = new Vector3(width, boneLength, width) * SCALE_FACTOR;
+            boxCollider.size = new Vector3(width, boneLength, width);
 
             HitboxCollider hitboxComponent = hitboxGO.AddComponent<HitboxCollider>();
             hitboxComponent.Initialize(hitRegion, damageMultiplier);
@@ -234,7 +231,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             // Laenge aus Parent-Bone-Distanz schaetzen
             float parentBoneLength = Vector3.Distance(parentBone.position, endBone.position);
-            float estimatedLength = (parentBoneLength * lengthFactor) * SCALE_FACTOR;
+            float estimatedLength = parentBoneLength * lengthFactor;
 
             if (estimatedLength < 0.001f)
             {
@@ -252,7 +249,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             hitboxGO.transform.SetLocalPositionAndRotation(new Vector3(0f, -estimatedLength * 0.3f, estimatedLength * 0.3f), Quaternion.identity);
             BoxCollider boxCollider = hitboxGO.AddComponent<BoxCollider>();
             boxCollider.isTrigger = true;
-            boxCollider.size = new Vector3(width, estimatedLength * 0.5f, estimatedLength) * SCALE_FACTOR;
+            boxCollider.size = new Vector3(width, estimatedLength * 0.5f, estimatedLength);
 
             HitboxCollider hitboxComponent = hitboxGO.AddComponent<HitboxCollider>();
             hitboxComponent.Initialize(hitRegion, damageMultiplier);

@@ -45,9 +45,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Maximale Steigung (Dot mit Up). SoF2 MIN_WALK_NORMAL = 0.7. Dimensionslos.</summary>
         public float PmMaxSteepness = 0.7f;
 
-        /// <summary>Maximale Step-Hoehe (SoF2: 18 × 0.0254 = 0.4572m).</summary>
-        public float PmMaxStep = 0.4572f;
-
         /// <summary>Step-Size für Step-Up (SoF2 STEPSIZE: 18 × 0.0254 = 0.4572m).</summary>
         public float PmStepSize = 0.4572f;
 
@@ -94,7 +91,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>SoF2 Ground-Trace Distanz: 0.25 Quake-Units × 0.0254 = 0.00635m.
         /// Erhöht auf 0.08m für CapsuleCast-Präzision bei Unity-Meshes.
         /// Zu kleine Werte führen dazu, dass der Spieler beim Laufen durch den Boden fällt.</summary>
-        private const float GROUND_TRACE_DIST = 0.08f;
+        private const float GROUND_TRACE_DIST = 0.08f; //original: 0.00635f
 
         // ===== Simulation State (Runtime, nicht serialisiert) =====
 
@@ -133,12 +130,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
         // ===== Private State =====
 
-        private float m_LastJumpTime;
-        private float m_LastGroundedTime;
-        private float m_LastStepUpTime;
-        private bool m_WasGroundedPrev;
         private float m_DeltaTime;
-        private float m_JumpStartY;
 
         /// <summary>SoF2 pml.walking — auf begehbarem Boden (frame-local).</summary>
         private bool m_Walking;
@@ -302,12 +294,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             // 4. Landing detection
             JustLanded = !wasGrounded && IsGrounded;
-            m_WasGroundedPrev = IsGrounded;
-
-            if (IsGrounded)
-            {
-                m_LastGroundedTime = SimulationTime;
-            }
 
             // 5. Airtime tracking: leaving ground
             if (wasGrounded && !IsGrounded)
@@ -371,8 +357,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 LandedThisGround = true;
             }
 
-            // 8. Landing event
-            HandleLandingEvents(JustLanded, position.y);
         }
 
         // ===================================================================
@@ -497,8 +481,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             IsDebounceActive = true;
 
             Velocity.y = JumpVelocity;
-            m_LastJumpTime = SimulationTime;
-            m_JumpStartY = currentY;
             JumpTriggered = true;
 
             return true;
@@ -1190,20 +1172,5 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             }
         }
 
-        /// <summary>
-        /// Landing-Events (Jump-Reset, Tracking).
-        /// SoF2: Landing-Logik ist in PM_GroundTrace (IsJumping=false, JumpDebounce).
-        /// </summary>
-        private void HandleLandingEvents(bool justLanded, float currentY)
-        {
-            if (!justLanded)
-            {
-                return;
-            }
-
-            // IsJumping is already cleared in PM_GroundTrace.
-            // JumpDebounce for hard landing is also set there.
-            // Nothing additional needed.
-        }
     }
 }
