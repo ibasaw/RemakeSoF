@@ -48,6 +48,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Duck Speed Scale (SoF2 PM_DUCKSCALE = 0.25).</summary>
         public float PmDuckScale = 0.25f;
 
+        /// <summary>Walk Speed Scale (SoF2 BUTTON_WALKING halves speed in PM_CmdScale).</summary>
+        public float PmWalkScale = 0.5f;
+
         /// <summary>SoF2 Standing-Hoehe: 89 Units (-46 bis 43) × 0.0254 m/unit.</summary>
         public float StandingHeight = 2.2606f;
 
@@ -831,6 +834,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             float scale = PM_CmdScale(cmd.MoveInput);
             wishspeed = scale * PmMaxSpeed;
+
+            // SoF2: Walk Speed Clamp (BUTTON_WALKING → halbe Speed)
+            // bg_pmove.c PM_CmdScale: if (BUTTON_WALKING) scale *= 0.5
+            if (cmd.HasButton(CommandButtons.Walk))
+            {
+                float walkMax = PmMaxSpeed * PmWalkScale;
+                if (wishspeed > walkMax)
+                {
+                    wishspeed = walkMax;
+                }
+            }
 
             // SoF2: Duck Speed Clamp — nur in WalkMove, NICHT in AirMove
             // bg_pmove.c: if (pm->ps->pm_flags & PMF_DUCKED) wishspeed *= pm_duckScale
