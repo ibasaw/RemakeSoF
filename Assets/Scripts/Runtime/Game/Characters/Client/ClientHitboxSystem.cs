@@ -93,31 +93,31 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             int index = 0;
 
             // --- Kopf / Hals / Torso ---
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_Head", cranium, cervical, HitRegion.Head, 1.75f, 0.55f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_Neck", cervical, thoracic, HitRegion.Neck, 1.75f, 0.35f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_Chest", thoracic, upperLumbar, HitRegion.Chest, 1.0f, 0.8f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_Gut", upperLumbar, lowerLumbar, HitRegion.Gut, 1.0f, 0.7f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_Groin", lowerLumbar, pelvis, HitRegion.Groin, 1.0f, 0.6f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_Head", cranium, cervical, HitRegion.Head, 1.75f, 0.85f, hitboxLayer, 1.3f);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_Neck", cervical, thoracic, HitRegion.Neck, 1.75f, 0.25f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_Chest", thoracic, upperLumbar, HitRegion.Chest, 1.0f, 0.65f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_Gut", upperLumbar, lowerLumbar, HitRegion.Gut, 1.0f, 0.55f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_Groin", lowerLumbar, pelvis, HitRegion.Groin, 1.0f, 0.45f, hitboxLayer);
 
             // --- Linker Arm ---
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_LeftShoulder", lclavical, lhumerus, HitRegion.LeftShoulder, 0.7f, 0.35f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_LeftArm", lhumerus, lradius, HitRegion.LeftArm, 0.7f, 0.3f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_LeftHand", lradius, lhand, HitRegion.LeftHand, 0.3f, 0.25f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_LeftShoulder", lclavical, lhumerus, HitRegion.LeftShoulder, 0.7f, 0.22f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_LeftArm", lhumerus, lradius, HitRegion.LeftArm, 0.7f, 0.22f, hitboxLayer, 0.85f);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_LeftHand", lradius, lhand, HitRegion.LeftHand, 0.3f, 0.18f, hitboxLayer, 0.75f);
 
             // --- Rechter Arm ---
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_RightShoulder", rclavical, rhumerus, HitRegion.RightShoulder, 0.7f, 0.35f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_RightArm", rhumerus, rradius, HitRegion.RightArm, 0.7f, 0.3f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_RightHand", rradius, rhand, HitRegion.RightHand, 0.3f, 0.25f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_RightShoulder", rclavical, rhumerus, HitRegion.RightShoulder, 0.7f, 0.22f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_RightArm", rhumerus, rradius, HitRegion.RightArm, 0.7f, 0.22f, hitboxLayer, 0.85f);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_RightHand", rradius, rhand, HitRegion.RightHand, 0.3f, 0.18f, hitboxLayer, 0.75f);
 
             // --- Linkes Bein ---
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_LeftThigh", lfemurYZ, ltibia, HitRegion.LeftThigh, 0.7f, 0.4f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_LeftLeg", ltibia, ltarsal, HitRegion.LeftLeg, 0.7f, 0.3f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateEndBoneHitbox("Hitbox_LeftFoot", ltarsal, ltibia, HitRegion.LeftFoot, 0.4f, 0.25f, 0.35f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_LeftThigh", lfemurYZ, ltibia, HitRegion.LeftThigh, 0.7f, 0.25f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_LeftLeg", ltibia, ltarsal, HitRegion.LeftLeg, 0.7f, 0.18f, hitboxLayer, 0.9f);
+            m_HitboxObjects[index++] = CreateEndBoneHitbox("Hitbox_LeftFoot", ltarsal, ltibia, HitRegion.LeftFoot, 0.4f, 0.2f, 0.28f, hitboxLayer);
 
             // --- Rechtes Bein ---
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_RightThigh", rfemurYZ, rtibia, HitRegion.RightThigh, 0.7f, 0.4f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_RightLeg", rtibia, rtarsal, HitRegion.RightLeg, 0.7f, 0.3f, hitboxLayer);
-            m_HitboxObjects[index++] = CreateEndBoneHitbox("Hitbox_RightFoot", rtarsal, rtibia, HitRegion.RightFoot, 0.4f, 0.25f, 0.35f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_RightThigh", rfemurYZ, rtibia, HitRegion.RightThigh, 0.7f, 0.25f, hitboxLayer);
+            m_HitboxObjects[index++] = CreateBoneHitbox("Hitbox_RightLeg", rtibia, rtarsal, HitRegion.RightLeg, 0.7f, 0.18f, hitboxLayer, 0.9f);
+            m_HitboxObjects[index++] = CreateEndBoneHitbox("Hitbox_RightFoot", rtarsal, rtibia, HitRegion.RightFoot, 0.4f, 0.2f, 0.28f, hitboxLayer);
 
             m_IsInitialized = true;
             Debug.Log($"[ClientHitboxSystem] {index} Hitboxen erstellt.");
@@ -156,7 +156,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>
         /// Erstellt einen BoxCollider zwischen zwei Bones.
         /// Der Collider wird als Kind des Start-Bones erstellt und entlang der Bone-Achse ausgerichtet.
-        /// Laenge = Bone-zu-Bone Distanz, Breite/Tiefe = Laenge * widthFactor.
+        /// Laenge = Bone-zu-Bone Distanz * lengthScale, Breite/Tiefe = skalierte Laenge * widthFactor.
         /// </summary>
         private GameObject CreateBoneHitbox(
             string hitboxName,
@@ -165,7 +165,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             HitRegion hitRegion,
             float damageMultiplier,
             float widthFactor,
-            int layer)
+            int layer,
+            float lengthScale = 1.0f)
         {
             if (startBone == null || endBone == null)
             {
@@ -180,7 +181,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return null;
             }
 
-            float width = boneLength * widthFactor;
+            float scaledLength = boneLength * lengthScale;
+            float width = scaledLength * widthFactor;
 
             GameObject hitboxGO = new(hitboxName)
             {
@@ -195,7 +197,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             hitboxGO.transform.SetLocalPositionAndRotation(midpoint, Quaternion.FromToRotation(Vector3.up, boneDirection));
             BoxCollider boxCollider = hitboxGO.AddComponent<BoxCollider>();
             boxCollider.isTrigger = true;
-            boxCollider.size = new Vector3(width, boneLength, width);
+            boxCollider.size = new Vector3(width, scaledLength, width);
 
             HitboxCollider hitboxComponent = hitboxGO.AddComponent<HitboxCollider>();
             hitboxComponent.Initialize(hitRegion, damageMultiplier);
@@ -318,15 +320,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 Color regionColor = GetRegionColor(hitRegion);
                 regionColor.a = m_VisualAlpha;
 
-                Material material = new(Shader.Find("Unlit/Color"));
-                material.color = regionColor;
+                // URP Unlit Shader mit Transparenz
+                Shader urpUnlit = Shader.Find("Universal Render Pipeline/Unlit");
+                if (urpUnlit == null)
+                {
+                    Debug.LogWarning("[ClientHitboxSystem] URP Unlit Shader nicht gefunden — Visual Debug deaktiviert.");
+                    return;
+                }
 
-                // Transparenz aktivieren
-                material.SetFloat("_Mode", 3);
-                material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                material.SetInt("_ZWrite", 0);
-                material.renderQueue = 3000;
+                Material material = new(urpUnlit);
+                material.SetColor("_BaseColor", regionColor);
+
+                // Surface Type = Transparent (1), Blend Mode = Alpha (0)
+                material.SetFloat("_Surface", 1f);
+                material.SetFloat("_Blend", 0f);
+                material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                material.SetFloat("_ZWrite", 0f);
+                material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                material.SetOverrideTag("RenderType", "Transparent");
+                material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                material.EnableKeyword("_ALPHAPREMULTIPLY_ON");
 
                 meshRenderer.material = material;
                 meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
