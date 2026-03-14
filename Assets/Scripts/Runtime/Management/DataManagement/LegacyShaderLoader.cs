@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.DataManagement
 {
     /// <summary>
-    /// Pure Service für das Laden und Parsen von Legacy SoF2 .shader Dateien.
-    /// Zugreifbar über ServiceLocator.
+    /// Pure Service fuer das Laden und Parsen von Legacy SoF2 Shader-Dateien
+    /// (.g2shader).
+    /// Zugreifbar ueber ServiceLocator.
     /// </summary>
     public class LegacyShaderLoader
     {
@@ -24,7 +24,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         }
 
         /// <summary>
-        /// Lädt alle .shader Dateien aus dem Data/shaders/ Ordner
+        /// Laedt alle .g2shader Dateien aus dem Data/shaders/ Ordner.
         /// </summary>
         private void LoadAllFromResources(string resourcePath = "Data/shaders")
         {
@@ -37,7 +37,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                 return;
             }
 
-            string[] shaderFiles = Directory.GetFiles(fullPath, "*.shader", SearchOption.TopDirectoryOnly);
+            string[] shaderFiles = Directory.GetFiles(fullPath, "*.g2shader", SearchOption.TopDirectoryOnly);
             
             foreach (string shaderFilePath in shaderFiles)
             {
@@ -56,7 +56,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         }
 
         /// <summary>
-        /// Lädt eine einzelne .shader Datei und parsed die Einträge
+        /// Laedt eine einzelne Shader-Datei und parsed die Eintraege.
         /// </summary>
         private Dictionary<string, ShaderEntry> LoadLegacyShaderEntriesForModel(string fullPath)
         {

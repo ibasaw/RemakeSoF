@@ -41,7 +41,7 @@
   - **SkinDefinitionLoader** (intern): Lädt Skin-Definitionen aus Resources; Methoden: `GetByName()`, `GetNextSkinName()`, `GetPreviousSkinName()`, `GetSkinsForModel()`, `GetAvailableModels()`.
   - **SurfaceDefinitionLoader** (intern): Lädt NPC_definition.json; Methode: `GetByModelName()` liefert Surface-Definitionen.
   - **CharacterTemplateLoader** (intern): Lädt SoF2_NPCs.json; Methoden: `GetBySkinName()`, `GetByName()`.
-  - **LegacyShaderLoader** (intern): Lädt .shader Files von Disk; Methode: `GetForModel()` liefert Shader-Definitionen.
+  - **LegacyShaderLoader** (intern): Lädt .g2shader Files von Disk; Methode: `GetForModel()` liefert Shader-Definitionen.
   - **PlayerSkinApplier** (intern): Reine Asset-Anwendung; bekommt nur konkrete Daten (keine Loader-Referenzen); Methoden: `ApplyAnimatorController()`, `ApplySurfaceDefinitions()`, `DisableAndEnableSurfaces()`; findet Renderer per Match-Logik, verwaltet Aktivierung.
   - **ConnectionManager**: StateMachine für NGO; leitet NetworkManager-Callbacks (OnConnectionEvent, OnServerStarted, ApprovalCheck, OnTransportFailure, OnServerStopped) an den aktuellen State weiter; Abos in `Awake`, Deregistrierung in `OnDestroy`.
   - **AuthenticationManager**: StateMachine (Unauthenticated/Authenticating/Authenticated/SessionExpired); Input via `IAuthenticationHandler` je State; Output-Events zentral im Manager (`OnAuthenticationSuccess()`, `OnAuthenticationFailure()`, `OnSessionExpired()`); verwaltet Authentifizierungsverlauf und Token-Refresh.

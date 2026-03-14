@@ -28,12 +28,12 @@ Einfache AABB pro NPC-State für den ersten `trap_Trace`-Test:
 **Quelle**: `SoF2_NPCs.json` → `NPC_Base_Human` → `Bounds`
 
 ### 1.2 hitLocation-Texturen (Fein-Test — das eigentliche System)
-- Jede Mesh-Surface hatte eine **Damage Map Texture** (`hitLocation` in `.shader`-Dateien)
+- Jede Mesh-Surface hatte eine **Damage Map Texture** (`hitLocation` in `.g2shader`-Dateien)
 - Nach Trace-Hit → UV-Koordinate am Trefferpunkt auslesen → hitLocation-Textur samplen → **Pixelfarbe = Körperzone**
 - Ermöglichte **36+ verschiedene Zonen** pro Charakter (bis zu einzelnen Ohren, Augen, Fingern)
 - Basis des Gore-Systems (Extremitäten abtrennen, Kopfteile wegsprengen)
 
-**Shader-Daten vorhanden in**: `Assets/Resources/Data/shaders/*.shader`
+**Shader-Daten vorhanden in**: `Assets/Resources/Data/shaders/*.g2shader`
 ```
 hitLocation  models/characters/average_face/m_avg_w1_hit
 hitLocation  models/characters/chem_suit/hood_chem_suit_hit
@@ -354,7 +354,7 @@ head_side_l, head_side_r
 | `GorePiece` | DTOs/GoreManagement/GorePiece.cs | DTO für Gore-Model-Stücke |
 | `GoreDataLoader` | DataManagement/GoreDataLoader.cs | Lädt Gore-Daten aus SoF2_DATA.json |
 | `ShaderEntry` | DTOs/SkinManagement/ShaderEntry.cs | HitLocation + HitMaterial pro Surface |
-| `ShaderDataReader` | Shared/ShaderDataReader.cs | Parst .shader Dateien inkl. hitLocation |
+| `ShaderDataReader` | Shared/ShaderDataReader.cs | Parst .g2shader Dateien inkl. hitLocation |
 
 ---
 

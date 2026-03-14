@@ -102,7 +102,7 @@ SoF2's character skin system faithfully recreated:
 - **SkinDefinitionLoader** — Loads skin definitions from Resources
 - **SurfaceDefinitionLoader** — Loads `NPC_definition.json` for mesh segments
 - **CharacterTemplateLoader** — Loads `SoF2_NPCs.json` for NPC templates
-- **LegacyShaderLoader** — Parses `.shader` files for material setup
+- **LegacyShaderLoader** — Parses `.g2shader` files for material setup
 - **PlayerSkinApplier** — Applies materials, toggles mesh surfaces, sets animator controllers
 
 ### Data Files

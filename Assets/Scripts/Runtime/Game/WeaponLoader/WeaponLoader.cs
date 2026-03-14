@@ -18,11 +18,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
         private const float k_WeaponZRotation = -90f;
 
         /// <summary>
-        /// Scale-Override fuer SoF2-Waffen-Groessenkorrektur. TODO: derzeit nicht benötigt eventuell später nochmal schauen!
-        /// </summary>
-        private const float k_WeaponScale = 1f;
-
-        /// <summary>
         /// Aktuell instanziiertes Waffen-GameObject.
         /// </summary>
         private GameObject m_CurrentWeaponInstance;
@@ -101,15 +96,26 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
                 return false;
             }
 
-            // Instanziieren als Child des Hand-Bones
+            // Prefab-Scale vor Instantiierung lesen (wird durch Parenting überschrieben).
+            Vector3 prefabScale = weaponPrefab.transform.localScale;
+
+            // Instanziieren als Child des Hand-Bones.
             m_CurrentWeaponInstance = Object.Instantiate(weaponPrefab, m_AttachmentBone);
             Transform weaponTransform = m_CurrentWeaponInstance.transform;
             weaponTransform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0f, 0f, k_WeaponZRotation));
-            //weaponTransform.localScale = Vector3.one * k_WeaponScale;
+
+            // Der Character-Bone hat lossyScale=2.54 (FBX-Import-Konvertierung: 1 inch = 2.54 cm).
+            // Ohne Kompensation erbt die Waffe diesen Factor und erscheint 2.54x zu groß.
+            // Lösung: localScale = prefabScale / boneLossyScale → worldScale = prefabScale (wie im Prefab designed).
+            Vector3 boneScale = m_AttachmentBone.lossyScale;
+            weaponTransform.localScale = new Vector3(
+                prefabScale.x / boneScale.x,
+                prefabScale.y / boneScale.y,
+                prefabScale.z / boneScale.z);
 
             m_CurrentWeaponName = weaponKey;
 
-            Debug.Log($"[WeaponLoader] Waffe '{weaponKey}' an '{m_AttachmentBone.name}' attached.");
+            Debug.Log($"[WeaponLoader] Waffe '{weaponKey}' attached. worldScale={weaponTransform.lossyScale}");
             return true;
         }
 
