@@ -278,6 +278,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
         }
 
+        /// <summary>
+        /// Feuert alle aktuellen Werte als Events, damit spaet subscribende Listener
+        /// (z.B. MatchController) den aktuellen State erhalten.
+        /// NGO OnValueChanged feuert nicht fuer initiale Werte.
+        /// </summary>
+        public void NotifyCurrentState()
+        {
+            string weaponName = CurrentWeaponName;
+            if (!string.IsNullOrEmpty(weaponName))
+            {
+                OnWeaponChanged?.Invoke(weaponName);
+                OnAmmoChanged?.Invoke(CurrentClipAmmo, ReserveAmmo);
+                OnAltAmmoChanged?.Invoke(AltClipAmmo, AltReserveAmmo);
+            }
+
+            OnHealthChanged?.Invoke(Health);
+        }
+
         public override void OnNetworkDespawn()
         {
             base.OnNetworkDespawn();

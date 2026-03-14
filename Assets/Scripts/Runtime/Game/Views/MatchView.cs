@@ -55,6 +55,12 @@ namespace Tolik.RemakeSoF.Runtime
         // Health HUD Labels
         Label m_HealthLabel;
 
+        /// <summary>
+        /// Wird gefeuert sobald die MatchView aktiviert und alle UI-Elemente neu gebunden sind.
+        /// Controller koennen hier ihren HUD-Refresh triggern.
+        /// </summary>
+        internal event Action OnViewEnabled;
+
         void Awake()
         {
             m_UIDocument = GetComponent<UIDocument>();
@@ -108,6 +114,8 @@ namespace Tolik.RemakeSoF.Runtime
 
             // Health HUD
             m_HealthLabel = root.Query<Label>("healthLabel");
+
+            OnViewEnabled?.Invoke();
         }
 
         internal void OnCountdownChanged(uint newValue)

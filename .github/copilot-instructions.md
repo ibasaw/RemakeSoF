@@ -6,6 +6,8 @@
 - Always include XML documentation comments (`/// <summary>...</summary>`) for all classes, methods, and public members to ensure clarity of purpose and usage.
 - Always use `new(TypeName)` syntax for object instantiation instead of `new TypeName()`. This improves performance by reducing IL code size.
 - Always follow the established project architecture and design patterns as outlined below.
+- No Polling, No Coroutines: Vermeide Update-Methoden mit Polling-Logik; keine Coroutines für asynchrone Abläufe; stattdessen Events, Callbacks oder Async/Await verwenden.
+- No Timer, No Flag Checks: Vermeide Timer- oder Flag-Checks für Ablaufsteuerung; nutze stattdessen State Machines, Event-Driven Logic oder Callback-Mechanismen.
 
 ## Clean Coding Standards
 - **KISS (Keep It Simple, Stupid)**: Bevorzuge einfache, klare Lösungen gegenüber komplexen; vermeide Over-Engineering; jede Klasse/Methode sollte eine klare, verständliche Aufgabe haben.

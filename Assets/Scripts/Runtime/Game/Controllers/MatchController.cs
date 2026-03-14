@@ -48,11 +48,13 @@ namespace Tolik.RemakeSoF.Runtime
             App.Model.PlayersConnected.OnValueChanged += OnPlayersConnectedChanged;
             App.Model.NetworkedGameState.OnMatchStarted += OnMatchStarted;
             App.Model.NetworkedGameState.OnMatchEnded += OnMatchEnded;
+            View.OnViewEnabled += OnMatchViewEnabled;
             Debug.Log("MatchController Awake: Listeners added to NetworkedGameState events.");
         }
 
         void OnDestroy()
         {
+            View.OnViewEnabled -= OnMatchViewEnabled;
             RemoveListeners();
             UnsubscribeFromCharacterState();
             Debug.Log("MatchController OnDestroy: Listeners removed from NetworkedGameState events.");
@@ -84,13 +86,8 @@ namespace Tolik.RemakeSoF.Runtime
             m_CharacterState.OnWeaponChanged += OnWeaponChangedHud;
             m_CharacterState.OnHealthChanged += OnHealthChanged;
 
-            // Initiale Werte setzen
-            OnHealthChanged(m_CharacterState.Health);
-            string weaponName = m_CharacterState.CurrentWeaponName;
-            if (!string.IsNullOrEmpty(weaponName))
-            {
-                UpdateWeaponHud(weaponName, m_CharacterState.CurrentClipAmmo, m_CharacterState.ReserveAmmo);
-            }
+            // Sofort aus aktuellem State initialisieren (falls Werte schon da sind).
+            TryInitializeHudFromCurrentState();
         }
 
         /// <summary>
@@ -130,6 +127,43 @@ namespace Tolik.RemakeSoF.Runtime
         {
             Broadcast(new StartMatchEvent());
             Debug.Log("[MatchController] Match started, broadcasting StartMatchEvent.");
+        }
+
+        /// <summary>
+        /// Callback wenn die MatchView sichtbar wird (OnEnable).
+        /// Initialisiert den HUD erneut aus dem aktuellen CharacterState,
+        /// damit UXML-Defaults nach Hide/Show nicht stehen bleiben.
+        /// </summary>
+        private void OnMatchViewEnabled()
+        {
+            // Falls CharacterState noch nicht verfuegbar, jetzt versuchen.
+            if (m_CharacterState == null && App.Model.PlayerCharacter != null)
+            {
+                SubscribeToCharacterState();
+            }
+
+            TryInitializeHudFromCurrentState();
+        }
+
+        /// <summary>
+        /// Initialisiert den HUD aus dem aktuellen CharacterState.
+        /// Wird nach Subscribe und beim View-OnEnable aufgerufen,
+        /// um Reihenfolge-Races zwischen Spawn, Delta-Events und View-Visibility abzufangen.
+        /// </summary>
+        private void TryInitializeHudFromCurrentState()
+        {
+            if (m_CharacterState == null)
+            {
+                return;
+            }
+
+            string weapon = m_CharacterState.CurrentWeaponName;
+            if (!string.IsNullOrEmpty(weapon))
+            {
+                UpdateWeaponHud(weapon, m_CharacterState.CurrentClipAmmo, m_CharacterState.ReserveAmmo);
+            }
+
+            OnHealthChanged(m_CharacterState.Health);
         }
 
         /// <summary>
@@ -215,7 +249,11 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         private void OnAmmoChanged(int clipAmmo, int reserveAmmo)
         {
-            View.UpdateAmmoHud(clipAmmo, reserveAmmo);
+            string weaponName = m_CharacterState.CurrentWeaponName;
+            if (!string.IsNullOrEmpty(weaponName))
+            {
+                UpdateWeaponHud(weaponName, clipAmmo, reserveAmmo);
+            }
         }
 
         /// <summary>
