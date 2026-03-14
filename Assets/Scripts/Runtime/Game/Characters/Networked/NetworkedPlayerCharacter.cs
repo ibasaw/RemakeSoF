@@ -83,7 +83,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private static readonly int s_KnifeReadyHash = Animator.StringToHash("TORSO_RAISE_KNIFE");
         private static readonly int s_ReadyOneHandedHash = Animator.StringToHash("TORSO_RAISE_ONEHANDED");
         private static readonly int s_ReadyTwoHandedHash = Animator.StringToHash("TORSO_RAISE");
+        private static readonly int s_SwapSpeedHash = Animator.StringToHash("SwapSpeed");
         private const int TORSO_LAYER_INDEX = 0;
+
+        /// <summary>
+        /// Clip-Dauer aller Swap-Animationen in Sekunden (6 Frames bei 20fps FBX-Samplerate).
+        /// </summary>
+        private const float SWAP_CLIP_DURATION = 6f / 20f;
 
         /// <summary>
         /// Aktueller synchronisierter Animation-State (für Remote-Bone-Rotation).
@@ -996,13 +1002,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <summary>
         /// Erzwingt den Animator-State fuer eine Swap-Animation (Drop oder Raise)
         /// auf dem Torso-Layer ab Frame 0.
-        /// Wird von <see cref="ClientPlayerCharacter"/> aufgerufen um bei Re-Switch
-        /// die Animation zuverlaessig neu zu starten.
+        /// Berechnet die Animator-Speed aus JSON-Daten (duration/fps) relativ zur
+        /// Clip-Dauer (SWAP_CLIP_DURATION), damit die Animation exakt so lange
+        /// laeuft wie in SoF2 vorgesehen.
         /// </summary>
-        public void ForcePlaySwapState(int stateHash)
+        public void ForcePlaySwapState(int stateHash, int duration, int fps)
         {
             if (m_Animator != null)
             {
+                float desiredDuration = (float)duration / fps;
+                float speed = SWAP_CLIP_DURATION / desiredDuration;
+                m_Animator.SetFloat(s_SwapSpeedHash, speed);
                 m_Animator.Play(stateHash, TORSO_LAYER_INDEX, 0f);
             }
         }

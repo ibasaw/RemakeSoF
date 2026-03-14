@@ -1677,7 +1677,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             // Animation auf Torso-Layer ab Frame 0 erzwingen
             int dropStateHash = NetworkedPlayerCharacter.GetDropStateHash(dropAnimName);
-            m_NetworkedPlayerCharacter.ForcePlaySwapState(dropStateHash);
+            m_NetworkedPlayerCharacter.ForcePlaySwapState(dropStateHash, dropFrames, dropFps);
         }
 
         /// <summary>
@@ -1735,7 +1735,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (!string.IsNullOrEmpty(m_SwapRaiseAnimName))
             {
                 int raiseStateHash = NetworkedPlayerCharacter.GetRaiseStateHash(m_SwapRaiseAnimName);
-                m_NetworkedPlayerCharacter.ForcePlaySwapState(raiseStateHash);
+                m_NetworkedPlayerCharacter.ForcePlaySwapState(raiseStateHash, m_SwapRaiseFrames, m_SwapRaiseFps);
             }
 
             // HUD sofort aktualisieren (Client Prediction wie SoF2 PM_FinishWeaponChange)
