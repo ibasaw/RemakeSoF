@@ -71,9 +71,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private static readonly int s_IsCrouchingHash = Animator.StringToHash("IsCrouching");
         private static readonly int s_IsReloadingHash = Animator.StringToHash("IsReloading");
         private static readonly int s_IsAltAttackingHash = Animator.StringToHash("IsAltAttacking");
+        private static readonly int s_IsSwappingHash = Animator.StringToHash("IsSwapping");
         private static readonly int s_JumpHash = Animator.StringToHash("Jump");
         private static readonly int s_CurrentWeaponHash = Animator.StringToHash("CurrentWeapon");
         private static readonly int s_AmmoHash = Animator.StringToHash("Ammo");
+
+        // Swap-Animation State Hashes (Torso Layer)
+        private static readonly int s_KnifeDropHash = Animator.StringToHash("TORSO_DROP_KNIFE");
+        private static readonly int s_DropOneHandedHash = Animator.StringToHash("TORSO_DROP_ONEHANDED");
+        private static readonly int s_DropTwoHandedHash = Animator.StringToHash("TORSO_DROP");
+        private static readonly int s_KnifeReadyHash = Animator.StringToHash("TORSO_RAISE_KNIFE");
+        private static readonly int s_ReadyOneHandedHash = Animator.StringToHash("TORSO_RAISE_ONEHANDED");
+        private static readonly int s_ReadyTwoHandedHash = Animator.StringToHash("TORSO_RAISE");
+        private const int TORSO_LAYER_INDEX = 0;
 
         /// <summary>
         /// Aktueller synchronisierter Animation-State (für Remote-Bone-Rotation).
@@ -147,6 +157,32 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <summary>Aktuelle AltAttack-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
         private int m_ServerAltAttackFps = 20;
 
+        // ===== Server-Side Weapon Swap Gating =====
+
+        /// <summary>Ob der Server gerade einen Waffenwechsel verarbeitet (Drop/Raise).</summary>
+        private bool m_ServerIsSwapping;
+
+        /// <summary>Aktuelle Phase beim Waffenwechsel (Drop/Raise).</summary>
+        private WeaponSwapPhase m_ServerSwapPhase;
+
+        /// <summary>Verbleibende Frames in der aktuellen Swap-Phase.</summary>
+        private int m_ServerSwapFramesRemaining;
+
+        /// <summary>Frame-Akkumulator fuer frame-diskretes Swap-Timing.</summary>
+        private float m_ServerSwapFrameAccumulator;
+
+        /// <summary>FPS der aktuellen Swap-Phase.</summary>
+        private int m_ServerSwapFps = 10;
+
+        /// <summary>Raise-Frame-Anzahl der Zielwaffe (fuer nach Drop).</summary>
+        private int m_ServerSwapRaiseFrames;
+
+        /// <summary>Raise-FPS der Zielwaffe.</summary>
+        private int m_ServerSwapRaiseFps = 10;
+
+        /// <summary>Name der Zielwaffe beim Waffenwechsel.</summary>
+        private string m_ServerSwapTargetWeapon;
+
         // ===== Movement Sync =====
 
 
@@ -160,6 +196,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             // Server-seitige Physik + BoxCollider initialisieren
             m_ServerPlayerCharacter.InitializeServer();
+
+            // Weapon-Swap-Event abonnieren (Server verarbeitet Swap-Timing)
+            m_CharacterState.OnWeaponSwapRequested += OnServerWeaponSwapRequested;
 
             // Spawn-Point vom Server zuweisen — ggf. warten bis Map geladen ist
             if (ServerPlayerSpawnPoints.Instance == null)
@@ -230,6 +269,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public override void OnNetworkDespawn()
         {
             UnsubscribeFromVisualInstantiated();
+
+            if (IsServer)
+            {
+                m_CharacterState.OnWeaponSwapRequested -= OnServerWeaponSwapRequested;
+            }
 
             base.OnNetworkDespawn();
         }
@@ -358,9 +402,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 }
             }
 
+            // Server-seitiges Weapon-Swap-Frame-Counting herunterzaehlen (Drop → Raise)
+            if (m_ServerIsSwapping)
+            {
+                TickServerWeaponSwap(cmd.DeltaTime);
+            }
+
             // Button-Inputs verarbeiten (SoF2: FireWeapon aus usercmd_t.buttons)
-            // Server gated: Attack nur starten wenn keine Attacke, kein Reload und kein AltAttack laeuft (Anti-Cheat)
-            bool noActionRunning = m_ServerAttackFramesRemaining <= 0 && m_ServerReloadFramesRemaining <= 0 && m_ServerAltAttackFramesRemaining <= 0;
+            // Server gated: Attack nur starten wenn keine Attacke, kein Reload, kein AltAttack und kein Swap laeuft (Anti-Cheat)
+            bool noActionRunning = m_ServerAttackFramesRemaining <= 0 && m_ServerReloadFramesRemaining <= 0 && m_ServerAltAttackFramesRemaining <= 0 && !m_ServerIsSwapping;
 
             if (cmd.HasButton(CommandButtons.Attack) && noActionRunning)
             {
@@ -699,6 +749,120 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
         }
 
+        // ===== Weapon Swap (Drop/Raise) =====
+
+        /// <summary>
+        /// Server: Startet den Waffenwechsel-Prozess (Drop alte Waffe, dann Raise neue Waffe).
+        /// Wird von NetworkedCharacterState via OnWeaponSwapRequested aufgerufen.
+        /// Wie SoF2: Re-Switch waehrend laufendem Swap ist erlaubt (unterbricht und startet neuen Drop).
+        /// </summary>
+        private void OnServerWeaponSwapRequested(string targetWeapon)
+        {
+            if (string.IsNullOrEmpty(targetWeapon))
+            {
+                return;
+            }
+
+            if (targetWeapon == m_CharacterState.CurrentWeaponName && !m_ServerIsSwapping)
+            {
+                return;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                return;
+            }
+
+            // Raise-Daten der Zielwaffe lesen (immer aktualisieren bei neuem Target)
+            int raiseFrames = 6;
+            int raiseFps = 10;
+            WeaponDefinition targetWeaponDef = loader.GetById(targetWeapon);
+            if (targetWeaponDef?.Animations != null &&
+                targetWeaponDef.Animations.TryGetValue("mp_raise", out WeaponAnimationEntry raiseAnim))
+            {
+                raiseFrames = raiseAnim.Duration;
+                raiseFps = raiseAnim.Fps;
+            }
+
+            // Wenn bereits im Drop: nur Target + Raise-Daten aktualisieren, Drop-Timer laeuft weiter
+            if (m_ServerIsSwapping && m_ServerSwapPhase == WeaponSwapPhase.Drop)
+            {
+                m_ServerSwapTargetWeapon = targetWeapon;
+                m_ServerSwapRaiseFrames = raiseFrames;
+                m_ServerSwapRaiseFps = raiseFps;
+                Debug.Log($"[NetworkedPlayerCharacter] Server: Swap target updated during drop for client {OwnerClientId}: → {targetWeapon} (Raise {raiseFrames}f@{raiseFps}fps)");
+                return;
+            }
+
+            // Drop-Daten der aktuellen Waffe (oder sichtbaren Waffe bei Re-Switch waehrend Raise)
+            int dropFrames = 6;
+            int dropFps = 10;
+            string dropSourceWeapon = m_ServerIsSwapping && m_ServerSwapPhase == WeaponSwapPhase.Raise
+                ? m_ServerSwapTargetWeapon
+                : m_CharacterState.CurrentWeaponName;
+
+            WeaponDefinition currentWeapon = loader.GetById(dropSourceWeapon);
+            if (currentWeapon?.Animations != null &&
+                currentWeapon.Animations.TryGetValue("mp_drop", out WeaponAnimationEntry dropAnim))
+            {
+                dropFrames = dropAnim.Duration;
+                dropFps = dropAnim.Fps;
+            }
+
+            m_ServerIsSwapping = true;
+            m_ServerSwapPhase = WeaponSwapPhase.Drop;
+            m_ServerSwapFramesRemaining = dropFrames;
+            m_ServerSwapFrameAccumulator = 0f;
+            m_ServerSwapFps = dropFps;
+            m_ServerSwapRaiseFrames = raiseFrames;
+            m_ServerSwapRaiseFps = raiseFps;
+            m_ServerSwapTargetWeapon = targetWeapon;
+
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Weapon swap started for client {OwnerClientId}: {dropSourceWeapon} → {targetWeapon} (Drop {dropFrames}f@{dropFps}fps, Raise {raiseFrames}f@{raiseFps}fps)");
+        }
+
+        /// <summary>
+        /// Server: Zaehlt Swap-Frames herunter und wechselt die Phase (Drop → Raise → Done).
+        /// Bei Drop-Ende wird die Waffe autoritativ gewechselt (setzt NetworkVariable).
+        /// </summary>
+        private void TickServerWeaponSwap(float deltaTime)
+        {
+            m_ServerSwapFrameAccumulator += deltaTime;
+            float frameInterval = 1f / m_ServerSwapFps;
+            while (m_ServerSwapFrameAccumulator >= frameInterval && m_ServerSwapFramesRemaining > 0)
+            {
+                m_ServerSwapFrameAccumulator -= frameInterval;
+                m_ServerSwapFramesRemaining--;
+            }
+
+            if (m_ServerSwapFramesRemaining <= 0)
+            {
+                if (m_ServerSwapPhase == WeaponSwapPhase.Drop)
+                {
+                    // Drop fertig: Waffe autoritativ wechseln (setzt NetworkVariable → OnWeaponChanged)
+                    m_CharacterState.SetCurrentWeaponName(m_ServerSwapTargetWeapon);
+                    UpdateServerAttackParameters();
+                    UpdateServerReloadParameters();
+
+                    // Raise-Phase starten
+                    m_ServerSwapPhase = WeaponSwapPhase.Raise;
+                    m_ServerSwapFramesRemaining = m_ServerSwapRaiseFrames;
+                    m_ServerSwapFrameAccumulator = 0f;
+                    m_ServerSwapFps = m_ServerSwapRaiseFps;
+                }
+                else if (m_ServerSwapPhase == WeaponSwapPhase.Raise)
+                {
+                    // Raise fertig: Swap abgeschlossen
+                    m_ServerIsSwapping = false;
+                    m_ServerSwapPhase = WeaponSwapPhase.None;
+                    m_ServerSwapTargetWeapon = null;
+
+                    Debug.Log($"[NetworkedPlayerCharacter] Server: Weapon swap completed for client {OwnerClientId}");
+                }
+            }
+        }
+
         // ===== Animation Sync =====
 
         /// <summary>
@@ -780,6 +944,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_Animator.SetBool(s_IsCrouchingHash, state.IsCrouching);
             m_Animator.SetBool(s_IsReloadingHash, state.IsReloading);
             m_Animator.SetBool(s_IsAltAttackingHash, state.IsAltAttacking);
+            m_Animator.SetBool(s_IsSwappingHash, state.IsSwapping);
             m_Animator.SetInteger(s_CurrentWeaponHash, state.CurrentWeapon);
             m_Animator.SetInteger(s_AmmoHash, state.Ammo);
         }
@@ -826,6 +991,48 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             {
                 m_Animator.SetTrigger(s_JumpHash);
             }
+        }
+
+        /// <summary>
+        /// Erzwingt den Animator-State fuer eine Swap-Animation (Drop oder Raise)
+        /// auf dem Torso-Layer ab Frame 0.
+        /// Wird von <see cref="ClientPlayerCharacter"/> aufgerufen um bei Re-Switch
+        /// die Animation zuverlaessig neu zu starten.
+        /// </summary>
+        public void ForcePlaySwapState(int stateHash)
+        {
+            if (m_Animator != null)
+            {
+                m_Animator.Play(stateHash, TORSO_LAYER_INDEX, 0f);
+            }
+        }
+
+        /// <summary>
+        /// Liefert den Animator-State-Hash fuer die Drop-Animation basierend auf
+        /// dem mp_drop.name Wert aus der Waffen-JSON (z.B. "TORSO_DROP_KNIFE").
+        /// </summary>
+        public static int GetDropStateHash(string dropAnimName)
+        {
+            return dropAnimName switch
+            {
+                "TORSO_DROP_KNIFE" => s_KnifeDropHash,
+                "TORSO_DROP_ONEHANDED" => s_DropOneHandedHash,
+                _ => s_DropTwoHandedHash,
+            };
+        }
+
+        /// <summary>
+        /// Liefert den Animator-State-Hash fuer die Raise-Animation basierend auf
+        /// dem mp_raise.name Wert aus der Waffen-JSON (z.B. "TORSO_RAISE_KNIFE").
+        /// </summary>
+        public static int GetRaiseStateHash(string raiseAnimName)
+        {
+            return raiseAnimName switch
+            {
+                "TORSO_RAISE_KNIFE" => s_KnifeReadyHash,
+                "TORSO_RAISE_ONEHANDED" => s_ReadyOneHandedHash,
+                _ => s_ReadyTwoHandedHash,
+            };
         }
     }
 }

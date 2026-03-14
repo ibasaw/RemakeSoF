@@ -297,6 +297,38 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Ob der Alt-Attack unendliche Munition verbraucht (z.B. Bayonet).</summary>
         private bool m_AltAttackInfiniteAmmo;
 
+        // ===== Weapon Swap State =====
+
+        /// <summary>Ob der Character gerade die Waffe wechselt (Drop/Raise).</summary>
+        private bool m_IsSwapping;
+
+        /// <summary>Aktuelle Phase beim Waffenwechsel.</summary>
+        private WeaponSwapPhase m_SwapPhase;
+
+        /// <summary>Verbleibende Frames in der aktuellen Swap-Phase.</summary>
+        private int m_SwapFramesRemaining;
+
+        /// <summary>Frame-Akkumulator fuer frame-diskretes Swap-Timing.</summary>
+        private float m_SwapFrameAccumulator;
+
+        /// <summary>FPS der aktuellen Swap-Phase.</summary>
+        private int m_SwapFps = 10;
+
+        /// <summary>Raise-Frame-Anzahl der Zielwaffe (gesetzt wenn OnWeaponChanged feuert).</summary>
+        private int m_SwapRaiseFrames;
+
+        /// <summary>Raise-FPS der Zielwaffe.</summary>
+        private int m_SwapRaiseFps = 10;
+
+        /// <summary>Animations-Name der Raise-Animation (z.B. "TORSO_RAISE") fuer Animator.Play.</summary>
+        private string m_SwapRaiseAnimName;
+
+        /// <summary>
+        /// Client-seitiges Swap-Target: Wird bei jedem Scroll lokal berechnet.
+        /// Spiegelt die Server-seitige CycleWeapon-Logik fuer sofortige HUD-Prediction.
+        /// </summary>
+        private string m_ClientSwapTarget;
+
         /// <summary>Ob bei leerem Magazin automatisch nachgeladen werden soll.</summary>
         [SerializeField]
         private bool m_AutoReload = true;
@@ -308,6 +340,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private bool m_IsRemoteMode;
 
         // ===== Weapon =====
+
+        /// <summary>
+        /// Feuert wenn der Client lokal von Drop- auf Raise-Phase wechselt.
+        /// Wird fuer HUD-Prediction genutzt (SoF2: Waffenwechsel genau an Drop/Raise-Grenze).
+        /// Parameter: Name der neuen Waffe.
+        /// </summary>
+        internal event Action<string> OnWeaponSwapRaiseStarted;
+
+        /// <summary>
+        /// Feuert bei jedem Scroll waehrend der Drop-Phase mit dem neuen Zielwaffen-Namen.
+        /// HUD zeigt sofort die naechste Waffe an (SoF2-authentisch: Waffenname wechselt on click).
+        /// </summary>
+        internal event Action<string> OnWeaponSwapTargetChanged;
 
         /// <summary>
         /// Interner WeaponLoader: laedt Waffen-Prefabs und attached sie an den Hand-Bone.
@@ -643,19 +688,35 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>
         /// Input-Callback fuer NextWeapon (performed).
-        /// Fordert den Server auf, zur naechsten Waffe im Inventar zu wechseln.
+        /// Startet den Waffenwechsel-Prozess (Drop aktuelle Waffe, dann Raise neue Waffe).
+        /// Wie SoF2: Re-Switch waehrend laufendem Swap ist erlaubt (unterbricht und startet neuen Drop).
         /// </summary>
         private void OnNextWeaponPerformed(InputAction.CallbackContext context)
         {
+            if (m_IsAttacking || m_IsAltAttacking || m_IsReloading)
+            {
+                return;
+            }
+
+            StartClientWeaponSwap();
+            CycleClientSwapTarget(1);
             m_CharacterState.RequestNextWeaponServerRpc();
         }
 
         /// <summary>
         /// Input-Callback fuer PreviousWeapon (performed).
-        /// Fordert den Server auf, zur vorherigen Waffe im Inventar zu wechseln.
+        /// Startet den Waffenwechsel-Prozess (Drop aktuelle Waffe, dann Raise neue Waffe).
+        /// Wie SoF2: Re-Switch waehrend laufendem Swap ist erlaubt (unterbricht und startet neuen Drop).
         /// </summary>
         private void OnPreviousWeaponPerformed(InputAction.CallbackContext context)
         {
+            if (m_IsAttacking || m_IsAltAttacking || m_IsReloading)
+            {
+                return;
+            }
+
+            StartClientWeaponSwap();
+            CycleClientSwapTarget(-1);
             m_CharacterState.RequestPreviousWeaponServerRpc();
         }
 
@@ -1135,6 +1196,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         private void HandleActionInput()
         {
+            // Waffenwechsel-Frames herunterzaehlen (Drop → Raise)
+            if (m_IsSwapping)
+            {
+                TickClientWeaponSwap();
+                return;
+            }
+
             // Attack-Frames herunterzaehlen (frame-diskret, wie SoF2 Animation-Frames)
             if (m_IsAttacking)
             {
@@ -1383,12 +1451,43 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             {
                 m_WeaponLoader.ClearCurrentWeapon();
                 m_PendingWeaponName = null;
+                m_IsSwapping = false;
+                m_SwapPhase = WeaponSwapPhase.None;
+                m_ClientSwapTarget = null;
                 return;
             }
 
             UpdateClientAttackParameters(weaponName);
 
-            // Pending merken fuer den Fall dass Visual noch nicht instanziiert ist
+            if (m_IsSwapping)
+            {
+                // Waffe merken aber noch nicht laden (Drop laeuft oder gerade fertig)
+                m_PendingWeaponName = weaponName;
+
+                // Raise-Daten der neuen Waffe lesen
+                WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+                if (loader != null)
+                {
+                    WeaponDefinition weapon = loader.GetById(weaponName);
+                    if (weapon?.Animations != null &&
+                        weapon.Animations.TryGetValue("mp_raise", out WeaponAnimationEntry raiseAnim))
+                    {
+                        m_SwapRaiseFrames = raiseAnim.Duration;
+                        m_SwapRaiseFps = raiseAnim.Fps;
+                        m_SwapRaiseAnimName = raiseAnim.Name;
+                    }
+                }
+
+                // Falls Drop bereits abgeschlossen: sofort zur Raise-Phase wechseln
+                if (m_SwapPhase == WeaponSwapPhase.Drop && m_SwapFramesRemaining <= 0)
+                {
+                    TransitionToRaisePhase();
+                }
+
+                return;
+            }
+
+            // Normaler Waffenwechsel (z.B. beim Spawn oder Server-initiiert ohne Player-Input)
             m_PendingWeaponName = weaponName;
             TryLoadPendingWeapon();
         }
@@ -1490,6 +1589,162 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
         }
 
+        // ===== Weapon Swap (Drop/Raise) =====
+
+        /// <summary>
+        /// Client: Berechnet das naechste Swap-Target lokal (spiegelt Server CycleWeapon).
+        /// Feuert OnWeaponSwapTargetChanged fuer sofortiges HUD-Update.
+        /// </summary>
+        private void CycleClientSwapTarget(int direction)
+        {
+            int count = m_CharacterState.WeaponCount;
+            if (count <= 1)
+            {
+                return;
+            }
+
+            // Von letztem Client-Target weiter cyclen (wie Server m_PendingSwapTarget)
+            string baseWeapon = !string.IsNullOrEmpty(m_ClientSwapTarget)
+                ? m_ClientSwapTarget
+                : m_CharacterState.CurrentWeaponName;
+
+            int currentIndex = -1;
+            for (int i = 0; i < count; i++)
+            {
+                if (string.Equals(m_CharacterState.GetWeaponAt(i), baseWeapon, StringComparison.Ordinal))
+                {
+                    currentIndex = i;
+                    break;
+                }
+            }
+
+            if (currentIndex < 0)
+            {
+                currentIndex = 0;
+            }
+
+            int nextIndex = (currentIndex + direction + count) % count;
+            m_ClientSwapTarget = m_CharacterState.GetWeaponAt(nextIndex);
+
+            OnWeaponSwapTargetChanged?.Invoke(m_ClientSwapTarget);
+        }
+
+        /// <summary>
+        /// Startet die client-seitige Drop-Phase des Waffenwechsels.
+        /// Liest die mp_drop Animationsdaten der aktuellen Waffe.
+        /// Bei erneutem Aufruf waehrend laufendem Drop: Drop laeuft weiter (nur Server-Target aendert sich).
+        /// Bei Aufruf waehrend Raise: neuer Drop wird gestartet (Re-Switch).
+        /// </summary>
+        private void StartClientWeaponSwap()
+        {
+            // Wenn bereits im Drop: nicht neu starten, Drop laeuft fuer alte Waffe weiter.
+            // Server cycled das Target, Client Drop-Timer bleibt.
+            if (m_IsSwapping && m_SwapPhase == WeaponSwapPhase.Drop)
+            {
+                return;
+            }
+
+            int dropFrames = 6;
+            int dropFps = 10;
+            string dropAnimName = "TORSO_DROP";
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader != null)
+            {
+                // Bei Raise-Phase Re-Switch: Drop-Daten der NEUEN Waffe (die jetzt sichtbar ist)
+                string currentVisual = m_SwapPhase == WeaponSwapPhase.Raise && !string.IsNullOrEmpty(m_PendingWeaponName)
+                    ? m_PendingWeaponName
+                    : m_CharacterState.CurrentWeaponName;
+
+                WeaponDefinition weapon = loader.GetById(currentVisual);
+                if (weapon?.Animations != null &&
+                    weapon.Animations.TryGetValue("mp_drop", out WeaponAnimationEntry dropAnim))
+                {
+                    dropFrames = dropAnim.Duration;
+                    dropFps = dropAnim.Fps;
+                    dropAnimName = dropAnim.Name;
+                }
+            }
+
+            m_IsSwapping = true;
+            m_SwapPhase = WeaponSwapPhase.Drop;
+            m_SwapFramesRemaining = dropFrames;
+            m_SwapFrameAccumulator = 0f;
+            m_SwapFps = dropFps;
+            m_SwapRaiseFrames = 0;
+            m_SwapRaiseFps = 10;
+            m_SwapRaiseAnimName = null;
+
+            // Animation auf Torso-Layer ab Frame 0 erzwingen
+            int dropStateHash = NetworkedPlayerCharacter.GetDropStateHash(dropAnimName);
+            m_NetworkedPlayerCharacter.ForcePlaySwapState(dropStateHash);
+        }
+
+        /// <summary>
+        /// Client: Zaehlt Swap-Frames herunter und wechselt die Phase (Drop → Raise → Done).
+        /// </summary>
+        private void TickClientWeaponSwap()
+        {
+            m_SwapFrameAccumulator += Time.deltaTime;
+            float frameInterval = 1f / m_SwapFps;
+            while (m_SwapFrameAccumulator >= frameInterval && m_SwapFramesRemaining > 0)
+            {
+                m_SwapFrameAccumulator -= frameInterval;
+                m_SwapFramesRemaining--;
+            }
+
+            if (m_SwapFramesRemaining <= 0)
+            {
+                if (m_SwapPhase == WeaponSwapPhase.Drop)
+                {
+                    TransitionToRaisePhase();
+                }
+                else if (m_SwapPhase == WeaponSwapPhase.Raise)
+                {
+                    m_IsSwapping = false;
+                    m_SwapPhase = WeaponSwapPhase.None;
+                    m_ClientSwapTarget = null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Client: Wechselt von Drop- zur Raise-Phase. Laedt das neue Waffen-Visual.
+        /// Falls die neue Waffe vom Server noch nicht empfangen wurde, wird gewartet.
+        /// </summary>
+        private void TransitionToRaisePhase()
+        {
+            // Waffe laden (falls OnWeaponChanged bereits empfangen)
+            if (!string.IsNullOrEmpty(m_PendingWeaponName))
+            {
+                TryLoadPendingWeapon();
+            }
+
+            // Raise-Daten muessen gesetzt sein (durch OnWeaponChanged)
+            if (m_SwapRaiseFrames <= 0)
+            {
+                return;
+            }
+
+            m_SwapPhase = WeaponSwapPhase.Raise;
+            m_SwapFramesRemaining = m_SwapRaiseFrames;
+            m_SwapFrameAccumulator = 0f;
+            m_SwapFps = m_SwapRaiseFps;
+
+            // Raise-Animation auf Torso-Layer ab Frame 0 erzwingen
+            if (!string.IsNullOrEmpty(m_SwapRaiseAnimName))
+            {
+                int raiseStateHash = NetworkedPlayerCharacter.GetRaiseStateHash(m_SwapRaiseAnimName);
+                m_NetworkedPlayerCharacter.ForcePlaySwapState(raiseStateHash);
+            }
+
+            // HUD sofort aktualisieren (Client Prediction wie SoF2 PM_FinishWeaponChange)
+            if (!string.IsNullOrEmpty(m_PendingWeaponName))
+            {
+                OnWeaponSwapRaiseStarted?.Invoke(m_PendingWeaponName);
+            }
+        }
+
         /// <summary>
         /// Berechnet den aktuellen Animation-State aus Simulation-Velocity und Ground-State.
         /// Schreibt den State in die NetworkVariable auf NetworkedPlayerCharacter,
@@ -1528,6 +1783,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 IsCrouching = m_Simulation.IsCrouching,
                 IsReloading = m_IsReloading,
                 IsAltAttacking = m_IsAltAttacking,
+                IsSwapping = m_IsSwapping,
                 MoveInputX = moveInput.x,
                 MoveInputY = moveInput.y,
                 PitchAngle = m_PitchTarget != null ? m_PitchTarget.eulerAngles.x : 0f,

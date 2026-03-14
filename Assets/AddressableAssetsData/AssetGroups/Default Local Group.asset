@@ -35,6 +35,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 10405b23bdd32814490b88c268614b7e
+    m_Address: usas12
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 11e9fd90ea7918b49bc08e144e3f5f70
+    m_Address: m1911a1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 149316149895ca449a6e57daab337d8d
     m_Address: models/characters/gore/bone_small/bone_small.glm
     m_ReadOnly: 0
@@ -52,6 +62,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2e92615550413c34aaf9b526bd70b64e
     m_Address: characters/models/suit_long_coat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 305aa99bddacd1f4c9e727190b450ac8
+    m_Address: m60
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -110,6 +125,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b5035efe1c91f0f40a8ac91ccbbcbf0b
+    m_Address: msg90a1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bbec368c1aac07241a140a8efe3b78ac
     m_Address: characters/models/suit_sleeves
     m_ReadOnly: 0
@@ -137,6 +157,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: db86cabdfd2d1f3469df9dcf905d6884
     m_Address: rpg7
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e18b431239260f7408fe1643afd3687b
+    m_Address: f1
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

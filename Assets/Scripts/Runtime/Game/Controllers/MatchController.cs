@@ -42,6 +42,11 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         private NetworkedCharacterState m_CharacterState;
 
+        /// <summary>
+        /// Gecachte PlayerCharacter-Referenz fuer HUD Weapon-Swap Prediction.
+        /// </summary>
+        private ClientPlayerCharacter m_PlayerCharacter;
+
         void Awake()
         {
             App.Model.Countdown.OnValueChanged += OnCountdownChanged;
@@ -80,11 +85,14 @@ namespace Tolik.RemakeSoF.Runtime
                 return;
             }
 
+            m_PlayerCharacter = player;
             m_CharacterState = player.CharacterState;
             m_CharacterState.OnAmmoChanged += OnAmmoChanged;
             m_CharacterState.OnAltAmmoChanged += OnAltAmmoChanged;
             m_CharacterState.OnWeaponChanged += OnWeaponChangedHud;
             m_CharacterState.OnHealthChanged += OnHealthChanged;
+            m_PlayerCharacter.OnWeaponSwapRaiseStarted += OnWeaponSwapRaiseStarted;
+            m_PlayerCharacter.OnWeaponSwapTargetChanged += OnWeaponSwapTargetChanged;
 
             // Sofort aus aktuellem State initialisieren (falls Werte schon da sind).
             TryInitializeHudFromCurrentState();
@@ -104,6 +112,14 @@ namespace Tolik.RemakeSoF.Runtime
             m_CharacterState.OnAltAmmoChanged -= OnAltAmmoChanged;
             m_CharacterState.OnWeaponChanged -= OnWeaponChangedHud;
             m_CharacterState.OnHealthChanged -= OnHealthChanged;
+
+            if (m_PlayerCharacter != null)
+            {
+                m_PlayerCharacter.OnWeaponSwapRaiseStarted -= OnWeaponSwapRaiseStarted;
+                m_PlayerCharacter.OnWeaponSwapTargetChanged -= OnWeaponSwapTargetChanged;
+                m_PlayerCharacter = null;
+            }
+
             m_CharacterState = null;
         }
 
@@ -267,6 +283,54 @@ namespace Tolik.RemakeSoF.Runtime
             }
 
             UpdateWeaponHud(weaponName, m_CharacterState.CurrentClipAmmo, m_CharacterState.ReserveAmmo);
+        }
+
+        /// <summary>
+        /// Client-Prediction Callback: Feuert bei jedem Scroll waehrend der Drop-Phase.
+        /// HUD zeigt sofort den Waffennamen der Zielwaffe (SoF2-authentisch: on click update).
+        /// </summary>
+        private void OnWeaponSwapTargetChanged(string weaponName)
+        {
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                return;
+            }
+
+            WeaponDefinition weapon = loader.GetById(weaponName);
+            int predictedClip = weapon?.Ammo?.StartClip ?? 0;
+            int predictedReserve = weapon?.Ammo?.StartReserve ?? 0;
+
+            UpdateWeaponHud(weaponName, predictedClip, predictedReserve);
+        }
+
+        /// <summary>
+        /// Client-Prediction Callback: Feuert wenn der lokale Client die Drop→Raise Grenze
+        /// erreicht (SoF2: PM_FinishWeaponChange). HUD zeigt sofort die neue Waffe
+        /// mit vorhergesagter Munition, ohne auf den Server-Roundtrip zu warten.
+        /// </summary>
+        private void OnWeaponSwapRaiseStarted(string weaponName)
+        {
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                return;
+            }
+
+            WeaponDefinition weapon = loader.GetById(weaponName);
+            int predictedClip = weapon?.Ammo?.StartClip ?? 0;
+            int predictedReserve = weapon?.Ammo?.StartReserve ?? 0;
+
+            // Versuche gespeicherte Ammo-Werte vom CharacterState zu holen
+            // (falls Server schon committed hat, sind die Werte aktueller)
+            if (m_CharacterState != null &&
+                string.Equals(m_CharacterState.CurrentWeaponName, weaponName, StringComparison.Ordinal))
+            {
+                predictedClip = m_CharacterState.CurrentClipAmmo;
+                predictedReserve = m_CharacterState.ReserveAmmo;
+            }
+
+            UpdateWeaponHud(weaponName, predictedClip, predictedReserve);
         }
 
         /// <summary>

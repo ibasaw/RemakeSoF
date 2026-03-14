@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
@@ -164,6 +165,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         private readonly Dictionary<string, (int clip, int reserve, int altClip, int altReserve)> m_AmmoCache = new();
 
+        /// <summary>
+        /// Server: Zielwaffe des laufenden Swaps. Wird von CycleWeapon genutzt um bei
+        /// erneutem Cycling waehrend eines Swaps von der Zielwaffe weiterzuzaehlen.
+        /// Wird beim Waffenwechsel-Commit (OnWeaponNameValueChanged) zurueckgesetzt.
+        /// </summary>
+        private string m_PendingSwapTarget;
+
 
 
         // ===== Public Properties =====
@@ -218,6 +226,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Event: Waffen-Inventar hat sich geaendert.
         /// </summary>
         public event System.Action OnWeaponInventoryChanged;
+
+        /// <summary>
+        /// Server-Event: Wird gefeuert wenn ein Waffenwechsel angefordert wird (statt direktem Setzen).
+        /// NetworkedPlayerCharacter abonniert dieses Event um den Swap-Prozess (Drop/Raise) zu steuern.
+        /// </summary>
+        public event System.Action<string> OnWeaponSwapRequested;
 
         /// <summary>
         /// Event: Munition hat sich geaendert (clipAmmo, reserveAmmo).
@@ -481,6 +495,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 if (!string.IsNullOrEmpty(oldWeapon))
                 {
                     m_AmmoCache[oldWeapon] = (m_CurrentClipAmmo.Value, m_ReserveAmmo.Value, m_AltClipAmmo.Value, m_AltReserveAmmo.Value);
+                }
+
+                // Pending-Target zuruecksetzen wenn committed Waffe == Ziel
+                if (!string.IsNullOrEmpty(m_PendingSwapTarget) &&
+                    string.Equals(m_PendingSwapTarget, newValue.ToString(), StringComparison.Ordinal))
+                {
+                    m_PendingSwapTarget = null;
                 }
 
                 if (newValue.Length > 0)
@@ -834,8 +855,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         [ServerRpc]
         public void RequestWeaponChangeServerRpc(FixedString64Bytes weaponName)
         {
-            m_CurrentWeaponName.Value = weaponName;
-            Debug.Log($"[NetworkedCharacterState] Server applied weapon change for client {OwnerClientId}: {weaponName}");
+            string target = weaponName.ToString();
+            OnWeaponSwapRequested?.Invoke(target);
+            Debug.Log($"[NetworkedCharacterState] Server weapon swap requested for client {OwnerClientId}: {target}");
         }
 
         // ===== Weapon Inventory =====
@@ -922,11 +944,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
-            FixedString64Bytes current = m_CurrentWeaponName.Value;
+            // Bei laufendem Swap: von der Zielwaffe weiter cyclen, nicht von der committed Waffe
+            FixedString64Bytes baseWeapon = !string.IsNullOrEmpty(m_PendingSwapTarget)
+                ? new FixedString64Bytes(m_PendingSwapTarget)
+                : m_CurrentWeaponName.Value;
+
             int currentIndex = -1;
             for (int i = 0; i < m_WeaponInventory.Count; i++)
             {
-                if (m_WeaponInventory[i] == current)
+                if (m_WeaponInventory[i] == baseWeapon)
                 {
                     currentIndex = i;
                     break;
@@ -941,8 +967,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             int nextIndex = (currentIndex + direction + m_WeaponInventory.Count) % m_WeaponInventory.Count;
             string nextWeapon = m_WeaponInventory[nextIndex].ToString();
 
-            m_CurrentWeaponName.Value = new FixedString64Bytes(nextWeapon);
-            Debug.Log($"[NetworkedCharacterState] Server cycled weapon for client {OwnerClientId}: {current} → {nextWeapon}");
+            m_PendingSwapTarget = nextWeapon;
+            OnWeaponSwapRequested?.Invoke(nextWeapon);
+            Debug.Log($"[NetworkedCharacterState] Server weapon swap requested for client {OwnerClientId}: {baseWeapon} → {nextWeapon}");
         }
     }
 }

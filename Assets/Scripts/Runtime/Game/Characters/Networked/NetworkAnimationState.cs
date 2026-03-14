@@ -46,7 +46,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Bit 0 (0x01): IsMoving, Bit 1 (0x02): IsGrounded,
         /// Bit 2 (0x04): IsWalking, Bit 3 (0x08): IsAttacking,
         /// Bit 4 (0x10): IsCrouching, Bit 5 (0x20): IsReloading,
-        /// Bit 6 (0x40): IsAltAttacking.
+        /// Bit 6 (0x40): IsAltAttacking, Bit 7 (0x80): IsSwapping.
         /// </summary>
         public byte Flags;
 
@@ -121,6 +121,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             readonly get => (Flags & 0x40) != 0;
             set => Flags = (byte)(value ? Flags | 0x40 : Flags & ~0x40);
+        }
+
+        /// <summary>
+        /// Ob der Character gerade die Waffe wechselt (Drop/Raise Animation).
+        /// </summary>
+        public bool IsSwapping
+        {
+            readonly get => (Flags & 0x80) != 0;
+            set => Flags = (byte)(value ? Flags | 0x80 : Flags & ~0x80);
         }
 
         /// <inheritdoc/>
