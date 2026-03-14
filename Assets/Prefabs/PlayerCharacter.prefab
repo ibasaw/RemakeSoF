@@ -412,6 +412,7 @@ MonoBehaviour:
     m_InternalValue: 0
   m_ServerPlayerCharacter: {fileID: 5114413647346417949}
   m_SkinHandler: {fileID: 792202953519434536}
+  m_CharacterState: {fileID: 2107942443278687898}
 --- !u!114 &2107942443278687898
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -99,6 +99,10 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                     Application.targetFrameRate = commandLineArgumentsParser.TargetFramerate;
                     QualitySettings.vSyncCount = 0;
 
+                    // WeaponDataLoader fuer server-seitige Attack-Parameter
+                    WeaponDataLoader serverWeaponLoader = new();
+                    ServiceLocator.Register(serverWeaponLoader);
+
                     // Start CLI command listener for server
                     m_ServerCommandListener = new ServerCommandListener();
                     ServiceLocator.Register(m_ServerCommandListener);
@@ -129,6 +133,9 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 
                         GoreDataLoader goreDataLoader = new();
                         ServiceLocator.Register(goreDataLoader);
+
+                        WeaponDataLoader weaponDataLoader = new();
+                        ServiceLocator.Register(weaponDataLoader);
 
                         SceneManager.LoadScene("MetagameScene");
                         Debug.Log($"[ApplicationEntryPoint] InitializeNetworkLogic - Client instance started, loaded MetagameScene.");

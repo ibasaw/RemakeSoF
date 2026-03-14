@@ -1,0 +1,499 @@
+[
+  {
+    "id": "knife",
+    "displayName": "Knife",
+    "category": 1,
+    "animatorIndex": 0,
+    "menuImage": "hud/weapon_icons/knife_icon",
+    "worldModel": "models/weapons/knife/world/knifeworld",
+    "viewModel": "models/weapons/knife/knife",
+    "isMelee": true,
+    "ammo": {
+      "type": "Knife",
+      "maxClip": 1,
+      "extraClips": 5,
+      "startClip": 1,
+      "startReserve": 5,
+      "infinite": true
+    },
+    "attack": {
+      "damage": 65,
+      "range": 60,
+      "fireMode": "auto",
+      "gore": false,
+      "volume": 0.1
+    },
+    "altAttack": {
+      "damage": 80,
+      "gore": false,
+      "volume": 0.0,
+      "projectile": {
+        "gravity": 0.5,
+        "speed": 1100,
+        "detonation": "sticky",
+        "model": "models/weapons/knife/world/knifeworld",
+        "objectType": "knife",
+        "loopSound": "sound/weapons/knife/throw_loop"
+      }
+    },
+    "sounds": {
+      "ready": "sound/weapons/knife/ready",
+      "swing": [
+        "sound/weapons/knife/swing01",
+        "sound/weapons/knife/swing02",
+        "sound/weapons/knife/swing03"
+      ],
+      "toss": "sound/weapons/knife/throw_idle"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_KNIFE",
+        "source": "knifestandaim01_mp",
+        "startFrame": 304,
+        "duration": 30,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_KNIFE",
+        "source": "knifeslash01_mp",
+        "startFrame": 334,
+        "duration": 6,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_altAttack": {
+        "name": "TORSO_ATTACK_KNIFE_THROW",
+        "source": "knifethrow01_mp",
+        "startFrame": 340,
+        "duration": 10,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE_KNIFE",
+        "source": "weaponready_knife_mp",
+        "startFrame": 356,
+        "duration": 6,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP_KNIFE",
+        "source": "weapondone_knife_mp",
+        "startFrame": 350,
+        "duration": 6,
+        "fps": 20,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "rpg7",
+    "displayName": "RPG-7",
+    "category": 7,
+    "animatorIndex": 1,
+    "menuImage": "hud/weapon_icons/rpg7_icon",
+    "worldModel": "models/weapons/rpg7/world/rpg7world",
+    "viewModel": "models/weapons/rpg7/rpg7",
+    "isMelee": false,
+    "ammo": {
+      "type": "RPG7",
+      "maxClip": 1,
+      "extraClips": 2,
+      "startClip": 1,
+      "startReserve": 2,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 200,
+      "radius": 300,
+      "fireMode": "single",
+      "gore": true,
+      "volume": 1.0,
+      "kickAngles": [ 1, 5, -2, 1 ],
+      "muzzleFlash": "effects/muzzle_flashes/mflash_rpg7",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_mm1",
+      "projectile": {
+        "gravity": 0,
+        "speed": 1500,
+        "detonation": "impact",
+        "effect": "effects/rpg7_trail",
+        "explosionEffect": "effects/explosions/mushroom_explosion_no_fire",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "loopSound": "sound/weapons/rpg7/flyby"
+      }
+    },
+    "sounds": {
+      "fire": "sound/weapons/rpg7/fire01",
+      "ready": "sound/weapons/rpg7/ready"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_RPG",
+        "source": "male01_normal_rpg7aim",
+        "startFrame": 710,
+        "duration": 40,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_RPG",
+        "source": "male01_normal_rpg7fire",
+        "startFrame": 693,
+        "duration": 17,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE",
+        "source": "weaponready01_mp",
+        "startFrame": 286,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP",
+        "source": "weapondone01_mp",
+        "startFrame": 280,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_reload": {
+        "name": "TORSO_RELOAD_RPG",
+        "source": "refillrpg7_mp",
+        "startFrame": 750,
+        "duration": 29,
+        "fps": 20,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "m4",
+    "displayName": "M4",
+    "category": 5,
+    "animatorIndex": 2,
+    "menuImage": "hud/weapon_icons/m4_icon",
+    "worldModel": "models/weapons/m4/world/m4world",
+    "viewModel": "models/weapons/m4/m4",
+    "isMelee": false,
+    "ammo": {
+      "type": "5.56mm",
+      "maxClip": 30,
+      "extraClips": 3,
+      "startClip": 30,
+      "startReserve": 90,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 35,
+      "range": 8192,
+      "fireMode": "auto",
+      "gore": true,
+      "volume": 0.8,
+      "kickAngles": [ 1, 3, -2, 1 ],
+      "inaccuracy": 0.12,
+      "maxInaccuracy": 2.15,
+      "muzzleFlash": "effects/muzzle_flashes/mflash_m4",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_m4",
+      "shellCasingEject": "effects/shell_brass",
+      "ejectBone": "ejection_m4",
+      "tracerEffect": "effects/tracerTest2",
+      "fireModes": [ "single", "burst", "auto" ]
+    },
+    "altAttack": {
+      "damage": 101,
+      "radius": 200,
+      "gore": true,
+      "volume": 0.8,
+      "kickAngles": [ 1, 6, -2, 1 ],
+      "muzzleFlash": "effects/muzzle_flashes/mflash_mm1",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_mm1",
+      "projectile": {
+        "gravity": 0.5,
+        "speed": 1400,
+        "detonation": "impact",
+        "effect": "effects/m203_trail",
+        "explosionEffect": "effects/explosions/m203_explosion",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion"
+      },
+      "ammo": {
+        "type": "40mm grenade",
+        "maxClip": 1,
+        "extraClips": 1
+      }
+    },
+    "sounds": {
+      "fire": [
+        "sound/weapons/m4/m4fire01",
+        "sound/weapons/m4/m4fire02",
+        "sound/weapons/m4/m4fire03"
+      ],
+      "altFire": "sound/weapons/m4/glaunch",
+      "ready": "sound/weapons/m4/ready_gun",
+      "clipOut": "sound/weapons/m4/clip_eject",
+      "clipIn": "sound/weapons/m4/clip_insert",
+      "boltPull": "sound/weapons/m4/bolt_pull",
+      "boltRelease": "sound/weapons/m4/bolt_release"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_M4",
+        "source": "m4aim_mp",
+        "startFrame": 924,
+        "duration": 40,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_M4",
+        "source": "m4fire_mp",
+        "startFrame": 964,
+        "duration": 2,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE",
+        "source": "weaponready01_mp",
+        "startFrame": 286,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP",
+        "source": "weapondone01_mp",
+        "startFrame": 280,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_reload": {
+        "name": "TORSO_RELOAD_RIFLE",
+        "source": "refillrifle01_mp",
+        "startFrame": 510,
+        "duration": 36,
+        "fps": 20,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "ak74",
+    "displayName": "AK-74",
+    "category": 5,
+    "animatorIndex": 3,
+    "menuImage": "hud/weapon_icons/ak74_icon",
+    "worldModel": "models/weapons/ak74/world/ak74world",
+    "viewModel": "models/weapons/ak74/ak74",
+    "isMelee": false,
+    "ammo": {
+      "type": "5.56mm",
+      "maxClip": 30,
+      "extraClips": 3,
+      "startClip": 30,
+      "startReserve": 90,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 45,
+      "range": 8192,
+      "fireMode": "auto",
+      "gore": true,
+      "volume": 0.8,
+      "kickAngles": [ 1, 3, -2, 1 ],
+      "inaccuracy": 0.18,
+      "maxInaccuracy": 2.5,
+      "muzzleFlash": "effects/muzzle_flashes/mflash_ak74",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_ak74",
+      "shellCasingEject": "effects/shell_brass",
+      "ejectBone": "ejection_ak74",
+      "tracerEffect": "effects/tracerTest2",
+      "fireModes": [ "single", "burst", "auto" ]
+    },
+    "altAttack": {
+      "damage": 75,
+      "range": 75,
+      "fireMode": "auto",
+      "gore": false,
+      "volume": 0.1,
+      "melee": "bayonet"
+    },
+    "sounds": {
+      "fire": [
+        "sound/weapons/ak74/fire01",
+        "sound/weapons/ak74/fire02",
+        "sound/weapons/ak74/fire03"
+      ],
+      "altFire": [
+        "sound/weapons/ak74/swing01",
+        "sound/weapons/ak74/swing02"
+      ],
+      "clipOut": "sound/weapons/ak74/eject_clip",
+      "clipIn": "sound/weapons/ak74/new_clip",
+      "slideRelease": "sound/weapons/ak74/slide_release",
+      "slap": "sound/weapons/ak74/slap"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_RIFLE",
+        "source": "soldieraimrifle02_mp",
+        "startFrame": 454,
+        "duration": 40,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_RIFLE",
+        "source": "riflestandsoldiersingle02_mp",
+        "startFrame": 494,
+        "duration": 2,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_altAttack": {
+        "name": "TORSO_ATTACK_BAYONET",
+        "source": "bayonetstab_mp",
+        "startFrame": 496,
+        "duration": 14,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE",
+        "source": "weaponready01_mp",
+        "startFrame": 286,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP",
+        "source": "weapondone01_mp",
+        "startFrame": 280,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_reload": {
+        "name": "TORSO_RELOAD_RIFLE",
+        "source": "refillrifle01_mp",
+        "startFrame": 510,
+        "duration": 36,
+        "fps": 20,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "mm1",
+    "displayName": "MM-1",
+    "category": 7,
+    "animatorIndex": 4,
+    "menuImage": "hud/weapon_icons/mm1_icon",
+    "worldModel": "models/weapons/mm1/world/mm1world",
+    "viewModel": "models/weapons/mm1/mm1",
+    "isMelee": false,
+    "ammo": {
+      "type": "40mm grenade",
+      "maxClip": 10,
+      "extraClips": 1,
+      "startClip": 10,
+      "startReserve": 10,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 200,
+      "radius": 150,
+      "fireMode": "single",
+      "fireDelay": 350,
+      "gore": true,
+      "volume": 0.9,
+      "kickAngles": [ 1, 12, -2, 1 ],
+      "muzzleFlash": "effects/muzzle_flashes/mflash_mm1",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_mm1",
+      "tracerEffect": "effects/tracerTest2",
+      "projectile": {
+        "gravity": 0.5,
+        "speed": 1400,
+        "detonation": "impact",
+        "effect": "effects/m203_trail",
+        "explosionEffect": "effects/explosions/m203_explosion",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "loopSound": "sound/weapons/frag_grenade/in_air.wav"
+      }
+    },
+    "sounds": {
+      "fire": "sound/weapons/mm1/fire01",
+      "ready": "sound/weapons/mm1/ready",
+      "drumOpen": "sound/weapons/mm1/open_chamber",
+      "drumClose": "sound/weapons/mm1/close_chamber",
+      "reload": "sound/weapons/mm1/grenade_load"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_MM1",
+        "source": "male_mm1_aim01_mp",
+        "startFrame": 883,
+        "duration": 2,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_MM1",
+        "source": "male_mm1fire01_mp",
+        "startFrame": 872,
+        "duration": 11,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE",
+        "source": "weaponready01_mp",
+        "startFrame": 286,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP",
+        "source": "weapondone01_mp",
+        "startFrame": 280,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_reloadStart": {
+        "name": "TORSO_RELOAD_MM1_START",
+        "source": "loadstart_mm1_mp",
+        "startFrame": 887,
+        "duration": 24,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_reloadShell": {
+        "name": "TORSO_RELOAD_MM1_SHELL",
+        "source": "loadshell_mm1_mp",
+        "startFrame": 885,
+        "duration": 2,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_reloadEnd": {
+        "name": "TORSO_RELOAD_MM1_END",
+        "source": "loadend_mm1_mp",
+        "startFrame": 911,
+        "duration": 13,
+        "fps": 20,
+        "loop": false
+      }
+    }
+  }
+]

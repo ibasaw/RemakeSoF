@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -113,15 +115,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         private NetworkList<FixedString64Bytes> m_WeaponInventory;
 
-        /// <summary>
-        /// Statisches Mapping von Waffen-Name auf Animator-Index.
-        /// CurrentWeapon (Int) im Animator: 0 = knife, 1 = rpg7.
-        /// </summary>
-        private static readonly Dictionary<string, int> s_WeaponAnimatorIndices = new()
-        {
-            { "knife", 0 },
-            { "rpg7", 1 },
-        };
+
 
         // ===== Public Properties =====
 
@@ -470,14 +464,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
-        /// Liefert den Animator-Index fuer eine Waffe (0 = knife, 1 = rpg7).
+        /// Liefert den Animator-Index fuer eine Waffe aus den geladenen Waffendaten.
         /// Gibt 0 zurueck wenn die Waffe unbekannt ist.
         /// </summary>
         public static int GetWeaponAnimatorIndex(string weaponName)
         {
-            if (s_WeaponAnimatorIndices.TryGetValue(weaponName, out int index))
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader != null)
             {
-                return index;
+                return loader.GetAnimatorIndex(weaponName);
             }
 
             return 0;

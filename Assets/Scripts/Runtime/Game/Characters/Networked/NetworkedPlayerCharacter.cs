@@ -1,8 +1,11 @@
 using System;
 using System.Collections;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
+using Tolik.RemakeSoF.Runtime.WeaponManagement;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -76,17 +79,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         // ===== Server-Side Attack Gating (SoF2: weaponTime in playerState_t) =====
 
+        /// <summary>
+        /// NetworkedCharacterState-Referenz fuer Waffen-Lookup (CurrentWeaponName).
+        /// </summary>
+        [SerializeField]
+        private NetworkedCharacterState m_CharacterState;
+
         /// <summary>Verbleibende Attack-Frames auf dem Server (autoritativ, nicht manipulierbar).</summary>
         private int m_ServerAttackFramesRemaining;
 
         /// <summary>Frame-Akkumulator auf dem Server fuer frame-diskretes Timing.</summary>
         private float m_ServerAttackFrameAccumulator;
 
-        /// <summary>Anzahl Animation-Frames fuer einen Knife-Slash (SoF2: knifeslash01_mp duration=6).</summary>
-        private const int k_ServerAttackFrames = 6;
+        /// <summary>Aktuelle Attack-Frame-Anzahl basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_ServerAttackFrames = 6;
 
-        /// <summary>FPS der Attack-Animation (SoF2: knifeslash01_mp fps=20).</summary>
-        private const int k_ServerAttackFps = 20; //passe ich alles später an.
+        /// <summary>Aktuelle Attack-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_ServerAttackFps = 20;
 
         // ===== Movement Sync =====
 
@@ -254,7 +263,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             if (m_ServerAttackFramesRemaining > 0)
             {
                 m_ServerAttackFrameAccumulator += cmd.DeltaTime;
-                float frameInterval = 1f / k_ServerAttackFps;
+                float frameInterval = 1f / m_ServerAttackFps;
                 while (m_ServerAttackFrameAccumulator >= frameInterval && m_ServerAttackFramesRemaining > 0)
                 {
                     m_ServerAttackFrameAccumulator -= frameInterval;
@@ -329,14 +338,47 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         private void ProcessAttack(PlayerCommand cmd)
         {
+            // Attack-Parameter von aktueller Waffe laden
+            UpdateServerAttackParameters();
+
             // Server startet Attack-Cooldown (frame-basiert, wie SoF2 weaponTime)
-            m_ServerAttackFramesRemaining = k_ServerAttackFrames;
+            m_ServerAttackFramesRemaining = m_ServerAttackFrames;
             m_ServerAttackFrameAccumulator = 0f;
 
-            Debug.Log($"[NetworkedPlayerCharacter] Server: Attack aus Command #{cmd.SequenceNumber} für Client {OwnerClientId} bei Yaw {cmd.YawAngle:F1} — {k_ServerAttackFrames} Frames @ {k_ServerAttackFps}fps Cooldown");
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Attack aus Command #{cmd.SequenceNumber} für Client {OwnerClientId} bei Yaw {cmd.YawAngle:F1} — {m_ServerAttackFrames} Frames @ {m_ServerAttackFps}fps Cooldown");
 
             // TODO: Server-seitige Hit-Detection (Raycast/SphereCast von Server-Position in Blickrichtung)
             // TODO: Damage an getroffene Spieler via HitboxCollider.HitRegion + DamageMultiplier
+        }
+
+        /// <summary>
+        /// Aktualisiert Attack-Frames und FPS basierend auf der aktuellen Waffe des Characters.
+        /// Liest mp_attack aus dem WeaponDataLoader.
+        /// </summary>
+        private void UpdateServerAttackParameters()
+        {
+            if (m_CharacterState == null)
+            {
+                return;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                return;
+            }
+
+            WeaponDefinition weapon = loader.GetById(m_CharacterState.CurrentWeaponName);
+            if (weapon?.Animations == null)
+            {
+                return;
+            }
+
+            if (weapon.Animations.TryGetValue("mp_attack", out WeaponAnimationEntry attackAnim))
+            {
+                m_ServerAttackFrames = attackAnim.Duration;
+                m_ServerAttackFps = attackAnim.Fps;
+            }
         }
 
         // ===== Animation Sync =====

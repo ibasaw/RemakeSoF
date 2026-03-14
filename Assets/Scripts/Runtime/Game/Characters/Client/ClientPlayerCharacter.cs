@@ -1,10 +1,13 @@
 ﻿using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Camera;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
 using Tolik.RemakeSoF.Runtime.Game.WeaponManagement;
+using Tolik.RemakeSoF.Runtime.WeaponManagement;
 /**
     * Owner-Client-Controller fuer Player-Character.
     * SoF2/Quake3-Style manuelle Physik: Velocity-basierte Bewegung mit BoxCasts (AABB).
@@ -218,11 +221,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Frame-Akkumulator fuer frame-diskretes Attack-Timing.</summary>
         private float m_AttackFrameAccumulator;
 
-        /// <summary>Anzahl Animation-Frames fuer einen Knife-Slash (aus average_sleeves_mp.frames).</summary>
-        private const int k_AttackFrames = 6;
+        /// <summary>Aktuelle Attack-Frame-Anzahl basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_AttackFrames = 6;
 
-        /// <summary>FPS der Attack-Animation (aus average_sleeves_mp.frames: knifeslash01_mp = 20fps).</summary>
-        private const int k_AttackFps = 20;
+        /// <summary>Aktuelle Attack-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_AttackFps = 20;
 
         /// <summary>
         /// Remote-Modus: Component laeuft auf Remote-Clients nur fuer Bone-Rotation,
@@ -1047,7 +1050,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (m_IsAttacking)
             {
                 m_AttackFrameAccumulator += Time.deltaTime;
-                float frameInterval = 1f / k_AttackFps;
+                float frameInterval = 1f / m_AttackFps;
                 while (m_AttackFrameAccumulator >= frameInterval && m_AttackFramesRemaining > 0)
                 {
                     m_AttackFrameAccumulator -= frameInterval;
@@ -1065,7 +1068,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (m_PlayerActions.Attack.IsPressed() && !m_IsAttacking)
             {
                 m_IsAttacking = true;
-                m_AttackFramesRemaining = k_AttackFrames;
+                m_AttackFramesRemaining = m_AttackFrames;
                 m_AttackFrameAccumulator = 0f;
             }
         }
@@ -1087,9 +1090,36 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return;
             }
 
+            UpdateClientAttackParameters(weaponName);
+
             // Pending merken fuer den Fall dass Visual noch nicht instanziiert ist
             m_PendingWeaponName = weaponName;
             TryLoadPendingWeapon();
+        }
+
+        /// <summary>
+        /// Aktualisiert m_AttackFrames und m_AttackFps anhand der mp_attack Animation
+        /// der aktuellen Waffe aus dem WeaponDataLoader.
+        /// </summary>
+        private void UpdateClientAttackParameters(string weaponName)
+        {
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                return;
+            }
+
+            WeaponDefinition weapon = loader.GetById(weaponName);
+            if (weapon == null)
+            {
+                return;
+            }
+
+            if (weapon.Animations != null && weapon.Animations.TryGetValue("mp_attack", out WeaponAnimationEntry attackAnim))
+            {
+                m_AttackFrames = attackAnim.Duration;
+                m_AttackFps = attackAnim.Fps;
+            }
         }
 
         /// <summary>
