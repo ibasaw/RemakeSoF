@@ -783,6 +783,33 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             Debug.Log($"[NetworkedCharacterState] Reload complete for '{CurrentWeaponName}': Clip={m_CurrentClipAmmo.Value}, Reserve={m_ReserveAmmo.Value}");
         }
 
+        /// <summary>
+        /// Server: Transferiert genau eine Shell von Reserve in Clip (Shell-by-Shell Reload).
+        /// </summary>
+        public void TransferOneShell()
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            if (m_ReserveAmmo.Value <= 0)
+            {
+                return;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(CurrentWeaponName);
+
+            if (weapon?.Ammo == null || m_CurrentClipAmmo.Value >= weapon.Ammo.MaxClip)
+            {
+                return;
+            }
+
+            m_CurrentClipAmmo.Value += 1;
+            m_ReserveAmmo.Value -= 1;
+        }
+
         // ===== Weapon Setters =====
 
         /// <summary>

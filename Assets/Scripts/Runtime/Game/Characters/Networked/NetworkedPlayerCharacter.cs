@@ -112,6 +112,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <summary>Aktuelle Reload-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
         private int m_ServerReloadFps = 20;
 
+        /// <summary>Ob die aktuelle Waffe Shell-by-Shell nachladet (M590, MM1).</summary>
+        private bool m_ServerIsShellReload;
+
+        /// <summary>Frame-Anzahl fuer ReloadStart-Animation (Shell-Reload).</summary>
+        private int m_ServerReloadStartFrames;
+
+        /// <summary>Frame-Anzahl fuer einzelne Shell-Lade-Animation (Shell-Reload).</summary>
+        private int m_ServerReloadShellFrames;
+
+        /// <summary>Frame-Anzahl fuer ReloadEnd-Animation (Shell-Reload).</summary>
+        private int m_ServerReloadEndFrames;
+
+        /// <summary>Aktuelle Phase beim Shell-Reload (Start, Shell, End).</summary>
+        private ShellReloadPhase m_ServerShellReloadPhase;
+
+        /// <summary>Verbleibende Shells die noch geladen werden muessen (Shell-Reload).</summary>
+        private int m_ServerShellsRemaining;
+
+        /// <summary>Verbleibende Frames in der aktuellen Shell-Reload-Phase.</summary>
+        private int m_ServerShellPhaseFramesRemaining;
+
         // ===== Server-Side AltAttack Gating =====
 
         /// <summary>Verbleibende AltAttack-Frames auf dem Server (autoritativ).</summary>
@@ -303,18 +324,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Server-seitiges Reload-Frame-Counting herunterzaehlen
             if (m_ServerReloadFramesRemaining > 0)
             {
-                m_ServerReloadFrameAccumulator += cmd.DeltaTime;
-                float reloadFrameInterval = 1f / m_ServerReloadFps;
-                while (m_ServerReloadFrameAccumulator >= reloadFrameInterval && m_ServerReloadFramesRemaining > 0)
+                if (m_ServerIsShellReload && m_ServerShellReloadPhase != ShellReloadPhase.None)
                 {
-                    m_ServerReloadFrameAccumulator -= reloadFrameInterval;
-                    m_ServerReloadFramesRemaining--;
+                    TickServerShellReload(cmd.DeltaTime);
                 }
-
-                // Reload abgeschlossen: Munition transferieren
-                if (m_ServerReloadFramesRemaining <= 0)
+                else
                 {
-                    m_CharacterState.CompleteReload();
+                    m_ServerReloadFrameAccumulator += cmd.DeltaTime;
+                    float reloadFrameInterval = 1f / m_ServerReloadFps;
+                    while (m_ServerReloadFrameAccumulator >= reloadFrameInterval && m_ServerReloadFramesRemaining > 0)
+                    {
+                        m_ServerReloadFrameAccumulator -= reloadFrameInterval;
+                        m_ServerReloadFramesRemaining--;
+                    }
+
+                    // Reload abgeschlossen: Munition transferieren
+                    if (m_ServerReloadFramesRemaining <= 0)
+                    {
+                        m_CharacterState.CompleteReload();
+                    }
                 }
             }
 
@@ -544,10 +572,33 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
-            m_ServerReloadFramesRemaining = m_ServerReloadFrames;
+            if (m_ServerIsShellReload)
+            {
+                WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+                WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+                if (weapon?.Ammo != null)
+                {
+                    int shellsNeeded = weapon.Ammo.MaxClip - m_CharacterState.CurrentClipAmmo;
+                    m_ServerShellsRemaining = Mathf.Min(shellsNeeded, m_CharacterState.ReserveAmmo);
+                    m_ServerShellReloadPhase = ShellReloadPhase.Start;
+                    m_ServerShellPhaseFramesRemaining = m_ServerReloadStartFrames;
+                    m_ServerReloadFramesRemaining = 1;
+                }
+                else
+                {
+                    m_ServerReloadFramesRemaining = m_ServerReloadFrames;
+                    m_ServerShellReloadPhase = ShellReloadPhase.None;
+                }
+            }
+            else
+            {
+                m_ServerReloadFramesRemaining = m_ServerReloadFrames;
+                m_ServerShellReloadPhase = ShellReloadPhase.None;
+            }
+
             m_ServerReloadFrameAccumulator = 0f;
 
-            Debug.Log($"[NetworkedPlayerCharacter] Server: Reload started for client {OwnerClientId} — {m_ServerReloadFrames} Frames @ {m_ServerReloadFps}fps");
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Reload started for client {OwnerClientId} — Phase={m_ServerShellReloadPhase}, ShellsRemaining={m_ServerShellsRemaining}");
         }
 
         /// <summary>
@@ -577,11 +628,74 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             {
                 m_ServerReloadFrames = reloadAnim.Duration;
                 m_ServerReloadFps = reloadAnim.Fps;
+                m_ServerIsShellReload = false;
+            }
+            else if (weapon.Animations.TryGetValue("mp_reloadStart", out WeaponAnimationEntry startAnim) &&
+                     weapon.Animations.TryGetValue("mp_reloadShell", out WeaponAnimationEntry shellAnim) &&
+                     weapon.Animations.TryGetValue("mp_reloadEnd", out WeaponAnimationEntry endAnim))
+            {
+                m_ServerReloadStartFrames = startAnim.Duration;
+                m_ServerReloadShellFrames = shellAnim.Duration;
+                m_ServerReloadEndFrames = endAnim.Duration;
+                m_ServerReloadFps = startAnim.Fps;
+                m_ServerIsShellReload = true;
+                m_ServerReloadFrames = 1;
             }
             else
             {
                 m_ServerReloadFrames = 0;
                 m_ServerReloadFps = 20;
+                m_ServerIsShellReload = false;
+            }
+        }
+
+        /// <summary>
+        /// Server: Tickt den Shell-by-Shell Reload phasenweise.
+        /// Start → Shell (wiederholt, je 1 Shell transferieren) → End → fertig.
+        /// </summary>
+        private void TickServerShellReload(float deltaTime)
+        {
+            m_ServerReloadFrameAccumulator += deltaTime;
+            float frameInterval = 1f / m_ServerReloadFps;
+
+            while (m_ServerReloadFrameAccumulator >= frameInterval && m_ServerShellPhaseFramesRemaining > 0)
+            {
+                m_ServerReloadFrameAccumulator -= frameInterval;
+                m_ServerShellPhaseFramesRemaining--;
+            }
+
+            if (m_ServerShellPhaseFramesRemaining > 0)
+            {
+                return;
+            }
+
+            switch (m_ServerShellReloadPhase)
+            {
+                case ShellReloadPhase.Start:
+                    m_ServerShellReloadPhase = ShellReloadPhase.Shell;
+                    m_ServerShellPhaseFramesRemaining = m_ServerReloadShellFrames;
+                    break;
+
+                case ShellReloadPhase.Shell:
+                    m_CharacterState.TransferOneShell();
+                    m_ServerShellsRemaining--;
+
+                    if (m_ServerShellsRemaining > 0)
+                    {
+                        m_ServerShellPhaseFramesRemaining = m_ServerReloadShellFrames;
+                    }
+                    else
+                    {
+                        m_ServerShellReloadPhase = ShellReloadPhase.End;
+                        m_ServerShellPhaseFramesRemaining = m_ServerReloadEndFrames;
+                    }
+                    break;
+
+                case ShellReloadPhase.End:
+                    m_ServerShellReloadPhase = ShellReloadPhase.None;
+                    m_ServerReloadFramesRemaining = 0;
+                    m_ServerReloadFrameAccumulator = 0f;
+                    break;
             }
         }
 

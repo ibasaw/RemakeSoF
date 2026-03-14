@@ -255,6 +255,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Aktuelle Reload-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
         private int m_ReloadFps = 20;
 
+        /// <summary>Ob die aktuelle Waffe Shell-by-Shell nachladet (M590, MM1).</summary>
+        private bool m_IsShellReload;
+
+        /// <summary>Frame-Anzahl fuer ReloadStart-Animation (Shell-Reload).</summary>
+        private int m_ReloadStartFrames;
+
+        /// <summary>Frame-Anzahl fuer einzelne Shell-Lade-Animation (Shell-Reload).</summary>
+        private int m_ReloadShellFrames;
+
+        /// <summary>Frame-Anzahl fuer ReloadEnd-Animation (Shell-Reload).</summary>
+        private int m_ReloadEndFrames;
+
+        /// <summary>Aktuelle Phase beim Shell-Reload (Start, Shell, End).</summary>
+        private ShellReloadPhase m_ShellReloadPhase;
+
+        /// <summary>Verbleibende Shells die noch geladen werden muessen (Shell-Reload).</summary>
+        private int m_ShellsRemaining;
+
+        /// <summary>Verbleibende Frames in der aktuellen Shell-Reload-Phase.</summary>
+        private int m_ShellPhaseFramesRemaining;
+
         /// <summary>Ob der Character gerade einen Alternativangriff ausfuehrt (fuer Animation + Netzwerk-Sync).</summary>
         private bool m_IsAltAttacking;
 
@@ -1153,18 +1174,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Reload-Frames herunterzaehlen (frame-diskret, wie Attack)
             if (m_IsReloading)
             {
-                m_ReloadFrameAccumulator += Time.deltaTime;
-                float reloadFrameInterval = 1f / m_ReloadFps;
-                while (m_ReloadFrameAccumulator >= reloadFrameInterval && m_ReloadFramesRemaining > 0)
+                if (m_IsShellReload && m_ShellReloadPhase != ShellReloadPhase.None)
                 {
-                    m_ReloadFrameAccumulator -= reloadFrameInterval;
-                    m_ReloadFramesRemaining--;
+                    TickClientShellReload();
                 }
-
-                if (m_ReloadFramesRemaining <= 0)
+                else
                 {
-                    m_IsReloading = false;
-                    m_ReloadFrameAccumulator = 0f;
+                    m_ReloadFrameAccumulator += Time.deltaTime;
+                    float reloadFrameInterval = 1f / m_ReloadFps;
+                    while (m_ReloadFrameAccumulator >= reloadFrameInterval && m_ReloadFramesRemaining > 0)
+                    {
+                        m_ReloadFrameAccumulator -= reloadFrameInterval;
+                        m_ReloadFramesRemaining--;
+                    }
+
+                    if (m_ReloadFramesRemaining <= 0)
+                    {
+                        m_IsReloading = false;
+                        m_ReloadFrameAccumulator = 0f;
+                    }
                 }
 
                 // Waehrend Reload kein Attack/AltAttack moeglich
@@ -1274,8 +1302,71 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             m_IsReloading = true;
-            m_ReloadFramesRemaining = m_ReloadFrames;
             m_ReloadFrameAccumulator = 0f;
+
+            if (m_IsShellReload)
+            {
+                int shellsNeeded = weapon.Ammo.MaxClip - m_CharacterState.CurrentClipAmmo;
+                m_ShellsRemaining = Mathf.Min(shellsNeeded, m_CharacterState.ReserveAmmo);
+                m_ShellReloadPhase = ShellReloadPhase.Start;
+                m_ShellPhaseFramesRemaining = m_ReloadStartFrames;
+                m_ReloadFramesRemaining = 1;
+            }
+            else
+            {
+                m_ShellReloadPhase = ShellReloadPhase.None;
+                m_ReloadFramesRemaining = m_ReloadFrames;
+            }
+        }
+
+        /// <summary>
+        /// Client: Tickt den Shell-by-Shell Reload phasenweise (Prediction).
+        /// Start → Shell (wiederholt) → End → fertig. Ammo-Transfer kommt vom Server via NetworkVariable.
+        /// </summary>
+        private void TickClientShellReload()
+        {
+            m_ReloadFrameAccumulator += Time.deltaTime;
+            float frameInterval = 1f / m_ReloadFps;
+
+            while (m_ReloadFrameAccumulator >= frameInterval && m_ShellPhaseFramesRemaining > 0)
+            {
+                m_ReloadFrameAccumulator -= frameInterval;
+                m_ShellPhaseFramesRemaining--;
+            }
+
+            if (m_ShellPhaseFramesRemaining > 0)
+            {
+                return;
+            }
+
+            switch (m_ShellReloadPhase)
+            {
+                case ShellReloadPhase.Start:
+                    m_ShellReloadPhase = ShellReloadPhase.Shell;
+                    m_ShellPhaseFramesRemaining = m_ReloadShellFrames;
+                    break;
+
+                case ShellReloadPhase.Shell:
+                    m_ShellsRemaining--;
+
+                    if (m_ShellsRemaining > 0)
+                    {
+                        m_ShellPhaseFramesRemaining = m_ReloadShellFrames;
+                    }
+                    else
+                    {
+                        m_ShellReloadPhase = ShellReloadPhase.End;
+                        m_ShellPhaseFramesRemaining = m_ReloadEndFrames;
+                    }
+                    break;
+
+                case ShellReloadPhase.End:
+                    m_ShellReloadPhase = ShellReloadPhase.None;
+                    m_ReloadFramesRemaining = 0;
+                    m_ReloadFrameAccumulator = 0f;
+                    m_IsReloading = false;
+                    break;
+            }
         }
 
         // ===== Weapon Loading =====
@@ -1332,11 +1423,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 {
                     m_ReloadFrames = reloadAnim.Duration;
                     m_ReloadFps = reloadAnim.Fps;
+                    m_IsShellReload = false;
+                }
+                else if (weapon.Animations.TryGetValue("mp_reloadStart", out WeaponAnimationEntry startAnim) &&
+                         weapon.Animations.TryGetValue("mp_reloadShell", out WeaponAnimationEntry shellAnim) &&
+                         weapon.Animations.TryGetValue("mp_reloadEnd", out WeaponAnimationEntry endAnim))
+                {
+                    m_ReloadStartFrames = startAnim.Duration;
+                    m_ReloadShellFrames = shellAnim.Duration;
+                    m_ReloadEndFrames = endAnim.Duration;
+                    m_ReloadFps = startAnim.Fps;
+                    m_IsShellReload = true;
+                    m_ReloadFrames = 1;
                 }
                 else
                 {
                     m_ReloadFrames = 0;
                     m_ReloadFps = 20;
+                    m_IsShellReload = false;
                 }
 
                 if (weapon.Animations.TryGetValue("mp_altAttack", out WeaponAnimationEntry altAttackAnim))
@@ -1361,6 +1465,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_IsReloading = false;
             m_ReloadFramesRemaining = 0;
             m_ReloadFrameAccumulator = 0f;
+            m_ShellReloadPhase = ShellReloadPhase.None;
+            m_ShellsRemaining = 0;
+            m_ShellPhaseFramesRemaining = 0;
             m_IsAltAttacking = false;
             m_AltAttackFramesRemaining = 0;
             m_AltAttackFrameAccumulator = 0f;

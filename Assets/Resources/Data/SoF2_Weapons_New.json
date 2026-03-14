@@ -497,5 +497,120 @@
         "loop": false
       }
     }
+  },
+  {
+    "id": "m590",
+    "displayName": "M590",
+    "category": 3,
+    "animatorIndex": 5,
+    "menuImage": "hud/weapon_icons/m590_icon",
+    "worldModel": "models/weapons/m590/world/m590world",
+    "viewModel": "models/weapons/m590/m590",
+    "isMelee": false,
+    "ammo": {
+      "type": "12 gauge",
+      "maxClip": 9,
+      "extraClips": 2,
+      "startClip": 9,
+      "startReserve": 18,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 22,
+      "pellets": 8,
+      "spread": 0.05,
+      "range": 1100,
+      "fireMode": "single",
+      "gore": true,
+      "volume": 0.8,
+      "kickAngles": [ 1, 8, -2, 1 ],
+      "inaccuracy": 3.0,
+      "maxInaccuracy": 3.0,
+      "muzzleFlash": "effects/mflash_m590",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_usas12",
+      "shellCasingEject": "effects/shell_shotgun",
+      "ejectBone": "ejection_m590"
+    },
+    "altAttack": {
+      "damage": 70,
+      "range": 60,
+      "fireMode": "auto",
+      "gore": false,
+      "volume": 0.0,
+      "melee": "blunt"
+    },
+    "sounds": {
+      "fire": "sound/weapons/m590/fire01",
+      "ready": "sound/weapons/m590/gun_flip",
+      "pumpBack": "sound/weapons/m590/pump1",
+      "pumpForward": "sound/weapons/m590/pump2",
+      "reload": "sound/weapons/m590/reload_shells"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_M590",
+        "source": "m590_normalstand_aim01",
+        "startFrame": 546,
+        "duration": 2,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_M590",
+        "source": "male01_normalstand_m590fire_mp",
+        "startFrame": 548,
+        "duration": 13,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_altAttack": {
+        "name": "TORSO_ATTACK_RIFLEBUTT",
+        "source": "male01_normalstand_m590riflebutt_mp",
+        "startFrame": 561,
+        "duration": 21,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE",
+        "source": "weaponready01_mp",
+        "startFrame": 286,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP",
+        "source": "weapondone01_mp",
+        "startFrame": 280,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_reloadStart": {
+        "name": "TORSO_RELOAD_M590_START",
+        "source": "loadstart_m590_mp",
+        "startFrame": 584,
+        "duration": 8,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_reloadShell": {
+        "name": "TORSO_RELOAD_M590_SHELL",
+        "source": "loadshell_m590_mp",
+        "startFrame": 582,
+        "duration": 2,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_reloadEnd": {
+        "name": "TORSO_RELOAD_M590_END",
+        "source": "loadend_m590_mp",
+        "startFrame": 592,
+        "duration": 8,
+        "fps": 20,
+        "loop": false
+      }
+    }
   }
 ]
