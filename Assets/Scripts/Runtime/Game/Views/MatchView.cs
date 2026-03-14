@@ -38,6 +38,23 @@ namespace Tolik.RemakeSoF.Runtime
         Label m_BhopChainLabel;
         Label m_BhopLastChainLabel;
 
+        // Weapon HUD Labels
+        Label m_WeaponNameLabel;
+        Label m_AmmoTypeLabel;
+        Label m_ClipAmmoLabel;
+        Label m_ReserveAmmoLabel;
+        VisualElement m_AmmoRow;
+        Label m_AmmoSeparatorLabel;
+
+        // Alt Ammo HUD Labels
+        Label m_AltAmmoTypeLabel;
+        Label m_AltClipAmmoLabel;
+        Label m_AltReserveAmmoLabel;
+        VisualElement m_AltAmmoRow;
+
+        // Health HUD Labels
+        Label m_HealthLabel;
+
         void Awake()
         {
             m_UIDocument = GetComponent<UIDocument>();
@@ -74,6 +91,23 @@ namespace Tolik.RemakeSoF.Runtime
             m_BhopSpeedLabel = root.Query<Label>("bhopSpeedLabel");
             m_BhopChainLabel = root.Query<Label>("bhopChainLabel");
             m_BhopLastChainLabel = root.Query<Label>("bhopLastChainLabel");
+
+            // Weapon HUD
+            m_WeaponNameLabel = root.Query<Label>("weaponNameLabel");
+            m_AmmoTypeLabel = root.Query<Label>("ammoTypeLabel");
+            m_ClipAmmoLabel = root.Query<Label>("clipAmmoLabel");
+            m_ReserveAmmoLabel = root.Query<Label>("reserveAmmoLabel");
+            m_AmmoRow = root.Query<VisualElement>("AmmoRow");
+            m_AmmoSeparatorLabel = root.Query<Label>("ammoSeparatorLabel");
+
+            // Alt Ammo HUD
+            m_AltAmmoTypeLabel = root.Query<Label>("altAmmoTypeLabel");
+            m_AltClipAmmoLabel = root.Query<Label>("altClipAmmoLabel");
+            m_AltReserveAmmoLabel = root.Query<Label>("altReserveAmmoLabel");
+            m_AltAmmoRow = root.Query<VisualElement>("AltAmmoRow");
+
+            // Health HUD
+            m_HealthLabel = root.Query<Label>("healthLabel");
         }
 
         internal void OnCountdownChanged(uint newValue)
@@ -169,6 +203,85 @@ namespace Tolik.RemakeSoF.Runtime
             {
                 m_BhopLastChainLabel.text = "";
             }
+        }
+
+        /// <summary>
+        /// Aktualisiert die Waffen-Anzeige (Name, Clip, Reserve).
+        /// Bei infinite Ammo wird die Ammo-Row ausgeblendet.
+        /// </summary>
+        internal void UpdateWeaponHud(string displayName, string ammoType, int clipAmmo, int reserveAmmo, bool hideAmmoRow, bool hasAltAmmo, string altAmmoType, int altClipAmmo, int altReserveAmmo)
+        {
+            m_WeaponNameLabel.text = displayName.ToUpperInvariant();
+
+            if (hideAmmoRow)
+            {
+                m_AmmoTypeLabel.style.display = DisplayStyle.None;
+                m_AmmoRow.style.display = DisplayStyle.None;
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(ammoType))
+                {
+                    m_AmmoTypeLabel.style.display = DisplayStyle.None;
+                }
+                else
+                {
+                    m_AmmoTypeLabel.style.display = DisplayStyle.Flex;
+                    m_AmmoTypeLabel.text = ammoType;
+                }
+
+                m_AmmoRow.style.display = DisplayStyle.Flex;
+                m_ClipAmmoLabel.text = clipAmmo.ToString();
+                m_ReserveAmmoLabel.text = reserveAmmo.ToString();
+            }
+
+            if (hasAltAmmo)
+            {
+                if (string.IsNullOrEmpty(altAmmoType))
+                {
+                    m_AltAmmoTypeLabel.style.display = DisplayStyle.None;
+                }
+                else
+                {
+                    m_AltAmmoTypeLabel.style.display = DisplayStyle.Flex;
+                    m_AltAmmoTypeLabel.text = altAmmoType;
+                }
+
+                m_AltAmmoRow.style.display = DisplayStyle.Flex;
+                m_AltClipAmmoLabel.text = altClipAmmo.ToString();
+                m_AltReserveAmmoLabel.text = altReserveAmmo.ToString();
+            }
+            else
+            {
+                m_AltAmmoTypeLabel.style.display = DisplayStyle.None;
+                m_AltAmmoRow.style.display = DisplayStyle.None;
+            }
+        }
+
+        /// <summary>
+        /// Aktualisiert die Munitions-Anzeige (Clip + Reserve).
+        /// </summary>
+        internal void UpdateAmmoHud(int clipAmmo, int reserveAmmo)
+        {
+            m_ClipAmmoLabel.text = clipAmmo.ToString();
+            m_ReserveAmmoLabel.text = reserveAmmo.ToString();
+        }
+
+        /// <summary>
+        /// Aktualisiert die Alt-Ammo-Anzeige (z.B. M203 Granaten).
+        /// </summary>
+        internal void UpdateAltAmmoHud(int altClipAmmo, int altReserveAmmo)
+        {
+            m_AltClipAmmoLabel.text = altClipAmmo.ToString();
+            m_AltReserveAmmoLabel.text = altReserveAmmo.ToString();
+        }
+
+        /// <summary>
+        /// Aktualisiert die Health-Anzeige.
+        /// </summary>
+        internal void UpdateHealthHud(int health)
+        {
+            m_HealthLabel.text = health.ToString();
         }
     }
 }

@@ -225,7 +225,9 @@
       "ammo": {
         "type": "40mm grenade",
         "maxClip": 1,
-        "extraClips": 1
+        "extraClips": 1,
+        "startClip": 1,
+        "startReserve": 1
       }
     },
     "sounds": {

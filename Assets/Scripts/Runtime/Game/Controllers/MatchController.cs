@@ -1,6 +1,10 @@
 using System;
 using UnityEngine;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+using Tolik.RemakeSoF.Runtime.WeaponManagement;
 
 namespace Tolik.RemakeSoF.Runtime
 {
@@ -33,6 +37,11 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         private float m_DebugHudTimer;
 
+        /// <summary>
+        /// Gecachte CharacterState-Referenz fuer Event-Subscriptions (Ammo/Weapon/Health HUD).
+        /// </summary>
+        private NetworkedCharacterState m_CharacterState;
+
         void Awake()
         {
             App.Model.Countdown.OnValueChanged += OnCountdownChanged;
@@ -45,6 +54,7 @@ namespace Tolik.RemakeSoF.Runtime
         void OnDestroy()
         {
             RemoveListeners();
+            UnsubscribeFromCharacterState();
             Debug.Log("MatchController OnDestroy: Listeners removed from NetworkedGameState events.");
         }
 
@@ -54,6 +64,50 @@ namespace Tolik.RemakeSoF.Runtime
             App.Model.PlayersConnected.OnValueChanged -= OnPlayersConnectedChanged;
             App.Model.NetworkedGameState.OnMatchStarted -= OnMatchStarted;
             App.Model.NetworkedGameState.OnMatchEnded -= OnMatchEnded;
+        }
+
+        /// <summary>
+        /// Verbindet sich mit dem CharacterState des lokalen Spielers fuer HUD-Events.
+        /// Wird lazy in Update aufgerufen, sobald PlayerCharacter verfuegbar ist.
+        /// </summary>
+        private void SubscribeToCharacterState()
+        {
+            ClientPlayerCharacter player = App.Model.PlayerCharacter;
+            if (player == null || player.CharacterState == null)
+            {
+                return;
+            }
+
+            m_CharacterState = player.CharacterState;
+            m_CharacterState.OnAmmoChanged += OnAmmoChanged;
+            m_CharacterState.OnAltAmmoChanged += OnAltAmmoChanged;
+            m_CharacterState.OnWeaponChanged += OnWeaponChangedHud;
+            m_CharacterState.OnHealthChanged += OnHealthChanged;
+
+            // Initiale Werte setzen
+            OnHealthChanged(m_CharacterState.Health);
+            string weaponName = m_CharacterState.CurrentWeaponName;
+            if (!string.IsNullOrEmpty(weaponName))
+            {
+                UpdateWeaponHud(weaponName, m_CharacterState.CurrentClipAmmo, m_CharacterState.ReserveAmmo);
+            }
+        }
+
+        /// <summary>
+        /// Trennt die Verbindung zum CharacterState.
+        /// </summary>
+        private void UnsubscribeFromCharacterState()
+        {
+            if (m_CharacterState == null)
+            {
+                return;
+            }
+
+            m_CharacterState.OnAmmoChanged -= OnAmmoChanged;
+            m_CharacterState.OnAltAmmoChanged -= OnAltAmmoChanged;
+            m_CharacterState.OnWeaponChanged -= OnWeaponChangedHud;
+            m_CharacterState.OnHealthChanged -= OnHealthChanged;
+            m_CharacterState = null;
         }
 
         void OnCountdownChanged(uint previousValue, uint newValue)
@@ -84,6 +138,12 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         private void Update()
         {
+            // Lazy subscribe zum CharacterState wenn PlayerCharacter verfuegbar wird
+            if (m_CharacterState == null && App.Model.PlayerCharacter != null)
+            {
+                SubscribeToCharacterState();
+            }
+
             m_FrameCount++;
             m_FpsTimer += Time.unscaledDeltaTime;
 
@@ -146,6 +206,92 @@ namespace Tolik.RemakeSoF.Runtime
                 player.LastBhopChainPeakSpeed,
                 player.LastBhopChainDistance
             );
+        }
+
+        // ===== Weapon / Ammo / Health HUD =====
+
+        /// <summary>
+        /// Callback wenn sich die Munition aendert.
+        /// </summary>
+        private void OnAmmoChanged(int clipAmmo, int reserveAmmo)
+        {
+            View.UpdateAmmoHud(clipAmmo, reserveAmmo);
+        }
+
+        /// <summary>
+        /// Callback wenn sich die Waffe aendert. Aktualisiert den gesamten Waffen-HUD.
+        /// </summary>
+        private void OnWeaponChangedHud(string weaponName)
+        {
+            if (m_CharacterState == null)
+            {
+                return;
+            }
+
+            UpdateWeaponHud(weaponName, m_CharacterState.CurrentClipAmmo, m_CharacterState.ReserveAmmo);
+        }
+
+        /// <summary>
+        /// Aktualisiert den Waffen-HUD mit Waffenname und Ammo-Daten.
+        /// Liest infinite-Flag aus dem WeaponDataLoader.
+        /// </summary>
+        private void UpdateWeaponHud(string weaponName, int clipAmmo, int reserveAmmo)
+        {
+            bool hideAmmoRow = false;
+            string displayName = weaponName;
+            string ammoType = "";
+            bool hasAltAmmo = false;
+            string altAmmoType = "";
+            int altClipAmmo = 0;
+            int altReserveAmmo = 0;
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader != null)
+            {
+                WeaponDefinition weapon = loader.GetById(weaponName);
+                if (weapon != null)
+                {
+                    displayName = weapon.DisplayName ?? weaponName;
+                }
+
+                if (weapon?.Ammo != null)
+                {
+                    // Ammo-Type nur anzeigen wenn er sich vom Waffen-ID unterscheidet
+                    if (!string.Equals(weapon.Ammo.Type, weapon.Id, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        ammoType = weapon.Ammo.Type ?? "";
+                    }
+
+                    bool altUsesMainAmmo = weapon.AltAttack?.Projectile != null && weapon.AltAttack.Ammo == null;
+                    hideAmmoRow = weapon.Ammo.Infinite && !altUsesMainAmmo;
+                }
+
+                if (weapon?.AltAttack?.Ammo != null)
+                {
+                    hasAltAmmo = true;
+                    altAmmoType = weapon.AltAttack.Ammo.Type ?? "";
+                    altClipAmmo = m_CharacterState.AltClipAmmo;
+                    altReserveAmmo = m_CharacterState.AltReserveAmmo;
+                }
+            }
+
+            View.UpdateWeaponHud(displayName, ammoType, clipAmmo, reserveAmmo, hideAmmoRow, hasAltAmmo, altAmmoType, altClipAmmo, altReserveAmmo);
+        }
+
+        /// <summary>
+        /// Callback wenn sich die Alt-Munition aendert (z.B. M203 Granaten).
+        /// </summary>
+        private void OnAltAmmoChanged(int altClipAmmo, int altReserveAmmo)
+        {
+            View.UpdateAltAmmoHud(altClipAmmo, altReserveAmmo);
+        }
+
+        /// <summary>
+        /// Callback wenn sich Health aendert.
+        /// </summary>
+        private void OnHealthChanged(int health)
+        {
+            View.UpdateHealthHud(health);
         }
     }
 }

@@ -69,8 +69,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private static readonly int s_IsWalkingHash = Animator.StringToHash("IsWalking");
         private static readonly int s_IsAttackingHash = Animator.StringToHash("IsAttacking");
         private static readonly int s_IsCrouchingHash = Animator.StringToHash("IsCrouching");
+        private static readonly int s_IsReloadingHash = Animator.StringToHash("IsReloading");
+        private static readonly int s_IsAltAttackingHash = Animator.StringToHash("IsAltAttacking");
         private static readonly int s_JumpHash = Animator.StringToHash("Jump");
         private static readonly int s_CurrentWeaponHash = Animator.StringToHash("CurrentWeapon");
+        private static readonly int s_AmmoHash = Animator.StringToHash("Ammo");
 
         /// <summary>
         /// Aktueller synchronisierter Animation-State (für Remote-Bone-Rotation).
@@ -96,6 +99,32 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>Aktuelle Attack-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
         private int m_ServerAttackFps = 20;
+
+        /// <summary>Verbleibende Reload-Frames auf dem Server (autoritativ).</summary>
+        private int m_ServerReloadFramesRemaining;
+
+        /// <summary>Frame-Akkumulator auf dem Server fuer frame-diskretes Reload-Timing.</summary>
+        private float m_ServerReloadFrameAccumulator;
+
+        /// <summary>Aktuelle Reload-Frame-Anzahl basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_ServerReloadFrames;
+
+        /// <summary>Aktuelle Reload-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_ServerReloadFps = 20;
+
+        // ===== Server-Side AltAttack Gating =====
+
+        /// <summary>Verbleibende AltAttack-Frames auf dem Server (autoritativ).</summary>
+        private int m_ServerAltAttackFramesRemaining;
+
+        /// <summary>Frame-Akkumulator auf dem Server fuer frame-diskretes AltAttack-Timing.</summary>
+        private float m_ServerAltAttackFrameAccumulator;
+
+        /// <summary>Aktuelle AltAttack-Frame-Anzahl basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_ServerAltAttackFrames;
+
+        /// <summary>Aktuelle AltAttack-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_ServerAltAttackFps = 20;
 
         // ===== Movement Sync =====
 
@@ -271,11 +300,55 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 }
             }
 
+            // Server-seitiges Reload-Frame-Counting herunterzaehlen
+            if (m_ServerReloadFramesRemaining > 0)
+            {
+                m_ServerReloadFrameAccumulator += cmd.DeltaTime;
+                float reloadFrameInterval = 1f / m_ServerReloadFps;
+                while (m_ServerReloadFrameAccumulator >= reloadFrameInterval && m_ServerReloadFramesRemaining > 0)
+                {
+                    m_ServerReloadFrameAccumulator -= reloadFrameInterval;
+                    m_ServerReloadFramesRemaining--;
+                }
+
+                // Reload abgeschlossen: Munition transferieren
+                if (m_ServerReloadFramesRemaining <= 0)
+                {
+                    m_CharacterState.CompleteReload();
+                }
+            }
+
+            // Server-seitiges AltAttack-Frame-Counting herunterzaehlen
+            if (m_ServerAltAttackFramesRemaining > 0)
+            {
+                m_ServerAltAttackFrameAccumulator += cmd.DeltaTime;
+                float altAttackFrameInterval = 1f / m_ServerAltAttackFps;
+                while (m_ServerAltAttackFrameAccumulator >= altAttackFrameInterval && m_ServerAltAttackFramesRemaining > 0)
+                {
+                    m_ServerAltAttackFrameAccumulator -= altAttackFrameInterval;
+                    m_ServerAltAttackFramesRemaining--;
+                }
+            }
+
             // Button-Inputs verarbeiten (SoF2: FireWeapon aus usercmd_t.buttons)
-            // Server gated: Attack nur starten wenn keine Attacke laeuft (Anti-Cheat)
-            if (cmd.HasButton(CommandButtons.Attack) && m_ServerAttackFramesRemaining <= 0)
+            // Server gated: Attack nur starten wenn keine Attacke, kein Reload und kein AltAttack laeuft (Anti-Cheat)
+            bool noActionRunning = m_ServerAttackFramesRemaining <= 0 && m_ServerReloadFramesRemaining <= 0 && m_ServerAltAttackFramesRemaining <= 0;
+
+            if (cmd.HasButton(CommandButtons.Attack) && noActionRunning)
             {
                 ProcessAttack(cmd);
+            }
+
+            // Server gated: AltAttack nur starten wenn keine Action laeuft
+            if (cmd.HasButton(CommandButtons.AltAttack) && noActionRunning)
+            {
+                ProcessAltAttack(cmd);
+            }
+
+            // Server gated: Reload nur starten wenn keine Action laeuft und Reload moeglich
+            if (cmd.HasButton(CommandButtons.Reload) && noActionRunning)
+            {
+                ProcessReload();
             }
 
             // Acknowledgement an Owner-Client senden (für Reconciliation)
@@ -338,6 +411,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         private void ProcessAttack(PlayerCommand cmd)
         {
+            // Munition verbrauchen (Server-autoritativ)
+            if (!m_CharacterState.TryConsumeAmmo())
+            {
+                Debug.Log($"[NetworkedPlayerCharacter] Server: Attack blocked — no ammo for client {OwnerClientId}");
+                return;
+            }
+
             // Attack-Parameter von aktueller Waffe laden
             UpdateServerAttackParameters();
 
@@ -378,6 +458,130 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             {
                 m_ServerAttackFrames = attackAnim.Duration;
                 m_ServerAttackFps = attackAnim.Fps;
+            }
+        }
+
+        /// <summary>
+        /// Server: Verarbeitet einen AltAttack aus dem PlayerCommand.
+        /// Wie SoF2 AltFire — konsumiert Alt-Ammo und startet AltAttack-Cooldown.
+        /// </summary>
+        private void ProcessAltAttack(PlayerCommand cmd)
+        {
+            // Alt-Munition verbrauchen (Server-autoritativ)
+            if (!m_CharacterState.TryConsumeAltAmmo())
+            {
+                Debug.Log($"[NetworkedPlayerCharacter] Server: AltAttack blocked — no alt ammo for client {OwnerClientId}");
+                return;
+            }
+
+            // AltAttack-Parameter von aktueller Waffe laden
+            UpdateServerAltAttackParameters();
+
+            if (m_ServerAltAttackFrames <= 0)
+            {
+                return;
+            }
+
+            // Server startet AltAttack-Cooldown (frame-basiert)
+            m_ServerAltAttackFramesRemaining = m_ServerAltAttackFrames;
+            m_ServerAltAttackFrameAccumulator = 0f;
+
+            Debug.Log($"[NetworkedPlayerCharacter] Server: AltAttack aus Command #{cmd.SequenceNumber} für Client {OwnerClientId} — {m_ServerAltAttackFrames} Frames @ {m_ServerAltAttackFps}fps Cooldown");
+        }
+
+        /// <summary>
+        /// Aktualisiert AltAttack-Frames und FPS basierend auf der aktuellen Waffe des Characters.
+        /// Liest mp_altAttack aus dem WeaponDataLoader.
+        /// </summary>
+        private void UpdateServerAltAttackParameters()
+        {
+            if (m_CharacterState == null)
+            {
+                return;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                return;
+            }
+
+            WeaponDefinition weapon = loader.GetById(m_CharacterState.CurrentWeaponName);
+            if (weapon?.Animations == null)
+            {
+                return;
+            }
+
+            if (weapon.Animations.TryGetValue("mp_altAttack", out WeaponAnimationEntry altAttackAnim))
+            {
+                m_ServerAltAttackFrames = altAttackAnim.Duration;
+                m_ServerAltAttackFps = altAttackAnim.Fps;
+            }
+            else
+            {
+                m_ServerAltAttackFrames = 0;
+                m_ServerAltAttackFps = 20;
+            }
+        }
+
+        /// <summary>
+        /// Server: Verarbeitet einen Reload-Request aus dem PlayerCommand.
+        /// Prueft via CharacterState ob Reload moeglich ist und startet den Cooldown.
+        /// </summary>
+        private void ProcessReload()
+        {
+            if (!m_CharacterState.CanReload())
+            {
+                return;
+            }
+
+            UpdateServerReloadParameters();
+
+            if (m_ServerReloadFrames <= 0)
+            {
+                // Keine Reload-Animation definiert — sofort reloaden
+                m_CharacterState.CompleteReload();
+                return;
+            }
+
+            m_ServerReloadFramesRemaining = m_ServerReloadFrames;
+            m_ServerReloadFrameAccumulator = 0f;
+
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Reload started for client {OwnerClientId} — {m_ServerReloadFrames} Frames @ {m_ServerReloadFps}fps");
+        }
+
+        /// <summary>
+        /// Aktualisiert Reload-Frames und FPS basierend auf der aktuellen Waffe des Characters.
+        /// Liest mp_reload aus dem WeaponDataLoader.
+        /// </summary>
+        private void UpdateServerReloadParameters()
+        {
+            if (m_CharacterState == null)
+            {
+                return;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                return;
+            }
+
+            WeaponDefinition weapon = loader.GetById(m_CharacterState.CurrentWeaponName);
+            if (weapon?.Animations == null)
+            {
+                return;
+            }
+
+            if (weapon.Animations.TryGetValue("mp_reload", out WeaponAnimationEntry reloadAnim))
+            {
+                m_ServerReloadFrames = reloadAnim.Duration;
+                m_ServerReloadFps = reloadAnim.Fps;
+            }
+            else
+            {
+                m_ServerReloadFrames = 0;
+                m_ServerReloadFps = 20;
             }
         }
 
@@ -460,7 +664,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_Animator.SetBool(s_IsWalkingHash, state.IsWalking);
             m_Animator.SetBool(s_IsAttackingHash, state.IsAttacking);
             m_Animator.SetBool(s_IsCrouchingHash, state.IsCrouching);
+            m_Animator.SetBool(s_IsReloadingHash, state.IsReloading);
+            m_Animator.SetBool(s_IsAltAttackingHash, state.IsAltAttacking);
             m_Animator.SetInteger(s_CurrentWeaponHash, state.CurrentWeapon);
+            m_Animator.SetInteger(s_AmmoHash, state.Ammo);
         }
 
         /// <summary>

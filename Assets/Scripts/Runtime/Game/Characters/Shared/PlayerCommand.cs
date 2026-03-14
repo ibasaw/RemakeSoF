@@ -29,6 +29,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
         /// <summary>Zoom / Scopeview.</summary>
         public const int Zoom = 1 << 6;
+
+        /// <summary>Nachladen (BUTTON_RELOAD).</summary>
+        public const int Reload = 1 << 7;
     }
 
     /// <summary>

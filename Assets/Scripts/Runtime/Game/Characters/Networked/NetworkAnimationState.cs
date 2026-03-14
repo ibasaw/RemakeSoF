@@ -45,7 +45,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Bitflags für boolesche Animator-Parameter.
         /// Bit 0 (0x01): IsMoving, Bit 1 (0x02): IsGrounded,
         /// Bit 2 (0x04): IsWalking, Bit 3 (0x08): IsAttacking,
-        /// Bit 4 (0x10): IsCrouching.
+        /// Bit 4 (0x10): IsCrouching, Bit 5 (0x20): IsReloading,
+        /// Bit 6 (0x40): IsAltAttacking.
         /// </summary>
         public byte Flags;
 
@@ -53,6 +54,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Index der aktuellen Waffe fuer Animator (0 = knife, 1 = rpg7).
         /// </summary>
         public byte CurrentWeapon;
+
+        /// <summary>
+        /// Aktuelle Magazin-Munition der aktuellen Waffe fuer den Animator.
+        /// </summary>
+        public short Ammo;
 
         /// <summary>
         /// Ob der Character sich bewegt (horizontale Geschwindigkeit > Schwellwert).
@@ -99,6 +105,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             set => Flags = (byte)(value ? Flags | 0x10 : Flags & ~0x10);
         }
 
+        /// <summary>
+        /// Ob der Character gerade nachladet.
+        /// </summary>
+        public bool IsReloading
+        {
+            readonly get => (Flags & 0x20) != 0;
+            set => Flags = (byte)(value ? Flags | 0x20 : Flags & ~0x20);
+        }
+
+        /// <summary>
+        /// Ob der Character gerade einen Alternativangriff ausfuehrt.
+        /// </summary>
+        public bool IsAltAttacking
+        {
+            readonly get => (Flags & 0x40) != 0;
+            set => Flags = (byte)(value ? Flags | 0x40 : Flags & ~0x40);
+        }
+
         /// <inheritdoc/>
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
@@ -110,6 +134,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             serializer.SerializeValue(ref PitchAngle);
             serializer.SerializeValue(ref Flags);
             serializer.SerializeValue(ref CurrentWeapon);
+            serializer.SerializeValue(ref Ammo);
         }
 
         /// <inheritdoc/>
@@ -122,7 +147,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                    Mathf.Approximately(MoveInputY, other.MoveInputY) &&
                    Mathf.Approximately(PitchAngle, other.PitchAngle) &&
                    Flags == other.Flags &&
-                   CurrentWeapon == other.CurrentWeapon;
+                   CurrentWeapon == other.CurrentWeapon &&
+                   Ammo == other.Ammo;
         }
 
         /// <inheritdoc/>
@@ -134,7 +160,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <inheritdoc/>
         public override readonly int GetHashCode()
         {
-            return HashCode.Combine(Speed, Horizontal, Vertical, MoveInputX, MoveInputY, PitchAngle, Flags, CurrentWeapon);
+            return HashCode.Combine(Speed, Horizontal, Vertical, MoveInputX, MoveInputY, PitchAngle, Flags, CurrentWeapon) ^ Ammo.GetHashCode();
         }
     }
 }

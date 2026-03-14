@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
+using Tolik.RemakeSoF.Runtime.WeaponManagement;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -106,6 +107,48 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             NetworkVariableWritePermission.Server
         );
 
+        // ===== Ammo =====
+
+        /// <summary>
+        /// Aktuelle Munition im Magazin der aktuellen Waffe.
+        /// Server-autoritativ, Clients lesen fuer Animator und HUD.
+        /// </summary>
+        private readonly NetworkVariable<int> m_CurrentClipAmmo = new(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+        /// <summary>
+        /// Reserve-Munition der aktuellen Waffe (nicht im Magazin).
+        /// Server-autoritativ, Clients lesen fuer HUD.
+        /// </summary>
+        private readonly NetworkVariable<int> m_ReserveAmmo = new(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+        /// <summary>
+        /// Aktuelle Alt-Attack Munition im Magazin (z.B. M203 Granate am M4).
+        /// Server-autoritativ, Clients lesen fuer HUD.
+        /// </summary>
+        private readonly NetworkVariable<int> m_AltClipAmmo = new(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+        /// <summary>
+        /// Reserve-Munition fuer Alt-Attack (z.B. zusaetzliche M203 Granaten).
+        /// Server-autoritativ, Clients lesen fuer HUD.
+        /// </summary>
+        private readonly NetworkVariable<int> m_AltReserveAmmo = new(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
         // ===== Weapon Inventory =====
 
         /// <summary>
@@ -114,6 +157,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Clients lesen die Liste fuer UI und Waffenwechsel-Logik.
         /// </summary>
         private NetworkList<FixedString64Bytes> m_WeaponInventory;
+
+        /// <summary>
+        /// Server-seitiger Ammo-Cache: speichert Clip/Reserve + AltClip/AltReserve pro Waffe beim Waffenwechsel.
+        /// Wird nicht synchronisiert — Server ist Single Source of Truth fuer Ammo.
+        /// </summary>
+        private readonly Dictionary<string, (int clip, int reserve, int altClip, int altReserve)> m_AmmoCache = new();
 
 
 
@@ -127,6 +176,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public int Deaths => m_Deaths.Value;
         public string CurrentSkinName => m_CurrentSkinName.Value.ToString();
         public string CurrentWeaponName => m_CurrentWeaponName.Value.ToString();
+        public int CurrentClipAmmo => m_CurrentClipAmmo.Value;
+        public int ReserveAmmo => m_ReserveAmmo.Value;
+        public int AltClipAmmo => m_AltClipAmmo.Value;
+        public int AltReserveAmmo => m_AltReserveAmmo.Value;
         public int WeaponCount => m_WeaponInventory?.Count ?? 0;
 
         // ===== Events =====
@@ -166,6 +219,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         public event System.Action OnWeaponInventoryChanged;
 
+        /// <summary>
+        /// Event: Munition hat sich geaendert (clipAmmo, reserveAmmo).
+        /// </summary>
+        public event System.Action<int, int> OnAmmoChanged;
+
+        /// <summary>
+        /// Event: Alt-Attack Munition hat sich geaendert (altClipAmmo, altReserveAmmo).
+        /// </summary>
+        public event System.Action<int, int> OnAltAmmoChanged;
+
         // ===== Lifecycle =====
 
         private void Awake()
@@ -186,6 +249,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_IsAlive.OnValueChanged += OnIsAliveValueChanged;
             m_CurrentSkinName.OnValueChanged += OnSkinNameValueChanged;
             m_CurrentWeaponName.OnValueChanged += OnWeaponNameValueChanged;
+            m_CurrentClipAmmo.OnValueChanged += OnClipAmmoValueChanged;
+            m_ReserveAmmo.OnValueChanged += OnReserveAmmoValueChanged;
+            m_AltClipAmmo.OnValueChanged += OnAltClipAmmoValueChanged;
+            m_AltReserveAmmo.OnValueChanged += OnAltReserveAmmoValueChanged;
             m_WeaponInventory.OnListChanged += OnWeaponInventoryListChanged;
 
             Debug.Log($"[NetworkedCharacterState] OnNetworkSpawn | Name={CharacterName} | Health={Health} | Skin={CurrentSkinName} | Weapon={CurrentWeaponName}");
@@ -220,6 +287,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_IsAlive.OnValueChanged -= OnIsAliveValueChanged;
             m_CurrentSkinName.OnValueChanged -= OnSkinNameValueChanged;
             m_CurrentWeaponName.OnValueChanged -= OnWeaponNameValueChanged;
+            m_CurrentClipAmmo.OnValueChanged -= OnClipAmmoValueChanged;
+            m_ReserveAmmo.OnValueChanged -= OnReserveAmmoValueChanged;
+            m_AltClipAmmo.OnValueChanged -= OnAltClipAmmoValueChanged;
+            m_AltReserveAmmo.OnValueChanged -= OnAltReserveAmmoValueChanged;
             m_WeaponInventory.OnListChanged -= OnWeaponInventoryListChanged;
         }
 
@@ -384,7 +455,55 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private void OnWeaponNameValueChanged(FixedString64Bytes oldValue, FixedString64Bytes newValue)
         {
             Debug.Log($"[NetworkedCharacterState] Weapon changed: {oldValue} → {newValue}");
+
+            // Server: Aktuelle Ammo der alten Waffe cachen, neue Waffe laden/initialisieren
+            if (IsServer)
+            {
+                string oldWeapon = oldValue.ToString();
+                if (!string.IsNullOrEmpty(oldWeapon))
+                {
+                    m_AmmoCache[oldWeapon] = (m_CurrentClipAmmo.Value, m_ReserveAmmo.Value, m_AltClipAmmo.Value, m_AltReserveAmmo.Value);
+                }
+
+                if (newValue.Length > 0)
+                {
+                    InitializeAmmoForCurrentWeapon();
+                }
+            }
+
             OnWeaponChanged?.Invoke(newValue.ToString());
+        }
+
+        /// <summary>
+        /// Callback wenn sich die Clip-Munition aendert.
+        /// </summary>
+        private void OnClipAmmoValueChanged(int oldValue, int newValue)
+        {
+            OnAmmoChanged?.Invoke(newValue, m_ReserveAmmo.Value);
+        }
+
+        /// <summary>
+        /// Callback wenn sich die Reserve-Munition aendert.
+        /// </summary>
+        private void OnReserveAmmoValueChanged(int oldValue, int newValue)
+        {
+            OnAmmoChanged?.Invoke(m_CurrentClipAmmo.Value, newValue);
+        }
+
+        /// <summary>
+        /// Callback wenn sich die Alt-Clip-Munition aendert.
+        /// </summary>
+        private void OnAltClipAmmoValueChanged(int oldValue, int newValue)
+        {
+            OnAltAmmoChanged?.Invoke(newValue, m_AltReserveAmmo.Value);
+        }
+
+        /// <summary>
+        /// Callback wenn sich die Alt-Reserve-Munition aendert.
+        /// </summary>
+        private void OnAltReserveAmmoValueChanged(int oldValue, int newValue)
+        {
+            OnAltAmmoChanged?.Invoke(m_AltClipAmmo.Value, newValue);
         }
 
         /// <summary>
@@ -393,6 +512,257 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private void OnWeaponInventoryListChanged(NetworkListEvent<FixedString64Bytes> changeEvent)
         {
             OnWeaponInventoryChanged?.Invoke();
+        }
+
+        // ===== Ammo Methods =====
+
+        /// <summary>
+        /// Server: Initialisiert Clip- und Reserve-Munition fuer die aktuelle Waffe.
+        /// Laedt aus dem AmmoCache wenn vorhanden (Per-Weapon Persistenz),
+        /// sonst aus dem WeaponDataLoader (StartClip / StartReserve).
+        /// </summary>
+        private void InitializeAmmoForCurrentWeapon()
+        {
+            string weaponName = CurrentWeaponName;
+
+            // Cache-Hit: Gespeicherte Ammo-Werte wiederherstellen
+            if (m_AmmoCache.TryGetValue(weaponName, out (int clip, int reserve, int altClip, int altReserve) cached))
+            {
+                m_CurrentClipAmmo.Value = cached.clip;
+                m_ReserveAmmo.Value = cached.reserve;
+                m_AltClipAmmo.Value = cached.altClip;
+                m_AltReserveAmmo.Value = cached.altReserve;
+                Debug.Log($"[NetworkedCharacterState] Ammo restored from cache for '{weaponName}': Clip={cached.clip}, Reserve={cached.reserve}, AltClip={cached.altClip}, AltReserve={cached.altReserve}");
+                return;
+            }
+
+            // Cache-Miss: Aus WeaponDataLoader initialisieren (erster Equip)
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                return;
+            }
+
+            WeaponDefinition weapon = loader.GetById(weaponName);
+            if (weapon?.Ammo == null)
+            {
+                m_CurrentClipAmmo.Value = 0;
+                m_ReserveAmmo.Value = 0;
+                m_AltClipAmmo.Value = 0;
+                m_AltReserveAmmo.Value = 0;
+                return;
+            }
+
+            m_CurrentClipAmmo.Value = weapon.Ammo.StartClip;
+            m_ReserveAmmo.Value = weapon.Ammo.StartReserve;
+
+            // Alt-Attack Munition initialisieren (z.B. M4 M203)
+            if (weapon.AltAttack?.Ammo != null)
+            {
+                m_AltClipAmmo.Value = weapon.AltAttack.Ammo.StartClip;
+                m_AltReserveAmmo.Value = weapon.AltAttack.Ammo.StartReserve;
+            }
+            else
+            {
+                m_AltClipAmmo.Value = 0;
+                m_AltReserveAmmo.Value = 0;
+            }
+
+            Debug.Log($"[NetworkedCharacterState] Ammo initialized for '{weaponName}': Clip={weapon.Ammo.StartClip}, Reserve={weapon.Ammo.StartReserve}, Infinite={weapon.Ammo.Infinite}, AltClip={m_AltClipAmmo.Value}, AltReserve={m_AltReserveAmmo.Value}");
+        }
+
+        /// <summary>
+        /// Server: Versucht einen Schuss Munition zu verbrauchen.
+        /// Gibt true zurueck wenn der Angriff erlaubt ist (Infinite oder Clip > 0).
+        /// Bei nicht-infinite Waffen wird ClipAmmo um 1 reduziert.
+        /// </summary>
+        public bool TryConsumeAmmo()
+        {
+            if (!IsServer)
+            {
+                return false;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(CurrentWeaponName);
+
+            if (weapon?.Ammo != null && weapon.Ammo.Infinite)
+            {
+                return true;
+            }
+
+            if (m_CurrentClipAmmo.Value <= 0)
+            {
+                return false;
+            }
+
+            m_CurrentClipAmmo.Value--;
+            return true;
+        }
+
+        /// <summary>
+        /// Server: Versucht Alt-Attack Munition zu verbrauchen.
+        /// Unterstuetzte Patterns:
+        /// - Melee-AltAttack (z.B. AK74 Bayonet): immer erlaubt, kein Verbrauch.
+        /// - Separate Alt-Ammo (z.B. M4 M203): verbraucht aus AltClipAmmo.
+        /// - Projektil ohne eigene Ammo (z.B. Knife-Throw): verbraucht aus ReserveAmmo.
+        /// </summary>
+        public bool TryConsumeAltAmmo()
+        {
+            if (!IsServer)
+            {
+                return false;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(CurrentWeaponName);
+
+            if (weapon?.AltAttack == null)
+            {
+                return false;
+            }
+
+            // Melee-AltAttack (Bayonet): immer erlaubt
+            if (!string.IsNullOrEmpty(weapon.AltAttack.Melee))
+            {
+                return true;
+            }
+
+            // Separate Alt-Ammo (M4 M203): aus eigenem Magazin verbrauchen
+            if (weapon.AltAttack.Ammo != null)
+            {
+                if (m_AltClipAmmo.Value <= 0)
+                {
+                    return false;
+                }
+
+                m_AltClipAmmo.Value--;
+                return true;
+            }
+
+            // Projektil ohne eigene Ammo (Knife-Throw): aus Weapon-Reserve verbrauchen
+            if (weapon.AltAttack.Projectile != null)
+            {
+                if (m_ReserveAmmo.Value <= 0)
+                {
+                    return false;
+                }
+
+                m_ReserveAmmo.Value--;
+                return true;
+            }
+
+            // Fallback: erlaubt (z.B. AltAttack ohne Ammo/Projectile/Melee)
+            return true;
+        }
+
+        /// <summary>
+        /// Server: Prueft ob ein Alt-Reload gestartet werden kann.
+        /// Nur relevant fuer Waffen mit separater Alt-Ammo (z.B. M4 M203).
+        /// </summary>
+        public bool CanAltReload()
+        {
+            if (!IsServer)
+            {
+                return false;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(CurrentWeaponName);
+
+            if (weapon?.AltAttack?.Ammo == null)
+            {
+                return false;
+            }
+
+            if (m_AltClipAmmo.Value >= weapon.AltAttack.Ammo.MaxClip)
+            {
+                return false;
+            }
+
+            return m_AltReserveAmmo.Value > 0;
+        }
+
+        /// <summary>
+        /// Server: Fuehrt den Alt-Reload durch — transferiert Munition von Alt-Reserve in Alt-Clip.
+        /// </summary>
+        public void CompleteAltReload()
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(CurrentWeaponName);
+
+            if (weapon?.AltAttack?.Ammo == null)
+            {
+                return;
+            }
+
+            int needed = weapon.AltAttack.Ammo.MaxClip - m_AltClipAmmo.Value;
+            int transfer = Mathf.Min(needed, m_AltReserveAmmo.Value);
+
+            m_AltClipAmmo.Value += transfer;
+            m_AltReserveAmmo.Value -= transfer;
+
+            Debug.Log($"[NetworkedCharacterState] Alt-Reload complete for '{CurrentWeaponName}': AltClip={m_AltClipAmmo.Value}, AltReserve={m_AltReserveAmmo.Value}");
+        }
+
+        /// <summary>
+        /// Server: Prueft ob ein Reload gestartet werden kann.
+        /// Gibt true zurueck wenn: Waffe nicht infinite, Clip nicht voll, Reserve > 0.
+        /// </summary>
+        public bool CanReload()
+        {
+            if (!IsServer)
+            {
+                return false;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(CurrentWeaponName);
+
+            if (weapon?.Ammo == null || weapon.Ammo.Infinite)
+            {
+                return false;
+            }
+
+            if (m_CurrentClipAmmo.Value >= weapon.Ammo.MaxClip)
+            {
+                return false;
+            }
+
+            return m_ReserveAmmo.Value > 0;
+        }
+
+        /// <summary>
+        /// Server: Fuehrt den Reload durch — transferiert Munition von Reserve in Clip.
+        /// Berechnet benoetigte Munition (MaxClip - aktuelles Clip), begrenzt auf verfuegbare Reserve.
+        /// </summary>
+        public void CompleteReload()
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(CurrentWeaponName);
+
+            if (weapon?.Ammo == null || weapon.Ammo.Infinite)
+            {
+                return;
+            }
+
+            int needed = weapon.Ammo.MaxClip - m_CurrentClipAmmo.Value;
+            int transfer = Mathf.Min(needed, m_ReserveAmmo.Value);
+
+            m_CurrentClipAmmo.Value += transfer;
+            m_ReserveAmmo.Value -= transfer;
+
+            Debug.Log($"[NetworkedCharacterState] Reload complete for '{CurrentWeaponName}': Clip={m_CurrentClipAmmo.Value}, Reserve={m_ReserveAmmo.Value}");
         }
 
         // ===== Weapon Setters =====

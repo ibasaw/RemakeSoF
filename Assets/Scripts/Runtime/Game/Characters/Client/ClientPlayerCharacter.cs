@@ -93,6 +93,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         [SerializeField]
         private NetworkedCharacterState m_CharacterState;
 
+        /// <summary>
+        /// Oeffentlicher Zugriff auf den NetworkedCharacterState (fuer HUD/Controller).
+        /// </summary>
+        public NetworkedCharacterState CharacterState => m_CharacterState;
+
         // ===== Constants =====
 
         /// <summary>Reconciliation Threshold: ab dieser Abweichung wird korrigiert (Meter).</summary>
@@ -108,6 +113,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>Ob der Spieler gerade angreift.</summary>
         internal bool IsAttacking => m_IsAttacking;
+
+        /// <summary>Ob der Spieler gerade einen Alternativangriff ausfuehrt.</summary>
+        internal bool IsAltAttacking => m_IsAltAttacking;
 
         /// <summary>Ob der Spieler geduckt ist.</summary>
         internal bool IsCrouching => m_Simulation.IsCrouching;
@@ -221,11 +229,56 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Frame-Akkumulator fuer frame-diskretes Attack-Timing.</summary>
         private float m_AttackFrameAccumulator;
 
+        ///Initial Knife Attack-FPS (wird von OnWeaponChanged aktualisiert).
         /// <summary>Aktuelle Attack-Frame-Anzahl basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
         private int m_AttackFrames = 6;
 
+        /// Initial Knife Attack-FPS (wird von OnWeaponChanged aktualisiert).
         /// <summary>Aktuelle Attack-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
         private int m_AttackFps = 20;
+
+        /// <summary>Ob die aktuelle Waffe unendliche Munition hat (z.B. Knife).</summary>
+        private bool m_CurrentWeaponInfiniteAmmo = true;
+
+        /// <summary>Ob der Character gerade nachladet (fuer Animation + Netzwerk-Sync).</summary>
+        private bool m_IsReloading;
+
+        /// <summary>Verbleibende Reload-Frames (frame-basiert, wie Attack).</summary>
+        private int m_ReloadFramesRemaining;
+
+        /// <summary>Frame-Akkumulator fuer frame-diskretes Reload-Timing.</summary>
+        private float m_ReloadFrameAccumulator;
+
+        /// <summary>Aktuelle Reload-Frame-Anzahl basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_ReloadFrames;
+
+        /// <summary>Aktuelle Reload-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_ReloadFps = 20;
+
+        /// <summary>Ob der Character gerade einen Alternativangriff ausfuehrt (fuer Animation + Netzwerk-Sync).</summary>
+        private bool m_IsAltAttacking;
+
+        /// <summary>Verbleibende AltAttack-Frames (frame-basiert, wie Attack).</summary>
+        private int m_AltAttackFramesRemaining;
+
+        /// <summary>Frame-Akkumulator fuer frame-diskretes AltAttack-Timing.</summary>
+        private float m_AltAttackFrameAccumulator;
+
+        /// <summary>Aktuelle AltAttack-Frame-Anzahl basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_AltAttackFrames;
+
+        /// <summary>Aktuelle AltAttack-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
+        private int m_AltAttackFps = 20;
+
+        /// <summary>Ob die aktuelle Waffe einen Alternativangriff hat.</summary>
+        private bool m_HasAltAttack;
+
+        /// <summary>Ob der Alt-Attack unendliche Munition verbraucht (z.B. Bayonet).</summary>
+        private bool m_AltAttackInfiniteAmmo;
+
+        /// <summary>Ob bei leerem Magazin automatisch nachgeladen werden soll.</summary>
+        [SerializeField]
+        private bool m_AutoReload = true;
 
         /// <summary>
         /// Remote-Modus: Component laeuft auf Remote-Clients nur fuer Bone-Rotation,
@@ -470,6 +523,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Weapon-Callbacks abmelden
             m_PlayerActions.NextWeapon.performed -= OnNextWeaponPerformed;
             m_PlayerActions.PreviousWeapon.performed -= OnPreviousWeaponPerformed;
+            m_PlayerActions.ReloadWeapon.performed -= OnReloadPerformed;
 
             // Visual-Event abmelden
             if (m_SkinHandler != null)
@@ -531,6 +585,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_PlayerActions.NextWeapon.performed += OnNextWeaponPerformed;
             m_PlayerActions.PreviousWeapon.performed += OnPreviousWeaponPerformed;
 
+            // Reload per Callback (R-Taste)
+            m_PlayerActions.ReloadWeapon.performed += OnReloadPerformed;
+
             // Server-Acknowledgement fuer Reconciliation abonnieren
             m_NetworkedPlayerCharacter.OnMovementAcknowledged += OnServerAcknowledgement;
 
@@ -579,6 +636,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private void OnPreviousWeaponPerformed(InputAction.CallbackContext context)
         {
             m_CharacterState.RequestPreviousWeaponServerRpc();
+        }
+
+        /// <summary>
+        /// Input-Callback fuer ReloadWeapon (performed, R-Taste).
+        /// Startet client-seitig den Reload wenn moeglich.
+        /// </summary>
+        private void OnReloadPerformed(InputAction.CallbackContext context)
+        {
+            TryStartReload();
         }
 
         private void Update()
@@ -657,6 +723,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (m_IsWalkingPressed) buttons |= CommandButtons.Walk;
             if (m_IsAttacking) buttons |= CommandButtons.Attack;
             if (m_IsCrouchPressed) buttons |= CommandButtons.Crouch;
+            if (m_IsReloading) buttons |= CommandButtons.Reload;
+            if (m_IsAltAttacking) buttons |= CommandButtons.AltAttack;
 
             PlayerCommand cmd = new()
             {
@@ -1042,7 +1110,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         }
 
         /// <summary>
-        /// Aktionen (Attack, etc.) an Server senden.
+        /// Aktionen (Attack, AltAttack, Reload) client-seitig verarbeiten.
         /// </summary>
         private void HandleActionInput()
         {
@@ -1064,13 +1132,150 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 }
             }
 
+            // AltAttack-Frames herunterzaehlen (frame-diskret, wie Attack)
+            if (m_IsAltAttacking)
+            {
+                m_AltAttackFrameAccumulator += Time.deltaTime;
+                float altFrameInterval = 1f / m_AltAttackFps;
+                while (m_AltAttackFrameAccumulator >= altFrameInterval && m_AltAttackFramesRemaining > 0)
+                {
+                    m_AltAttackFrameAccumulator -= altFrameInterval;
+                    m_AltAttackFramesRemaining--;
+                }
+
+                if (m_AltAttackFramesRemaining <= 0)
+                {
+                    m_IsAltAttacking = false;
+                    m_AltAttackFrameAccumulator = 0f;
+                }
+            }
+
+            // Reload-Frames herunterzaehlen (frame-diskret, wie Attack)
+            if (m_IsReloading)
+            {
+                m_ReloadFrameAccumulator += Time.deltaTime;
+                float reloadFrameInterval = 1f / m_ReloadFps;
+                while (m_ReloadFrameAccumulator >= reloadFrameInterval && m_ReloadFramesRemaining > 0)
+                {
+                    m_ReloadFrameAccumulator -= reloadFrameInterval;
+                    m_ReloadFramesRemaining--;
+                }
+
+                if (m_ReloadFramesRemaining <= 0)
+                {
+                    m_IsReloading = false;
+                    m_ReloadFrameAccumulator = 0f;
+                }
+
+                // Waehrend Reload kein Attack/AltAttack moeglich
+                return;
+            }
+
+            // Keine neue Aktion starten wenn eine laeuft
+            bool noActionRunning = !m_IsAttacking && !m_IsAltAttacking && !m_IsReloading;
+
             // SoF2: Maus gehalten = automatisch wiederholen nach Cooldown (wie BUTTON_ATTACK in usercmd_t)
-            if (m_PlayerActions.Attack.IsPressed() && !m_IsAttacking)
+            // Client-Prediction: Nur starten wenn Munition vorhanden oder Waffe unendlich
+            bool hasAmmo = m_CurrentWeaponInfiniteAmmo || m_CharacterState.CurrentClipAmmo > 0;
+            if (m_PlayerActions.Attack.IsPressed() && noActionRunning && hasAmmo)
             {
                 m_IsAttacking = true;
                 m_AttackFramesRemaining = m_AttackFrames;
                 m_AttackFrameAccumulator = 0f;
             }
+
+            // AltAttack (Rechtsklick): SecondAttack Input
+            if (m_HasAltAttack && m_PlayerActions.SecondAttack.IsPressed() && noActionRunning && HasAltAmmo())
+            {
+                m_IsAltAttacking = true;
+                m_AltAttackFramesRemaining = m_AltAttackFrames;
+                m_AltAttackFrameAccumulator = 0f;
+            }
+
+            // Auto-Reload: Wenn Maus gedrueckt, kein Angriff laeuft und Magazin leer
+            if (m_AutoReload && m_PlayerActions.Attack.IsPressed() && noActionRunning && !hasAmmo)
+            {
+                TryStartReload();
+            }
+        }
+
+        /// <summary>
+        /// Prueft client-seitig ob Alt-Attack Munition vorhanden ist.
+        /// Melee-AltAttack (Bayonet): immer true. Separate Alt-Ammo: AltClip > 0.
+        /// Projektil ohne eigene Ammo (Knife-Throw): Reserve > 0.
+        /// </summary>
+        private bool HasAltAmmo()
+        {
+            if (m_AltAttackInfiniteAmmo)
+            {
+                return true;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+
+            if (weapon?.AltAttack == null)
+            {
+                return false;
+            }
+
+            // Separate Alt-Ammo (M4 M203): AltClip pruefen
+            if (weapon.AltAttack.Ammo != null)
+            {
+                return m_CharacterState.AltClipAmmo > 0;
+            }
+
+            // Projektil ohne eigene Ammo (Knife-Throw): Weapon-Reserve pruefen
+            if (weapon.AltAttack.Projectile != null)
+            {
+                return m_CharacterState.ReserveAmmo > 0;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Versucht client-seitig einen Reload zu starten.
+        /// Prueft: kein Attack/Reload aktiv, nicht infinite, Clip nicht voll, Reserve > 0.
+        /// </summary>
+        private void TryStartReload()
+        {
+            if (m_IsAttacking || m_IsReloading || m_IsAltAttacking)
+            {
+                return;
+            }
+
+            if (m_CurrentWeaponInfiniteAmmo)
+            {
+                return;
+            }
+
+            // Pruefe ob Clip voll oder Reserve leer (client-seitige Prediction)
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+            if (weapon?.Ammo == null)
+            {
+                return;
+            }
+
+            if (m_CharacterState.CurrentClipAmmo >= weapon.Ammo.MaxClip)
+            {
+                return;
+            }
+
+            if (m_CharacterState.ReserveAmmo <= 0)
+            {
+                return;
+            }
+
+            if (m_ReloadFrames <= 0)
+            {
+                return;
+            }
+
+            m_IsReloading = true;
+            m_ReloadFramesRemaining = m_ReloadFrames;
+            m_ReloadFrameAccumulator = 0f;
         }
 
         // ===== Weapon Loading =====
@@ -1115,11 +1320,50 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return;
             }
 
-            if (weapon.Animations != null && weapon.Animations.TryGetValue("mp_attack", out WeaponAnimationEntry attackAnim))
+            if (weapon.Animations != null)
             {
-                m_AttackFrames = attackAnim.Duration;
-                m_AttackFps = attackAnim.Fps;
+                if (weapon.Animations.TryGetValue("mp_attack", out WeaponAnimationEntry attackAnim))
+                {
+                    m_AttackFrames = attackAnim.Duration;
+                    m_AttackFps = attackAnim.Fps;
+                }
+
+                if (weapon.Animations.TryGetValue("mp_reload", out WeaponAnimationEntry reloadAnim))
+                {
+                    m_ReloadFrames = reloadAnim.Duration;
+                    m_ReloadFps = reloadAnim.Fps;
+                }
+                else
+                {
+                    m_ReloadFrames = 0;
+                    m_ReloadFps = 20;
+                }
+
+                if (weapon.Animations.TryGetValue("mp_altAttack", out WeaponAnimationEntry altAttackAnim))
+                {
+                    m_AltAttackFrames = altAttackAnim.Duration;
+                    m_AltAttackFps = altAttackAnim.Fps;
+                }
+                else
+                {
+                    m_AltAttackFrames = 0;
+                    m_AltAttackFps = 20;
+                }
             }
+
+            m_CurrentWeaponInfiniteAmmo = weapon.Ammo != null && weapon.Ammo.Infinite;
+
+            // AltAttack-Verfuegbarkeit pruefen
+            m_HasAltAttack = weapon.AltAttack != null;
+            m_AltAttackInfiniteAmmo = weapon.AltAttack != null && !string.IsNullOrEmpty(weapon.AltAttack.Melee);
+
+            // Laufende Aktionen abbrechen bei Waffenwechsel
+            m_IsReloading = false;
+            m_ReloadFramesRemaining = 0;
+            m_ReloadFrameAccumulator = 0f;
+            m_IsAltAttacking = false;
+            m_AltAttackFramesRemaining = 0;
+            m_AltAttackFrameAccumulator = 0f;
         }
 
         /// <summary>
@@ -1175,10 +1419,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 IsWalking = isWalking,
                 IsAttacking = m_IsAttacking,
                 IsCrouching = m_Simulation.IsCrouching,
+                IsReloading = m_IsReloading,
+                IsAltAttacking = m_IsAltAttacking,
                 MoveInputX = moveInput.x,
                 MoveInputY = moveInput.y,
                 PitchAngle = m_PitchTarget != null ? m_PitchTarget.eulerAngles.x : 0f,
                 CurrentWeapon = (byte)NetworkedCharacterState.GetWeaponAnimatorIndex(m_CharacterState.CurrentWeaponName),
+                Ammo = (short)m_CharacterState.CurrentClipAmmo,
             };
 
             // In NetworkVariable schreiben + lokal auf Animator anwenden
