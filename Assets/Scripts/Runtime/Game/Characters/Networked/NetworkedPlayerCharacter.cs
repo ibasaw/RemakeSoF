@@ -67,6 +67,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private static readonly int s_IsAttackingHash = Animator.StringToHash("IsAttacking");
         private static readonly int s_IsCrouchingHash = Animator.StringToHash("IsCrouching");
         private static readonly int s_JumpHash = Animator.StringToHash("Jump");
+        private static readonly int s_CurrentWeaponHash = Animator.StringToHash("CurrentWeapon");
 
         /// <summary>
         /// Aktueller synchronisierter Animation-State (für Remote-Bone-Rotation).
@@ -85,7 +86,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private const int k_ServerAttackFrames = 6;
 
         /// <summary>FPS der Attack-Animation (SoF2: knifeslash01_mp fps=20).</summary>
-        private const int k_ServerAttackFps = 20;
+        private const int k_ServerAttackFps = 20; //passe ich alles später an.
 
         // ===== Movement Sync =====
 
@@ -417,6 +418,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_Animator.SetBool(s_IsWalkingHash, state.IsWalking);
             m_Animator.SetBool(s_IsAttackingHash, state.IsAttacking);
             m_Animator.SetBool(s_IsCrouchingHash, state.IsCrouching);
+            m_Animator.SetInteger(s_CurrentWeaponHash, state.CurrentWeapon);
         }
 
         /// <summary>

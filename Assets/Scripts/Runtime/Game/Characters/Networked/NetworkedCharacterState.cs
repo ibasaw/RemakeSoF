@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -103,6 +104,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             NetworkVariableWritePermission.Server
         );
 
+        // ===== Weapon Inventory =====
+
+        /// <summary>
+        /// Synchronisierte Liste der verfuegbaren Waffen des Characters.
+        /// Server-autoritativ: Server fuegt Waffen hinzu/entfernt sie.
+        /// Clients lesen die Liste fuer UI und Waffenwechsel-Logik.
+        /// </summary>
+        private NetworkList<FixedString64Bytes> m_WeaponInventory;
+
+        /// <summary>
+        /// Statisches Mapping von Waffen-Name auf Animator-Index.
+        /// CurrentWeapon (Int) im Animator: 0 = knife, 1 = rpg7.
+        /// </summary>
+        private static readonly Dictionary<string, int> s_WeaponAnimatorIndices = new()
+        {
+            { "knife", 0 },
+            { "rpg7", 1 },
+        };
+
         // ===== Public Properties =====
 
         public string CharacterName => m_CharacterName.Value.ToString();
@@ -113,6 +133,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public int Deaths => m_Deaths.Value;
         public string CurrentSkinName => m_CurrentSkinName.Value.ToString();
         public string CurrentWeaponName => m_CurrentWeaponName.Value.ToString();
+        public int WeaponCount => m_WeaponInventory?.Count ?? 0;
 
         // ===== Events =====
 
@@ -146,7 +167,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         public event System.Action<string> OnWeaponChanged;
 
+        /// <summary>
+        /// Event: Waffen-Inventar hat sich geaendert.
+        /// </summary>
+        public event System.Action OnWeaponInventoryChanged;
+
         // ===== Lifecycle =====
+
+        private void Awake()
+        {
+            m_WeaponInventory = new NetworkList<FixedString64Bytes>(
+                null,
+                NetworkVariableReadPermission.Everyone,
+                NetworkVariableWritePermission.Server
+            );
+        }
 
         public override void OnNetworkSpawn()
         {
@@ -157,6 +192,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_IsAlive.OnValueChanged += OnIsAliveValueChanged;
             m_CurrentSkinName.OnValueChanged += OnSkinNameValueChanged;
             m_CurrentWeaponName.OnValueChanged += OnWeaponNameValueChanged;
+            m_WeaponInventory.OnListChanged += OnWeaponInventoryListChanged;
 
             Debug.Log($"[NetworkedCharacterState] OnNetworkSpawn | Name={CharacterName} | Health={Health} | Skin={CurrentSkinName} | Weapon={CurrentWeaponName}");
 
@@ -190,6 +226,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_IsAlive.OnValueChanged -= OnIsAliveValueChanged;
             m_CurrentSkinName.OnValueChanged -= OnSkinNameValueChanged;
             m_CurrentWeaponName.OnValueChanged -= OnWeaponNameValueChanged;
+            m_WeaponInventory.OnListChanged -= OnWeaponInventoryListChanged;
         }
 
         // ===== Server Setters =====
@@ -356,6 +393,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             OnWeaponChanged?.Invoke(newValue.ToString());
         }
 
+        /// <summary>
+        /// Callback wenn sich die Waffen-Inventar-Liste aendert.
+        /// </summary>
+        private void OnWeaponInventoryListChanged(NetworkListEvent<FixedString64Bytes> changeEvent)
+        {
+            OnWeaponInventoryChanged?.Invoke();
+        }
+
         // ===== Weapon Setters =====
 
         /// <summary>
@@ -382,6 +427,112 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             m_CurrentWeaponName.Value = weaponName;
             Debug.Log($"[NetworkedCharacterState] Server applied weapon change for client {OwnerClientId}: {weaponName}");
+        }
+
+        // ===== Weapon Inventory =====
+
+        /// <summary>
+        /// Server: Fuegt eine Waffe zum Inventar hinzu (Duplikate werden ignoriert).
+        /// </summary>
+        public void AddWeapon(string weaponName)
+        {
+            if (!IsServer)
+            {
+                Debug.LogWarning("[NetworkedCharacterState] AddWeapon can only be called on the server.");
+                return;
+            }
+
+            FixedString64Bytes fixedName = new(weaponName);
+
+            for (int i = 0; i < m_WeaponInventory.Count; i++)
+            {
+                if (m_WeaponInventory[i] == fixedName)
+                {
+                    return;
+                }
+            }
+
+            m_WeaponInventory.Add(fixedName);
+            Debug.Log($"[NetworkedCharacterState] Server added weapon '{weaponName}' for client {OwnerClientId}. Inventory count: {m_WeaponInventory.Count}");
+        }
+
+        /// <summary>
+        /// Liefert den Waffen-Namen am angegebenen Inventar-Index.
+        /// </summary>
+        public string GetWeaponAt(int index)
+        {
+            if (index < 0 || index >= m_WeaponInventory.Count)
+            {
+                return string.Empty;
+            }
+
+            return m_WeaponInventory[index].ToString();
+        }
+
+        /// <summary>
+        /// Liefert den Animator-Index fuer eine Waffe (0 = knife, 1 = rpg7).
+        /// Gibt 0 zurueck wenn die Waffe unbekannt ist.
+        /// </summary>
+        public static int GetWeaponAnimatorIndex(string weaponName)
+        {
+            if (s_WeaponAnimatorIndices.TryGetValue(weaponName, out int index))
+            {
+                return index;
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Owner: Fordert den Server auf, zur naechsten Waffe im Inventar zu wechseln.
+        /// </summary>
+        [ServerRpc]
+        public void RequestNextWeaponServerRpc()
+        {
+            CycleWeapon(1);
+        }
+
+        /// <summary>
+        /// Owner: Fordert den Server auf, zur vorherigen Waffe im Inventar zu wechseln.
+        /// </summary>
+        [ServerRpc]
+        public void RequestPreviousWeaponServerRpc()
+        {
+            CycleWeapon(-1);
+        }
+
+        /// <summary>
+        /// Server: Cycled die aktuelle Waffe um den angegebenen Offset (1 = naechste, -1 = vorherige).
+        /// Wrap-around am Inventar-Ende/Anfang (wie SoF2 weapon cycling).
+        /// </summary>
+        private void CycleWeapon(int direction)
+        {
+            if (m_WeaponInventory.Count <= 1)
+            {
+                return;
+            }
+
+            FixedString64Bytes current = m_CurrentWeaponName.Value;
+            int currentIndex = -1;
+            for (int i = 0; i < m_WeaponInventory.Count; i++)
+            {
+                if (m_WeaponInventory[i] == current)
+                {
+                    currentIndex = i;
+                    break;
+                }
+            }
+
+            if (currentIndex < 0)
+            {
+                currentIndex = 0;
+            }
+
+            int nextIndex = (currentIndex + direction + m_WeaponInventory.Count) % m_WeaponInventory.Count;
+            string nextWeapon = m_WeaponInventory[nextIndex].ToString();
+
+            m_CurrentWeaponName.Value = new FixedString64Bytes(nextWeapon);
+            Debug.Log($"[NetworkedCharacterState] Server cycled weapon for client {OwnerClientId}: {current} → {nextWeapon}");
         }
     }
 }

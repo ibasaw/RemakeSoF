@@ -50,6 +50,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public byte Flags;
 
         /// <summary>
+        /// Index der aktuellen Waffe fuer Animator (0 = knife, 1 = rpg7).
+        /// </summary>
+        public byte CurrentWeapon;
+
+        /// <summary>
         /// Ob der Character sich bewegt (horizontale Geschwindigkeit > Schwellwert).
         /// </summary>
         public bool IsMoving
@@ -104,6 +109,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             serializer.SerializeValue(ref MoveInputY);
             serializer.SerializeValue(ref PitchAngle);
             serializer.SerializeValue(ref Flags);
+            serializer.SerializeValue(ref CurrentWeapon);
         }
 
         /// <inheritdoc/>
@@ -115,7 +121,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                    Mathf.Approximately(MoveInputX, other.MoveInputX) &&
                    Mathf.Approximately(MoveInputY, other.MoveInputY) &&
                    Mathf.Approximately(PitchAngle, other.PitchAngle) &&
-                   Flags == other.Flags;
+                   Flags == other.Flags &&
+                   CurrentWeapon == other.CurrentWeapon;
         }
 
         /// <inheritdoc/>
@@ -127,7 +134,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <inheritdoc/>
         public override readonly int GetHashCode()
         {
-            return HashCode.Combine(Speed, Horizontal, Vertical, MoveInputX, MoveInputY, PitchAngle, Flags);
+            return HashCode.Combine(Speed, Horizontal, Vertical, MoveInputX, MoveInputY, PitchAngle, Flags, CurrentWeapon);
         }
     }
 }

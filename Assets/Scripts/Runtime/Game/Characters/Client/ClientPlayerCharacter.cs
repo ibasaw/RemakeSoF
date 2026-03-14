@@ -464,6 +464,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Jump-Callback abmelden
             m_PlayerActions.Jump.performed -= OnJumpPerformed;
 
+            // Weapon-Callbacks abmelden
+            m_PlayerActions.NextWeapon.performed -= OnNextWeaponPerformed;
+            m_PlayerActions.PreviousWeapon.performed -= OnPreviousWeaponPerformed;
+
             // Visual-Event abmelden
             if (m_SkinHandler != null)
             {
@@ -520,6 +524,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Jump per Callback (zuverlaessiger als WasPressedThisFrame in FixedUpdate)
             m_PlayerActions.Jump.performed += OnJumpPerformed;
 
+            // Weapon-Cycling per Callback (SoF2: ScrollUp/Down zum Waffenwechsel)
+            m_PlayerActions.NextWeapon.performed += OnNextWeaponPerformed;
+            m_PlayerActions.PreviousWeapon.performed += OnPreviousWeaponPerformed;
+
             // Server-Acknowledgement fuer Reconciliation abonnieren
             m_NetworkedPlayerCharacter.OnMovementAcknowledged += OnServerAcknowledgement;
 
@@ -550,6 +558,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private void OnJumpPerformed(InputAction.CallbackContext context)
         {
             m_JumpRequested = true;
+        }
+
+        /// <summary>
+        /// Input-Callback fuer NextWeapon (performed).
+        /// Fordert den Server auf, zur naechsten Waffe im Inventar zu wechseln.
+        /// </summary>
+        private void OnNextWeaponPerformed(InputAction.CallbackContext context)
+        {
+            m_CharacterState.RequestNextWeaponServerRpc();
+        }
+
+        /// <summary>
+        /// Input-Callback fuer PreviousWeapon (performed).
+        /// Fordert den Server auf, zur vorherigen Waffe im Inventar zu wechseln.
+        /// </summary>
+        private void OnPreviousWeaponPerformed(InputAction.CallbackContext context)
+        {
+            m_CharacterState.RequestPreviousWeaponServerRpc();
         }
 
         private void Update()
@@ -1122,6 +1148,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 MoveInputX = moveInput.x,
                 MoveInputY = moveInput.y,
                 PitchAngle = m_PitchTarget != null ? m_PitchTarget.eulerAngles.x : 0f,
+                CurrentWeapon = (byte)NetworkedCharacterState.GetWeaponAnimatorIndex(m_CharacterState.CurrentWeaponName),
             };
 
             // In NetworkVariable schreiben + lokal auf Animator anwenden
