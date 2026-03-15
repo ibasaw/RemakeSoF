@@ -1,4 +1,5 @@
 using System.Linq;
+using Tolik.RemakeSoF.Runtime.Game.Effects;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
@@ -18,6 +19,17 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         /// Prefix für surface_types_json Properties in Ghoul2Meta.
         /// </summary>
         private const string k_SurfaceTypesJsonPrefix = "surface_types_json_";
+
+        /// <summary>
+        /// Prefix fuer q3map_material Properties in Ghoul2Meta (q3map_material_0..N, pro Sub-Material-Slot).
+        /// Wert ist der SoF2-Surface-Typ-Name (z.B. "Concrete", "HollowMetal", "Flesh").
+        /// </summary>
+        private const string k_Q3MapMaterialPrefix = "q3map_material_";
+
+        /// <summary>
+        /// Q3map_material ohne Slot-Suffix (Fallback wenn kein _N vorhanden).
+        /// </summary>
+        private const string k_Q3MapMaterialSingle = "q3map_material";
 
         /// <summary>
         /// Maximale Anzahl durchsuchter Slots.
@@ -98,6 +110,9 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 collider.sharedMesh = mesh;
             }
 
+            // SurfaceTypeMarker aus q3map_material Ghoul2Meta-Property setzen
+            ApplySurfaceTypeMarker(renderer);
+
             return true;
         }
 
@@ -116,6 +131,73 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
             boxCollider.center = center;
             boxCollider.size = size;
+        }
+
+        /// <summary>
+        /// Liest den q3map_material Wert aus Ghoul2Meta und setzt einen SurfaceTypeMarker.
+        /// Sucht q3map_material_0..N (pro Slot) und q3map_material (Fallback ohne Suffix).
+        /// Der Wert wird zu lowercase konvertiert fuer SoF2_data_per_surface.json Kompatibilitaet.
+        /// </summary>
+        private void ApplySurfaceTypeMarker(Renderer renderer)
+        {
+            if (!renderer.TryGetComponent(out Ghoul2Meta meta))
+            {
+                return;
+            }
+
+            string material = GetQ3MapMaterial(meta);
+            if (string.IsNullOrEmpty(material))
+            {
+                return;
+            }
+
+            // SoF2-Surface-Keys sind lowercase (z.B. "concrete", "hollowmetal")
+            // q3map_material Werte sind PascalCase (z.B. "Concrete", "HollowMetal")
+            string surfaceType = material.ToLowerInvariant();
+
+            GameObject go = renderer.gameObject;
+            SurfaceTypeMarker marker = go.GetComponent<SurfaceTypeMarker>();
+            if (marker == null)
+            {
+                marker = go.AddComponent<SurfaceTypeMarker>();
+            }
+
+            marker.SetSurfaceType(surfaceType);
+        }
+
+        /// <summary>
+        /// Liest den ersten q3map_material Wert aus Ghoul2Meta.
+        /// Sucht zuerst q3map_material_0..N, dann q3map_material als Fallback.
+        /// </summary>
+        private string GetQ3MapMaterial(Ghoul2Meta meta)
+        {
+            // Erst Slot-basierte Properties pruefen (q3map_material_0, _1, ...)
+            for (int i = 0; i < k_MaxSlots; i++)
+            {
+                string propertyName = k_Q3MapMaterialPrefix + i;
+                if (!meta.HasProperty(propertyName))
+                {
+                    break;
+                }
+
+                string value = meta.GetString(propertyName);
+                if (!string.IsNullOrEmpty(value))
+                {
+                    return value;
+                }
+            }
+
+            // Fallback: q3map_material ohne Suffix
+            if (meta.HasProperty(k_Q3MapMaterialSingle))
+            {
+                string value = meta.GetString(k_Q3MapMaterialSingle);
+                if (!string.IsNullOrEmpty(value))
+                {
+                    return value;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

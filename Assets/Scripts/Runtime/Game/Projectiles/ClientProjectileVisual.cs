@@ -1,3 +1,6 @@
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.EffectManagement;
+using Tolik.RemakeSoF.Runtime.Game.Effects;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
@@ -13,6 +16,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
     {
         /// <summary>SoF2-Unit → Unity-Meter (1 QU = 0.0254m).</summary>
         private const float SOF2_UNIT_SCALE = 0.0254f;
+
+        /// <summary>SoF2 Gravitation in Unity-Meter/s² (800 QU/s² × 0.0254 = 20.32).</summary>
+        private const float SOF2_GRAVITY = 20.32f;
 
         /// <summary>Max Lebensdauer in Sekunden (Safety-Cleanup).</summary>
         private const float MAX_LIFETIME = 15f;
@@ -62,6 +68,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Trail-Renderer Referenz.</summary>
         private TrailRenderer m_Trail;
 
+        /// <summary>Effekt-ID fuer datengetriebene Visuals (aus JSON).</summary>
+        private string m_EffectId;
+
+        /// <summary>Explosions-Effekt-ID fuer Detonation (aus JSON).</summary>
+        private string m_ExplosionEffectId;
+
         /// <summary>
         /// Initialisiert das visuelle Projektil mit den gleichen Parametern wie ServerProjectile.
         /// </summary>
@@ -73,9 +85,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             float bounce,
             string detonation,
             float timer,
-            uint projectileId = 0)
+            uint projectileId = 0,
+            string effectId = "",
+            string explosionEffectId = "")
         {
             m_ProjectileId = projectileId;
+            m_EffectId = effectId;
+            m_ExplosionEffectId = explosionEffectId;
             transform.position = spawnPosition;
             m_Velocity = direction.normalized * (speedQU * SOF2_UNIT_SCALE);
             m_GravityScale = gravityScale;
@@ -127,14 +143,61 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 renderer.material = mat;
             }
 
-            // TrailRenderer fuer Flugspur
+            // Datengetriebene Effekte via EffectFactory
+            EffectFactory factory = ServiceLocator.Get<EffectFactory>();
+            EffectDefinition definition = factory?.GetDefinition(m_EffectId);
+
+            if (definition != null && definition.Segments != null)
+            {
+                CreateDataDrivenVisuals(factory, definition);
+            }
+            else
+            {
+                CreateFallbackTrail();
+            }
+        }
+
+        /// <summary>
+        /// Erstellt datengetriebene Visuals aus der EffectDefinition (Trail + ParticleSystem pro Segment).
+        /// </summary>
+        private void CreateDataDrivenVisuals(EffectFactory factory, EffectDefinition definition)
+        {
+            foreach (EffectSegment segment in definition.Segments)
+            {
+                if (segment.Type == "tail")
+                {
+                    m_Trail = gameObject.AddComponent<TrailRenderer>();
+                    factory.ConfigureTrailRenderer(m_Trail, segment);
+                }
+                else if (segment.Type == "particle")
+                {
+                    GameObject psGo = new($"Effect_{segment.Name}");
+                    psGo.transform.SetParent(transform, false);
+                    ParticleSystem ps = psGo.AddComponent<ParticleSystem>();
+                    ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    factory.ConfigureParticleSystem(ps, segment);
+                    ps.Play();
+                }
+            }
+
+            // Fallback: Wenn kein Tail-Segment vorhanden, einfachen Trail hinzufuegen
+            if (m_Trail == null)
+            {
+                CreateFallbackTrail();
+            }
+        }
+
+        /// <summary>
+        /// Erstellt einen einfachen Fallback-Trail wenn keine EffectDefinition vorhanden.
+        /// </summary>
+        private void CreateFallbackTrail()
+        {
             m_Trail = gameObject.AddComponent<TrailRenderer>();
             m_Trail.time = TRAIL_TIME;
             m_Trail.startWidth = TRAIL_START_WIDTH;
             m_Trail.endWidth = TRAIL_END_WIDTH;
             m_Trail.material = new Material(Shader.Find("Sprites/Default"));
 
-            // Trail-Farbe: Farbverlauf je nach Detonationsart
             Gradient gradient = new();
             Color trailStart = m_Detonation == "timer" ? Color.green
                 : m_Detonation == "sticky" ? Color.white
@@ -189,10 +252,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 }
             }
 
-            // Gravitation anwenden
+            // Gravitation anwenden (SoF2: 800 QU/s² = 20.32 m/s², nicht Unity 9.81)
             if (m_GravityScale > 0f)
             {
-                m_Velocity += Physics.gravity * (m_GravityScale * dt);
+                m_Velocity.y -= SOF2_GRAVITY * m_GravityScale * dt;
             }
 
             // Rotation in Flugrichtung aktualisieren
@@ -258,8 +321,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
             m_HasDetonated = true;
 
-            // Einfache visuelle Explosion: kurz aufblitzendes Licht + Sphere-Scale-Up
-            CreateExplosionVisual(transform.position);
+            // Datengetriebene Explosion via EffectFactory (falls vorhanden)
+            EffectFactory factory = ServiceLocator.Get<EffectFactory>();
+            if (factory != null && !string.IsNullOrEmpty(m_ExplosionEffectId))
+            {
+                factory.SpawnExplosion(transform.position, m_ExplosionEffectId);
+            }
+            else
+            {
+                CreateExplosionVisual(transform.position);
+            }
 
             // Trail kurz sichtbar lassen, dann zerstoeren
             Destroy(gameObject, TRAIL_TIME);
@@ -328,7 +399,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// </summary>
         private static void CreateExplosionVisual(Vector3 position)
         {
-            // Temporaeres Licht fuer Explosion
+            // Temporaeres Licht auf eigenem GameObject (URP UniversalAdditionalLightData)
             GameObject flashObj = new("ProjectileExplosion");
             flashObj.transform.position = position;
 

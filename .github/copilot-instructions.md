@@ -1,5 +1,8 @@
 # Copilot Instructions for RemakeSoF
 
+## Decision-Making Principles
+- For background tasks or long decision tasks use Python and not PowerShell. PowerShell is only for short scripts and quick fixes, not for complex logic or data processing.
+- Always prefer clear, maintainable code over clever one-liners. Readability is more important than brevity.
 
 ## Important Developer Coding Rules
 - NEVER use a `var` declaration. ALWAYS use explicit types for better readability and maintainability.

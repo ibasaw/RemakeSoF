@@ -17,6 +17,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>SoF2-Unit → Unity-Meter (1 QU = 0.0254m).</summary>
         private const float SOF2_UNIT_SCALE = 0.0254f;
 
+        /// <summary>SoF2 Gravitation in Unity-Meter/s² (800 QU/s² × 0.0254 = 20.32).</summary>
+        private const float SOF2_GRAVITY = 20.32f;
+
         /// <summary>Physics Layer Name fuer Hitbox-Collider.</summary>
         private const string HITBOX_LAYER_NAME = "Hitbox";
 
@@ -162,10 +165,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 }
             }
 
-            // Gravitation anwenden
+            // Gravitation anwenden (SoF2: 800 QU/s² = 20.32 m/s², nicht Unity 9.81)
             if (m_GravityScale > 0f)
             {
-                m_Velocity += Physics.gravity * (m_GravityScale * dt);
+                m_Velocity.y -= SOF2_GRAVITY * m_GravityScale * dt;
             }
 
             // Rotation in Flugrichtung aktualisieren

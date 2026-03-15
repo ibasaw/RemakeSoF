@@ -5,6 +5,7 @@ using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
+using Tolik.RemakeSoF.Runtime.Game.Effects;
 using Tolik.RemakeSoF.Runtime.Game.Projectiles;
 using Tolik.RemakeSoF.Runtime.WeaponManagement;
 using Unity.Netcode;
@@ -648,6 +649,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             int pelletCount = attackDef.Pellets > 0 ? attackDef.Pellets : 1;
             float pelletSpread = attackDef.Spread;
 
+            // Munitionstyp fuer Impact-Effekt-Lookup
+            string ammoType = weapon?.Ammo?.Type ?? "";
+
             for (int i = 0; i < pelletCount; i++)
             {
                 // Jedes Pellet bekommt eigene Streuung: Basis-Inaccuracy + Pellet-Spread
@@ -657,9 +661,46 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 // Server-seitiger Hitscan-Raycast auf Hitbox-Layer
                 bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask);
 
-                Vector3 hitPoint = didHit ? hit.point : eyePos + aimDirection * rangeMeters;
+                // Welt-Geometrie-Raycast fuer Impact-Effekte (alles ausser Hitboxes)
+                int worldLayerMask = ~hitboxLayerMask;
+                bool didHitWorld = Physics.Raycast(eyePos, aimDirection, out RaycastHit worldHit, rangeMeters, worldLayerMask);
 
-                if (didHit)
+                // Endpunkt: naechster Treffer (Hitbox oder Welt) oder Max-Range
+                float hitboxDist = didHit ? hit.distance : float.MaxValue;
+                float worldDist = didHitWorld ? worldHit.distance : float.MaxValue;
+
+                Vector3 hitPoint;
+                Vector3 impactNormal = Vector3.zero;
+                string impactEffectId = "";
+
+                if (hitboxDist <= worldDist && didHit)
+                {
+                    // Hitbox naeher: Spieler getroffen
+                    hitPoint = hit.point;
+                }
+                else if (didHitWorld)
+                {
+                    // Welt-Geometrie naeher: Wand/Boden getroffen
+                    hitPoint = worldHit.point;
+                    impactNormal = worldHit.normal;
+
+                    // Surface-Typ vom Collider lesen
+                    SurfaceTypeMarker surfaceMarker = worldHit.collider.GetComponentInParent<SurfaceTypeMarker>();
+                    string surfaceType = surfaceMarker != null ? surfaceMarker.SurfaceType : "default";
+
+                    // Impact-Effect-ID via SurfaceImpactDataLoader ermitteln
+                    SurfaceImpactDataLoader surfaceLoader = ServiceLocator.Get<SurfaceImpactDataLoader>();
+                    if (surfaceLoader != null)
+                    {
+                        impactEffectId = surfaceLoader.GetImpactEffectId(surfaceType, ammoType);
+                    }
+                }
+                else
+                {
+                    hitPoint = eyePos + aimDirection * rangeMeters;
+                }
+
+                if (didHit && hitboxDist <= worldDist)
                 {
                     HitboxCollider hitbox = hit.collider.GetComponent<HitboxCollider>();
                     if (hitbox != null)
@@ -679,8 +720,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     }
                 }
 
-                // Debug-Tracer pro Pellet an alle Clients senden
-                DebugTracerClientRpc(eyePos, hitPoint);
+                // Tracer + Impact pro Pellet an alle Clients senden
+                string tracerEffectId = attackDef.TracerEffect ?? "";
+                TracerClientRpc(eyePos, hitPoint, impactNormal, tracerEffectId, impactEffectId);
             }
 
             // Eigenen Collider wieder aktivieren
@@ -856,7 +898,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
 
             // Visual-RPC an alle Clients fuer Projektil-Visualisierung
-            ProjectileSpawnClientRpc(spawnPosition, direction, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "impact", timer, projectileId);
+            string effectPath = projDef.Effect ?? "";
+            string explosionEffectPath = projDef.ExplosionEffect ?? "";
+            ProjectileSpawnClientRpc(spawnPosition, direction, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "impact", timer, projectileId, effectPath, explosionEffectPath);
         }
 
         /// <summary>
@@ -929,7 +973,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             );
 
             // Visual-RPC an alle Clients
-            ProjectileSpawnClientRpc(eyePos, aimDirection, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "timer", cookedTimer, projectileId);
+            string grenadeEffectPath = projDef.Effect ?? "";
+            string grenadeExplosionEffectPath = projDef.ExplosionEffect ?? "";
+            ProjectileSpawnClientRpc(eyePos, aimDirection, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "timer", cookedTimer, projectileId, grenadeEffectPath, grenadeExplosionEffectPath);
 
             // Throw-Follow-Through-Phase starten (mp_attackEnd = GRENADE_END)
             if (weapon?.Animations != null && weapon.Animations.TryGetValue("mp_attackEnd", out WeaponAnimationEntry throwAnim))
@@ -973,14 +1019,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>
         /// Server → Alle Clients: Projektil-Spawn fuer Client-seitige Visualisierung.
-        /// Erstellt ein ClientProjectileVisual mit TrailRenderer auf allen Clients.
+        /// Erstellt ein ClientProjectileVisual mit datengetriebenem Trail-Effekt auf allen Clients.
         /// </summary>
         [Rpc(SendTo.Everyone)]
-        private void ProjectileSpawnClientRpc(Vector3 spawnPosition, Vector3 direction, float speed, float gravity, float bounce, string detonation, float timer, uint projectileId)
+        private void ProjectileSpawnClientRpc(Vector3 spawnPosition, Vector3 direction, float speed, float gravity, float bounce, string detonation, float timer, uint projectileId, string effectId, string explosionEffectId)
         {
             GameObject visualObj = new($"ProjectileVisual_{OwnerClientId}");
             ClientProjectileVisual visual = visualObj.AddComponent<ClientProjectileVisual>();
-            visual.Initialize(spawnPosition, direction, speed, gravity, bounce, detonation, timer, projectileId);
+            visual.Initialize(spawnPosition, direction, speed, gravity, bounce, detonation, timer, projectileId, effectId, explosionEffectId);
         }
 
         /// <summary>
@@ -1002,18 +1048,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
-        /// Server → Alle Clients: Debug-Tracer-Daten fuer Visualisierung.
-        /// Clients mit aktiviertem m_ShowDebugTracers zeichnen eine sichtbare Linie
-        /// vom ejectBone der aktuellen Waffe zum HitPoint (Game-View + Scene-View).
+        /// Server → Alle Clients: Tracer-Visualisierung + Impact-Effekt fuer Hitscan-Waffen.
+        /// Spawnt einen datengetriebenen TracerVisual (TrailRenderer) der vom ejectBone
+        /// der aktuellen Waffe zum HitPoint fliegt. Bei Welt-Treffer wird zusaetzlich ein
+        /// Impact-Effekt (Staub, Funken, Einschussloch) an der Einschlagstelle gespawnt.
         /// </summary>
         [Rpc(SendTo.Everyone)]
-        private void DebugTracerClientRpc(Vector3 serverStart, Vector3 end)
+        private void TracerClientRpc(Vector3 serverStart, Vector3 end, Vector3 hitNormal,
+            string tracerEffectId, string impactEffectId)
         {
-            if (!m_ShowDebugTracers)
-            {
-                return;
-            }
-
             // EjectBone der aktuellen Waffe als Tracer-Startpunkt suchen
             Vector3 tracerStart = serverStart;
             if (m_Animator != null)
@@ -1032,21 +1075,48 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 }
             }
 
-            // Scene-View Debug-Linie (Editor/Development Build)
-            Debug.DrawLine(tracerStart, end, Color.red, 2f);
+            // Datengetriebener Tracer (SoF2 tracerEffect → TracerVisual mit TrailRenderer)
+            if (!string.IsNullOrEmpty(tracerEffectId))
+            {
+                TracerVisual.Create(tracerStart, end, tracerEffectId);
+            }
 
-            // Game-View sichtbare Linie via temporaerem LineRenderer
-            CreateTracerLine(tracerStart, end);
+            // Impact-Effekt an der Einschlagstelle (Staub, Funken, Decal)
+            if (!string.IsNullOrEmpty(impactEffectId) && hitNormal.sqrMagnitude > 0f)
+            {
+                EffectFactory effectFactory = ServiceLocator.Get<EffectFactory>();
+                effectFactory?.SpawnImpactEffect(end, hitNormal, impactEffectId);
+
+                // Debug-HUD: Surface-Typ aus impactEffectId extrahieren (nur fuer lokalen Spieler)
+                if (IsOwner)
+                {
+                    string surfaceDebug = impactEffectId;
+                    const string impactPrefix = "effects/impact_";
+                    if (surfaceDebug.StartsWith(impactPrefix))
+                    {
+                        surfaceDebug = surfaceDebug.Substring(impactPrefix.Length);
+                    }
+                    MatchView matchView = FindAnyObjectByType<MatchView>();
+                    matchView?.UpdateLastSurfaceType(surfaceDebug);
+                }
+            }
+
+            // Debug-Linien (optional, fuer Entwicklung — sichtbar in Game + Scene View)
+            if (m_ShowDebugTracers)
+            {
+                Debug.DrawLine(tracerStart, end, Color.red, TRACER_DURATION);
+                CreateDebugTracerLine(tracerStart, end);
+            }
         }
 
         /// <summary>
-        /// Erstellt eine temporaere sichtbare Tracer-Linie (LineRenderer) von start zu end.
-        /// Zerstoert sich nach TRACER_DURATION Sekunden automatisch.
+        /// Erstellt eine temporaere sichtbare Debug-Linie im Game View (LineRenderer).
+        /// Wird nur bei aktiviertem m_ShowDebugTracers angezeigt.
         /// </summary>
-        private void CreateTracerLine(Vector3 start, Vector3 end)
+        private static void CreateDebugTracerLine(Vector3 start, Vector3 end)
         {
-            GameObject tracerObj = new("DebugTracer");
-            LineRenderer lr = tracerObj.AddComponent<LineRenderer>();
+            GameObject lineObj = new("DebugTracer");
+            LineRenderer lr = lineObj.AddComponent<LineRenderer>();
             lr.positionCount = 2;
             lr.SetPosition(0, start);
             lr.SetPosition(1, end);
@@ -1054,10 +1124,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             lr.endWidth = 0.02f;
             lr.material = new Material(Shader.Find("Sprites/Default"));
             lr.startColor = Color.red;
-            lr.endColor = Color.yellow;
+            lr.endColor = Color.red;
             lr.useWorldSpace = true;
-
-            Destroy(tracerObj, TRACER_DURATION);
+            Destroy(lineObj, TRACER_DURATION);
         }
 
         /// <summary>
@@ -1136,9 +1205,44 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
                 int hitboxLayerMask = LayerMask.GetMask(HITBOX_LAYER_NAME);
                 bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask);
-                Vector3 hitPoint = didHit ? hit.point : eyePos + aimDirection * rangeMeters;
 
-                if (didHit)
+                // Welt-Geometrie-Raycast fuer Impact-Effekte
+                int worldLayerMask = ~hitboxLayerMask;
+                bool didHitWorld = Physics.Raycast(eyePos, aimDirection, out RaycastHit worldHit, rangeMeters, worldLayerMask);
+
+                float hitboxDist = didHit ? hit.distance : float.MaxValue;
+                float worldDist = didHitWorld ? worldHit.distance : float.MaxValue;
+
+                Vector3 hitPoint;
+                Vector3 impactNormal = Vector3.zero;
+                string impactEffectId = "";
+
+                if (hitboxDist <= worldDist && didHit)
+                {
+                    hitPoint = hit.point;
+                }
+                else if (didHitWorld)
+                {
+                    hitPoint = worldHit.point;
+                    impactNormal = worldHit.normal;
+
+                    SurfaceTypeMarker surfaceMarker = worldHit.collider.GetComponentInParent<SurfaceTypeMarker>();
+                    string surfaceType = surfaceMarker != null ? surfaceMarker.SurfaceType : "default";
+
+                    // AltAttack Munitionstyp (z.B. Knife)
+                    string altAmmoType = weapon?.AltAttack?.Ammo?.Type ?? weapon?.Ammo?.Type ?? "";
+                    SurfaceImpactDataLoader surfaceLoader = ServiceLocator.Get<SurfaceImpactDataLoader>();
+                    if (surfaceLoader != null)
+                    {
+                        impactEffectId = surfaceLoader.GetImpactEffectId(surfaceType, altAmmoType);
+                    }
+                }
+                else
+                {
+                    hitPoint = eyePos + aimDirection * rangeMeters;
+                }
+
+                if (didHit && hitboxDist <= worldDist)
                 {
                     HitboxCollider hitbox = hit.collider.GetComponent<HitboxCollider>();
                     if (hitbox != null)
@@ -1158,7 +1262,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
                 m_ServerPlayerCharacter.SetPhysicsColliderEnabled(true);
 
-                DebugTracerClientRpc(eyePos, hitPoint);
+                string altTracerEffectId = altAttackDef.TracerEffect ?? "";
+                TracerClientRpc(eyePos, hitPoint, impactNormal, altTracerEffectId, impactEffectId);
             }
 
             // KickAngles: Rueckstoss an Owner-Client senden (falls definiert)

@@ -55,6 +55,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         // Health HUD Labels
         Label m_HealthLabel;
+        Label m_LastSurfaceTypeLabel;
 
         /// <summary>
         /// Wird gefeuert sobald die MatchView aktiviert und alle UI-Elemente neu gebunden sind.
@@ -116,6 +117,7 @@ namespace Tolik.RemakeSoF.Runtime
 
             // Health HUD
             m_HealthLabel = root.Query<Label>("healthLabel");
+            m_LastSurfaceTypeLabel = root.Query<Label>("lastSurfaceTypeLabel");
 
             OnViewEnabled?.Invoke();
         }
@@ -292,6 +294,17 @@ namespace Tolik.RemakeSoF.Runtime
         internal void UpdateHealthHud(int health)
         {
             m_HealthLabel.text = health.ToString();
+        }
+
+        /// <summary>
+        /// Aktualisiert die Debug-Anzeige des zuletzt getroffenen Surface-Typs.
+        /// </summary>
+        internal void UpdateLastSurfaceType(string surfaceType)
+        {
+            if (m_LastSurfaceTypeLabel != null)
+            {
+                m_LastSurfaceTypeLabel.text = $"Surface: {surfaceType}";
+            }
         }
 
         /// <summary>

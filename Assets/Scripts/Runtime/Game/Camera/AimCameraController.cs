@@ -91,6 +91,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
         /// <summary>Zeitpunkt des letzten Kicks (fuer Decay-Berechnung).</summary>
         private float m_KickTime;
 
+        // ===== Explosion Camera Shake =====
+
+        /// <summary>Aktuelle Shake-Intensitaet (nimmt ueber Zeit ab).</summary>
+        private float m_ShakeIntensity;
+
+        /// <summary>Shake-Dauer in Sekunden.</summary>
+        private float m_ShakeDuration;
+
+        /// <summary>Vergangene Shake-Zeit.</summary>
+        private float m_ShakeElapsed;
+
+        /// <summary>Aktueller Shake-Offset auf Pitch.</summary>
+        private float m_ShakePitchOffset;
+
+        /// <summary>Aktueller Shake-Offset auf Yaw.</summary>
+        private float m_ShakeYawOffset;
+
         private void Awake()
         {
             m_AimCam = GetComponent<CinemachineThirdPersonFollow>();
@@ -159,15 +176,34 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
                 kickYawOffset = m_KickYawStart * ratio;
             }
 
-            // YawTarget und PitchTarget aktualisieren (Basis + Kick-Overlay)
+            // Explosion Camera Shake: zufaellige Richtungs-Offsets mit Decay
+            float shakePitch = 0f;
+            float shakeYaw = 0f;
+
+            if (m_ShakeElapsed < m_ShakeDuration && m_ShakeIntensity > 0f)
+            {
+                m_ShakeElapsed += Time.deltaTime;
+                float shakeRatio = 1f - Mathf.Clamp01(m_ShakeElapsed / m_ShakeDuration);
+                float currentIntensity = m_ShakeIntensity * shakeRatio;
+
+                // Perlin-Noise fuer organisches Wackeln (unterschiedliche Frequenzen fuer Pitch/Yaw)
+                float noiseTime = Time.time * 25f;
+                m_ShakePitchOffset = (Mathf.PerlinNoise(noiseTime, 0f) - 0.5f) * 2f * currentIntensity;
+                m_ShakeYawOffset = (Mathf.PerlinNoise(0f, noiseTime + 100f) - 0.5f) * 2f * currentIntensity;
+
+                shakePitch = m_ShakePitchOffset;
+                shakeYaw = m_ShakeYawOffset;
+            }
+
+            // YawTarget und PitchTarget aktualisieren (Basis + Kick-Overlay + Shake)
             if (m_YawTarget != null)
             {
-                m_YawTarget.rotation = Quaternion.Euler(0f, m_Yaw + kickYawOffset, 0f);
+                m_YawTarget.rotation = Quaternion.Euler(0f, m_Yaw + kickYawOffset + shakeYaw, 0f);
             }
 
             if (m_PitchTarget != null)
             {
-                float effectivePitch = Mathf.Clamp(m_Pitch + kickPitchOffset, m_PitchMin, m_PitchMax);
+                float effectivePitch = Mathf.Clamp(m_Pitch + kickPitchOffset + shakePitch, m_PitchMin, m_PitchMax);
                 m_PitchTarget.localRotation = Quaternion.Euler(effectivePitch, 0f, 0f);
             }
 
@@ -239,6 +275,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
             if (m_PitchTarget != null)
             {
                 m_PitchTarget.localRotation = Quaternion.Euler(0f, 0f, 0f);
+            }
+        }
+
+        /// <summary>
+        /// Fuegt einen Explosions-Kamera-Shake hinzu (proximity-basiert).
+        /// Intensity in Grad (SoF2 bounce), Duration in Sekunden.
+        /// Bei mehreren gleichzeitigen Shakes wird der staerkere behalten.
+        /// </summary>
+        public void AddExplosionShake(float intensity, float duration)
+        {
+            // Staerkeren Shake bevorzugen (nicht addieren, sonst uebertreibt es)
+            if (intensity > m_ShakeIntensity * (1f - Mathf.Clamp01(m_ShakeElapsed / Mathf.Max(m_ShakeDuration, 0.01f))))
+            {
+                m_ShakeIntensity = intensity;
+                m_ShakeDuration = duration;
+                m_ShakeElapsed = 0f;
             }
         }
     }

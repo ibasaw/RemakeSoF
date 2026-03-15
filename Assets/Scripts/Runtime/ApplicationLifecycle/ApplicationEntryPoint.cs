@@ -11,6 +11,7 @@ using UnityEngine.SceneManagement;
 using ConnectionEvent = Tolik.RemakeSoF.Runtime.ConnectionManagement.ConnectionEvent;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.ConsoleManagement;
+using Tolik.RemakeSoF.Runtime.Game.Effects;
 
 namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 {
@@ -103,6 +104,14 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                     WeaponDataLoader serverWeaponLoader = new();
                     ServiceLocator.Register(serverWeaponLoader);
 
+                    // EffectDataLoader fuer server-seitige Effekt-Referenzen
+                    EffectDataLoader serverEffectLoader = new();
+                    ServiceLocator.Register(serverEffectLoader);
+
+                    // SurfaceImpactDataLoader fuer server-seitige Impact-Effekt-Aufloesung
+                    SurfaceImpactDataLoader serverSurfaceImpactLoader = new();
+                    ServiceLocator.Register(serverSurfaceImpactLoader);
+
                     // Start CLI command listener for server
                     m_ServerCommandListener = new ServerCommandListener();
                     ServiceLocator.Register(m_ServerCommandListener);
@@ -136,6 +145,15 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 
                         WeaponDataLoader weaponDataLoader = new();
                         ServiceLocator.Register(weaponDataLoader);
+
+                        EffectDataLoader effectDataLoader = new();
+                        ServiceLocator.Register(effectDataLoader);
+
+                        EffectFactory effectFactory = new();
+                        ServiceLocator.Register(effectFactory);
+
+                        SurfaceImpactDataLoader surfaceImpactLoader = new();
+                        ServiceLocator.Register(surfaceImpactLoader);
 
                         SceneManager.LoadScene("MetagameScene");
                         Debug.Log($"[ApplicationEntryPoint] InitializeNetworkLogic - Client instance started, loaded MetagameScene.");

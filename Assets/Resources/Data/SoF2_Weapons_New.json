@@ -31,7 +31,7 @@
         "gravity": 0.5,
         "speed": 1100,
         "detonation": "sticky",
-        "model": "models/weapons/knife/world/knifeworld",
+        "model": "knife",
         "objectType": "knife",
         "loopSound": "sound/weapons/knife/throw_loop"
       }
@@ -1029,7 +1029,7 @@
         "bounce": 0.45,
         "detonation": "timer",
         "timer": 3.0,
-        "model": "models/weapons/f1/world/f1world",
+        "model": "f1",
         "effect": "effects/grenade_trail",
         "explosionEffect": "effects/explosions/fragment_explosion",
         "underwaterEffect": "effects/explosions/water_explosion_under",
@@ -1049,7 +1049,7 @@
         "bounce": 0.25,
         "detonation": "timer",
         "timer": 3.0,
-        "model": "models/weapons/f1/world/f1world",
+        "model": "f1",
         "effect": "effects/grenade_trail",
         "explosionEffect": "effects/explosions/fragment_explosion",
         "underwaterEffect": "effects/explosions/water_explosion_under",
