@@ -647,16 +647,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             // Pellet-Anzahl: Schrotflinten feuern mehrere Pellets pro Schuss (z.B. M590: 8)
             int pelletCount = attackDef.Pellets > 0 ? attackDef.Pellets : 1;
-            float pelletSpread = attackDef.Spread;
+
+            // SoF2 spread-Feld ist nur Fallback fuer inaccuracy wenn 0 (bg_weapons.c:278-281),
+            // wird NICHT separat addiert. Streuung basiert allein auf inaccuracy.
 
             // Munitionstyp fuer Impact-Effekt-Lookup
             string ammoType = weapon?.Ammo?.Type ?? "";
 
+            // Aim-Vektoren fuer SoF2-konforme Streuung (BG_CalculateBulletEndpoint)
+            Vector3 aimForward = aimRotation * Vector3.forward;
+            Vector3 aimRight = aimRotation * Vector3.right;
+            Vector3 aimUp = aimRotation * Vector3.up;
+
             for (int i = 0; i < pelletCount; i++)
             {
-                // Jedes Pellet bekommt eigene Streuung: Basis-Inaccuracy + Pellet-Spread
-                float totalSpread = spread + pelletSpread;
-                Vector3 aimDirection = ApplyInaccuracy(aimRotation * Vector3.forward, totalSpread);
+                // SoF2-konforme Streuung: 0.05 * inaccuracy * gaussian auf right/up Vektoren
+                Vector3 aimDirection = ApplyInaccuracySoF2(aimForward, aimRight, aimUp, spread);
 
                 // Server-seitiger Hitscan-Raycast auf Hitbox-Layer
                 bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask);
@@ -730,10 +736,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             // KickAngles: Rueckstoss an Owner-Client senden (SoF2 AddViewKick)
             // Format: [minPitch, maxPitch, minYaw, maxYaw]
+            // SoF2 Skalierung: kickPitch += value * 500, extract as /1000 → effektiv ×0.5
             if (attackDef.KickAngles != null && attackDef.KickAngles.Count >= 4)
             {
-                float pitchKick = UnityEngine.Random.Range(attackDef.KickAngles[0], attackDef.KickAngles[1]);
-                float yawKick = UnityEngine.Random.Range(attackDef.KickAngles[2], attackDef.KickAngles[3]);
+                float pitchKick = UnityEngine.Random.Range(attackDef.KickAngles[0], attackDef.KickAngles[1]) * 0.5f;
+                float yawKick = UnityEngine.Random.Range(attackDef.KickAngles[2], attackDef.KickAngles[3]) * 0.5f;
                 ApplyKickAnglesClientRpc(pitchKick, yawKick);
             }
         }
@@ -769,24 +776,39 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
-        /// Wendet SoF2-Inaccuracy auf eine Schussrichtung an.
-        /// Erzeugt zufaellige Streuung innerhalb eines Kegels (Spread in Grad).
+        /// SoF2-konforme Streuungsberechnung basierend auf BG_CalculateBulletEndpoint (bg_weapons.c).
+        /// Verwendet 0.05 * inaccuracy als Abweichung auf right/up-Vektoren mit Gausscher Verteilung.
+        /// Die Gaussian-Verteilung (Summe zweier Gleichverteilungen → Dreiecksverteilung) sorgt fuer
+        /// SoF2-typische Streuung: Pellets konzentrieren sich zur Mitte, wenige aussen.
         /// </summary>
-        private Vector3 ApplyInaccuracy(Vector3 direction, float spreadDegrees)
+        private Vector3 ApplyInaccuracySoF2(Vector3 forward, Vector3 right, Vector3 up, float inaccuracy)
         {
-            if (spreadDegrees <= 0f)
+            if (inaccuracy <= 0f)
             {
-                return direction;
+                return forward;
             }
 
-            // Zufaellige Rotation innerhalb des Spread-Kegels
-            float randomAngle = UnityEngine.Random.Range(0f, 360f);
-            float randomSpread = UnityEngine.Random.Range(0f, spreadDegrees);
+            // SoF2 Gaussian: Summe zweier Gleichverteilungen [0,1) - 0.5 → Dreiecksverteilung [-1, 1]
+            // Rejection Sampling: nur Punkte innerhalb des Einheitskreises (wie SoF2 bg_weapons.c:1237-1250)
+            float gaussianX;
+            float gaussianY;
+            do
+            {
+                float f1 = UnityEngine.Random.value;
+                float f2 = UnityEngine.Random.value;
+                gaussianX = (f1 - 0.5f) + (f2 - 0.5f);
 
-            Quaternion spreadRotation = Quaternion.AngleAxis(randomSpread, Vector3.up);
-            Quaternion rollRotation = Quaternion.AngleAxis(randomAngle, direction);
+                f1 = UnityEngine.Random.value;
+                f2 = UnityEngine.Random.value;
+                gaussianY = (f1 - 0.5f) + (f2 - 0.5f);
+            }
+            while (gaussianX * gaussianX + gaussianY * gaussianY >= 1f);
 
-            return (rollRotation * spreadRotation * Quaternion.Inverse(rollRotation)) * direction;
+            // SoF2: 0.05f * inaccuracy * gaussian als Offset auf normalisierte right/up-Vektoren
+            float spreadFactor = 0.05f * inaccuracy;
+            Vector3 direction = forward + spreadFactor * gaussianX * right + spreadFactor * gaussianY * up;
+
+            return direction.normalized;
         }
 
         // ===== Projectile Weapons (RPG7, MM1, F1 Grenade) =====
@@ -852,10 +874,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             SpawnProjectile(eyePos, aimDirection, attackDef, projDef);
 
             // KickAngles: Rueckstoss an Owner-Client senden
+            // SoF2 Skalierung: ×0.5 (kickPitch += value*500, extract /1000)
             if (attackDef.KickAngles != null && attackDef.KickAngles.Count >= 4)
             {
-                float pitchKick = UnityEngine.Random.Range(attackDef.KickAngles[0], attackDef.KickAngles[1]);
-                float yawKick = UnityEngine.Random.Range(attackDef.KickAngles[2], attackDef.KickAngles[3]);
+                float pitchKick = UnityEngine.Random.Range(attackDef.KickAngles[0], attackDef.KickAngles[1]) * 0.5f;
+                float yawKick = UnityEngine.Random.Range(attackDef.KickAngles[2], attackDef.KickAngles[3]) * 0.5f;
                 ApplyKickAnglesClientRpc(pitchKick, yawKick);
             }
 
@@ -900,7 +923,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Visual-RPC an alle Clients fuer Projektil-Visualisierung
             string effectPath = projDef.Effect ?? "";
             string explosionEffectPath = projDef.ExplosionEffect ?? "";
-            ProjectileSpawnClientRpc(spawnPosition, direction, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "impact", timer, projectileId, effectPath, explosionEffectPath);
+            string modelKey = projDef.Model ?? "";
+            ProjectileSpawnClientRpc(spawnPosition, direction, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "impact", timer, projectileId, effectPath, explosionEffectPath, modelKey);
         }
 
         /// <summary>
@@ -975,7 +999,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Visual-RPC an alle Clients
             string grenadeEffectPath = projDef.Effect ?? "";
             string grenadeExplosionEffectPath = projDef.ExplosionEffect ?? "";
-            ProjectileSpawnClientRpc(eyePos, aimDirection, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "timer", cookedTimer, projectileId, grenadeEffectPath, grenadeExplosionEffectPath);
+            string grenadeModelKey = projDef.Model ?? "";
+            ProjectileSpawnClientRpc(eyePos, aimDirection, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "timer", cookedTimer, projectileId, grenadeEffectPath, grenadeExplosionEffectPath, grenadeModelKey);
 
             // Throw-Follow-Through-Phase starten (mp_attackEnd = GRENADE_END)
             if (weapon?.Animations != null && weapon.Animations.TryGetValue("mp_attackEnd", out WeaponAnimationEntry throwAnim))
@@ -1022,11 +1047,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Erstellt ein ClientProjectileVisual mit datengetriebenem Trail-Effekt auf allen Clients.
         /// </summary>
         [Rpc(SendTo.Everyone)]
-        private void ProjectileSpawnClientRpc(Vector3 spawnPosition, Vector3 direction, float speed, float gravity, float bounce, string detonation, float timer, uint projectileId, string effectId, string explosionEffectId)
+        private void ProjectileSpawnClientRpc(Vector3 spawnPosition, Vector3 direction, float speed, float gravity, float bounce, string detonation, float timer, uint projectileId, string effectId, string explosionEffectId, string modelKey)
         {
             GameObject visualObj = new($"ProjectileVisual_{OwnerClientId}");
             ClientProjectileVisual visual = visualObj.AddComponent<ClientProjectileVisual>();
-            visual.Initialize(spawnPosition, direction, speed, gravity, bounce, detonation, timer, projectileId, effectId, explosionEffectId);
+            visual.Initialize(spawnPosition, direction, speed, gravity, bounce, detonation, timer, projectileId, effectId, explosionEffectId, modelKey);
         }
 
         /// <summary>
@@ -1267,10 +1292,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
 
             // KickAngles: Rueckstoss an Owner-Client senden (falls definiert)
+            // SoF2 Skalierung: ×0.5 (kickPitch += value*500, extract /1000)
             if (altAttackDef?.KickAngles != null && altAttackDef.KickAngles.Count >= 4)
             {
-                float pitchKick = UnityEngine.Random.Range(altAttackDef.KickAngles[0], altAttackDef.KickAngles[1]);
-                float yawKick = UnityEngine.Random.Range(altAttackDef.KickAngles[2], altAttackDef.KickAngles[3]);
+                float pitchKick = UnityEngine.Random.Range(altAttackDef.KickAngles[0], altAttackDef.KickAngles[1]) * 0.5f;
+                float yawKick = UnityEngine.Random.Range(altAttackDef.KickAngles[2], altAttackDef.KickAngles[3]) * 0.5f;
                 ApplyKickAnglesClientRpc(pitchKick, yawKick);
             }
 

@@ -1,458 +1,458 @@
 ﻿[
     {
-        "id":  "effects/impacts/impact_armor",
-        "displayName":  "Impact Armor",
-        "segments":  [
-                         {
-                             "name":  "puff",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mist",
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  1.5,
-                                              "lifetimeMax":  1.5,
-                                              "delayMin":  0.2,
-                                              "delayMax":  0.2,
-                                              "rotationMin":  10,
-                                              "rotationMax":  10,
-                                              "rotationSpeedMin":  -40,
-                                              "rotationSpeedMax":  40,
-                                              "gravityModifier":  -0.0259,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.1,
-                                           "startMax":  0.1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       },
-                             "size":  {
-                                          "startMin":  0.1778,
-                                          "startMax":  0.1778,
-                                          "endMin":  0.3048,
-                                          "endMax":  0.381,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "ring",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_ring",
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.3,
-                                              "lifetimeMax":  0.3,
-                                              "rotationMin":  0,
-                                              "rotationMax":  50,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.3,
-                                           "startMax":  0.3,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       },
-                             "size":  {
-                                          "endMin":  0.381,
-                                          "endMax":  0.508,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "impact",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_spark",
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.3,
-                                              "lifetimeMax":  0.3,
-                                              "rotationMin":  -10,
-                                              "rotationMax":  10,
-                                              "rotationSpeedMin":  -200,
-                                              "rotationSpeedMax":  200,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.3,
-                                           "startMax":  0.3,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       },
-                             "size":  {
-                                          "endMin":  0.254,
-                                          "endMax":  0.254,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "type":  "tail",
-                             "texture":  "gfx/misc/jk_spark",
-                             "spawnFlags":  [
-                                                "orgOnSphere",
-                                                "axisFromSphere"
-                                            ],
-                             "trail":  {
-                                           "lifetime":  0.3,
-                                           "countMin":  4,
-                                           "countMax":  7,
-                                           "startWidth":  0.01905,
-                                           "endWidth":  0.127,
-                                           "lengthMin":  0.762,
-                                           "lengthMax":  0.762,
-                                           "speed":  3.175
-                                       },
-                             "alpha":  {
-                                           "startMin":  0.3,
-                                           "startMax":  0.3,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       }
-                         },
-                         {
-                             "name":  "Copy of impact",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_spark",
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.2,
-                                              "lifetimeMax":  0.2,
-                                              "rotationMin":  -10,
-                                              "rotationMax":  10,
-                                              "rotationSpeedMin":  -200,
-                                              "rotationSpeedMax":  200,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.3,
-                                           "startMax":  0.3,
-                                           "endMin":  0,
-                                           "endMax":  0
-                                       },
-                             "size":  {
-                                          "startMin":  0.0254,
-                                          "startMax":  0.0508,
-                                          "endMin":  0.254,
-                                          "endMax":  0.254
-                                      }
-                         }
-                     ]
+        "id": "effects/impacts/impact_armor",
+        "displayName": "Impact Armor",
+        "segments": [
+            {
+                "name": "puff",
+                "type": "particle",
+                "texture": "gfx/misc/jk_mist",
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 1.5,
+                    "lifetimeMax": 1.5,
+                    "delayMin": 0.2,
+                    "delayMax": 0.2,
+                    "rotationMin": 10,
+                    "rotationMax": 10,
+                    "rotationSpeedMin": -40,
+                    "rotationSpeedMax": 40,
+                    "gravityModifier": -0.0259,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.1,
+                    "startMax": 0.1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                },
+                "size": {
+                    "startMin": 0.1778,
+                    "startMax": 0.1778,
+                    "endMin": 0.3048,
+                    "endMax": 0.381,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "ring",
+                "type": "particle",
+                "texture": "gfx/misc/jk_ring",
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.3,
+                    "lifetimeMax": 0.3,
+                    "rotationMin": 0,
+                    "rotationMax": 50,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.3,
+                    "startMax": 0.3,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                },
+                "size": {
+                    "endMin": 0.381,
+                    "endMax": 0.508,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "impact",
+                "type": "particle",
+                "texture": "gfx/misc/jk_spark",
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.3,
+                    "lifetimeMax": 0.3,
+                    "rotationMin": -10,
+                    "rotationMax": 10,
+                    "rotationSpeedMin": -200,
+                    "rotationSpeedMax": 200,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.3,
+                    "startMax": 0.3,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                },
+                "size": {
+                    "endMin": 0.254,
+                    "endMax": 0.254,
+                    "curve": "linear"
+                }
+            },
+            {
+                "type": "tail",
+                "texture": "gfx/misc/jk_spark",
+                "spawnFlags": [
+                    "orgOnSphere",
+                    "axisFromSphere"
+                ],
+                "trail": {
+                    "lifetime": 0.3,
+                    "countMin": 4,
+                    "countMax": 7,
+                    "startWidth": 0.01905,
+                    "endWidth": 0.127,
+                    "lengthMin": 0.762,
+                    "lengthMax": 0.762,
+                    "speed": 3.175
+                },
+                "alpha": {
+                    "startMin": 0.3,
+                    "startMax": 0.3,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "Copy of impact",
+                "type": "particle",
+                "texture": "gfx/misc/jk_spark",
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.2,
+                    "lifetimeMax": 0.2,
+                    "rotationMin": -10,
+                    "rotationMax": 10,
+                    "rotationSpeedMin": -200,
+                    "rotationSpeedMax": 200,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.3,
+                    "startMax": 0.3,
+                    "endMin": 0,
+                    "endMax": 0
+                },
+                "size": {
+                    "startMin": 0.0254,
+                    "startMax": 0.0508,
+                    "endMin": 0.254,
+                    "endMax": 0.254
+                }
+            }
+        ]
     },
     {
-        "id":  "effects/impacts/impact_computer",
-        "displayName":  "Impact Computer",
-        "segments":  [
-                         {
-                             "name":  "smoke",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_smoke5",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  2,
-                                              "countMax":  3,
-                                              "lifetimeMin":  2,
-                                              "lifetimeMax":  2,
-                                              "delayMin":  0.3,
-                                              "delayMax":  0.3,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "rotationSpeedMin":  -80,
-                                              "rotationSpeedMax":  80,
-                                              "gravityModifier":  -0.0362,
-                                              "originMin":  [
-                                                                -0.254,
-                                                                -0.254,
-                                                                -0.127
-                                                            ],
-                                              "originMax":  [
-                                                                0.254,
-                                                                0.254,
-                                                                -0.127
-                                                            ],
-                                              "velocityMin":  [
-                                                                  -0.1016,
-                                                                  -0.1016,
-                                                                  0.2032
-                                                              ],
-                                              "velocityMax":  [
-                                                                  0.1016,
-                                                                  0.1016,
-                                                                  0.508
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.6,
-                                           "startMax":  0.8,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  55,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.5765
-                                                        ],
-                                           "startMax":  [
-                                                            0.1373
-                                                        ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.254,
-                                          "startMax":  0.254,
-                                          "endMin":  0.635,
-                                          "endMax":  0.889,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "bang_light",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mflash_ak74",
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.4,
-                                              "lifetimeMax":  0.45,
-                                              "rotationMin":  -180,
-                                              "rotationMax":  180,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.7,
-                                           "startMax":  0.7,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  50,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "size":  {
-                                          "startMin":  0.0254,
-                                          "startMax":  0.0508,
-                                          "endMin":  1.016,
-                                          "endMax":  1.143,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "cneter bang_light",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mflash_ak74",
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.2,
-                                              "lifetimeMax":  0.25,
-                                              "rotationMin":  -180,
-                                              "rotationMax":  180,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  90,
-                                           "curve":  "linear"
-                                       },
-                             "size":  {
-                                          "endMin":  0.635,
-                                          "endMax":  0.889,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "sparks",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mflash_ak74",
-                             "flags":  [
-                                           "usePhysics"
-                                       ],
-                             "particle":  {
-                                              "countMin":  8,
-                                              "countMax":  8,
-                                              "lifetimeMin":  1.5,
-                                              "lifetimeMax":  2,
-                                              "gravityModifier":  1.683,
-                                              "velocityMin":  [
-                                                                  -2.54,
-                                                                  0.635,
-                                                                  2.54
-                                                              ],
-                                              "velocityMax":  [
-                                                                  2.54,
-                                                                  1.27,
-                                                                  10.16
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  60,
-                                           "curve":  "random nonlinear"
-                                       },
-                             "size":  {
-                                          "startMin":  0.0127,
-                                          "startMax":  0.0381
-                                      }
-                         },
-                         {
-                             "type":  "line",
-                             "texture":  "gfx/misc/jk_mflash_ak74",
-                             "particle":  {
-                                              "countMin":  5,
-                                              "countMax":  5,
-                                              "lifetimeMin":  0.15,
-                                              "lifetimeMax":  0.2,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0
-                                       },
-                             "size":  {
-                                          "startMin":  0.0254,
-                                          "startMax":  0.0381,
-                                          "endMin":  0.00254,
-                                          "endMax":  0.00254,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "delayed_sparks",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mflash_ak74",
-                             "flags":  [
-                                           "usePhysics"
-                                       ],
-                             "particle":  {
-                                              "countMin":  6,
-                                              "countMax":  8,
-                                              "lifetimeMin":  1.6,
-                                              "lifetimeMax":  2,
-                                              "delayMin":  1.1,
-                                              "delayMax":  1.1,
-                                              "gravityModifier":  1.683,
-                                              "velocityMin":  [
-                                                                  -1.905,
-                                                                  -1.905,
-                                                                  5.715
-                                                              ],
-                                              "velocityMax":  [
-                                                                  1.905,
-                                                                  1.905,
-                                                                  7.62
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  50,
-                                           "curve":  "random nonlinear"
-                                       },
-                             "size":  {
-                                          "startMin":  0.0127,
-                                          "startMax":  0.0381,
-                                          "endMin":  0.00254,
-                                          "endMax":  0.00254
-                                      }
-                         },
-                         {
-                             "name":  "delayed1 sparks",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mflash_ak74",
-                             "flags":  [
-                                           "usePhysics"
-                                       ],
-                             "particle":  {
-                                              "countMin":  4,
-                                              "countMax":  5,
-                                              "lifetimeMin":  1.6,
-                                              "lifetimeMax":  2,
-                                              "delayMin":  3,
-                                              "delayMax":  3,
-                                              "gravityModifier":  1.683,
-                                              "velocityMin":  [
-                                                                  -1.905,
-                                                                  -2.032,
-                                                                  5.08
-                                                              ],
-                                              "velocityMax":  [
-                                                                  1.905,
-                                                                  2.032,
-                                                                  7.62
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  50,
-                                           "curve":  "random nonlinear"
-                                       },
-                             "size":  {
-                                          "startMin":  0.0127,
-                                          "startMax":  0.0381
-                                      }
-                         },
-                         {
-                             "name":  "Copy of Unnamed Line 12",
-                             "type":  "line",
-                             "texture":  "gfx/misc/jk_mflash_ak74",
-                             "particle":  {
-                                              "countMin":  6,
-                                              "countMax":  8,
-                                              "lifetimeMin":  0.12,
-                                              "lifetimeMax":  0.2,
-                                              "delayMin":  3,
-                                              "delayMax":  3,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0
-                                       },
-                             "size":  {
-                                          "startMin":  0.0254,
-                                          "startMax":  0.0381,
-                                          "endMin":  0.00254,
-                                          "endMax":  0.00254,
-                                          "curve":  "linear"
-                                      }
-                         }
-                     ]
+        "id": "effects/impacts/impact_computer",
+        "displayName": "Impact Computer",
+        "segments": [
+            {
+                "name": "smoke",
+                "type": "particle",
+                "texture": "gfx/misc/jk_smoke5",
+                "flags": [
+                    "useAlpha"
+                ],
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 2,
+                    "countMax": 3,
+                    "lifetimeMin": 2,
+                    "lifetimeMax": 2,
+                    "delayMin": 0.3,
+                    "delayMax": 0.3,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "rotationSpeedMin": -80,
+                    "rotationSpeedMax": 80,
+                    "gravityModifier": -0.0362,
+                    "originMin": [
+                        -0.254,
+                        -0.254,
+                        -0.127
+                    ],
+                    "originMax": [
+                        0.254,
+                        0.254,
+                        -0.127
+                    ],
+                    "velocityMin": [
+                        -0.1016,
+                        -0.1016,
+                        0.2032
+                    ],
+                    "velocityMax": [
+                        0.1016,
+                        0.1016,
+                        0.508
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.6,
+                    "startMax": 0.8,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 55,
+                    "curve": "linear nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.5765
+                    ],
+                    "startMax": [
+                        0.1373
+                    ]
+                },
+                "size": {
+                    "startMin": 0.254,
+                    "startMax": 0.254,
+                    "endMin": 0.635,
+                    "endMax": 0.889,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "bang_light",
+                "type": "particle",
+                "texture": "gfx/misc/jk_mflash_ak74",
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.4,
+                    "lifetimeMax": 0.45,
+                    "rotationMin": -180,
+                    "rotationMax": 180,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.7,
+                    "startMax": 0.7,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 50,
+                    "curve": "linear nonlinear"
+                },
+                "size": {
+                    "startMin": 0.0254,
+                    "startMax": 0.0508,
+                    "endMin": 1.016,
+                    "endMax": 1.143,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "cneter bang_light",
+                "type": "particle",
+                "texture": "gfx/misc/jk_mflash_ak74",
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.2,
+                    "lifetimeMax": 0.25,
+                    "rotationMin": -180,
+                    "rotationMax": 180,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 90,
+                    "curve": "linear"
+                },
+                "size": {
+                    "endMin": 0.635,
+                    "endMax": 0.889,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "sparks",
+                "type": "particle",
+                "texture": "gfx/misc/jk_mflash_ak74",
+                "flags": [
+                    "usePhysics"
+                ],
+                "particle": {
+                    "countMin": 8,
+                    "countMax": 8,
+                    "lifetimeMin": 1.5,
+                    "lifetimeMax": 2,
+                    "gravityModifier": 1.683,
+                    "velocityMin": [
+                        -2.54,
+                        0.635,
+                        2.54
+                    ],
+                    "velocityMax": [
+                        2.54,
+                        1.27,
+                        10.16
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 60,
+                    "curve": "random nonlinear"
+                },
+                "size": {
+                    "startMin": 0.0127,
+                    "startMax": 0.0381
+                }
+            },
+            {
+                "type": "line",
+                "texture": "gfx/misc/jk_mflash_ak74",
+                "particle": {
+                    "countMin": 5,
+                    "countMax": 5,
+                    "lifetimeMin": 0.15,
+                    "lifetimeMax": 0.2,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0
+                },
+                "size": {
+                    "startMin": 0.0254,
+                    "startMax": 0.0381,
+                    "endMin": 0.00254,
+                    "endMax": 0.00254,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "delayed_sparks",
+                "type": "particle",
+                "texture": "gfx/misc/jk_mflash_ak74",
+                "flags": [
+                    "usePhysics"
+                ],
+                "particle": {
+                    "countMin": 6,
+                    "countMax": 8,
+                    "lifetimeMin": 1.6,
+                    "lifetimeMax": 2,
+                    "delayMin": 1.1,
+                    "delayMax": 1.1,
+                    "gravityModifier": 1.683,
+                    "velocityMin": [
+                        -1.905,
+                        -1.905,
+                        5.715
+                    ],
+                    "velocityMax": [
+                        1.905,
+                        1.905,
+                        7.62
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 50,
+                    "curve": "random nonlinear"
+                },
+                "size": {
+                    "startMin": 0.0127,
+                    "startMax": 0.0381,
+                    "endMin": 0.00254,
+                    "endMax": 0.00254
+                }
+            },
+            {
+                "name": "delayed1 sparks",
+                "type": "particle",
+                "texture": "gfx/misc/jk_mflash_ak74",
+                "flags": [
+                    "usePhysics"
+                ],
+                "particle": {
+                    "countMin": 4,
+                    "countMax": 5,
+                    "lifetimeMin": 1.6,
+                    "lifetimeMax": 2,
+                    "delayMin": 3,
+                    "delayMax": 3,
+                    "gravityModifier": 1.683,
+                    "velocityMin": [
+                        -1.905,
+                        -2.032,
+                        5.08
+                    ],
+                    "velocityMax": [
+                        1.905,
+                        2.032,
+                        7.62
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 50,
+                    "curve": "random nonlinear"
+                },
+                "size": {
+                    "startMin": 0.0127,
+                    "startMax": 0.0381
+                }
+            },
+            {
+                "name": "Copy of Unnamed Line 12",
+                "type": "line",
+                "texture": "gfx/misc/jk_mflash_ak74",
+                "particle": {
+                    "countMin": 6,
+                    "countMax": 8,
+                    "lifetimeMin": 0.12,
+                    "lifetimeMax": 0.2,
+                    "delayMin": 3,
+                    "delayMax": 3,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0
+                },
+                "size": {
+                    "startMin": 0.0254,
+                    "startMax": 0.0381,
+                    "endMin": 0.00254,
+                    "endMax": 0.00254,
+                    "curve": "linear"
+                }
+            }
+        ]
     }
 ]

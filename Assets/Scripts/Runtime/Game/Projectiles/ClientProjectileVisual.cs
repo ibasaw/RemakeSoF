@@ -1,6 +1,7 @@
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.EffectManagement;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
+using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
@@ -74,6 +75,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Explosions-Effekt-ID fuer Detonation (aus JSON).</summary>
         private string m_ExplosionEffectId;
 
+        /// <summary>Addressable-Key fuer Projektil-Model (z.B. "knife", "f1"). Leer = kein Model.</summary>
+        private string m_ModelKey;
+
+        /// <summary>Instanziiertes Projektil-Model (geladen via PrefabManager).</summary>
+        private GameObject m_ModelInstance;
+
+        /// <summary>Akkumulierter ROLL-Winkel fuer Messer-Wurfrotation (SoF2: lerpAngles[ROLL] += cg.time * 1.75).</summary>
+        private float m_KnifeRollAngle;
+
+        /// <summary>Z-Rotation fuer SoF2/Ghoul2-Models (identisch zum WeaponLoader).</summary>
+        private const float MODEL_Z_ROTATION = -90f;
+
+        /// <summary>Rotationsgeschwindigkeit fuer Messer-Wurfrotation in Grad/Sek (SoF2: 1.75 Grad/ms = 1750 Grad/s).</summary>
+        private const float KNIFE_ROTATION_SPEED = 1750f;
+
         /// <summary>
         /// Initialisiert das visuelle Projektil mit den gleichen Parametern wie ServerProjectile.
         /// </summary>
@@ -87,11 +103,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             float timer,
             uint projectileId = 0,
             string effectId = "",
-            string explosionEffectId = "")
+            string explosionEffectId = "",
+            string modelKey = "")
         {
             m_ProjectileId = projectileId;
             m_EffectId = effectId;
             m_ExplosionEffectId = explosionEffectId;
+            m_ModelKey = modelKey;
             transform.position = spawnPosition;
             m_Velocity = direction.normalized * (speedQU * SOF2_UNIT_SCALE);
             m_GravityScale = gravityScale;
@@ -116,9 +134,97 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         }
 
         /// <summary>
-        /// Erstellt die visuellen Komponenten: kleine Kugel + TrailRenderer.
+        /// Erstellt die visuellen Komponenten: 3D-Model (wenn vorhanden) oder Fallback-Kugel + TrailRenderer.
         /// </summary>
         private void CreateVisuals()
+        {
+            // Model laden via PrefabManager (z.B. "knife", "f1")
+            bool hasModel = !string.IsNullOrEmpty(m_ModelKey) && TryLoadModel();
+
+            if (!hasModel)
+            {
+                CreateFallbackSphere();
+            }
+
+            // Datengetriebene Effekte via EffectFactory
+            EffectFactory factory = ServiceLocator.Get<EffectFactory>();
+            EffectDefinition definition = factory?.GetDefinition(m_EffectId);
+
+            if (definition != null && definition.Segments != null)
+            {
+                CreateDataDrivenVisuals(factory, definition);
+            }
+            else
+            {
+                CreateFallbackTrail();
+            }
+        }
+
+        /// <summary>
+        /// Versucht das Projektil-Model via PrefabManager zu laden und zu instanziieren.
+        /// Gibt true zurueck wenn erfolgreich, false als Fallback.
+        /// </summary>
+        private bool TryLoadModel()
+        {
+            PrefabManager prefabManager = ServiceLocator.Get<PrefabManager>();
+            if (prefabManager == null)
+            {
+                Debug.LogWarning("[ClientProjectileVisual] PrefabManager nicht verfuegbar — Fallback auf Sphere.");
+                return false;
+            }
+
+            GameObject prefab = prefabManager.LoadPrefab<GameObject>(m_ModelKey);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[ClientProjectileVisual] Projektil-Model '{m_ModelKey}' nicht gefunden — Fallback auf Sphere.");
+                return false;
+            }
+
+            m_ModelInstance = Instantiate(prefab, transform);
+            m_ModelInstance.name = $"ProjectileModel_{m_ModelKey}";
+
+            // SoF2/Ghoul2-Models sind um Z-Achse gedreht relativ zu Unity (wie im WeaponLoader)
+            m_ModelInstance.transform.localRotation = Quaternion.Euler(0f, 0f, MODEL_Z_ROTATION);
+
+            // Collider entfernen (Projektil-Models sind rein visuell, Kollision ist punkt-basiert)
+            foreach (Collider col in m_ModelInstance.GetComponentsInChildren<Collider>())
+            {
+                Destroy(col);
+            }
+
+            // Knife: ROLL-Rotation wird direkt auf dem Transform angewendet (nicht auf Bone),
+            // passend zu SoF2 cg_ents.c CG_Missile(): lerpAngles[ROLL] += cg.time * 1.75
+
+            Debug.Log($"[ClientProjectileVisual] Projektil-Model '{m_ModelKey}' geladen.");
+            return true;
+        }
+
+        /// <summary>
+        /// Sucht rekursiv nach einem Child-Transform mit dem angegebenen Namen.
+        /// </summary>
+        private static Transform FindChildRecursive(Transform parent, string childName)
+        {
+            foreach (Transform child in parent)
+            {
+                if (child.name == childName)
+                {
+                    return child;
+                }
+
+                Transform found = FindChildRecursive(child, childName);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Erstellt eine Fallback-Kugel wenn kein Projektil-Model vorhanden ist.
+        /// </summary>
+        private void CreateFallbackSphere()
         {
             // Kleine Kugel als Projektil-Objekt
             GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -141,19 +247,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                     : m_Detonation == "sticky" ? new Color(0.85f, 0.85f, 0.9f)
                     : new Color(1f, 0.5f, 0f);
                 renderer.material = mat;
-            }
-
-            // Datengetriebene Effekte via EffectFactory
-            EffectFactory factory = ServiceLocator.Get<EffectFactory>();
-            EffectDefinition definition = factory?.GetDefinition(m_EffectId);
-
-            if (definition != null && definition.Segments != null)
-            {
-                CreateDataDrivenVisuals(factory, definition);
-            }
-            else
-            {
-                CreateFallbackTrail();
             }
         }
 
@@ -262,6 +355,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             if (m_Velocity.sqrMagnitude > 0.001f)
             {
                 transform.rotation = Quaternion.LookRotation(m_Velocity);
+
+                // SoF2 Knife ROLL-Rotation: cg_ents.c CG_Missile() → lerpAngles[ROLL] += cg.time * 1.75
+                // 1.75 Grad/ms = 1750 Grad/s auf ROLL-Achse (lokale Forward/Z-Achse)
+                if (m_ModelKey == "knife")
+                {
+                    m_KnifeRollAngle += KNIFE_ROTATION_SPEED * dt;
+                    transform.rotation *= Quaternion.AngleAxis(m_KnifeRollAngle, Vector3.forward);
+                }
             }
 
             // Bewegung mit Kollisionserkennung
@@ -365,6 +466,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
             Destroy(gameObject, remainingLife);
         }
+
+
 
         /// <summary>
         /// Zerstoert das Visual mit der angegebenen ID (aufgerufen via Server-RPC bei Sticky-Pickup).

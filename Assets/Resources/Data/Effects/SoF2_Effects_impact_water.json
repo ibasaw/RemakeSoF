@@ -1,685 +1,685 @@
 ﻿[
     {
-        "id":  "effects/impact_water",
-        "displayName":  "Impact Water",
-        "segments":  [
-                         {
-                             "name":  "WaterRipple",
-                             "type":  "orientedParticle",
-                             "texture":  "gfx/misc/jd_ripple",
-                             "spawnFlags":  [
-                                                "evenDistribution",
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  2,
-                                              "countMax":  2,
-                                              "lifetimeMin":  0.4,
-                                              "lifetimeMax":  0.6,
-                                              "delayMin":  0,
-                                              "delayMax":  0.1,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  10,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            1
-                                                        ],
-                                           "startMax":  [
-                                                            0.8
-                                                        ]
-                                       },
-                             "size":  {
-                                          "endMin":  1.27,
-                                          "endMax":  1.27,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "water_explosion",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mist",
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.5,
-                                              "lifetimeMax":  0.7,
-                                              "delayMin":  0.15,
-                                              "delayMax":  0.15,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "rotationSpeedMin":  -40,
-                                              "rotationSpeedMax":  40,
-                                              "gravityModifier":  -0.0117,
-                                              "originMin":  [
-                                                                0,
-                                                                0,
-                                                                0.0254
-                                                            ],
-                                              "originMax":  [
-                                                                0,
-                                                                0,
-                                                                0.0508
-                                                            ],
-                                              "velocityMin":  [
-                                                                  -0.1016,
-                                                                  -0.1016,
-                                                                  0.254
-                                                              ],
-                                              "velocityMax":  [
-                                                                  0.1016,
-                                                                  0.1016,
-                                                                  0.508
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.3,
-                                           "startMax":  0.4,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.8471
-                                                        ],
-                                           "startMax":  [
-                                                            0.8
-                                                        ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.1016,
-                                          "startMax":  0.1016,
-                                          "endMin":  0.4064,
-                                          "endMax":  0.4572,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "type":  "tail",
-                             "texture":  "gfx/misc/bp_splash",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "spawnFlags":  [
-                                                "orgOnCylinder",
-                                                "axisFromSphere",
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "trail":  {
-                                           "lifetime":  0.45,
-                                           "countMin":  4,
-                                           "countMax":  5,
-                                           "startWidth":  0.0381,
-                                           "endWidth":  0.1524,
-                                           "lengthMin":  0.4064,
-                                           "lengthMax":  0.8128,
-                                           "speed":  0.0254,
-                                           "radius":  0.0381
-                                       },
-                             "alpha":  {
-                                           "startMin":  0.7,
-                                           "startMax":  0.8,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.7804
-                                                        ],
-                                           "startMax":  [
-                                                            0.6784
-                                                        ]
-                                       }
-                         },
-                         {
-                             "name":  "Copy of Unnamed Tail 14",
-                             "type":  "tail",
-                             "texture":  "gfx/misc/bp_splash",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "trail":  {
-                                           "lifetime":  0.7,
-                                           "startWidth":  0.0381,
-                                           "endWidth":  0.2286,
-                                           "lengthMin":  1.016,
-                                           "lengthMax":  1.016,
-                                           "speed":  0.0508
-                                       },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear nonlinear"
-                                       }
-                         }
-                     ]
+        "id": "effects/impact_water",
+        "displayName": "Impact Water",
+        "segments": [
+            {
+                "name": "WaterRipple",
+                "type": "orientedParticle",
+                "texture": "gfx/misc/jd_ripple",
+                "spawnFlags": [
+                    "evenDistribution",
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 2,
+                    "countMax": 2,
+                    "lifetimeMin": 0.4,
+                    "lifetimeMax": 0.6,
+                    "delayMin": 0,
+                    "delayMax": 0.1,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 10,
+                    "curve": "linear nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        1
+                    ],
+                    "startMax": [
+                        0.8
+                    ]
+                },
+                "size": {
+                    "endMin": 1.27,
+                    "endMax": 1.27,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "water_explosion",
+                "type": "particle",
+                "texture": "gfx/misc/jk_mist",
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.5,
+                    "lifetimeMax": 0.7,
+                    "delayMin": 0.15,
+                    "delayMax": 0.15,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "rotationSpeedMin": -40,
+                    "rotationSpeedMax": 40,
+                    "gravityModifier": -0.0117,
+                    "originMin": [
+                        0,
+                        0,
+                        0.0254
+                    ],
+                    "originMax": [
+                        0,
+                        0,
+                        0.0508
+                    ],
+                    "velocityMin": [
+                        -0.1016,
+                        -0.1016,
+                        0.254
+                    ],
+                    "velocityMax": [
+                        0.1016,
+                        0.1016,
+                        0.508
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.3,
+                    "startMax": 0.4,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                },
+                "color": {
+                    "startMin": [
+                        0.8471
+                    ],
+                    "startMax": [
+                        0.8
+                    ]
+                },
+                "size": {
+                    "startMin": 0.1016,
+                    "startMax": 0.1016,
+                    "endMin": 0.4064,
+                    "endMax": 0.4572,
+                    "curve": "linear"
+                }
+            },
+            {
+                "type": "tail",
+                "texture": "gfx/misc/bp_splash",
+                "flags": [
+                    "useAlpha"
+                ],
+                "spawnFlags": [
+                    "orgOnCylinder",
+                    "axisFromSphere",
+                    "rgbComponentInterpolation"
+                ],
+                "trail": {
+                    "lifetime": 0.45,
+                    "countMin": 4,
+                    "countMax": 5,
+                    "startWidth": 0.0381,
+                    "endWidth": 0.1524,
+                    "lengthMin": 0.4064,
+                    "lengthMax": 0.8128,
+                    "speed": 0.0254,
+                    "radius": 0.0381
+                },
+                "alpha": {
+                    "startMin": 0.7,
+                    "startMax": 0.8,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.7804
+                    ],
+                    "startMax": [
+                        0.6784
+                    ]
+                }
+            },
+            {
+                "name": "Copy of Unnamed Tail 14",
+                "type": "tail",
+                "texture": "gfx/misc/bp_splash",
+                "flags": [
+                    "useAlpha"
+                ],
+                "trail": {
+                    "lifetime": 0.7,
+                    "startWidth": 0.0381,
+                    "endWidth": 0.2286,
+                    "lengthMin": 1.016,
+                    "lengthMax": 1.016,
+                    "speed": 0.0508
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear nonlinear"
+                }
+            }
+        ]
     },
     {
-        "id":  "effects/impact_water_12g",
-        "displayName":  "Impact Water 12G",
-        "segments":  [
-                         {
-                             "name":  "WaterRipple",
-                             "type":  "orientedParticle",
-                             "texture":  "gfx/sprites/rainring",
-                             "spawnFlags":  [
-                                                "evenDistribution",
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  2,
-                                              "lifetimeMin":  0.4,
-                                              "lifetimeMax":  0.6,
-                                              "delayMin":  0,
-                                              "delayMax":  0.1,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  50,
-                                           "curve":  "linear clamp"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.8471
-                                                        ],
-                                           "startMax":  [
-                                                            0.8
-                                                        ]
-                                       },
-                             "size":  {
-                                          "endMin":  1.27,
-                                          "endMax":  1.27,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "water_explosion",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mist",
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  0,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.5,
-                                              "lifetimeMax":  0.7,
-                                              "delayMin":  0.15,
-                                              "delayMax":  0.15,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "rotationSpeedMin":  -40,
-                                              "rotationSpeedMax":  40,
-                                              "gravityModifier":  -0.0117,
-                                              "originMin":  [
-                                                                0,
-                                                                0,
-                                                                0.0254
-                                                            ],
-                                              "originMax":  [
-                                                                0,
-                                                                0,
-                                                                0.0508
-                                                            ],
-                                              "velocityMin":  [
-                                                                  -0.1016,
-                                                                  -0.1016,
-                                                                  0.254
-                                                              ],
-                                              "velocityMax":  [
-                                                                  0.1016,
-                                                                  0.1016,
-                                                                  0.508
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.3,
-                                           "startMax":  0.4,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.8471
-                                                        ],
-                                           "startMax":  [
-                                                            0.8
-                                                        ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.1016,
-                                          "startMax":  0.1016,
-                                          "endMin":  0.4064,
-                                          "endMax":  0.4572,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "type":  "tail",
-                             "texture":  "gfx/misc/bp_splash",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "spawnFlags":  [
-                                                "orgOnCylinder",
-                                                "axisFromSphere",
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "trail":  {
-                                           "lifetime":  0.45,
-                                           "countMin":  3,
-                                           "countMax":  3,
-                                           "startWidth":  0.0381,
-                                           "endWidth":  0.1524,
-                                           "lengthMin":  0.4064,
-                                           "lengthMax":  0.8128,
-                                           "speed":  0.0254,
-                                           "radius":  0.0381
-                                       },
-                             "alpha":  {
-                                           "startMin":  0.6,
-                                           "startMax":  0.7,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.6784
-                                                        ],
-                                           "startMax":  [
-                                                            0.7804
-                                                        ]
-                                       }
-                         },
-                         {
-                             "name":  "Copy of Unnamed Tail 14",
-                             "type":  "tail",
-                             "texture":  "gfx/misc/bp_splash",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "spawnFlags":  [
-                                                "evenDistribution"
-                                            ],
-                             "trail":  {
-                                           "lifetime":  0.7,
-                                           "startWidth":  0.0381,
-                                           "endWidth":  0.1778,
-                                           "lengthMin":  1.016,
-                                           "lengthMax":  1.016,
-                                           "speed":  0.0508
-                                       },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear nonlinear"
-                                       }
-                         }
-                     ]
+        "id": "effects/impact_water_12g",
+        "displayName": "Impact Water 12G",
+        "segments": [
+            {
+                "name": "WaterRipple",
+                "type": "orientedParticle",
+                "texture": "gfx/sprites/rainring",
+                "spawnFlags": [
+                    "evenDistribution",
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 2,
+                    "lifetimeMin": 0.4,
+                    "lifetimeMax": 0.6,
+                    "delayMin": 0,
+                    "delayMax": 0.1,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 50,
+                    "curve": "linear clamp"
+                },
+                "color": {
+                    "startMin": [
+                        0.8471
+                    ],
+                    "startMax": [
+                        0.8
+                    ]
+                },
+                "size": {
+                    "endMin": 1.27,
+                    "endMax": 1.27,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "water_explosion",
+                "type": "particle",
+                "texture": "gfx/misc/jk_mist",
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 0,
+                    "countMax": 1,
+                    "lifetimeMin": 0.5,
+                    "lifetimeMax": 0.7,
+                    "delayMin": 0.15,
+                    "delayMax": 0.15,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "rotationSpeedMin": -40,
+                    "rotationSpeedMax": 40,
+                    "gravityModifier": -0.0117,
+                    "originMin": [
+                        0,
+                        0,
+                        0.0254
+                    ],
+                    "originMax": [
+                        0,
+                        0,
+                        0.0508
+                    ],
+                    "velocityMin": [
+                        -0.1016,
+                        -0.1016,
+                        0.254
+                    ],
+                    "velocityMax": [
+                        0.1016,
+                        0.1016,
+                        0.508
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.3,
+                    "startMax": 0.4,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                },
+                "color": {
+                    "startMin": [
+                        0.8471
+                    ],
+                    "startMax": [
+                        0.8
+                    ]
+                },
+                "size": {
+                    "startMin": 0.1016,
+                    "startMax": 0.1016,
+                    "endMin": 0.4064,
+                    "endMax": 0.4572,
+                    "curve": "linear"
+                }
+            },
+            {
+                "type": "tail",
+                "texture": "gfx/misc/bp_splash",
+                "flags": [
+                    "useAlpha"
+                ],
+                "spawnFlags": [
+                    "orgOnCylinder",
+                    "axisFromSphere",
+                    "rgbComponentInterpolation"
+                ],
+                "trail": {
+                    "lifetime": 0.45,
+                    "countMin": 3,
+                    "countMax": 3,
+                    "startWidth": 0.0381,
+                    "endWidth": 0.1524,
+                    "lengthMin": 0.4064,
+                    "lengthMax": 0.8128,
+                    "speed": 0.0254,
+                    "radius": 0.0381
+                },
+                "alpha": {
+                    "startMin": 0.6,
+                    "startMax": 0.7,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.6784
+                    ],
+                    "startMax": [
+                        0.7804
+                    ]
+                }
+            },
+            {
+                "name": "Copy of Unnamed Tail 14",
+                "type": "tail",
+                "texture": "gfx/misc/bp_splash",
+                "flags": [
+                    "useAlpha"
+                ],
+                "spawnFlags": [
+                    "evenDistribution"
+                ],
+                "trail": {
+                    "lifetime": 0.7,
+                    "startWidth": 0.0381,
+                    "endWidth": 0.1778,
+                    "lengthMin": 1.016,
+                    "lengthMax": 1.016,
+                    "speed": 0.0508
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear nonlinear"
+                }
+            }
+        ]
     },
     {
-        "id":  "effects/impact_water_belt",
-        "displayName":  "Impact Water Belt",
-        "segments":  [
-                         {
-                             "name":  "WaterRipple",
-                             "type":  "orientedParticle",
-                             "texture":  "gfx/misc/jd_ripple",
-                             "spawnFlags":  [
-                                                "evenDistribution",
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  2,
-                                              "countMax":  2,
-                                              "lifetimeMin":  0.6,
-                                              "lifetimeMax":  0.8,
-                                              "delayMin":  0,
-                                              "delayMax":  0.1,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  10,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            1
-                                                        ],
-                                           "startMax":  [
-                                                            0.8
-                                                        ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.1016,
-                                          "startMax":  0.1016,
-                                          "endMin":  1.651,
-                                          "endMax":  2.286,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "water_explosion",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mist",
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.7,
-                                              "lifetimeMax":  0.9,
-                                              "delayMin":  0.15,
-                                              "delayMax":  0.15,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "rotationSpeedMin":  -40,
-                                              "rotationSpeedMax":  40,
-                                              "gravityModifier":  -0.0117,
-                                              "velocityMin":  [
-                                                                  -0.1016,
-                                                                  -0.1016,
-                                                                  0.508
-                                                              ],
-                                              "velocityMax":  [
-                                                                  0.1016,
-                                                                  0.1016,
-                                                                  0.635
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.4,
-                                           "startMax":  0.5,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.8471
-                                                        ],
-                                           "startMax":  [
-                                                            0.8
-                                                        ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.1016,
-                                          "startMax":  0.1016,
-                                          "endMin":  0.9652,
-                                          "endMax":  1.1176,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "type":  "tail",
-                             "texture":  "gfx/misc/bp_splash",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "spawnFlags":  [
-                                                "orgOnCylinder",
-                                                "axisFromSphere",
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "trail":  {
-                                           "lifetime":  0.625,
-                                           "countMin":  4,
-                                           "countMax":  5,
-                                           "startWidth":  0.0635,
-                                           "endWidth":  0.3048,
-                                           "lengthMin":  1.3716,
-                                           "lengthMax":  1.8288,
-                                           "speed":  0.0254,
-                                           "radius":  0.0381
-                                       },
-                             "alpha":  {
-                                           "startMin":  0.8,
-                                           "startMax":  0.9,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.8118
-                                                        ],
-                                           "startMax":  [
-                                                            0.8549
-                                                        ]
-                                       }
-                         },
-                         {
-                             "name":  "Copy of Unnamed Tail 14",
-                             "type":  "tail",
-                             "texture":  "gfx/misc/bp_splash",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "trail":  {
-                                           "lifetime":  0.95,
-                                           "startWidth":  0.0889,
-                                           "endWidth":  0.5588,
-                                           "lengthMin":  2.54,
-                                           "lengthMax":  2.54,
-                                           "speed":  0.0508
-                                       },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear nonlinear"
-                                       }
-                         }
-                     ]
+        "id": "effects/impact_water_belt",
+        "displayName": "Impact Water Belt",
+        "segments": [
+            {
+                "name": "WaterRipple",
+                "type": "orientedParticle",
+                "texture": "gfx/misc/jd_ripple",
+                "spawnFlags": [
+                    "evenDistribution",
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 2,
+                    "countMax": 2,
+                    "lifetimeMin": 0.6,
+                    "lifetimeMax": 0.8,
+                    "delayMin": 0,
+                    "delayMax": 0.1,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 10,
+                    "curve": "linear nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        1
+                    ],
+                    "startMax": [
+                        0.8
+                    ]
+                },
+                "size": {
+                    "startMin": 0.1016,
+                    "startMax": 0.1016,
+                    "endMin": 1.651,
+                    "endMax": 2.286,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "water_explosion",
+                "type": "particle",
+                "texture": "gfx/misc/jk_mist",
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.7,
+                    "lifetimeMax": 0.9,
+                    "delayMin": 0.15,
+                    "delayMax": 0.15,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "rotationSpeedMin": -40,
+                    "rotationSpeedMax": 40,
+                    "gravityModifier": -0.0117,
+                    "velocityMin": [
+                        -0.1016,
+                        -0.1016,
+                        0.508
+                    ],
+                    "velocityMax": [
+                        0.1016,
+                        0.1016,
+                        0.635
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.4,
+                    "startMax": 0.5,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                },
+                "color": {
+                    "startMin": [
+                        0.8471
+                    ],
+                    "startMax": [
+                        0.8
+                    ]
+                },
+                "size": {
+                    "startMin": 0.1016,
+                    "startMax": 0.1016,
+                    "endMin": 0.9652,
+                    "endMax": 1.1176,
+                    "curve": "linear"
+                }
+            },
+            {
+                "type": "tail",
+                "texture": "gfx/misc/bp_splash",
+                "flags": [
+                    "useAlpha"
+                ],
+                "spawnFlags": [
+                    "orgOnCylinder",
+                    "axisFromSphere",
+                    "rgbComponentInterpolation"
+                ],
+                "trail": {
+                    "lifetime": 0.625,
+                    "countMin": 4,
+                    "countMax": 5,
+                    "startWidth": 0.0635,
+                    "endWidth": 0.3048,
+                    "lengthMin": 1.3716,
+                    "lengthMax": 1.8288,
+                    "speed": 0.0254,
+                    "radius": 0.0381
+                },
+                "alpha": {
+                    "startMin": 0.8,
+                    "startMax": 0.9,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.8118
+                    ],
+                    "startMax": [
+                        0.8549
+                    ]
+                }
+            },
+            {
+                "name": "Copy of Unnamed Tail 14",
+                "type": "tail",
+                "texture": "gfx/misc/bp_splash",
+                "flags": [
+                    "useAlpha"
+                ],
+                "trail": {
+                    "lifetime": 0.95,
+                    "startWidth": 0.0889,
+                    "endWidth": 0.5588,
+                    "lengthMin": 2.54,
+                    "lengthMax": 2.54,
+                    "speed": 0.0508
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear nonlinear"
+                }
+            }
+        ]
     },
     {
-        "id":  "effects/impact_water2",
-        "displayName":  "Impact Water2",
-        "segments":  [
-                         {
-                             "name":  "WaterRipple",
-                             "type":  "orientedParticle",
-                             "texture":  "gfx/misc/jd_ripple",
-                             "spawnFlags":  [
-                                                "evenDistribution",
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  2,
-                                              "countMax":  2,
-                                              "lifetimeMin":  0.55,
-                                              "lifetimeMax":  0.7,
-                                              "delayMin":  0,
-                                              "delayMax":  0.1,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  10,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            1
-                                                        ],
-                                           "startMax":  [
-                                                            0.8
-                                                        ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.0508,
-                                          "startMax":  0.0762,
-                                          "endMin":  1.651,
-                                          "endMax":  1.651,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "water_explosion",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mist",
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.65,
-                                              "lifetimeMax":  0.8,
-                                              "delayMin":  0.15,
-                                              "delayMax":  0.15,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "rotationSpeedMin":  -40,
-                                              "rotationSpeedMax":  40,
-                                              "gravityModifier":  -0.0117,
-                                              "originMin":  [
-                                                                0,
-                                                                0,
-                                                                0.0508
-                                                            ],
-                                              "originMax":  [
-                                                                0,
-                                                                0,
-                                                                0.1016
-                                                            ],
-                                              "velocityMin":  [
-                                                                  -0.1016,
-                                                                  -0.1016,
-                                                                  0.4572
-                                                              ],
-                                              "velocityMax":  [
-                                                                  0.1016,
-                                                                  0.1016,
-                                                                  0.6096
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.3,
-                                           "startMax":  0.4,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.8471
-                                                        ],
-                                           "startMax":  [
-                                                            0.8
-                                                        ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.1016,
-                                          "startMax":  0.1016,
-                                          "endMin":  0.508,
-                                          "endMax":  0.6096,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "type":  "tail",
-                             "texture":  "gfx/misc/bp_splash",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "spawnFlags":  [
-                                                "orgOnCylinder",
-                                                "axisFromSphere",
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "trail":  {
-                                           "lifetime":  0.525,
-                                           "countMin":  4,
-                                           "countMax":  5,
-                                           "startWidth":  0.0635,
-                                           "endWidth":  0.1905,
-                                           "lengthMin":  0.7112,
-                                           "lengthMax":  1.016,
-                                           "speed":  0.0254,
-                                           "radius":  0.0381
-                                       },
-                             "alpha":  {
-                                           "startMin":  0.7,
-                                           "startMax":  0.8,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.7804
-                                                        ],
-                                           "startMax":  [
-                                                            0.6784
-                                                        ]
-                                       }
-                         },
-                         {
-                             "name":  "Copy of Unnamed Tail 14",
-                             "type":  "tail",
-                             "texture":  "gfx/misc/bp_splash",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "trail":  {
-                                           "lifetime":  0.825,
-                                           "startWidth":  0.0635,
-                                           "endWidth":  0.3048,
-                                           "lengthMin":  1.397,
-                                           "lengthMax":  1.397,
-                                           "speed":  0.0508
-                                       },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear nonlinear"
-                                       }
-                         }
-                     ]
+        "id": "effects/impact_water2",
+        "displayName": "Impact Water2",
+        "segments": [
+            {
+                "name": "WaterRipple",
+                "type": "orientedParticle",
+                "texture": "gfx/misc/jd_ripple",
+                "spawnFlags": [
+                    "evenDistribution",
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 2,
+                    "countMax": 2,
+                    "lifetimeMin": 0.55,
+                    "lifetimeMax": 0.7,
+                    "delayMin": 0,
+                    "delayMax": 0.1,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 10,
+                    "curve": "linear nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        1
+                    ],
+                    "startMax": [
+                        0.8
+                    ]
+                },
+                "size": {
+                    "startMin": 0.0508,
+                    "startMax": 0.0762,
+                    "endMin": 1.651,
+                    "endMax": 1.651,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "water_explosion",
+                "type": "particle",
+                "texture": "gfx/misc/jk_mist",
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.65,
+                    "lifetimeMax": 0.8,
+                    "delayMin": 0.15,
+                    "delayMax": 0.15,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "rotationSpeedMin": -40,
+                    "rotationSpeedMax": 40,
+                    "gravityModifier": -0.0117,
+                    "originMin": [
+                        0,
+                        0,
+                        0.0508
+                    ],
+                    "originMax": [
+                        0,
+                        0,
+                        0.1016
+                    ],
+                    "velocityMin": [
+                        -0.1016,
+                        -0.1016,
+                        0.4572
+                    ],
+                    "velocityMax": [
+                        0.1016,
+                        0.1016,
+                        0.6096
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.3,
+                    "startMax": 0.4,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                },
+                "color": {
+                    "startMin": [
+                        0.8471
+                    ],
+                    "startMax": [
+                        0.8
+                    ]
+                },
+                "size": {
+                    "startMin": 0.1016,
+                    "startMax": 0.1016,
+                    "endMin": 0.508,
+                    "endMax": 0.6096,
+                    "curve": "linear"
+                }
+            },
+            {
+                "type": "tail",
+                "texture": "gfx/misc/bp_splash",
+                "flags": [
+                    "useAlpha"
+                ],
+                "spawnFlags": [
+                    "orgOnCylinder",
+                    "axisFromSphere",
+                    "rgbComponentInterpolation"
+                ],
+                "trail": {
+                    "lifetime": 0.525,
+                    "countMin": 4,
+                    "countMax": 5,
+                    "startWidth": 0.0635,
+                    "endWidth": 0.1905,
+                    "lengthMin": 0.7112,
+                    "lengthMax": 1.016,
+                    "speed": 0.0254,
+                    "radius": 0.0381
+                },
+                "alpha": {
+                    "startMin": 0.7,
+                    "startMax": 0.8,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.7804
+                    ],
+                    "startMax": [
+                        0.6784
+                    ]
+                }
+            },
+            {
+                "name": "Copy of Unnamed Tail 14",
+                "type": "tail",
+                "texture": "gfx/misc/bp_splash",
+                "flags": [
+                    "useAlpha"
+                ],
+                "trail": {
+                    "lifetime": 0.825,
+                    "startWidth": 0.0635,
+                    "endWidth": 0.3048,
+                    "lengthMin": 1.397,
+                    "lengthMax": 1.397,
+                    "speed": 0.0508
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear nonlinear"
+                }
+            }
+        ]
     }
 ]

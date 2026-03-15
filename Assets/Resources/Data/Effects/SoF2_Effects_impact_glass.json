@@ -1,226 +1,226 @@
 ﻿[
     {
-        "id":  "effects/impact_glass",
-        "displayName":  "Impact Glass",
-        "segments":  [
-                         {
-                             "type":  "particle",
-                             "texture":  "gfx/misc/gb_glass_bit1",
-                             "flags":  [
-                                           "usePhysics",
-                                           "useAlpha"
-                                       ],
-                             "spawnFlags":  [
-                                                "orgOnCylinder",
-                                                "axisFromSphere"
-                                            ],
-                             "particle":  {
-                                              "countMin":  5,
-                                              "countMax":  9,
-                                              "lifetimeMin":  3,
-                                              "lifetimeMax":  3.5,
-                                              "rotationMin":  0,
-                                              "rotationMax":  180,
-                                              "gravityModifier":  1.5535,
-                                              "originMin":  [
-                                                                -0.127,
-                                                                -0.127,
-                                                                0.127
-                                                            ],
-                                              "originMax":  [
-                                                                0.127,
-                                                                0.127,
-                                                                0.254
-                                                            ],
-                                              "velocityMin":  [
-                                                                  0,
-                                                                  1.27,
-                                                                  0
-                                                              ],
-                                              "velocityMax":  [
-                                                                  0,
-                                                                  7.62,
-                                                                  2.54
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  75,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "size":  {
-                                          "startMin":  0.0127,
-                                          "startMax":  0.0635
-                                      }
-                         },
-                         {
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_dirt_grey_streaked",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "particle":  {
-                                              "countMin":  2,
-                                              "countMax":  2,
-                                              "lifetimeMin":  0.2,
-                                              "lifetimeMax":  0.2,
-                                              "rotationMin":  -180,
-                                              "rotationMax":  180,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  20,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "size":  {
-                                          "endMin":  0.762,
-                                          "endMax":  1.016,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "Copy of Unnamed Particle 1",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_smoke5",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.4,
-                                              "lifetimeMax":  0.4,
-                                              "rotationMin":  -180,
-                                              "rotationMax":  180,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.15,
-                                           "startMax":  0.1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  20,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "size":  {
-                                          "endMin":  0.3048,
-                                          "endMax":  0.4572,
-                                          "curve":  "linear"
-                                      }
-                         }
-                     ]
+        "id": "effects/impact_glass",
+        "displayName": "Impact Glass",
+        "segments": [
+            {
+                "type": "particle",
+                "texture": "gfx/misc/gb_glass_bit1",
+                "flags": [
+                    "usePhysics",
+                    "useAlpha"
+                ],
+                "spawnFlags": [
+                    "orgOnCylinder",
+                    "axisFromSphere"
+                ],
+                "particle": {
+                    "countMin": 5,
+                    "countMax": 9,
+                    "lifetimeMin": 3,
+                    "lifetimeMax": 3.5,
+                    "rotationMin": 0,
+                    "rotationMax": 180,
+                    "gravityModifier": 1.5535,
+                    "originMin": [
+                        -0.127,
+                        -0.127,
+                        0.127
+                    ],
+                    "originMax": [
+                        0.127,
+                        0.127,
+                        0.254
+                    ],
+                    "velocityMin": [
+                        0,
+                        1.27,
+                        0
+                    ],
+                    "velocityMax": [
+                        0,
+                        7.62,
+                        2.54
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 75,
+                    "curve": "linear nonlinear"
+                },
+                "size": {
+                    "startMin": 0.0127,
+                    "startMax": 0.0635
+                }
+            },
+            {
+                "type": "particle",
+                "texture": "gfx/misc/jk_dirt_grey_streaked",
+                "flags": [
+                    "useAlpha"
+                ],
+                "particle": {
+                    "countMin": 2,
+                    "countMax": 2,
+                    "lifetimeMin": 0.2,
+                    "lifetimeMax": 0.2,
+                    "rotationMin": -180,
+                    "rotationMax": 180,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 20,
+                    "curve": "linear nonlinear"
+                },
+                "size": {
+                    "endMin": 0.762,
+                    "endMax": 1.016,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "Copy of Unnamed Particle 1",
+                "type": "particle",
+                "texture": "gfx/misc/jk_smoke5",
+                "flags": [
+                    "useAlpha"
+                ],
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.4,
+                    "lifetimeMax": 0.4,
+                    "rotationMin": -180,
+                    "rotationMax": 180,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.15,
+                    "startMax": 0.1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 20,
+                    "curve": "linear nonlinear"
+                },
+                "size": {
+                    "endMin": 0.3048,
+                    "endMax": 0.4572,
+                    "curve": "linear"
+                }
+            }
+        ]
     },
     {
-        "id":  "effects/impacts/impact_bpglass",
-        "displayName":  "Impact Bpglass",
-        "segments":  [
-                         {
-                             "type":  "tail",
-                             "texture":  "gfx/misc/jk_sniper_flash",
-                             "trail":  {
-                                           "lifetime":  0.225,
-                                           "countMin":  1,
-                                           "countMax":  2,
-                                           "startWidth":  0.01016,
-                                           "endWidth":  0.001,
-                                           "lengthMin":  0.381,
-                                           "lengthMax":  0.508,
-                                           "speed":  1.651
-                                       },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "nonlinear"
-                                       }
-                         },
-                         {
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_sniper_flash",
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.075,
-                                              "lifetimeMax":  0.1,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0
-                                       },
-                             "size":  {
-                                          "startMin":  0.0762,
-                                          "startMax":  0.1016,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "type":  "particle",
-                             "texture":  "gfx/misc/bp_smoke01",
-                             "flags":  [
-                                           "usePhysics",
-                                           "useAlpha"
-                                       ],
-                             "particle":  {
-                                              "countMin":  2,
-                                              "countMax":  2,
-                                              "lifetimeMin":  0.8,
-                                              "lifetimeMax":  1,
-                                              "delayMin":  0,
-                                              "delayMax":  0.05,
-                                              "rotationMin":  -180,
-                                              "rotationMax":  180,
-                                              "gravityModifier":  0.0039,
-                                              "velocityMin":  [
-                                                                  -0.0254,
-                                                                  -0.0254,
-                                                                  0.0254
-                                                              ],
-                                              "velocityMax":  [
-                                                                  0.0254,
-                                                                  0.0254,
-                                                                  0.0508
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.2,
-                                           "startMax":  0.3,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       },
-                             "size":  {
-                                          "endMin":  0.1524,
-                                          "endMax":  0.2032,
-                                          "curve":  "linear clamp"
-                                      }
-                         },
-                         {
-                             "name":  "decal",
-                             "type":  "decal",
-                             "texture":  "gfx/decals/impact/scuff",
-                             "decal":  {
-                                           "sizeMin":  0.0381,
-                                           "sizeMax":  0.0635,
-                                           "rotationMin":  0,
-                                           "rotationMax":  360,
-                                           "alphaMin":  0.5,
-                                           "alphaMax":  0.8,
-                                           "lifetime":  30
-                                       }
-                         }
-                     ]
+        "id": "effects/impacts/impact_bpglass",
+        "displayName": "Impact Bpglass",
+        "segments": [
+            {
+                "type": "tail",
+                "texture": "gfx/misc/jk_sniper_flash",
+                "trail": {
+                    "lifetime": 0.225,
+                    "countMin": 1,
+                    "countMax": 2,
+                    "startWidth": 0.01016,
+                    "endWidth": 0.001,
+                    "lengthMin": 0.381,
+                    "lengthMax": 0.508,
+                    "speed": 1.651
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "nonlinear"
+                }
+            },
+            {
+                "type": "particle",
+                "texture": "gfx/misc/jk_sniper_flash",
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.075,
+                    "lifetimeMax": 0.1,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0
+                },
+                "size": {
+                    "startMin": 0.0762,
+                    "startMax": 0.1016,
+                    "curve": "linear"
+                }
+            },
+            {
+                "type": "particle",
+                "texture": "gfx/misc/bp_smoke01",
+                "flags": [
+                    "usePhysics",
+                    "useAlpha"
+                ],
+                "particle": {
+                    "countMin": 2,
+                    "countMax": 2,
+                    "lifetimeMin": 0.8,
+                    "lifetimeMax": 1,
+                    "delayMin": 0,
+                    "delayMax": 0.05,
+                    "rotationMin": -180,
+                    "rotationMax": 180,
+                    "gravityModifier": 0.0039,
+                    "velocityMin": [
+                        -0.0254,
+                        -0.0254,
+                        0.0254
+                    ],
+                    "velocityMax": [
+                        0.0254,
+                        0.0254,
+                        0.0508
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.2,
+                    "startMax": 0.3,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                },
+                "size": {
+                    "endMin": 0.1524,
+                    "endMax": 0.2032,
+                    "curve": "linear clamp"
+                }
+            },
+            {
+                "name": "decal",
+                "type": "decal",
+                "texture": "gfx/decals/impact/scuff",
+                "decal": {
+                    "sizeMin": 0.0381,
+                    "sizeMax": 0.0635,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "alphaMin": 0.5,
+                    "alphaMax": 0.8,
+                    "lifetime": 30
+                }
+            }
+        ]
     }
 ]

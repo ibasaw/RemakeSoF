@@ -71,24 +71,30 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
         /// </summary>
         private Vector2 m_AccumulatedLookInput = Vector2.zero;
 
-        // ===== SoF2 Kick-Angles (temporaerer View-Overlay mit Decay) =====
+        // ===== SoF2 Kick-Angles (akkumulierter View-Punch mit Dual-Mode Decay) =====
 
-        /// <summary>Decay-Dauer fuer Kick-Angles in Sekunden (SoF2: ~200ms).</summary>
-        private const float KICK_DECAY_TIME = 0.2f;
+        /// <summary>Zeitfenster in Sekunden um "feuert noch" zu erkennen (kein RPC-based weaponstate).</summary>
+        private const float KICK_FIRING_WINDOW = 0.15f;
 
-        /// <summary>Aktueller Kick-Pitch-Offset (decayed ueber Zeit zurueck auf 0).</summary>
+        /// <summary>Linearer Decay waehrend Feuer: 0.01°/ms = 10°/s (SoF2: degreesCorrectedPerMSecond).</summary>
+        private const float KICK_LINEAR_DECAY_RATE = 10f;
+
+        /// <summary>Exponentieller Decay-Faktor wenn nicht feuert (SoF2: 0.3).</summary>
+        private const float KICK_EXPONENTIAL_FACTOR = 0.3f;
+
+        /// <summary>Basis-Millisekunden fuer den exponentiellen Faktor (SoF2: 50ms).</summary>
+        private const float KICK_EXPONENTIAL_BASE_MS = 50f;
+
+        /// <summary>Deadzone: Snap auf 0 wenn innerhalb ±0.05° (SoF2).</summary>
+        private const float KICK_DEADZONE = 0.05f;
+
+        /// <summary>Akkumulierter Kick-Pitch-Offset in Grad (decayed per-frame Richtung 0).</summary>
         private float m_KickPitch;
 
-        /// <summary>Aktueller Kick-Yaw-Offset (decayed ueber Zeit zurueck auf 0).</summary>
+        /// <summary>Akkumulierter Kick-Yaw-Offset in Grad (decayed per-frame Richtung 0).</summary>
         private float m_KickYaw;
 
-        /// <summary>Initiale Kick-Pitch-Staerke bei letztem Schuss (fuer linearen Decay).</summary>
-        private float m_KickPitchStart;
-
-        /// <summary>Initiale Kick-Yaw-Staerke bei letztem Schuss (fuer linearen Decay).</summary>
-        private float m_KickYawStart;
-
-        /// <summary>Zeitpunkt des letzten Kicks (fuer Decay-Berechnung).</summary>
+        /// <summary>Zeitpunkt des letzten Kick-Eingangs (fuer Firing-Detection).</summary>
         private float m_KickTime;
 
         // ===== Explosion Camera Shake =====
@@ -164,17 +170,43 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
                 m_AccumulatedLookInput = Vector2.zero;
             }
 
-            // SoF2 Kick-Angles: linearer Decay ueber KICK_DECAY_TIME
-            float kickPitchOffset = 0f;
-            float kickYawOffset = 0f;
-            float timeSinceKick = Time.time - m_KickTime;
+            // SoF2 Kick-Angles: Dual-Mode Decay (PM_Weapon_UpdateKickAngles)
+            // Feuert noch → langsamer linearer Decay (10°/s)
+            // Nicht mehr feuern → schneller exponentieller Decay (smooth Ruecklauf)
+            float kickDt = Time.deltaTime;
+            bool isFiring = (Time.time - m_KickTime) < KICK_FIRING_WINDOW;
 
-            if (timeSinceKick < KICK_DECAY_TIME)
+            if (isFiring)
             {
-                float ratio = 1f - (timeSinceKick / KICK_DECAY_TIME);
-                kickPitchOffset = m_KickPitchStart * ratio;
-                kickYawOffset = m_KickYawStart * ratio;
+                // SoF2: linearer Decay waehrend Feuer (0.01°/ms = 10°/s)
+                float correction = KICK_LINEAR_DECAY_RATE * kickDt;
+                m_KickPitch = Mathf.MoveTowards(m_KickPitch, 0f, correction);
+                m_KickYaw = Mathf.MoveTowards(m_KickYaw, 0f, correction);
             }
+            else
+            {
+                // SoF2: exponentieller Decay wenn nicht feuert
+                // VectorScale(kickAngles, 1.0 - (0.3 * msec/50))
+                float dtMs = kickDt * 1000f;
+                float scale = 1f - (KICK_EXPONENTIAL_FACTOR * (dtMs / KICK_EXPONENTIAL_BASE_MS));
+                scale = Mathf.Max(scale, 0f);
+                m_KickPitch *= scale;
+                m_KickYaw *= scale;
+
+                // Deadzone: Snap auf 0 innerhalb ±0.05° (SoF2)
+                if (Mathf.Abs(m_KickPitch) < KICK_DEADZONE)
+                {
+                    m_KickPitch = 0f;
+                }
+
+                if (Mathf.Abs(m_KickYaw) < KICK_DEADZONE)
+                {
+                    m_KickYaw = 0f;
+                }
+            }
+
+            float kickPitchOffset = m_KickPitch;
+            float kickYawOffset = m_KickYaw;
 
             // Explosion Camera Shake: zufaellige Richtungs-Offsets mit Decay
             float shakePitch = 0f;
@@ -229,27 +261,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
         }
 
         /// <summary>
-        /// Fuegt einen View-Punch hinzu (SoF2 kick_angles).
-        /// Kick wird als temporaerer Overlay auf die View angewendet und decayed
-        /// linear ueber KICK_DECAY_TIME (~200ms) zurueck auf Null.
-        /// Bei Schnellfeuer addieren sich Kicks auf den aktuellen Restwert.
+        /// Fuegt einen View-Punch hinzu (SoF2 PM_Weapon_AddKickAngles).
+        /// Kick wird auf den akkumulierten Offset addiert.
+        /// Bei Schnellfeuer haeuft sich der Kick an (langsamer Decay waehrend Feuer).
+        /// Beim Aufhoeren: schneller exponentieller Ruecklauf (smooth).
         /// Pitch-Kick ist positiv nach oben (Waffe kickt hoch), Yaw-Kick seitwaerts.
         /// </summary>
         public void AddViewPunch(float pitchKick, float yawKick)
         {
-            // Bei Schnellfeuer: aktuellen Restwert als Basis nehmen
-            float timeSinceKick = Time.time - m_KickTime;
-            float remaining = 0f;
-
-            if (timeSinceKick < KICK_DECAY_TIME)
-            {
-                remaining = 1f - (timeSinceKick / KICK_DECAY_TIME);
-            }
-
-            // Neuen Kick auf verbleibenden Kick addieren
-            m_KickPitchStart = (m_KickPitchStart * remaining) - pitchKick;
-            m_KickYawStart = (m_KickYawStart * remaining) + yawKick;
+            m_KickPitch -= pitchKick;
+            m_KickYaw += yawKick;
             m_KickTime = Time.time;
+
+            // SoF2 Clamp: maximal 180° (kickPitch > 180000 in SoF2)
+            m_KickPitch = Mathf.Clamp(m_KickPitch, -180f, 180f);
         }
 
         /// <summary>

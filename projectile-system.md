@@ -67,11 +67,41 @@ bool noActionRunning = m_ServerAttackFramesRemaining <= 0
     && m_ServerGrenadeThrowFramesRemaining <= 0;
 ```
 
-## Client Visual (TODO)
-`ProjectileSpawnClientRpc(spawnPosition, direction, speed, gravity)` is sent to all clients.
-Currently logs only. Future: spawn visual trail/model on clients.
+## Client Visual
+`ProjectileSpawnClientRpc(spawnPosition, direction, speed, gravity, bounce, detonation, timer, projectileId, effectId, explosionEffectId, modelKey)` is sent to all clients.
+Creates `ClientProjectileVisual` with:
+1. 3D model via PrefabManager (if `modelKey` is set — knife, f1)
+2. Data-driven trail/particle effects via EffectFactory (if `effectId` is set)
+3. Fallback colored sphere + simple trail (if neither available)
+4. Knife-specific end-over-end rotation on `knifeworldbase` bone
 
 ## EjectBone Mapping
 - RPG7: `ejection_rpg7`
 - MM1: `ejection_mm1`
 - F1: `gun` (both primary and alt attack)
+
+## Client Visual — Projectile Models
+`ProjectileSpawnClientRpc` sends `modelKey` (from JSON `"model"` field) to all clients.
+`ClientProjectileVisual` loads the 3D model via PrefabManager (Addressables, cache-first).
+
+### Model Mapping
+| Weapon | `model` Key | Prefab | Visual |
+|--------|------------|--------|--------|
+| Knife (throw) | `"knife"` | `Weapons/knife.prefab` | 3D knife mesh, end-over-end rotation |
+| F1 (both attacks) | `"f1"` | `Weapons/f1.prefab` | 3D grenade mesh, follows flight direction |
+| RPG7 | — | — | Trail effect only (`effects/rpg7_trail`) |
+| MM1 | — | — | Trail effect only (`effects/m203_trail`) |
+| M4 M203 | — | — | Trail effect only (`effects/m203_trail`) |
+
+### Knife Rotation
+The knife FBX contains a `knifeworldbase` bone with a pre-defined rotation animation.
+`ClientProjectileVisual` searches for this bone and applies continuous X-axis rotation (720°/s)
+to simulate end-over-end tumble during flight. Falls back to model root if bone not found.
+
+### Collision
+Projectile models have **no colliders** — all collision detection is point-based (Raycast along
+flight path in `ServerProjectile`). Colliders are stripped from instantiated models on spawn.
+
+### Fallback
+If the model prefab is not found via PrefabManager, a colored primitive sphere (0.1m) is used
+as fallback (same as before model loading was added).

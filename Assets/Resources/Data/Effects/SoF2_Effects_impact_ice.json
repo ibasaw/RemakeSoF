@@ -1,604 +1,604 @@
 ﻿[
     {
-        "id":  "effects/impact_ice",
-        "displayName":  "Impact Ice",
-        "segments":  [
-                         {
-                             "name":  "smokepuff",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/bp_smoke01",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.6,
-                                              "lifetimeMax":  0.7,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "rotationSpeedMin":  -200,
-                                              "rotationSpeedMax":  200,
-                                              "gravityModifier":  -0.0259,
-                                              "velocityMin":  [
-                                                                  -0.254,
-                                                                  -0.254,
-                                                                  0.889
-                                                              ],
-                                              "velocityMax":  [
-                                                                  0.254,
-                                                                  0.254,
-                                                                  1.143
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.45,
-                                           "startMax":  0.55,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.8863
-                                                        ],
-                                           "startMax":  [
-                                                            0.7961
-                                                        ],
-                                           "endMin":  [
-                                                          0.9294
-                                                      ],
-                                           "endMax":  [
-                                                          1
-                                                      ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.1778,
-                                          "startMax":  0.2286,
-                                          "endMin":  0.4064,
-                                          "endMax":  0.4572,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "type":  "line",
-                             "texture":  "gfx/misc/jk_smoke",
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.1,
-                                              "lifetimeMax":  0.1,
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.3,
-                                           "startMax":  0.4,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       },
-                             "size":  {
-                                          "startMin":  0.0508,
-                                          "startMax":  0.1524,
-                                          "endMin":  0.00762,
-                                          "endMax":  0.0127,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "name":  "Ice_particle_cloud",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_dirt_grey",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "particle":  {
-                                              "countMin":  2,
-                                              "countMax":  2,
-                                              "lifetimeMin":  0.5,
-                                              "lifetimeMax":  0.7,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "rotationSpeedMin":  -200,
-                                              "rotationSpeedMax":  200,
-                                              "velocityMin":  [
-                                                                  -0.508,
-                                                                  -0.508,
-                                                                  1.524
-                                                              ],
-                                              "velocityMax":  [
-                                                                  0.508,
-                                                                  0.508,
-                                                                  1.778
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  30,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.7961
-                                                        ],
-                                           "startMax":  [
-                                                            0.9294
-                                                        ],
-                                           "endMin":  [
-                                                          0.7961
-                                                      ],
-                                           "endMax":  [
-                                                          0.549
-                                                      ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.0508,
-                                          "startMax":  0.1016,
-                                          "endMin":  0.508,
-                                          "endMax":  0.635
-                                      }
-                         },
-                         {
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mist",
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  3,
-                                              "countMax":  5,
-                                              "lifetimeMin":  0.15,
-                                              "lifetimeMax":  0.3,
-                                              "gravityModifier":  0.4531,
-                                              "originMin":  [
-                                                                -0.0254,
-                                                                -0.0254,
-                                                                0
-                                                            ],
-                                              "originMax":  [
-                                                                0.0254,
-                                                                0.0254,
-                                                                0
-                                                            ],
-                                              "velocityMin":  [
-                                                                  -1.524,
-                                                                  -1.524,
-                                                                  5.08
-                                                              ],
-                                              "velocityMax":  [
-                                                                  1.524,
-                                                                  1.524,
-                                                                  10.16
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.6,
-                                           "startMax":  0.8,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  60,
-                                           "curve":  "nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.3216
-                                                        ],
-                                           "startMax":  [
-                                                            0.7961
-                                                        ],
-                                           "endMin":  [
-                                                          0.549
-                                                      ],
-                                           "endMax":  [
-                                                          0.8863
-                                                      ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.01016,
-                                          "startMax":  0.01651,
-                                          "endMin":  0.00254,
-                                          "endMax":  0.00508
-                                      }
-                         },
-                         {
-                             "name":  "decal",
-                             "type":  "decal",
-                             "texture":  "gfx/decals/impact/ice",
-                             "decal":  {
-                                           "sizeMin":  0.1143,
-                                           "sizeMax":  0.1524,
-                                           "rotationMin":  0,
-                                           "rotationMax":  360,
-                                           "lifetime":  30
-                                       }
-                         }
-                     ]
+        "id": "effects/impact_ice",
+        "displayName": "Impact Ice",
+        "segments": [
+            {
+                "name": "smokepuff",
+                "type": "particle",
+                "texture": "gfx/misc/bp_smoke01",
+                "flags": [
+                    "useAlpha"
+                ],
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.6,
+                    "lifetimeMax": 0.7,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "rotationSpeedMin": -200,
+                    "rotationSpeedMax": 200,
+                    "gravityModifier": -0.0259,
+                    "velocityMin": [
+                        -0.254,
+                        -0.254,
+                        0.889
+                    ],
+                    "velocityMax": [
+                        0.254,
+                        0.254,
+                        1.143
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.45,
+                    "startMax": 0.55,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                },
+                "color": {
+                    "startMin": [
+                        0.8863
+                    ],
+                    "startMax": [
+                        0.7961
+                    ],
+                    "endMin": [
+                        0.9294
+                    ],
+                    "endMax": [
+                        1
+                    ]
+                },
+                "size": {
+                    "startMin": 0.1778,
+                    "startMax": 0.2286,
+                    "endMin": 0.4064,
+                    "endMax": 0.4572,
+                    "curve": "linear"
+                }
+            },
+            {
+                "type": "line",
+                "texture": "gfx/misc/jk_smoke",
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.1,
+                    "lifetimeMax": 0.1,
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.3,
+                    "startMax": 0.4,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                },
+                "size": {
+                    "startMin": 0.0508,
+                    "startMax": 0.1524,
+                    "endMin": 0.00762,
+                    "endMax": 0.0127,
+                    "curve": "linear"
+                }
+            },
+            {
+                "name": "Ice_particle_cloud",
+                "type": "particle",
+                "texture": "gfx/misc/jk_dirt_grey",
+                "flags": [
+                    "useAlpha"
+                ],
+                "particle": {
+                    "countMin": 2,
+                    "countMax": 2,
+                    "lifetimeMin": 0.5,
+                    "lifetimeMax": 0.7,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "rotationSpeedMin": -200,
+                    "rotationSpeedMax": 200,
+                    "velocityMin": [
+                        -0.508,
+                        -0.508,
+                        1.524
+                    ],
+                    "velocityMax": [
+                        0.508,
+                        0.508,
+                        1.778
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 30,
+                    "curve": "linear nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.7961
+                    ],
+                    "startMax": [
+                        0.9294
+                    ],
+                    "endMin": [
+                        0.7961
+                    ],
+                    "endMax": [
+                        0.549
+                    ]
+                },
+                "size": {
+                    "startMin": 0.0508,
+                    "startMax": 0.1016,
+                    "endMin": 0.508,
+                    "endMax": 0.635
+                }
+            },
+            {
+                "type": "particle",
+                "texture": "gfx/misc/jk_mist",
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 3,
+                    "countMax": 5,
+                    "lifetimeMin": 0.15,
+                    "lifetimeMax": 0.3,
+                    "gravityModifier": 0.4531,
+                    "originMin": [
+                        -0.0254,
+                        -0.0254,
+                        0
+                    ],
+                    "originMax": [
+                        0.0254,
+                        0.0254,
+                        0
+                    ],
+                    "velocityMin": [
+                        -1.524,
+                        -1.524,
+                        5.08
+                    ],
+                    "velocityMax": [
+                        1.524,
+                        1.524,
+                        10.16
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.6,
+                    "startMax": 0.8,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 60,
+                    "curve": "nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.3216
+                    ],
+                    "startMax": [
+                        0.7961
+                    ],
+                    "endMin": [
+                        0.549
+                    ],
+                    "endMax": [
+                        0.8863
+                    ]
+                },
+                "size": {
+                    "startMin": 0.01016,
+                    "startMax": 0.01651,
+                    "endMin": 0.00254,
+                    "endMax": 0.00508
+                }
+            },
+            {
+                "name": "decal",
+                "type": "decal",
+                "texture": "gfx/decals/impact/ice",
+                "decal": {
+                    "sizeMin": 0.1143,
+                    "sizeMax": 0.1524,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "lifetime": 30
+                }
+            }
+        ]
     },
     {
-        "id":  "effects/impact_ice_12g",
-        "displayName":  "Impact Ice 12G",
-        "segments":  [
-                         {
-                             "name":  "smokepuff",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/bp_smoke01",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.6,
-                                              "lifetimeMax":  0.7,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "velocityMin":  [
-                                                                  -0.254,
-                                                                  -0.254,
-                                                                  0.381
-                                                              ],
-                                              "velocityMax":  [
-                                                                  0.254,
-                                                                  0.254,
-                                                                  0.635
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.3,
-                                           "startMax":  0.35,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  20,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.8863
-                                                        ],
-                                           "startMax":  [
-                                                            0.7961
-                                                        ],
-                                           "endMin":  [
-                                                          0.9294
-                                                      ],
-                                           "endMax":  [
-                                                          1
-                                                      ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.1524,
-                                          "startMax":  0.1778,
-                                          "endMin":  0.254,
-                                          "endMax":  0.254,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_mist",
-                             "particle":  {
-                                              "countMin":  2,
-                                              "countMax":  3,
-                                              "lifetimeMin":  0.15,
-                                              "lifetimeMax":  0.3,
-                                              "originMin":  [
-                                                                -0.0254,
-                                                                -0.0254,
-                                                                0
-                                                            ],
-                                              "originMax":  [
-                                                                0.0254,
-                                                                0.0254,
-                                                                0
-                                                            ],
-                                              "velocityMin":  [
-                                                                  -1.524,
-                                                                  -1.524,
-                                                                  3.81
-                                                              ],
-                                              "velocityMax":  [
-                                                                  1.524,
-                                                                  1.524,
-                                                                  7.62
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.5,
-                                           "startMax":  0.7,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  50,
-                                           "curve":  "nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.3216
-                                                        ],
-                                           "startMax":  [
-                                                            0.7961
-                                                        ],
-                                           "endMin":  [
-                                                          0.549
-                                                      ],
-                                           "endMax":  [
-                                                          0.8863
-                                                      ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.00762,
-                                          "startMax":  0.01143,
-                                          "endMin":  0.00254,
-                                          "endMax":  0.00508
-                                      }
-                         },
-                         {
-                             "name":  "decal",
-                             "type":  "decal",
-                             "texture":  "gfx/decals/impact/ice",
-                             "decal":  {
-                                           "sizeMin":  0.0508,
-                                           "sizeMax":  0.0762,
-                                           "rotationMin":  0,
-                                           "rotationMax":  360,
-                                           "lifetime":  30
-                                       }
-                         }
-                     ]
+        "id": "effects/impact_ice_12g",
+        "displayName": "Impact Ice 12G",
+        "segments": [
+            {
+                "name": "smokepuff",
+                "type": "particle",
+                "texture": "gfx/misc/bp_smoke01",
+                "flags": [
+                    "useAlpha"
+                ],
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.6,
+                    "lifetimeMax": 0.7,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "velocityMin": [
+                        -0.254,
+                        -0.254,
+                        0.381
+                    ],
+                    "velocityMax": [
+                        0.254,
+                        0.254,
+                        0.635
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.3,
+                    "startMax": 0.35,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 20,
+                    "curve": "linear nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.8863
+                    ],
+                    "startMax": [
+                        0.7961
+                    ],
+                    "endMin": [
+                        0.9294
+                    ],
+                    "endMax": [
+                        1
+                    ]
+                },
+                "size": {
+                    "startMin": 0.1524,
+                    "startMax": 0.1778,
+                    "endMin": 0.254,
+                    "endMax": 0.254,
+                    "curve": "linear"
+                }
+            },
+            {
+                "type": "particle",
+                "texture": "gfx/misc/jk_mist",
+                "particle": {
+                    "countMin": 2,
+                    "countMax": 3,
+                    "lifetimeMin": 0.15,
+                    "lifetimeMax": 0.3,
+                    "originMin": [
+                        -0.0254,
+                        -0.0254,
+                        0
+                    ],
+                    "originMax": [
+                        0.0254,
+                        0.0254,
+                        0
+                    ],
+                    "velocityMin": [
+                        -1.524,
+                        -1.524,
+                        3.81
+                    ],
+                    "velocityMax": [
+                        1.524,
+                        1.524,
+                        7.62
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.5,
+                    "startMax": 0.7,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 50,
+                    "curve": "nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.3216
+                    ],
+                    "startMax": [
+                        0.7961
+                    ],
+                    "endMin": [
+                        0.549
+                    ],
+                    "endMax": [
+                        0.8863
+                    ]
+                },
+                "size": {
+                    "startMin": 0.00762,
+                    "startMax": 0.01143,
+                    "endMin": 0.00254,
+                    "endMax": 0.00508
+                }
+            },
+            {
+                "name": "decal",
+                "type": "decal",
+                "texture": "gfx/decals/impact/ice",
+                "decal": {
+                    "sizeMin": 0.0508,
+                    "sizeMax": 0.0762,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "lifetime": 30
+                }
+            }
+        ]
     },
     {
-        "id":  "effects/impact_ice2",
-        "displayName":  "Impact Ice2",
-        "segments":  [
-                         {
-                             "name":  "smokepuff",
-                             "type":  "particle",
-                             "texture":  "gfx/misc/bp_smoke01",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  1,
-                                              "countMax":  1,
-                                              "lifetimeMin":  0.7,
-                                              "lifetimeMax":  1,
-                                              "rotationMin":  0,
-                                              "rotationMax":  360,
-                                              "gravityModifier":  -0.0194,
-                                              "velocityMin":  [
-                                                                  -0.254,
-                                                                  -0.254,
-                                                                  0.635
-                                                              ],
-                                              "velocityMax":  [
-                                                                  0.254,
-                                                                  0.254,
-                                                                  0.889
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.5,
-                                           "startMax":  0.6,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  30,
-                                           "curve":  "linear nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.9961
-                                                        ],
-                                           "startMax":  [
-                                                            0.7961
-                                                        ],
-                                           "endMin":  [
-                                                          0.9294
-                                                      ],
-                                           "endMax":  [
-                                                          1
-                                                      ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.254,
-                                          "startMax":  0.381,
-                                          "endMin":  0.508,
-                                          "endMax":  0.762,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "type":  "particle",
-                             "texture":  "gfx/misc/bp_rock",
-                             "flags":  [
-                                           "usePhysics",
-                                           "useAlpha"
-                                       ],
-                             "spawnFlags":  [
-                                                "rgbComponentInterpolation"
-                                            ],
-                             "particle":  {
-                                              "countMin":  4,
-                                              "countMax":  7,
-                                              "lifetimeMin":  0.1,
-                                              "lifetimeMax":  0.15,
-                                              "rotationSpeedMin":  20,
-                                              "rotationSpeedMax":  400,
-                                              "gravityModifier":  1.2946,
-                                              "originMin":  [
-                                                                -0.0254,
-                                                                0,
-                                                                0
-                                                            ],
-                                              "originMax":  [
-                                                                0.0254,
-                                                                0,
-                                                                0
-                                                            ],
-                                              "velocityMin":  [
-                                                                  -1.016,
-                                                                  -1.27,
-                                                                  2.54
-                                                              ],
-                                              "velocityMax":  [
-                                                                  1.27,
-                                                                  1.016,
-                                                                  6.35
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.7961
-                                                        ],
-                                           "startMax":  [
-                                                            0.8588
-                                                        ],
-                                           "endMin":  [
-                                                          0.7961
-                                                      ],
-                                           "endMax":  [
-                                                          0.3216
-                                                      ]
-                                       },
-                             "size":  {
-                                          "endMin":  0.02032,
-                                          "endMax":  0.05842
-                                      }
-                         },
-                         {
-                             "type":  "line",
-                             "texture":  "gfx/misc/jk_smoke",
-                             "particle":  {
-                                              "countMin":  2,
-                                              "countMax":  4,
-                                              "lifetimeMin":  0.1,
-                                              "lifetimeMax":  0.1,
-                                              "originMin":  [
-                                                                -0.1016,
-                                                                -0.1016,
-                                                                -0.0508
-                                                            ],
-                                              "originMax":  [
-                                                                0.1016,
-                                                                0.1016,
-                                                                -0.0508
-                                                            ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  0.3,
-                                           "startMax":  0.4,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "curve":  "linear"
-                                       },
-                             "size":  {
-                                          "startMin":  0.0508,
-                                          "startMax":  0.1524,
-                                          "endMin":  0.00762,
-                                          "endMax":  0.0127,
-                                          "curve":  "linear"
-                                      }
-                         },
-                         {
-                             "type":  "particle",
-                             "texture":  "gfx/misc/jk_smoke5",
-                             "flags":  [
-                                           "useAlpha"
-                                       ],
-                             "particle":  {
-                                              "countMin":  5,
-                                              "countMax":  6,
-                                              "lifetimeMin":  0.15,
-                                              "lifetimeMax":  0.25,
-                                              "gravityModifier":  0.5178,
-                                              "originMin":  [
-                                                                -0.0254,
-                                                                -0.0254,
-                                                                0
-                                                            ],
-                                              "originMax":  [
-                                                                0.0254,
-                                                                0.0254,
-                                                                0
-                                                            ],
-                                              "velocityMin":  [
-                                                                  -1.524,
-                                                                  -1.524,
-                                                                  5.08
-                                                              ],
-                                              "velocityMax":  [
-                                                                  1.524,
-                                                                  1.524,
-                                                                  10.16
-                                                              ],
-                                              "burst":  true
-                                          },
-                             "alpha":  {
-                                           "startMin":  1,
-                                           "startMax":  1,
-                                           "endMin":  0,
-                                           "endMax":  0,
-                                           "parm":  50,
-                                           "curve":  "nonlinear"
-                                       },
-                             "color":  {
-                                           "startMin":  [
-                                                            0.9294
-                                                        ],
-                                           "startMax":  [
-                                                            0.7961
-                                                        ],
-                                           "endMin":  [
-                                                          0.549
-                                                      ],
-                                           "endMax":  [
-                                                          0.8863
-                                                      ]
-                                       },
-                             "size":  {
-                                          "startMin":  0.01016,
-                                          "startMax":  0.01524,
-                                          "endMin":  0.00254,
-                                          "endMax":  0.00508
-                                      }
-                         },
-                         {
-                             "name":  "decal",
-                             "type":  "decal",
-                             "texture":  "gfx/decals/impact/ice",
-                             "decal":  {
-                                           "sizeMin":  0.2032,
-                                           "sizeMax":  0.254,
-                                           "rotationMin":  0,
-                                           "rotationMax":  360,
-                                           "lifetime":  30
-                                       }
-                         }
-                     ]
+        "id": "effects/impact_ice2",
+        "displayName": "Impact Ice2",
+        "segments": [
+            {
+                "name": "smokepuff",
+                "type": "particle",
+                "texture": "gfx/misc/bp_smoke01",
+                "flags": [
+                    "useAlpha"
+                ],
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 1,
+                    "countMax": 1,
+                    "lifetimeMin": 0.7,
+                    "lifetimeMax": 1,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "gravityModifier": -0.0194,
+                    "velocityMin": [
+                        -0.254,
+                        -0.254,
+                        0.635
+                    ],
+                    "velocityMax": [
+                        0.254,
+                        0.254,
+                        0.889
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.5,
+                    "startMax": 0.6,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 30,
+                    "curve": "linear nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.9961
+                    ],
+                    "startMax": [
+                        0.7961
+                    ],
+                    "endMin": [
+                        0.9294
+                    ],
+                    "endMax": [
+                        1
+                    ]
+                },
+                "size": {
+                    "startMin": 0.254,
+                    "startMax": 0.381,
+                    "endMin": 0.508,
+                    "endMax": 0.762,
+                    "curve": "linear"
+                }
+            },
+            {
+                "type": "particle",
+                "texture": "gfx/misc/bp_rock",
+                "flags": [
+                    "usePhysics",
+                    "useAlpha"
+                ],
+                "spawnFlags": [
+                    "rgbComponentInterpolation"
+                ],
+                "particle": {
+                    "countMin": 4,
+                    "countMax": 7,
+                    "lifetimeMin": 0.1,
+                    "lifetimeMax": 0.15,
+                    "rotationSpeedMin": 20,
+                    "rotationSpeedMax": 400,
+                    "gravityModifier": 1.2946,
+                    "originMin": [
+                        -0.0254,
+                        0,
+                        0
+                    ],
+                    "originMax": [
+                        0.0254,
+                        0,
+                        0
+                    ],
+                    "velocityMin": [
+                        -1.016,
+                        -1.27,
+                        2.54
+                    ],
+                    "velocityMax": [
+                        1.27,
+                        1.016,
+                        6.35
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.7961
+                    ],
+                    "startMax": [
+                        0.8588
+                    ],
+                    "endMin": [
+                        0.7961
+                    ],
+                    "endMax": [
+                        0.3216
+                    ]
+                },
+                "size": {
+                    "endMin": 0.02032,
+                    "endMax": 0.05842
+                }
+            },
+            {
+                "type": "line",
+                "texture": "gfx/misc/jk_smoke",
+                "particle": {
+                    "countMin": 2,
+                    "countMax": 4,
+                    "lifetimeMin": 0.1,
+                    "lifetimeMax": 0.1,
+                    "originMin": [
+                        -0.1016,
+                        -0.1016,
+                        -0.0508
+                    ],
+                    "originMax": [
+                        0.1016,
+                        0.1016,
+                        -0.0508
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 0.3,
+                    "startMax": 0.4,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "curve": "linear"
+                },
+                "size": {
+                    "startMin": 0.0508,
+                    "startMax": 0.1524,
+                    "endMin": 0.00762,
+                    "endMax": 0.0127,
+                    "curve": "linear"
+                }
+            },
+            {
+                "type": "particle",
+                "texture": "gfx/misc/jk_smoke5",
+                "flags": [
+                    "useAlpha"
+                ],
+                "particle": {
+                    "countMin": 5,
+                    "countMax": 6,
+                    "lifetimeMin": 0.15,
+                    "lifetimeMax": 0.25,
+                    "gravityModifier": 0.5178,
+                    "originMin": [
+                        -0.0254,
+                        -0.0254,
+                        0
+                    ],
+                    "originMax": [
+                        0.0254,
+                        0.0254,
+                        0
+                    ],
+                    "velocityMin": [
+                        -1.524,
+                        -1.524,
+                        5.08
+                    ],
+                    "velocityMax": [
+                        1.524,
+                        1.524,
+                        10.16
+                    ],
+                    "burst": true
+                },
+                "alpha": {
+                    "startMin": 1,
+                    "startMax": 1,
+                    "endMin": 0,
+                    "endMax": 0,
+                    "parm": 50,
+                    "curve": "nonlinear"
+                },
+                "color": {
+                    "startMin": [
+                        0.9294
+                    ],
+                    "startMax": [
+                        0.7961
+                    ],
+                    "endMin": [
+                        0.549
+                    ],
+                    "endMax": [
+                        0.8863
+                    ]
+                },
+                "size": {
+                    "startMin": 0.01016,
+                    "startMax": 0.01524,
+                    "endMin": 0.00254,
+                    "endMax": 0.00508
+                }
+            },
+            {
+                "name": "decal",
+                "type": "decal",
+                "texture": "gfx/decals/impact/ice",
+                "decal": {
+                    "sizeMin": 0.2032,
+                    "sizeMax": 0.254,
+                    "rotationMin": 0,
+                    "rotationMax": 360,
+                    "lifetime": 30
+                }
+            }
+        ]
     }
 ]
