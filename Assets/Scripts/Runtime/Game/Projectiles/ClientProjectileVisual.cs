@@ -50,6 +50,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Ob das Projektil bereits detoniert ist.</summary>
         private bool m_HasDetonated;
 
+        /// <summary>Eindeutige ID fuer servergesteuerte Cleanup-Logik.</summary>
+        private uint m_ProjectileId;
+
+        /// <summary>Statisches Lookup fuer aktive Sticky-Visuals nach ID.</summary>
+        private static readonly System.Collections.Generic.Dictionary<uint, ClientProjectileVisual> s_ActiveVisuals = new();
+
         /// <summary>LayerMask fuer Welt-Kollision (visuelle Kollisionserkennung).</summary>
         private int m_WorldLayerMask;
 
@@ -66,8 +72,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             float gravityScale,
             float bounce,
             string detonation,
-            float timer)
+            float timer,
+            uint projectileId = 0)
         {
+            m_ProjectileId = projectileId;
             transform.position = spawnPosition;
             m_Velocity = direction.normalized * (speedQU * SOF2_UNIT_SCALE);
             m_GravityScale = gravityScale;
@@ -265,6 +273,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         {
             m_HasDetonated = true;
 
+            // In Lookup registrieren fuer servergesteuerte Cleanup-Logik
+            if (m_ProjectileId != 0)
+            {
+                s_ActiveVisuals[m_ProjectileId] = this;
+            }
+
             // Trail abschalten (Projektil ruht)
             if (m_Trail != null)
             {
@@ -279,6 +293,34 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             }
 
             Destroy(gameObject, remainingLife);
+        }
+
+        /// <summary>
+        /// Zerstoert das Visual mit der angegebenen ID (aufgerufen via Server-RPC bei Sticky-Pickup).
+        /// </summary>
+        public static void DestroyById(uint projectileId)
+        {
+            if (projectileId == 0)
+            {
+                return;
+            }
+
+            if (s_ActiveVisuals.TryGetValue(projectileId, out ClientProjectileVisual visual) && visual != null)
+            {
+                s_ActiveVisuals.Remove(projectileId);
+                Destroy(visual.gameObject);
+            }
+        }
+
+        /// <summary>
+        /// Cleanup: aus statischem Lookup entfernen.
+        /// </summary>
+        private void OnDestroy()
+        {
+            if (m_ProjectileId != 0)
+            {
+                s_ActiveVisuals.Remove(m_ProjectileId);
+            }
         }
 
         /// <summary>

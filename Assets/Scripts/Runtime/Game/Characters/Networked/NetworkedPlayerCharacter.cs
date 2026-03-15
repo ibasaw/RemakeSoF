@@ -113,6 +113,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <summary>Dauer der sichtbaren Tracer-Linie in Sekunden.</summary>
         private const float TRACER_DURATION = 2.0f;
 
+        /// <summary>Laufende Projektil-ID fuer Visual-Cleanup (Server-only).</summary>
+        private uint m_NextProjectileId = 1;
+
         /// <summary>
         /// NetworkedCharacterState-Referenz fuer Waffen-Lookup (CurrentWeaponName).
         /// </summary>
@@ -782,8 +785,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
 
             // Impact/Sticky-Projektile (RPG7, MM1, Knife-Throw): Sofort spawnen
-            m_ServerAttackFramesRemaining = m_ServerAttackFrames;
-            m_ServerAttackFrameAccumulator = 0f;
+            // AltAttack benutzt eigene Frames (mp_altAttack), Attack benutzt mp_attack
+            if (isAlt)
+            {
+                m_ServerAltAttackFramesRemaining = m_ServerAltAttackFrames;
+                m_ServerAltAttackFrameAccumulator = 0f;
+            }
+            else
+            {
+                m_ServerAttackFramesRemaining = m_ServerAttackFrames;
+                m_ServerAttackFrameAccumulator = 0f;
+            }
 
             Vector3 eyePos = m_ServerPlayerCharacter.GetEyePosition();
             Vector3 aimDirection = Quaternion.Euler(cmd.PitchAngle, cmd.YawAngle, 0f) * Vector3.forward;
@@ -807,6 +819,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         private void SpawnProjectile(Vector3 spawnPosition, Vector3 direction, WeaponAttackDefinition attackDef, WeaponProjectileDefinition projDef)
         {
+            uint projectileId = m_NextProjectileId++;
             GameObject projectileObj = new($"Projectile_{m_CharacterState.CurrentWeaponName}_{OwnerClientId}");
             ServerProjectile projectile = projectileObj.AddComponent<ServerProjectile>();
 
@@ -825,11 +838,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 attackDef.Damage,
                 attackDef.Radius,
                 OwnerClientId,
-                m_CharacterState.CurrentWeaponName
+                m_CharacterState.CurrentWeaponName,
+                projectileId
             );
 
+            // Sticky-Pickup: Callback registrieren fuer Visual-Cleanup
+            if (projDef.Detonation == "sticky")
+            {
+                projectile.OnPickedUp += OnStickyProjectilePickedUp;
+            }
+
             // Visual-RPC an alle Clients fuer Projektil-Visualisierung
-            ProjectileSpawnClientRpc(spawnPosition, direction, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "impact", timer);
+            ProjectileSpawnClientRpc(spawnPosition, direction, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "impact", timer, projectileId);
         }
 
         /// <summary>
@@ -882,6 +902,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
 
             // Projektil spawnen mit reduziertem Timer
+            uint projectileId = m_NextProjectileId++;
             GameObject projectileObj = new($"Grenade_{m_CharacterState.CurrentWeaponName}_{OwnerClientId}");
             ServerProjectile projectile = projectileObj.AddComponent<ServerProjectile>();
 
@@ -896,11 +917,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 attackDef.Damage,
                 attackDef.Radius,
                 OwnerClientId,
-                m_CharacterState.CurrentWeaponName
+                m_CharacterState.CurrentWeaponName,
+                projectileId
             );
 
             // Visual-RPC an alle Clients
-            ProjectileSpawnClientRpc(eyePos, aimDirection, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "timer", cookedTimer);
+            ProjectileSpawnClientRpc(eyePos, aimDirection, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "timer", cookedTimer, projectileId);
 
             // Throw-Follow-Through-Phase starten (mp_attackEnd = GRENADE_END)
             if (weapon?.Animations != null && weapon.Animations.TryGetValue("mp_attackEnd", out WeaponAnimationEntry throwAnim))
@@ -933,6 +955,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_ServerGrenadeThrowFrameAccumulator -= frameInterval;
                 m_ServerGrenadeThrowFramesRemaining--;
             }
+
+            // Throw-Follow-Through fertig: Automatisch nachladen (Granaten haben kein mp_reload)
+            if (m_ServerGrenadeThrowFramesRemaining <= 0 && m_CharacterState.CanReload())
+            {
+                m_CharacterState.CompleteReload();
+                Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade auto-reload after throw for client {OwnerClientId}");
+            }
         }
 
         /// <summary>
@@ -940,11 +969,29 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Erstellt ein ClientProjectileVisual mit TrailRenderer auf allen Clients.
         /// </summary>
         [Rpc(SendTo.Everyone)]
-        private void ProjectileSpawnClientRpc(Vector3 spawnPosition, Vector3 direction, float speed, float gravity, float bounce, string detonation, float timer)
+        private void ProjectileSpawnClientRpc(Vector3 spawnPosition, Vector3 direction, float speed, float gravity, float bounce, string detonation, float timer, uint projectileId)
         {
             GameObject visualObj = new($"ProjectileVisual_{OwnerClientId}");
             ClientProjectileVisual visual = visualObj.AddComponent<ClientProjectileVisual>();
-            visual.Initialize(spawnPosition, direction, speed, gravity, bounce, detonation, timer);
+            visual.Initialize(spawnPosition, direction, speed, gravity, bounce, detonation, timer, projectileId);
+        }
+
+        /// <summary>
+        /// Server-Callback: Sticky-Projektil wurde aufgehoben.
+        /// Sendet Destroy-RPC an alle Clients fuer Visual-Cleanup.
+        /// </summary>
+        private void OnStickyProjectilePickedUp(uint projectileId)
+        {
+            DestroyProjectileVisualClientRpc(projectileId);
+        }
+
+        /// <summary>
+        /// Server → Alle Clients: Zerstoert das Client-Visual eines aufgehobenen Sticky-Projektils.
+        /// </summary>
+        [Rpc(SendTo.Everyone)]
+        private void DestroyProjectileVisualClientRpc(uint projectileId)
+        {
+            ClientProjectileVisual.DestroyById(projectileId);
         }
 
         /// <summary>

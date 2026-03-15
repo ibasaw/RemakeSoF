@@ -59,6 +59,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Ob das Projektil an einer Oberflaeche haftet (Sticky-Detonation).</summary>
         private bool m_IsStuck;
 
+        /// <summary>Eindeutige ID fuer Visual-Cleanup bei Sticky-Pickup.</summary>
+        private uint m_ProjectileId;
+
+        /// <summary>Callback wenn Sticky-Projektil aufgehoben wird (ID fuer Visual-Cleanup).</summary>
+        public event System.Action<uint> OnPickedUp;
+
         /// <summary>Pickup-Radius in Unity-Metern fuer Sticky-Projektile.</summary>
         private const float PICKUP_RADIUS = 0.75f;
 
@@ -86,8 +92,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             int damage,
             int radiusQU,
             ulong ownerClientId,
-            string weaponName = "")
+            string weaponName = "",
+            uint projectileId = 0)
         {
+            m_ProjectileId = projectileId;
             transform.position = spawnPosition;
             m_Velocity = direction.normalized * (speedQU * SOF2_UNIT_SCALE);
             m_GravityScale = gravityScale;
@@ -377,8 +385,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
             targetState.AddReserveAmmoForWeapon(m_WeaponName, 1);
 
-            Debug.Log($"[ServerProjectile] Sticky picked up by client {m_OwnerClientId} — weapon={m_WeaponName}");
+            Debug.Log($"[ServerProjectile] Sticky picked up by client {m_OwnerClientId} — weapon={m_WeaponName}, id={m_ProjectileId}");
 
+            OnPickedUp?.Invoke(m_ProjectileId);
             Destroy(gameObject);
         }
     }
