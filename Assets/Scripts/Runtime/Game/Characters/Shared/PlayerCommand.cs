@@ -48,6 +48,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Yaw-Winkel des Charakters in Grad (Kamera-Blickrichtung Y-Rotation).</summary>
         public float YawAngle;
 
+        /// <summary>Pitch-Winkel des Charakters in Grad (Kamera-Blickrichtung X-Rotation). Benötigt fuer server-seitige Hitscan-Richtung.</summary>
+        public float PitchAngle;
+
         /// <summary>
         /// Button-Bitfield (SoF2 usercmd_t.buttons).
         /// Verwendet CommandButtons-Konstanten fuer Attack, Jump, Walk, Crouch, etc.
@@ -70,6 +73,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         {
             serializer.SerializeValue(ref MoveInput);
             serializer.SerializeValue(ref YawAngle);
+            serializer.SerializeValue(ref PitchAngle);
             serializer.SerializeValue(ref Buttons);
             serializer.SerializeValue(ref DeltaTime);
             serializer.SerializeValue(ref SequenceNumber);

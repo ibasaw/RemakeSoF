@@ -160,6 +160,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
         }
 
         /// <summary>
+        /// Fuegt einen View-Punch hinzu (SoF2 kickAngles).
+        /// Modifiziert Pitch und Yaw permanent — der Spieler muss mit der Maus gegenlenken.
+        /// Pitch-Kick ist positiv nach oben (Waffe kickt hoch), Yaw-Kick seitwärts.
+        /// </summary>
+        public void AddViewPunch(float pitchKick, float yawKick)
+        {
+            m_Pitch -= pitchKick;
+            m_Pitch = Mathf.Clamp(m_Pitch, m_PitchMin, m_PitchMax);
+            m_Yaw += yawKick;
+        }
+
+        /// <summary>
         /// Setzt Yaw/Pitch basierend auf einer Kamera-Forward-Richtung.
         /// </summary>
         public void SetYawPitchFromCameraForward(Transform cameraTransform)

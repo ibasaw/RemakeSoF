@@ -5,6 +5,7 @@ using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
+using Tolik.RemakeSoF.Runtime.Game.Projectiles;
 using Tolik.RemakeSoF.Runtime.WeaponManagement;
 using Unity.Netcode;
 using UnityEngine;
@@ -98,6 +99,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         // ===== Server-Side Attack Gating (SoF2: weaponTime in playerState_t) =====
 
+        /// <summary>SoF2-Unit → Unity-Meter Konvertierungsfaktor (1 QU = 1 Inch = 0.0254m).</summary>
+        private const float SOF2_UNIT_SCALE = 0.0254f;
+
+        /// <summary>Physics Layer Name fuer Hitbox-Collider.</summary>
+        private const string HITBOX_LAYER_NAME = "Hitbox";
+
+        [Header("Debug Tracer")]
+        /// <summary>Zeigt Debug-Tracer-Linien bei jedem Schuss (Game-View + Scene-View). Linie vom ejectBone zum HitPoint.</summary>
+        [SerializeField]
+        private bool m_ShowDebugTracers;
+
+        /// <summary>Dauer der sichtbaren Tracer-Linie in Sekunden.</summary>
+        private const float TRACER_DURATION = 2.0f;
+
         /// <summary>
         /// NetworkedCharacterState-Referenz fuer Waffen-Lookup (CurrentWeaponName).
         /// </summary>
@@ -115,6 +130,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>Aktuelle Attack-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
         private int m_ServerAttackFps = 20;
+
+        /// <summary>Akkumulierte Inaccuracy durch Dauerfeuer (steigt pro Schuss Richtung MaxInaccuracy, faellt bei Pause zurueck).</summary>
+        private float m_ServerAccumulatedInaccuracy;
+
+        /// <summary>Zeitpunkt des letzten Schusses fuer Inaccuracy-Decay (Server-seitig).</summary>
+        private float m_ServerLastShotTime;
 
         /// <summary>Verbleibende Reload-Frames auf dem Server (autoritativ).</summary>
         private int m_ServerReloadFramesRemaining;
@@ -188,6 +209,41 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>Name der Zielwaffe beim Waffenwechsel.</summary>
         private string m_ServerSwapTargetWeapon;
+
+        // ===== Server-Side Grenade Cook/Throw (Two-Phase Attack) =====
+
+        /// <summary>Ob gerade eine Granate gekocht wird (GRENADE_START Phase).</summary>
+        private bool m_ServerIsGrenadeCooking;
+
+        /// <summary>Verbleibende Cook-Frames (GRENADE_START Animation).</summary>
+        private int m_ServerGrenadeCookFramesRemaining;
+
+        /// <summary>Frame-Akkumulator fuer Grenade-Cook-Timing.</summary>
+        private float m_ServerGrenadeCookFrameAccumulator;
+
+        /// <summary>Cook-FPS (aus mp_attack Animation der Granate).</summary>
+        private int m_ServerGrenadeCookFps = 20;
+
+        /// <summary>Cook-Dauer in Sekunden (aus mp_attack Frames/FPS).</summary>
+        private float m_ServerGrenadeCookDuration;
+
+        /// <summary>Gespeicherter PlayerCommand.PitchAngle zum Zeitpunkt des Wurfs.</summary>
+        private float m_ServerGrenadePitchAngle;
+
+        /// <summary>Gespeicherter PlayerCommand.YawAngle zum Zeitpunkt des Wurfs.</summary>
+        private float m_ServerGrenadeYawAngle;
+
+        /// <summary>Ob AltAttack-Granate (langsamerer Wurf, weniger Bounce).</summary>
+        private bool m_ServerGrenadeIsAlt;
+
+        /// <summary>Verbleibende Frames fuer die Throw-Follow-Through-Animation (mp_attackEnd).</summary>
+        private int m_ServerGrenadeThrowFramesRemaining;
+
+        /// <summary>Frame-Akkumulator fuer Grenade-Throw-Timing.</summary>
+        private float m_ServerGrenadeThrowFrameAccumulator;
+
+        /// <summary>Throw-FPS (aus mp_attackEnd Animation).</summary>
+        private int m_ServerGrenadeThrowFps = 20;
 
         // ===== Movement Sync =====
 
@@ -414,9 +470,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 TickServerWeaponSwap(cmd.DeltaTime);
             }
 
+            // Server-seitiges Grenade-Cook/Throw herunterzaehlen
+            if (m_ServerIsGrenadeCooking)
+            {
+                TickServerGrenadeCook(cmd);
+            }
+            else if (m_ServerGrenadeThrowFramesRemaining > 0)
+            {
+                TickServerGrenadeThrow(cmd.DeltaTime);
+            }
+
             // Button-Inputs verarbeiten (SoF2: FireWeapon aus usercmd_t.buttons)
-            // Server gated: Attack nur starten wenn keine Attacke, kein Reload, kein AltAttack und kein Swap laeuft (Anti-Cheat)
-            bool noActionRunning = m_ServerAttackFramesRemaining <= 0 && m_ServerReloadFramesRemaining <= 0 && m_ServerAltAttackFramesRemaining <= 0 && !m_ServerIsSwapping;
+            // Server gated: Attack nur starten wenn keine Attacke, kein Reload, kein AltAttack, kein Swap und keine Granate laeuft (Anti-Cheat)
+            bool noActionRunning = m_ServerAttackFramesRemaining <= 0
+                && m_ServerReloadFramesRemaining <= 0
+                && m_ServerAltAttackFramesRemaining <= 0
+                && !m_ServerIsSwapping
+                && !m_ServerIsGrenadeCooking
+                && m_ServerGrenadeThrowFramesRemaining <= 0;
 
             if (cmd.HasButton(CommandButtons.Attack) && noActionRunning)
             {
@@ -492,6 +563,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Server: Verarbeitet einen Attack aus dem PlayerCommand.
         /// Wie SoF2 FireWeapon() in g_weapon.c — wird aus dem usercmd_t gelesen,
         /// nicht als separater RPC gesendet. Position + Blickrichtung sind exakt synchron.
+        /// Unterstuetzt Multi-Pellet (Schrotflinten), Inaccuracy-Buildup bei Dauerfeuer,
+        /// und Projektil-Waffen (RPG7, MM1, F1 Grenade).
         /// </summary>
         private void ProcessAttack(PlayerCommand cmd)
         {
@@ -505,14 +578,112 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Attack-Parameter von aktueller Waffe laden
             UpdateServerAttackParameters();
 
+            // Waffen-Definition laden
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+            WeaponAttackDefinition attackDef = weapon?.Attack;
+
+            if (attackDef == null)
+            {
+                Debug.LogWarning($"[NetworkedPlayerCharacter] Server: No attack definition for weapon '{m_CharacterState.CurrentWeaponName}'");
+                return;
+            }
+
+            // Projektil-Waffen: Granaten starten Cook/Throw, RPG/MM1 spawnen sofort
+            if (attackDef.Projectile != null)
+            {
+                ProcessProjectileAttack(cmd, attackDef, weapon, false);
+                return;
+            }
+
             // Server startet Attack-Cooldown (frame-basiert, wie SoF2 weaponTime)
             m_ServerAttackFramesRemaining = m_ServerAttackFrames;
             m_ServerAttackFrameAccumulator = 0f;
 
-            Debug.Log($"[NetworkedPlayerCharacter] Server: Attack aus Command #{cmd.SequenceNumber} für Client {OwnerClientId} bei Yaw {cmd.YawAngle:F1} — {m_ServerAttackFrames} Frames @ {m_ServerAttackFps}fps Cooldown");
+            // Eye-Position und Blickrichtung vom Server berechnen
+            Vector3 eyePos = m_ServerPlayerCharacter.GetEyePosition();
+            Quaternion aimRotation = Quaternion.Euler(cmd.PitchAngle, cmd.YawAngle, 0f);
 
-            // TODO: Server-seitige Hit-Detection (Raycast/SphereCast von Server-Position in Blickrichtung)
-            // TODO: Damage an getroffene Spieler via HitboxCollider.HitRegion + DamageMultiplier
+            // Inaccuracy-Buildup: Streuung steigt bei Dauerfeuer von Inaccuracy → MaxInaccuracy
+            // Decay: 0.5s ohne Schuss → resettet auf Basis-Inaccuracy
+            float currentTime = Time.time;
+            float timeSinceLastShot = currentTime - m_ServerLastShotTime;
+            const float INACCURACY_DECAY_TIME = 0.5f;
+            const float INACCURACY_BUILDUP_STEP = 0.3f;
+
+            if (timeSinceLastShot > INACCURACY_DECAY_TIME)
+            {
+                m_ServerAccumulatedInaccuracy = attackDef.Inaccuracy;
+            }
+            else
+            {
+                m_ServerAccumulatedInaccuracy = Mathf.Min(
+                    m_ServerAccumulatedInaccuracy + INACCURACY_BUILDUP_STEP,
+                    attackDef.MaxInaccuracy > 0f ? attackDef.MaxInaccuracy : attackDef.Inaccuracy
+                );
+            }
+
+            m_ServerLastShotTime = currentTime;
+            float spread = m_ServerAccumulatedInaccuracy;
+
+            // Reichweite: SoF2-Units → Unity-Meter (1 QU = 0.0254m)
+            float rangeMeters = attackDef.Range * SOF2_UNIT_SCALE;
+
+            // Eigenen Collider deaktivieren fuer Self-Hit-Vermeidung
+            m_ServerPlayerCharacter.SetPhysicsColliderEnabled(false);
+
+            int hitboxLayerMask = LayerMask.GetMask(HITBOX_LAYER_NAME);
+
+            // Pellet-Anzahl: Schrotflinten feuern mehrere Pellets pro Schuss (z.B. M590: 8)
+            int pelletCount = attackDef.Pellets > 0 ? attackDef.Pellets : 1;
+            float pelletSpread = attackDef.Spread;
+
+            for (int i = 0; i < pelletCount; i++)
+            {
+                // Jedes Pellet bekommt eigene Streuung: Basis-Inaccuracy + Pellet-Spread
+                float totalSpread = spread + pelletSpread;
+                Vector3 aimDirection = ApplyInaccuracy(aimRotation * Vector3.forward, totalSpread);
+
+                // Server-seitiger Hitscan-Raycast auf Hitbox-Layer
+                bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask);
+
+                Vector3 hitPoint = didHit ? hit.point : eyePos + aimDirection * rangeMeters;
+
+                if (didHit)
+                {
+                    HitboxCollider hitbox = hit.collider.GetComponent<HitboxCollider>();
+                    if (hitbox != null)
+                    {
+                        // Damage berechnen: Basis-Damage × Region-Multiplikator (pro Pellet)
+                        int finalDamage = Mathf.RoundToInt(attackDef.Damage * hitbox.DamageMultiplier);
+
+                        // Getroffenen Spieler finden und Schaden anwenden
+                        NetworkedCharacterState targetState = hit.collider.GetComponentInParent<NetworkedCharacterState>();
+                        if (targetState != null && targetState != m_CharacterState)
+                        {
+                            int newHealth = Mathf.Max(0, targetState.Health - finalDamage);
+                            targetState.SetHealth(newHealth);
+
+                            Debug.Log($"[NetworkedPlayerCharacter] Server: HIT! Client {OwnerClientId} → {targetState.CharacterName} | Pellet={i + 1}/{pelletCount} | Region={hitbox.HitRegion} | Damage={finalDamage} (Base={attackDef.Damage} × {hitbox.DamageMultiplier:F2}) | Health={newHealth}");
+                        }
+                    }
+                }
+
+                // Debug-Tracer pro Pellet an alle Clients senden
+                DebugTracerClientRpc(eyePos, hitPoint);
+            }
+
+            // Eigenen Collider wieder aktivieren
+            m_ServerPlayerCharacter.SetPhysicsColliderEnabled(true);
+
+            // KickAngles: Rueckstoss an Owner-Client senden (SoF2 AddViewKick)
+            // Format: [minPitch, maxPitch, minYaw, maxYaw]
+            if (attackDef.KickAngles != null && attackDef.KickAngles.Count >= 4)
+            {
+                float pitchKick = UnityEngine.Random.Range(attackDef.KickAngles[0], attackDef.KickAngles[1]);
+                float yawKick = UnityEngine.Random.Range(attackDef.KickAngles[2], attackDef.KickAngles[3]);
+                ApplyKickAnglesClientRpc(pitchKick, yawKick);
+            }
         }
 
         /// <summary>
@@ -546,8 +717,309 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
+        /// Wendet SoF2-Inaccuracy auf eine Schussrichtung an.
+        /// Erzeugt zufaellige Streuung innerhalb eines Kegels (Spread in Grad).
+        /// </summary>
+        private Vector3 ApplyInaccuracy(Vector3 direction, float spreadDegrees)
+        {
+            if (spreadDegrees <= 0f)
+            {
+                return direction;
+            }
+
+            // Zufaellige Rotation innerhalb des Spread-Kegels
+            float randomAngle = UnityEngine.Random.Range(0f, 360f);
+            float randomSpread = UnityEngine.Random.Range(0f, spreadDegrees);
+
+            Quaternion spreadRotation = Quaternion.AngleAxis(randomSpread, Vector3.up);
+            Quaternion rollRotation = Quaternion.AngleAxis(randomAngle, direction);
+
+            return (rollRotation * spreadRotation * Quaternion.Inverse(rollRotation)) * direction;
+        }
+
+        // ===== Projectile Weapons (RPG7, MM1, F1 Grenade) =====
+
+        /// <summary>
+        /// Server: Verarbeitet einen Projektil-Angriff.
+        /// Fuer Timer-Granaten (F1): Startet Cook-Phase (GRENADE_START), Projektil wird erst bei Wurf gespawnt.
+        /// Fuer Impact-Projektile (RPG7, MM1): Spawnt sofort ein ServerProjectile.
+        /// </summary>
+        private void ProcessProjectileAttack(PlayerCommand cmd, WeaponAttackDefinition attackDef, WeaponDefinition weapon, bool isAlt)
+        {
+            WeaponProjectileDefinition projDef = attackDef.Projectile;
+
+            if (projDef.Detonation == "timer")
+            {
+                // Granate: Cook-Phase starten (GRENADE_START)
+                // Projektil spawnt erst wenn Cook-Animation fertig ist
+                string attackAnimKey = isAlt ? "mp_altAttack" : "mp_attack";
+                if (weapon.Animations != null && weapon.Animations.TryGetValue(attackAnimKey, out WeaponAnimationEntry cookAnim))
+                {
+                    m_ServerGrenadeCookFramesRemaining = cookAnim.Duration;
+                    m_ServerGrenadeCookFps = cookAnim.Fps;
+                    m_ServerGrenadeCookDuration = (float)cookAnim.Duration / cookAnim.Fps;
+                }
+                else
+                {
+                    m_ServerGrenadeCookFramesRemaining = 23;
+                    m_ServerGrenadeCookFps = 20;
+                    m_ServerGrenadeCookDuration = 23f / 20f;
+                }
+
+                m_ServerIsGrenadeCooking = true;
+                m_ServerGrenadeCookFrameAccumulator = 0f;
+                m_ServerGrenadePitchAngle = cmd.PitchAngle;
+                m_ServerGrenadeYawAngle = cmd.YawAngle;
+                m_ServerGrenadeIsAlt = isAlt;
+
+                // Attack-Cooldown: Cook-Frames blockieren weitere Aktionen
+                m_ServerAttackFramesRemaining = m_ServerGrenadeCookFramesRemaining;
+                m_ServerAttackFrameAccumulator = 0f;
+                m_ServerAttackFps = m_ServerGrenadeCookFps;
+
+                Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade cook started for client {OwnerClientId} — {m_ServerGrenadeCookFramesRemaining}f @ {m_ServerGrenadeCookFps}fps (isAlt={isAlt})");
+                return;
+            }
+
+            // Impact-Projektile (RPG7, MM1): Sofort spawnen
+            m_ServerAttackFramesRemaining = m_ServerAttackFrames;
+            m_ServerAttackFrameAccumulator = 0f;
+
+            Vector3 eyePos = m_ServerPlayerCharacter.GetEyePosition();
+            Vector3 aimDirection = Quaternion.Euler(cmd.PitchAngle, cmd.YawAngle, 0f) * Vector3.forward;
+
+            SpawnProjectile(eyePos, aimDirection, attackDef, projDef);
+
+            // KickAngles: Rueckstoss an Owner-Client senden
+            if (attackDef.KickAngles != null && attackDef.KickAngles.Count >= 4)
+            {
+                float pitchKick = UnityEngine.Random.Range(attackDef.KickAngles[0], attackDef.KickAngles[1]);
+                float yawKick = UnityEngine.Random.Range(attackDef.KickAngles[2], attackDef.KickAngles[3]);
+                ApplyKickAnglesClientRpc(pitchKick, yawKick);
+            }
+
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Impact projectile spawned for client {OwnerClientId} — Speed={projDef.Speed} Gravity={projDef.Gravity}");
+        }
+
+        /// <summary>
+        /// Server: Spawnt ein ServerProjectile-GameObject mit den angegebenen Parametern.
+        /// Das Projektil simuliert sich selbst (Flugbahn, Kollision, Detonation, Explosions-Damage).
+        /// </summary>
+        private void SpawnProjectile(Vector3 spawnPosition, Vector3 direction, WeaponAttackDefinition attackDef, WeaponProjectileDefinition projDef)
+        {
+            GameObject projectileObj = new($"Projectile_{m_CharacterState.CurrentWeaponName}_{OwnerClientId}");
+            ServerProjectile projectile = projectileObj.AddComponent<ServerProjectile>();
+
+            float timer = projDef.Timer;
+            // Fuer gekochte Granaten: Timer wurde waehrend Cook reduziert
+            // (wird von TickServerGrenadeCook uebergeben, hier nur Default)
+
+            projectile.Initialize(
+                spawnPosition,
+                direction,
+                projDef.Speed,
+                projDef.Gravity,
+                projDef.Bounce,
+                projDef.Detonation,
+                timer,
+                attackDef.Damage,
+                attackDef.Radius,
+                OwnerClientId
+            );
+
+            // Visual-RPC an alle Clients fuer Projektil-Visualisierung
+            ProjectileSpawnClientRpc(spawnPosition, direction, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "impact", timer);
+        }
+
+        /// <summary>
+        /// Server: Tickt die Grenade-Cook-Phase (GRENADE_START Animation).
+        /// Wenn Cook-Frames abgelaufen sind: Projektil spawnen und Throw-Phase starten.
+        /// </summary>
+        private void TickServerGrenadeCook(PlayerCommand cmd)
+        {
+            m_ServerGrenadeCookFrameAccumulator += cmd.DeltaTime;
+            float frameInterval = 1f / m_ServerGrenadeCookFps;
+
+            while (m_ServerGrenadeCookFrameAccumulator >= frameInterval && m_ServerGrenadeCookFramesRemaining > 0)
+            {
+                m_ServerGrenadeCookFrameAccumulator -= frameInterval;
+                m_ServerGrenadeCookFramesRemaining--;
+            }
+
+            // Blickrichtung aktualisieren (Spieler kann sich waehrend Cook drehen)
+            m_ServerGrenadePitchAngle = cmd.PitchAngle;
+            m_ServerGrenadeYawAngle = cmd.YawAngle;
+
+            if (m_ServerGrenadeCookFramesRemaining > 0)
+            {
+                return;
+            }
+
+            // Cook fertig: Projektil spawnen (Wurf)
+            m_ServerIsGrenadeCooking = false;
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+            WeaponAttackDefinition attackDef = m_ServerGrenadeIsAlt ? weapon?.AltAttack : weapon?.Attack;
+            WeaponProjectileDefinition projDef = attackDef?.Projectile;
+
+            if (attackDef == null || projDef == null)
+            {
+                Debug.LogWarning("[NetworkedPlayerCharacter] Server: Grenade cook finished but no projectile definition found");
+                return;
+            }
+
+            // Spawn-Position und Richtung zum Zeitpunkt des Wurfs
+            Vector3 eyePos = m_ServerPlayerCharacter.GetEyePosition();
+            Vector3 aimDirection = Quaternion.Euler(m_ServerGrenadePitchAngle, m_ServerGrenadeYawAngle, 0f) * Vector3.forward;
+
+            // Timer reduzieren: Granate kocht waehrend GRENADE_START
+            float cookedTimer = projDef.Timer - m_ServerGrenadeCookDuration;
+            if (cookedTimer < 0.1f)
+            {
+                cookedTimer = 0.1f;
+            }
+
+            // Projektil spawnen mit reduziertem Timer
+            GameObject projectileObj = new($"Grenade_{m_CharacterState.CurrentWeaponName}_{OwnerClientId}");
+            ServerProjectile projectile = projectileObj.AddComponent<ServerProjectile>();
+
+            projectile.Initialize(
+                eyePos,
+                aimDirection,
+                projDef.Speed,
+                projDef.Gravity,
+                projDef.Bounce,
+                projDef.Detonation,
+                cookedTimer,
+                attackDef.Damage,
+                attackDef.Radius,
+                OwnerClientId
+            );
+
+            // Visual-RPC an alle Clients
+            ProjectileSpawnClientRpc(eyePos, aimDirection, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "timer", cookedTimer);
+
+            // Throw-Follow-Through-Phase starten (mp_attackEnd = GRENADE_END)
+            if (weapon?.Animations != null && weapon.Animations.TryGetValue("mp_attackEnd", out WeaponAnimationEntry throwAnim))
+            {
+                m_ServerGrenadeThrowFramesRemaining = throwAnim.Duration;
+                m_ServerGrenadeThrowFps = throwAnim.Fps;
+            }
+            else
+            {
+                m_ServerGrenadeThrowFramesRemaining = 18;
+                m_ServerGrenadeThrowFps = 20;
+            }
+
+            m_ServerGrenadeThrowFrameAccumulator = 0f;
+
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade thrown for client {OwnerClientId} — CookedTimer={cookedTimer:F2}s, ThrowFrames={m_ServerGrenadeThrowFramesRemaining}");
+        }
+
+        /// <summary>
+        /// Server: Tickt die Grenade-Throw-Follow-Through-Phase (GRENADE_END Animation).
+        /// Blockiert weitere Aktionen bis die Throw-Animation abgespielt ist.
+        /// </summary>
+        private void TickServerGrenadeThrow(float deltaTime)
+        {
+            m_ServerGrenadeThrowFrameAccumulator += deltaTime;
+            float frameInterval = 1f / m_ServerGrenadeThrowFps;
+
+            while (m_ServerGrenadeThrowFrameAccumulator >= frameInterval && m_ServerGrenadeThrowFramesRemaining > 0)
+            {
+                m_ServerGrenadeThrowFrameAccumulator -= frameInterval;
+                m_ServerGrenadeThrowFramesRemaining--;
+            }
+        }
+
+        /// <summary>
+        /// Server → Alle Clients: Projektil-Spawn fuer Client-seitige Visualisierung.
+        /// Erstellt ein ClientProjectileVisual mit TrailRenderer auf allen Clients.
+        /// </summary>
+        [Rpc(SendTo.Everyone)]
+        private void ProjectileSpawnClientRpc(Vector3 spawnPosition, Vector3 direction, float speed, float gravity, float bounce, string detonation, float timer)
+        {
+            GameObject visualObj = new($"ProjectileVisual_{OwnerClientId}");
+            ClientProjectileVisual visual = visualObj.AddComponent<ClientProjectileVisual>();
+            visual.Initialize(spawnPosition, direction, speed, gravity, bounce, detonation, timer);
+        }
+
+        /// <summary>
+        /// Server → Alle Clients: Debug-Tracer-Daten fuer Visualisierung.
+        /// Clients mit aktiviertem m_ShowDebugTracers zeichnen eine sichtbare Linie
+        /// vom ejectBone der aktuellen Waffe zum HitPoint (Game-View + Scene-View).
+        /// </summary>
+        [Rpc(SendTo.Everyone)]
+        private void DebugTracerClientRpc(Vector3 serverStart, Vector3 end)
+        {
+            if (!m_ShowDebugTracers)
+            {
+                return;
+            }
+
+            // EjectBone der aktuellen Waffe als Tracer-Startpunkt suchen
+            Vector3 tracerStart = serverStart;
+            if (m_Animator != null)
+            {
+                WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+                WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+                string ejectBoneName = weapon?.Attack?.EjectBone;
+
+                if (!string.IsNullOrEmpty(ejectBoneName))
+                {
+                    Transform ejectBone = FindDeepChild(m_Animator.transform, ejectBoneName);
+                    if (ejectBone != null)
+                    {
+                        tracerStart = ejectBone.position;
+                    }
+                }
+            }
+
+            // Scene-View Debug-Linie (Editor/Development Build)
+            Debug.DrawLine(tracerStart, end, Color.red, 2f);
+
+            // Game-View sichtbare Linie via temporaerem LineRenderer
+            CreateTracerLine(tracerStart, end);
+        }
+
+        /// <summary>
+        /// Erstellt eine temporaere sichtbare Tracer-Linie (LineRenderer) von start zu end.
+        /// Zerstoert sich nach TRACER_DURATION Sekunden automatisch.
+        /// </summary>
+        private void CreateTracerLine(Vector3 start, Vector3 end)
+        {
+            GameObject tracerObj = new("DebugTracer");
+            LineRenderer lr = tracerObj.AddComponent<LineRenderer>();
+            lr.positionCount = 2;
+            lr.SetPosition(0, start);
+            lr.SetPosition(1, end);
+            lr.startWidth = 0.02f;
+            lr.endWidth = 0.02f;
+            lr.material = new Material(Shader.Find("Sprites/Default"));
+            lr.startColor = Color.red;
+            lr.endColor = Color.yellow;
+            lr.useWorldSpace = true;
+
+            Destroy(tracerObj, TRACER_DURATION);
+        }
+
+        /// <summary>
+        /// Server → Owner-Client: Wendet SoF2 kickAngles als View-Punch an.
+        /// KickAngles-Format: [minPitch, maxPitch, minYaw, maxYaw].
+        /// Pitch-Kick bewegt die Kamera nach oben (Rueckstoss), Yaw-Kick seitlich.
+        /// </summary>
+        [Rpc(SendTo.Owner)]
+        private void ApplyKickAnglesClientRpc(float pitchKick, float yawKick)
+        {
+            ClientPlayerCharacter client = GetComponent<ClientPlayerCharacter>();
+            client?.ApplyKickAngles(pitchKick, yawKick);
+        }
+
+        /// <summary>
         /// Server: Verarbeitet einen AltAttack aus dem PlayerCommand.
         /// Wie SoF2 AltFire — konsumiert Alt-Ammo und startet AltAttack-Cooldown.
+        /// Fuer Projektil-Waffen (F1 Grenade altAttack): Delegiert an ProcessProjectileAttack.
         /// </summary>
         private void ProcessAltAttack(PlayerCommand cmd)
         {
@@ -563,6 +1035,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             if (m_ServerAltAttackFrames <= 0)
             {
+                return;
+            }
+
+            // Pruefen ob AltAttack ein Projektil hat (F1 Grenade Underhand-Throw)
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+            WeaponAttackDefinition altAttackDef = weapon?.AltAttack;
+
+            if (altAttackDef?.Projectile != null)
+            {
+                ProcessProjectileAttack(cmd, altAttackDef, weapon, true);
                 return;
             }
 
@@ -1043,6 +1526,30 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 "TORSO_RAISE_ONEHANDED" => s_ReadyOneHandedHash,
                 _ => s_ReadyTwoHandedHash,
             };
+        }
+        // ===== Utility =====
+
+        /// <summary>
+        /// Rekursive Tiefensuche nach einem Child-Transform mit gegebenem Namen.
+        /// </summary>
+        private static Transform FindDeepChild(Transform parent, string childName)
+        {
+            if (parent.name == childName)
+            {
+                return parent;
+            }
+
+            int childCount = parent.childCount;
+            for (int i = 0; i < childCount; i++)
+            {
+                Transform result = FindDeepChild(parent.GetChild(i), childName);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
         }
     }
 }

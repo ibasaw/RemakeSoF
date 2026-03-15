@@ -1,0 +1,268 @@
+using UnityEngine;
+
+namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
+{
+    using Characters.Networked;
+    using Characters.Shared;
+    /// <summary>
+    /// Server-seitiges Projektil (RPG, Granate, MM1).
+    /// Simuliert Flugbahn mit Gravitation, Speed und optionalem Bounce.
+    /// Detoniert bei Impact (Kollision) oder Timer (Countdown).
+    /// Explosion-Damage via OverlapSphere auf Hitbox-Layer.
+    /// Kein NetworkObject — Server berechnet Damage, Clients bekommen Visual-RPC.
+    /// </summary>
+    public class ServerProjectile : MonoBehaviour
+    {
+        /// <summary>SoF2-Unit → Unity-Meter (1 QU = 0.0254m).</summary>
+        private const float SOF2_UNIT_SCALE = 0.0254f;
+
+        /// <summary>Physics Layer Name fuer Hitbox-Collider.</summary>
+        private const string HITBOX_LAYER_NAME = "Hitbox";
+
+        /// <summary>Max Lebensdauer in Sekunden (Safety-Cleanup fuer verlorene Projektile).</summary>
+        private const float MAX_LIFETIME = 15f;
+
+        /// <summary>Aktuelle Flugrichtung und -geschwindigkeit (Unity-Meter/Sek).</summary>
+        private Vector3 m_Velocity;
+
+        /// <summary>Gravitations-Skalierung (0 = keine, 0.5 = halbe, 1.0 = volle).</summary>
+        private float m_GravityScale;
+
+        /// <summary>Bounce-Faktor (0 = kein Bounce, 0.45 = F1 Grenade).</summary>
+        private float m_Bounce;
+
+        /// <summary>Detonationsart: "impact" oder "timer".</summary>
+        private string m_Detonation;
+
+        /// <summary>Timer-Countdown fuer Timer-Detonation (Sekunden).</summary>
+        private float m_Timer;
+
+        /// <summary>Explosions-Damage.</summary>
+        private int m_Damage;
+
+        /// <summary>Explosions-Radius in SoF2-Units.</summary>
+        private int m_Radius;
+
+        /// <summary>Seit Spawn vergangene Zeit.</summary>
+        private float m_Lifetime;
+
+        /// <summary>Ob das Projektil bereits detoniert ist.</summary>
+        private bool m_HasDetonated;
+
+        /// <summary>Owner-ClientId (fuer Self-Damage-Prevention).</summary>
+        private ulong m_OwnerClientId;
+
+        /// <summary>LayerMask fuer Hitbox-Raycasts.</summary>
+        private int m_HitboxLayerMask;
+
+        /// <summary>LayerMask fuer Welt-Kollision (alles ausser Hitbox).</summary>
+        private int m_WorldLayerMask;
+
+        /// <summary>Callback wenn Projektil detoniert (fuer Visual-RPC vom Spawner).</summary>
+        public event System.Action<Vector3> OnDetonated;
+
+        /// <summary>
+        /// Initialisiert das Projektil mit Waffen-Daten.
+        /// Wird vom Server nach Instantiate aufgerufen.
+        /// </summary>
+        public void Initialize(
+            Vector3 spawnPosition,
+            Vector3 direction,
+            float speedQU,
+            float gravityScale,
+            float bounce,
+            string detonation,
+            float timer,
+            int damage,
+            int radiusQU,
+            ulong ownerClientId)
+        {
+            transform.position = spawnPosition;
+            m_Velocity = direction.normalized * (speedQU * SOF2_UNIT_SCALE);
+            m_GravityScale = gravityScale;
+            m_Bounce = bounce;
+            m_Detonation = detonation;
+            m_Timer = timer;
+            m_Damage = damage;
+            m_Radius = radiusQU;
+            m_OwnerClientId = ownerClientId;
+            m_Lifetime = 0f;
+            m_HasDetonated = false;
+
+            m_HitboxLayerMask = LayerMask.GetMask(HITBOX_LAYER_NAME);
+            // Welt-Kollision: Default Layer (alles was nicht Hitbox ist)
+            m_WorldLayerMask = ~m_HitboxLayerMask;
+
+            // Rotation in Flugrichtung
+            if (m_Velocity.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(m_Velocity);
+            }
+        }
+
+        /// <summary>
+        /// Server-seitige Physik-Simulation pro Frame.
+        /// </summary>
+        private void Update()
+        {
+            if (m_HasDetonated)
+            {
+                return;
+            }
+
+            float dt = Time.deltaTime;
+            m_Lifetime += dt;
+
+            // Safety-Cleanup
+            if (m_Lifetime > MAX_LIFETIME)
+            {
+                Detonate(transform.position);
+                return;
+            }
+
+            // Timer-Detonation
+            if (m_Detonation == "timer")
+            {
+                m_Timer -= dt;
+                if (m_Timer <= 0f)
+                {
+                    Detonate(transform.position);
+                    return;
+                }
+            }
+
+            // Gravitation anwenden
+            if (m_GravityScale > 0f)
+            {
+                m_Velocity += Physics.gravity * (m_GravityScale * dt);
+            }
+
+            // Rotation in Flugrichtung aktualisieren
+            if (m_Velocity.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(m_Velocity);
+            }
+
+            // Bewegung mit Kollisionserkennung
+            Vector3 movement = m_Velocity * dt;
+            float distance = movement.magnitude;
+
+            if (distance < 0.001f)
+            {
+                return;
+            }
+
+            Vector3 direction = movement / distance;
+
+            // Raycast fuer Welt-Kollision (Waende, Boden)
+            if (Physics.Raycast(transform.position, direction, out RaycastHit worldHit, distance, m_WorldLayerMask))
+            {
+                transform.position = worldHit.point + worldHit.normal * 0.01f;
+
+                if (m_Detonation == "impact")
+                {
+                    Detonate(worldHit.point);
+                    return;
+                }
+
+                // Bounce (Timer-Granaten)
+                if (m_Bounce > 0f)
+                {
+                    m_Velocity = Vector3.Reflect(m_Velocity, worldHit.normal) * m_Bounce;
+                }
+                else
+                {
+                    m_Velocity = Vector3.zero;
+                }
+
+                return;
+            }
+
+            // Raycast fuer Hitbox-Kollision (Spieler direkt treffen → impact)
+            if (Physics.Raycast(transform.position, direction, out RaycastHit hitboxHit, distance, m_HitboxLayerMask))
+            {
+                // Impact-Detonation bei direktem Spieler-Treffer (auch bei Timer-Granaten)
+                if (m_Detonation == "impact")
+                {
+                    Detonate(hitboxHit.point);
+                    return;
+                }
+            }
+
+            // Keine Kollision — normal bewegen
+            transform.position += movement;
+        }
+
+        /// <summary>
+        /// Detoniert das Projektil: Explosions-Damage im Radius anwenden.
+        /// </summary>
+        private void Detonate(Vector3 explosionPoint)
+        {
+            if (m_HasDetonated)
+            {
+                return;
+            }
+
+            m_HasDetonated = true;
+
+            float radiusMeters = m_Radius * SOF2_UNIT_SCALE;
+
+            // Alle Hitboxen im Explosionsradius finden
+            Collider[] hits = Physics.OverlapSphere(explosionPoint, radiusMeters, m_HitboxLayerMask);
+
+            // Pro Spieler nur einmal Schaden anwenden (hoechster Treffer zaehlt)
+            System.Collections.Generic.Dictionary<NetworkedCharacterState, float> damagePerTarget =
+                new();
+
+            foreach (Collider col in hits)
+            {
+                HitboxCollider hitbox = col.GetComponent<HitboxCollider>();
+                if (hitbox == null)
+                {
+                    continue;
+                }
+
+                NetworkedCharacterState targetState =
+                    col.GetComponentInParent<NetworkedCharacterState>();
+                if (targetState == null)
+                {
+                    continue;
+                }
+
+                // Distanz-basierter Damage-Falloff (linear: voller Damage im Zentrum, 0 am Rand)
+                float distance = Vector3.Distance(explosionPoint, col.transform.position);
+                float falloff = 1f - Mathf.Clamp01(distance / radiusMeters);
+                float effectiveDamage = m_Damage * falloff;
+
+                // Hoechsten Damage pro Spieler merken
+                if (!damagePerTarget.ContainsKey(targetState) || damagePerTarget[targetState] < effectiveDamage)
+                {
+                    damagePerTarget[targetState] = effectiveDamage;
+                }
+            }
+
+            // Damage anwenden
+            foreach (System.Collections.Generic.KeyValuePair<NetworkedCharacterState, float> kvp in damagePerTarget)
+            {
+                int finalDamage = Mathf.RoundToInt(kvp.Value);
+                if (finalDamage <= 0)
+                {
+                    continue;
+                }
+
+                int newHealth = Mathf.Max(0, kvp.Key.Health - finalDamage);
+                kvp.Key.SetHealth(newHealth);
+
+                Debug.Log($"[ServerProjectile] Explosion hit {kvp.Key.CharacterName} | Damage={finalDamage} | Health={newHealth}");
+            }
+
+            // Event fuer Visual-RPC
+            OnDetonated?.Invoke(explosionPoint);
+
+            Debug.Log($"[ServerProjectile] Detonated at {explosionPoint} | Radius={radiusMeters:F1}m | Targets={damagePerTarget.Count}");
+
+            // Zerstoeren
+            Destroy(gameObject);
+        }
+    }
+}

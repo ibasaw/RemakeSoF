@@ -412,6 +412,7 @@ MonoBehaviour:
     m_InternalValue: 0
   m_ServerPlayerCharacter: {fileID: 5114413647346417949}
   m_SkinHandler: {fileID: 792202953519434536}
+  m_ShowDebugTracers: 1
   m_CharacterState: {fileID: 2107942443278687898}
 --- !u!114 &2107942443278687898
 MonoBehaviour:
@@ -544,6 +545,7 @@ MonoBehaviour:
     GroundMask:
       serializedVersion: 2
       m_Bits: 4294967295
+  m_AutoReload: 1
   m_LegsYawOffsetDegrees: 90
   m_IdleYawByDir:
   - 112
@@ -664,5 +666,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdc4f9747a1ba75418e5fc7800e8d322, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientHitboxSystem
-  m_ShowVisualHitboxes: 1
+  m_ShowVisualHitboxes: 0
   m_VisualAlpha: 0.22

@@ -812,6 +812,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             {
                 MoveInput = m_MoveInput,
                 YawAngle = m_YawTarget != null ? m_YawTarget.eulerAngles.y : transform.eulerAngles.y,
+                PitchAngle = m_PitchTarget != null ? m_PitchTarget.eulerAngles.x : 0f,
                 Buttons = buttons,
                 DeltaTime = Time.deltaTime,
                 SequenceNumber = m_NextSequenceNumber++,
@@ -2021,6 +2022,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             Cursor.lockState = active ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !active;
+        }
+
+        /// <summary>
+        /// Wendet SoF2 kickAngles als View-Punch auf die Kamera an.
+        /// Wird vom Server via ClientRpc aufgerufen (nur Owner).
+        /// </summary>
+        public void ApplyKickAngles(float pitchKick, float yawKick)
+        {
+            m_AimCameraController?.AddViewPunch(pitchKick, yawKick);
         }
     }
 }

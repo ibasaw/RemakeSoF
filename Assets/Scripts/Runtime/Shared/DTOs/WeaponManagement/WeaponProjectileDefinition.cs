@@ -68,5 +68,17 @@ namespace Tolik.RemakeSoF.Runtime.WeaponManagement
         /// </summary>
         [JsonProperty("objectType")]
         public string ObjectType;
+
+        /// <summary>
+        /// Bounce-Faktor fuer Granaten (0 = kein Bounce, 0.45 = F1 Grenade).
+        /// </summary>
+        [JsonProperty("bounce")]
+        public float Bounce;
+
+        /// <summary>
+        /// Timer in Sekunden fuer Timer-Detonation (z.B. F1 Grenade: 3.0s).
+        /// </summary>
+        [JsonProperty("timer")]
+        public float Timer;
     }
 }

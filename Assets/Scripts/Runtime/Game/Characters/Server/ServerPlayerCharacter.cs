@@ -46,6 +46,35 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         private bool m_IsReady;
 
         /// <summary>
+        /// SoF2 Eye-Height Ratio: ViewHeight/TotalHeight = 72/89 ≈ 0.809.
+        /// Standing: DEFAULT_VIEWHEIGHT(26) + playerMins.z(46) = 72 von 89 QU.
+        /// Gilt proportional auch fuer Crouching.
+        /// </summary>
+        private const float EYE_HEIGHT_RATIO = 72f / 89f;
+
+        /// <summary>
+        /// Berechnet die Eye-Position des Spielers auf dem Server.
+        /// Position ist am Fuss (feet), Eye-Height wird proportional aus CapsuleHeight berechnet.
+        /// </summary>
+        public Vector3 GetEyePosition()
+        {
+            float eyeHeight = m_Simulation.CapsuleHeight * EYE_HEIGHT_RATIO;
+            return transform.position + new Vector3(0f, eyeHeight, 0f);
+        }
+
+        /// <summary>
+        /// Physics BoxCollider fuer server-seitige Hit-Detection temporaer deaktivieren.
+        /// Verhindert Self-Hit bei Raycast.
+        /// </summary>
+        public void SetPhysicsColliderEnabled(bool enabled)
+        {
+            if (m_PhysicsCollider != null)
+            {
+                m_PhysicsCollider.enabled = enabled;
+            }
+        }
+
+        /// <summary>
         /// Initialisiert die Server-seitige Physik und den Collision-Collider.
         /// Wird von NetworkedPlayerCharacter.OnServerSpawn() aufgerufen,
         /// damit der BoxCollider nur auf dem Server erstellt wird.

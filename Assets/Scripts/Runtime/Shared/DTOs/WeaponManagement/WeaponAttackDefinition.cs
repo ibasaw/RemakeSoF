@@ -71,6 +71,18 @@ namespace Tolik.RemakeSoF.Runtime.WeaponManagement
         public float MaxInaccuracy;
 
         /// <summary>
+        /// Anzahl Projektile pro Schuss (Schrotflinten, z.B. M590: 8 Pellets).
+        /// </summary>
+        [JsonProperty("pellets")]
+        public int Pellets;
+
+        /// <summary>
+        /// Zusaetzliche Streuung pro Pellet (Schrotflinten-Spread in Grad).
+        /// </summary>
+        [JsonProperty("spread")]
+        public float Spread;
+
+        /// <summary>
         /// Muzzle-Flash-Effekt-Pfad.
         /// </summary>
         [JsonProperty("muzzleFlash")]
