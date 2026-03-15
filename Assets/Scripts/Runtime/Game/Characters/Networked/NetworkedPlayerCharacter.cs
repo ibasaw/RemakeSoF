@@ -781,7 +781,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
-            // Impact-Projektile (RPG7, MM1): Sofort spawnen
+            // Impact/Sticky-Projektile (RPG7, MM1, Knife-Throw): Sofort spawnen
             m_ServerAttackFramesRemaining = m_ServerAttackFrames;
             m_ServerAttackFrameAccumulator = 0f;
 
@@ -798,7 +798,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 ApplyKickAnglesClientRpc(pitchKick, yawKick);
             }
 
-            Debug.Log($"[NetworkedPlayerCharacter] Server: Impact projectile spawned for client {OwnerClientId} — Speed={projDef.Speed} Gravity={projDef.Gravity}");
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Projectile ({projDef.Detonation}) spawned for client {OwnerClientId} — Speed={projDef.Speed} Gravity={projDef.Gravity}");
         }
 
         /// <summary>
@@ -824,7 +824,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 timer,
                 attackDef.Damage,
                 attackDef.Radius,
-                OwnerClientId
+                OwnerClientId,
+                m_CharacterState.CurrentWeaponName
             );
 
             // Visual-RPC an alle Clients fuer Projektil-Visualisierung
@@ -894,7 +895,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 cookedTimer,
                 attackDef.Damage,
                 attackDef.Radius,
-                OwnerClientId
+                OwnerClientId,
+                m_CharacterState.CurrentWeaponName
             );
 
             // Visual-RPC an alle Clients
@@ -1049,9 +1051,53 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
-            // Server startet AltAttack-Cooldown (frame-basiert)
+            // Melee/Hitscan-AltAttack: Cooldown starten + Raycast + Damage + KickAngles
             m_ServerAltAttackFramesRemaining = m_ServerAltAttackFrames;
             m_ServerAltAttackFrameAccumulator = 0f;
+
+            // Melee/Hitscan Raycast (einzelner Schuss, keine Pellets, keine Inaccuracy)
+            if (altAttackDef != null && altAttackDef.Damage > 0 && altAttackDef.Range > 0)
+            {
+                Vector3 eyePos = m_ServerPlayerCharacter.GetEyePosition();
+                Vector3 aimDirection = Quaternion.Euler(cmd.PitchAngle, cmd.YawAngle, 0f) * Vector3.forward;
+                float rangeMeters = altAttackDef.Range * SOF2_UNIT_SCALE;
+
+                m_ServerPlayerCharacter.SetPhysicsColliderEnabled(false);
+
+                int hitboxLayerMask = LayerMask.GetMask(HITBOX_LAYER_NAME);
+                bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask);
+                Vector3 hitPoint = didHit ? hit.point : eyePos + aimDirection * rangeMeters;
+
+                if (didHit)
+                {
+                    HitboxCollider hitbox = hit.collider.GetComponent<HitboxCollider>();
+                    if (hitbox != null)
+                    {
+                        int finalDamage = Mathf.RoundToInt(altAttackDef.Damage * hitbox.DamageMultiplier);
+
+                        NetworkedCharacterState targetState = hit.collider.GetComponentInParent<NetworkedCharacterState>();
+                        if (targetState != null && targetState != m_CharacterState)
+                        {
+                            int newHealth = Mathf.Max(0, targetState.Health - finalDamage);
+                            targetState.SetHealth(newHealth);
+
+                            Debug.Log($"[NetworkedPlayerCharacter] Server: AltAttack HIT! Client {OwnerClientId} → {targetState.CharacterName} | Region={hitbox.HitRegion} | Damage={finalDamage} (Base={altAttackDef.Damage} × {hitbox.DamageMultiplier:F2}) | Health={newHealth}");
+                        }
+                    }
+                }
+
+                m_ServerPlayerCharacter.SetPhysicsColliderEnabled(true);
+
+                DebugTracerClientRpc(eyePos, hitPoint);
+            }
+
+            // KickAngles: Rueckstoss an Owner-Client senden (falls definiert)
+            if (altAttackDef?.KickAngles != null && altAttackDef.KickAngles.Count >= 4)
+            {
+                float pitchKick = UnityEngine.Random.Range(altAttackDef.KickAngles[0], altAttackDef.KickAngles[1]);
+                float yawKick = UnityEngine.Random.Range(altAttackDef.KickAngles[2], altAttackDef.KickAngles[3]);
+                ApplyKickAnglesClientRpc(pitchKick, yawKick);
+            }
 
             Debug.Log($"[NetworkedPlayerCharacter] Server: AltAttack aus Command #{cmd.SequenceNumber} für Client {OwnerClientId} — {m_ServerAltAttackFrames} Frames @ {m_ServerAltAttackFps}fps Cooldown");
         }

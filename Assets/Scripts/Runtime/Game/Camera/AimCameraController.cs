@@ -71,6 +71,26 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
         /// </summary>
         private Vector2 m_AccumulatedLookInput = Vector2.zero;
 
+        // ===== SoF2 Kick-Angles (temporaerer View-Overlay mit Decay) =====
+
+        /// <summary>Decay-Dauer fuer Kick-Angles in Sekunden (SoF2: ~200ms).</summary>
+        private const float KICK_DECAY_TIME = 0.2f;
+
+        /// <summary>Aktueller Kick-Pitch-Offset (decayed ueber Zeit zurueck auf 0).</summary>
+        private float m_KickPitch;
+
+        /// <summary>Aktueller Kick-Yaw-Offset (decayed ueber Zeit zurueck auf 0).</summary>
+        private float m_KickYaw;
+
+        /// <summary>Initiale Kick-Pitch-Staerke bei letztem Schuss (fuer linearen Decay).</summary>
+        private float m_KickPitchStart;
+
+        /// <summary>Initiale Kick-Yaw-Staerke bei letztem Schuss (fuer linearen Decay).</summary>
+        private float m_KickYawStart;
+
+        /// <summary>Zeitpunkt des letzten Kicks (fuer Decay-Berechnung).</summary>
+        private float m_KickTime;
+
         private void Awake()
         {
             m_AimCam = GetComponent<CinemachineThirdPersonFollow>();
@@ -127,15 +147,28 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
                 m_AccumulatedLookInput = Vector2.zero;
             }
 
-            // YawTarget und PitchTarget aktualisieren (falls bereits gesetzt)
+            // SoF2 Kick-Angles: linearer Decay ueber KICK_DECAY_TIME
+            float kickPitchOffset = 0f;
+            float kickYawOffset = 0f;
+            float timeSinceKick = Time.time - m_KickTime;
+
+            if (timeSinceKick < KICK_DECAY_TIME)
+            {
+                float ratio = 1f - (timeSinceKick / KICK_DECAY_TIME);
+                kickPitchOffset = m_KickPitchStart * ratio;
+                kickYawOffset = m_KickYawStart * ratio;
+            }
+
+            // YawTarget und PitchTarget aktualisieren (Basis + Kick-Overlay)
             if (m_YawTarget != null)
             {
-                m_YawTarget.rotation = Quaternion.Euler(0f, m_Yaw, 0f);
+                m_YawTarget.rotation = Quaternion.Euler(0f, m_Yaw + kickYawOffset, 0f);
             }
 
             if (m_PitchTarget != null)
             {
-                m_PitchTarget.localRotation = Quaternion.Euler(m_Pitch, 0f, 0f);
+                float effectivePitch = Mathf.Clamp(m_Pitch + kickPitchOffset, m_PitchMin, m_PitchMax);
+                m_PitchTarget.localRotation = Quaternion.Euler(effectivePitch, 0f, 0f);
             }
 
             // Shoulder-Switch interpolieren (visuell, nicht physik-kritisch)
@@ -160,15 +193,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Camera
         }
 
         /// <summary>
-        /// Fuegt einen View-Punch hinzu (SoF2 kickAngles).
-        /// Modifiziert Pitch und Yaw permanent — der Spieler muss mit der Maus gegenlenken.
-        /// Pitch-Kick ist positiv nach oben (Waffe kickt hoch), Yaw-Kick seitwärts.
+        /// Fuegt einen View-Punch hinzu (SoF2 kick_angles).
+        /// Kick wird als temporaerer Overlay auf die View angewendet und decayed
+        /// linear ueber KICK_DECAY_TIME (~200ms) zurueck auf Null.
+        /// Bei Schnellfeuer addieren sich Kicks auf den aktuellen Restwert.
+        /// Pitch-Kick ist positiv nach oben (Waffe kickt hoch), Yaw-Kick seitwaerts.
         /// </summary>
         public void AddViewPunch(float pitchKick, float yawKick)
         {
-            m_Pitch -= pitchKick;
-            m_Pitch = Mathf.Clamp(m_Pitch, m_PitchMin, m_PitchMax);
-            m_Yaw += yawKick;
+            // Bei Schnellfeuer: aktuellen Restwert als Basis nehmen
+            float timeSinceKick = Time.time - m_KickTime;
+            float remaining = 0f;
+
+            if (timeSinceKick < KICK_DECAY_TIME)
+            {
+                remaining = 1f - (timeSinceKick / KICK_DECAY_TIME);
+            }
+
+            // Neuen Kick auf verbleibenden Kick addieren
+            m_KickPitchStart = (m_KickPitchStart * remaining) - pitchKick;
+            m_KickYawStart = (m_KickYawStart * remaining) + yawKick;
+            m_KickTime = Time.time;
         }
 
         /// <summary>

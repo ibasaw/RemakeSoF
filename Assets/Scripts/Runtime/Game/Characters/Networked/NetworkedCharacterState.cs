@@ -696,6 +696,30 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
+        /// Server: Fuegt Reserve-Munition fuer eine bestimmte Waffe hinzu (z.B. Sticky-Pickup).
+        /// Wenn die Waffe aktuell ausgeruestet ist, wird m_ReserveAmmo direkt erhoeht.
+        /// Wenn die Waffe im Cache liegt, wird der Cache-Eintrag aktualisiert.
+        /// </summary>
+        public void AddReserveAmmoForWeapon(string weaponName, int amount)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            if (string.Equals(CurrentWeaponName, weaponName, System.StringComparison.Ordinal))
+            {
+                m_ReserveAmmo.Value += amount;
+                return;
+            }
+
+            if (m_AmmoCache.TryGetValue(weaponName, out (int clip, int reserve, int altClip, int altReserve) cached))
+            {
+                m_AmmoCache[weaponName] = (cached.clip, cached.reserve + amount, cached.altClip, cached.altReserve);
+            }
+        }
+
+        /// <summary>
         /// Server: Prueft ob ein Alt-Reload gestartet werden kann.
         /// Nur relevant fuer Waffen mit separater Alt-Ammo (z.B. M4 M203).
         /// </summary>

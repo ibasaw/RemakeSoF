@@ -5,10 +5,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
     using Characters.Networked;
     using Characters.Shared;
     /// <summary>
-    /// Server-seitiges Projektil (RPG, Granate, MM1).
+    /// Server-seitiges Projektil (RPG, Granate, MM1, Knife-Throw).
     /// Simuliert Flugbahn mit Gravitation, Speed und optionalem Bounce.
-    /// Detoniert bei Impact (Kollision) oder Timer (Countdown).
-    /// Explosion-Damage via OverlapSphere auf Hitbox-Layer.
+    /// Detoniert bei Impact (Kollision), Timer (Countdown) oder Sticky (haftet an Oberflaeche).
+    /// Impact/Timer: Explosion-Damage via OverlapSphere auf Hitbox-Layer.
+    /// Sticky: Direkter Damage bei Hitbox-Treffer, haftet dann an Oberflaeche als Pickup.
     /// Kein NetworkObject — Server berechnet Damage, Clients bekommen Visual-RPC.
     /// </summary>
     public class ServerProjectile : MonoBehaviour
@@ -31,7 +32,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Bounce-Faktor (0 = kein Bounce, 0.45 = F1 Grenade).</summary>
         private float m_Bounce;
 
-        /// <summary>Detonationsart: "impact" oder "timer".</summary>
+        /// <summary>Detonationsart: "impact", "timer" oder "sticky".</summary>
         private string m_Detonation;
 
         /// <summary>Timer-Countdown fuer Timer-Detonation (Sekunden).</summary>
@@ -49,8 +50,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Ob das Projektil bereits detoniert ist.</summary>
         private bool m_HasDetonated;
 
-        /// <summary>Owner-ClientId (fuer Self-Damage-Prevention).</summary>
+        /// <summary>Owner-ClientId (fuer Self-Damage-Prevention und Sticky-Pickup).</summary>
         private ulong m_OwnerClientId;
+
+        /// <summary>Name der Waffe die dieses Projektil geworfen hat (fuer Sticky-Pickup).</summary>
+        private string m_WeaponName;
+
+        /// <summary>Ob das Projektil an einer Oberflaeche haftet (Sticky-Detonation).</summary>
+        private bool m_IsStuck;
+
+        /// <summary>Pickup-Radius in Unity-Metern fuer Sticky-Projektile.</summary>
+        private const float PICKUP_RADIUS = 0.75f;
 
         /// <summary>LayerMask fuer Hitbox-Raycasts.</summary>
         private int m_HitboxLayerMask;
@@ -75,7 +85,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             float timer,
             int damage,
             int radiusQU,
-            ulong ownerClientId)
+            ulong ownerClientId,
+            string weaponName = "")
         {
             transform.position = spawnPosition;
             m_Velocity = direction.normalized * (speedQU * SOF2_UNIT_SCALE);
@@ -86,8 +97,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             m_Damage = damage;
             m_Radius = radiusQU;
             m_OwnerClientId = ownerClientId;
+            m_WeaponName = weaponName;
             m_Lifetime = 0f;
             m_HasDetonated = false;
+            m_IsStuck = false;
 
             m_HitboxLayerMask = LayerMask.GetMask(HITBOX_LAYER_NAME);
             // Welt-Kollision: Default Layer (alles was nicht Hitbox ist)
@@ -107,6 +120,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         {
             if (m_HasDetonated)
             {
+                // Sticky-Projektile ticken weiter fuer Lifetime-Cleanup
+                if (m_IsStuck)
+                {
+                    m_Lifetime += Time.deltaTime;
+                    if (m_Lifetime > MAX_LIFETIME)
+                    {
+                        Destroy(gameObject);
+                    }
+                }
+
                 return;
             }
 
@@ -165,6 +188,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                     return;
                 }
 
+                if (m_Detonation == "sticky")
+                {
+                    StickToSurface(worldHit.point, worldHit.normal);
+                    return;
+                }
+
                 // Bounce (Timer-Granaten)
                 if (m_Bounce > 0f)
                 {
@@ -178,13 +207,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 return;
             }
 
-            // Raycast fuer Hitbox-Kollision (Spieler direkt treffen → impact)
+            // Raycast fuer Hitbox-Kollision (Spieler direkt treffen)
             if (Physics.Raycast(transform.position, direction, out RaycastHit hitboxHit, distance, m_HitboxLayerMask))
             {
-                // Impact-Detonation bei direktem Spieler-Treffer (auch bei Timer-Granaten)
                 if (m_Detonation == "impact")
                 {
                     Detonate(hitboxHit.point);
+                    return;
+                }
+
+                if (m_Detonation == "sticky")
+                {
+                    ApplyDirectDamage(hitboxHit);
+                    StickToSurface(hitboxHit.point, hitboxHit.normal);
                     return;
                 }
             }
@@ -262,6 +297,88 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             Debug.Log($"[ServerProjectile] Detonated at {explosionPoint} | Radius={radiusMeters:F1}m | Targets={damagePerTarget.Count}");
 
             // Zerstoeren
+            Destroy(gameObject);
+        }
+
+        /// <summary>
+        /// Sticky-Projektil an Oberflaeche fixieren: Stoppt Bewegung, wird zum Pickup.
+        /// Fuegt SphereCollider-Trigger + kinematischen Rigidbody hinzu fuer OnTriggerEnter.
+        /// </summary>
+        private void StickToSurface(Vector3 point, Vector3 normal)
+        {
+            m_HasDetonated = true;
+            m_IsStuck = true;
+            transform.position = point + normal * 0.02f;
+
+            if (normal.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(normal);
+            }
+
+            // Trigger-Collider fuer Pickup-Detection
+            SphereCollider trigger = gameObject.AddComponent<SphereCollider>();
+            trigger.isTrigger = true;
+            trigger.radius = PICKUP_RADIUS;
+
+            // Kinematischer Rigidbody fuer Trigger-Events
+            Rigidbody rb = gameObject.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+
+            Debug.Log($"[ServerProjectile] Sticky stuck at {point} — awaiting pickup by client {m_OwnerClientId}");
+        }
+
+        /// <summary>
+        /// Direkter Schaden bei Sticky-Treffer (kein Explosionsradius, kein Falloff).
+        /// </summary>
+        private void ApplyDirectDamage(RaycastHit hit)
+        {
+            HitboxCollider hitbox = hit.collider.GetComponent<HitboxCollider>();
+            if (hitbox == null)
+            {
+                return;
+            }
+
+            NetworkedCharacterState targetState =
+                hit.collider.GetComponentInParent<NetworkedCharacterState>();
+            if (targetState == null)
+            {
+                return;
+            }
+
+            int newHealth = Mathf.Max(0, targetState.Health - m_Damage);
+            targetState.SetHealth(newHealth);
+
+            Debug.Log($"[ServerProjectile] Sticky direct hit {targetState.CharacterName} | Damage={m_Damage} | Health={newHealth}");
+        }
+
+        /// <summary>
+        /// Trigger-Event: Spieler laeuft ueber das Sticky-Projektil → Ammo-Pickup.
+        /// Nur der Owner (Werfer) kann sein Projektil wieder aufheben.
+        /// </summary>
+        private void OnTriggerEnter(Collider other)
+        {
+            if (!m_IsStuck)
+            {
+                return;
+            }
+
+            NetworkedCharacterState targetState =
+                other.GetComponentInParent<NetworkedCharacterState>();
+            if (targetState == null)
+            {
+                return;
+            }
+
+            // Nur der Owner kann sein geworfenes Projektil aufheben
+            if (targetState.OwnerClientId != m_OwnerClientId)
+            {
+                return;
+            }
+
+            targetState.AddReserveAmmoForWeapon(m_WeaponName, 1);
+
+            Debug.Log($"[ServerProjectile] Sticky picked up by client {m_OwnerClientId} — weapon={m_WeaponName}");
+
             Destroy(gameObject);
         }
     }

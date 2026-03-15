@@ -7,6 +7,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
     /// Simuliert die gleiche Physik wie ServerProjectile (Geschwindigkeit, Gravitation, Bounce)
     /// fuer eine vorhersagbare visuelle Darstellung auf allen Clients.
     /// Zeigt Trail + kleines Objekt, keine Gameplay-Logik (kein Damage).
+    /// Sticky-Projektile bleiben an der Auftreffstelle sichtbar.
     /// </summary>
     public class ClientProjectileVisual : MonoBehaviour
     {
@@ -37,7 +38,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Bounce-Faktor.</summary>
         private float m_Bounce;
 
-        /// <summary>Detonationsart: "impact" oder "timer".</summary>
+        /// <summary>Detonationsart: "impact", "timer" oder "sticky".</summary>
         private string m_Detonation;
 
         /// <summary>Timer-Countdown fuer Timer-Detonation (Sekunden).</summary>
@@ -107,12 +108,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 Destroy(col);
             }
 
-            // Material: leuchtend Orange/Rot fuer Sichtbarkeit
+            // Material: Farbe je nach Detonationsart
             Renderer renderer = sphere.GetComponent<Renderer>();
             if (renderer != null)
             {
                 Material mat = new(Shader.Find("Sprites/Default"));
-                mat.color = m_Detonation == "timer" ? new Color(0.2f, 0.8f, 0.2f) : new Color(1f, 0.5f, 0f);
+                mat.color = m_Detonation == "timer" ? new Color(0.2f, 0.8f, 0.2f)
+                    : m_Detonation == "sticky" ? new Color(0.85f, 0.85f, 0.9f)
+                    : new Color(1f, 0.5f, 0f);
                 renderer.material = mat;
             }
 
@@ -123,13 +126,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             m_Trail.endWidth = TRAIL_END_WIDTH;
             m_Trail.material = new Material(Shader.Find("Sprites/Default"));
 
-            // Trail-Farbe: Farbverlauf Gelb → Transparent
+            // Trail-Farbe: Farbverlauf je nach Detonationsart
             Gradient gradient = new();
+            Color trailStart = m_Detonation == "timer" ? Color.green
+                : m_Detonation == "sticky" ? Color.white
+                : Color.yellow;
+            Color trailEnd = m_Detonation == "timer" ? new Color(0f, 0.5f, 0f)
+                : m_Detonation == "sticky" ? new Color(0.7f, 0.7f, 0.7f)
+                : Color.red;
             gradient.SetKeys(
                 new GradientColorKey[]
                 {
-                    new(m_Detonation == "timer" ? Color.green : Color.yellow, 0f),
-                    new(m_Detonation == "timer" ? new Color(0f, 0.5f, 0f) : Color.red, 1f)
+                    new(trailStart, 0f),
+                    new(trailEnd, 1f)
                 },
                 new GradientAlphaKey[]
                 {
@@ -206,6 +215,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                     return;
                 }
 
+                if (m_Detonation == "sticky")
+                {
+                    StickToSurface();
+                    return;
+                }
+
                 // Bounce (Timer-Granaten)
                 if (m_Bounce > 0f)
                 {
@@ -240,6 +255,30 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
             // Trail kurz sichtbar lassen, dann zerstoeren
             Destroy(gameObject, TRAIL_TIME);
+        }
+
+        /// <summary>
+        /// Sticky-Projektil an Oberflaeche fixieren: Kein Explosions-Effekt, bleibt sichtbar.
+        /// Wird nach MAX_LIFETIME automatisch aufgeraeumt.
+        /// </summary>
+        private void StickToSurface()
+        {
+            m_HasDetonated = true;
+
+            // Trail abschalten (Projektil ruht)
+            if (m_Trail != null)
+            {
+                m_Trail.emitting = false;
+            }
+
+            // Verbleibende Lifetime als Cleanup-Timer
+            float remainingLife = MAX_LIFETIME - m_Lifetime;
+            if (remainingLife < 1f)
+            {
+                remainingLife = 1f;
+            }
+
+            Destroy(gameObject, remainingLife);
         }
 
         /// <summary>
