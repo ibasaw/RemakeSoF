@@ -3,6 +3,7 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.EffectManagement;
 using Tolik.RemakeSoF.Runtime.Game.Camera;
+using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
 
@@ -832,5 +833,234 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
 
             Object.Destroy(impactObj, maxLifetime + 1f);
         }
+
+        /// <summary>
+        /// Spawnt einen datengetriebenen Muzzle-Effekt (Flash oder Smoke) an Position/Rotation.
+        /// Laedt EffectDefinition per effectId, erstellt ParticleSystems + Licht fuer jedes Segment.
+        /// Falls keine EffectDefinition vorhanden: Spawnt Fallback (kurzer heller Flash + Punktlicht).
+        /// </summary>
+        public void SpawnMuzzleEffect(Vector3 position, Quaternion rotation, string effectId)
+        {
+            EffectDefinition definition = GetDefinition(effectId);
+            if (definition?.Segments == null || definition.Segments.Count == 0)
+            {
+                SpawnFallbackMuzzleFlash(position);
+                return;
+            }
+
+            GameObject effectObj = new($"MuzzleEffect_{definition.DisplayName}");
+            effectObj.transform.position = position;
+            effectObj.transform.rotation = rotation;
+
+            float maxLifetime = 0f;
+
+            foreach (EffectSegment segment in definition.Segments)
+            {
+                if (segment.Type is "particle" or "tail" or "orientedParticle" or "line")
+                {
+                    GameObject psGo = new(segment.Name ?? "MuzzleParticle");
+                    psGo.transform.SetParent(effectObj.transform, false);
+
+                    ParticleSystem ps = psGo.AddComponent<ParticleSystem>();
+                    ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    ConfigureParticleSystem(ps, segment);
+
+                    ParticleSystemRenderer psRenderer = ps.GetComponent<ParticleSystemRenderer>();
+                    if (psRenderer != null)
+                    {
+                        if (segment.Type == "orientedParticle")
+                        {
+                            psRenderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
+                        }
+                        else if (segment.Type == "line")
+                        {
+                            psRenderer.renderMode = ParticleSystemRenderMode.Stretch;
+                            psRenderer.lengthScale = 4f;
+                        }
+                    }
+
+                    ps.Play();
+
+                    float segLife = segment.Particle != null
+                        ? segment.Particle.LifetimeMax + segment.Particle.DelayMax
+                        : (segment.Trail?.Lifetime ?? 1f);
+                    maxLifetime = Mathf.Max(maxLifetime, segLife);
+                }
+                else if (segment.Type == "light")
+                {
+                    SpawnExplosionLight(effectObj.transform, segment);
+                }
+            }
+
+            Object.Destroy(effectObj, maxLifetime + 0.5f);
+        }
+
+        /// <summary>
+        /// Fallback Muzzle-Flash wenn keine EffectDefinition vorhanden.
+        /// Kurzer heller Flash + Punktlicht (SoF2-Stil: additive gelbe Partikel).
+        /// </summary>
+        private static void SpawnFallbackMuzzleFlash(Vector3 position)
+        {
+            GameObject flashObj = new("MuzzleFlash_Fallback");
+            flashObj.transform.position = position;
+
+            Light flash = flashObj.AddComponent<Light>();
+            flash.type = LightType.Point;
+            flash.color = new Color(1f, 0.85f, 0.4f);
+            flash.intensity = 5f;
+            flash.range = 6f;
+
+            Object.Destroy(flashObj, 0.08f);
+        }
+
+        /// <summary>
+        /// Spawnt eine SoF2-authentische Patronenhuelse am Eject-Bone.
+        /// Datengetrieben aus EffectDefinition (Emitter-Segment): Modell, Velocity, Spin, Bounce, Gravity.
+        /// Laedt 3D-Modell via PrefabManager (Addressables-Key aus Emitter-Definition).
+        /// Fallback: kleiner Quader mit Messing-Farbe.
+        /// </summary>
+        public void SpawnShellCasing(Vector3 position, Quaternion rotation, string effectId)
+        {
+            EffectDefinition definition = GetDefinition(effectId);
+            EffectEmitterDefinition emitter = null;
+
+            if (definition?.Segments != null)
+            {
+                foreach (EffectSegment segment in definition.Segments)
+                {
+                    if (segment.Type == "emitter" && segment.Emitter != null)
+                    {
+                        emitter = segment.Emitter;
+                        break;
+                    }
+                }
+            }
+
+            GameObject shellObj = null;
+
+            // Modell aus Emitter-Definition laden (Addressables-Key ohne .md3)
+            if (emitter?.Models != null && emitter.Models.Count > 0)
+            {
+                string modelKey = emitter.Models[Random.Range(0, emitter.Models.Count)];
+                PrefabManager prefabManager = ServiceLocator.Get<PrefabManager>();
+                if (prefabManager != null)
+                {
+                    GameObject prefab = prefabManager.LoadPrefab<GameObject>(modelKey);
+                    if (prefab != null)
+                    {
+                        shellObj = Object.Instantiate(prefab, position, rotation);
+                    }
+                }
+            }
+
+            // Fallback: kleiner Quader als Patronenhuelse
+            if (shellObj == null)
+            {
+                shellObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                shellObj.name = "ShellCasing_Fallback";
+                shellObj.transform.position = position;
+                shellObj.transform.rotation = rotation;
+                shellObj.transform.localScale = new Vector3(0.008f, 0.008f, 0.02f);
+
+                Renderer renderer = shellObj.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.material.color = new Color(0.82f, 0.68f, 0.21f);
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                }
+            }
+
+            // Rigidbody fuer Physik-Simulation
+            Rigidbody rb = shellObj.GetComponent<Rigidbody>();
+            if (rb == null)
+            {
+                rb = shellObj.AddComponent<Rigidbody>();
+            }
+
+            rb.mass = 0.01f;
+            rb.linearDamping = 0.3f;
+            rb.angularDamping = 0.3f;
+            rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+
+            if (emitter != null)
+            {
+                // Datengetriebene Auswurf-Geschwindigkeit aus Emitter-Definition (bereits m/s)
+                Vector3 localVelocity = new(
+                    Random.Range(emitter.VelocityMin[0], emitter.VelocityMax[0]),
+                    Random.Range(emitter.VelocityMin[1], emitter.VelocityMax[1]),
+                    Random.Range(emitter.VelocityMin[2], emitter.VelocityMax[2])
+                );
+                rb.linearVelocity = rotation * localVelocity;
+
+                // Datengetriebener Spin aus angleDelta (Grad/s → Rad/s)
+                rb.angularVelocity = new Vector3(
+                    Random.Range(emitter.AngleDeltaMin[0], emitter.AngleDeltaMax[0]) * Mathf.Deg2Rad,
+                    Random.Range(emitter.AngleDeltaMin[1], emitter.AngleDeltaMax[1]) * Mathf.Deg2Rad,
+                    Random.Range(emitter.AngleDeltaMin[2], emitter.AngleDeltaMax[2]) * Mathf.Deg2Rad
+                );
+
+                // Datengetriebenes Bounce-Material
+                Collider col = shellObj.GetComponent<Collider>();
+                if (col != null)
+                {
+                    PhysicsMaterial shellMat = new()
+                    {
+                        bounciness = Random.Range(emitter.BounceMin, emitter.BounceMax),
+                        dynamicFriction = 0.5f,
+                        staticFriction = 0.5f,
+                        bounceCombine = PhysicsMaterialCombine.Maximum
+                    };
+                    col.material = shellMat;
+                }
+
+                // SoF2-authentische Gravitation (SoF2 shells fallen ~1.5-2× schneller als Unity-Standard)
+                float desiredGravity = Random.Range(emitter.GravityMin, emitter.GravityMax);
+                float extraAcceleration = desiredGravity - Physics.gravity.y;
+                if (Mathf.Abs(extraAcceleration) > 0.1f)
+                {
+                    ConstantForce cf = shellObj.AddComponent<ConstantForce>();
+                    cf.force = new Vector3(0f, extraAcceleration * rb.mass, 0f);
+                }
+
+                // Lebensdauer aus Definition (gekappt auf 5s fuer Performance)
+                float lifetime = Mathf.Min(
+                    Random.Range(emitter.LifetimeMin, emitter.LifetimeMax), 5f);
+                Object.Destroy(shellObj, lifetime);
+            }
+            else
+            {
+                // Fallback: Hardcoded SoF2 shell_brass Werte
+                Vector3 localEjectVelocity = new(
+                    Random.Range(50f, 100f) * SOF2_UNIT_SCALE,
+                    Random.Range(-10f, 10f) * SOF2_UNIT_SCALE,
+                    Random.Range(80f, 120f) * SOF2_UNIT_SCALE
+                );
+                rb.linearVelocity = rotation * localEjectVelocity;
+
+                rb.angularVelocity = new Vector3(
+                    Random.Range(50f, 100f) * Mathf.Deg2Rad,
+                    Random.Range(20f, 50f) * Mathf.Deg2Rad,
+                    0f
+                );
+
+                Collider col = shellObj.GetComponent<Collider>();
+                if (col != null)
+                {
+                    PhysicsMaterial shellMat = new()
+                    {
+                        bounciness = 0.3f,
+                        dynamicFriction = 0.5f,
+                        staticFriction = 0.5f,
+                        bounceCombine = PhysicsMaterialCombine.Maximum
+                    };
+                    col.material = shellMat;
+                }
+
+                Object.Destroy(shellObj, 3f);
+            }
+        }
+
+        /// <summary>SoF2 Unit-Skalierung: 1 Quake Unit = 0.0254 Meter.</summary>
+        private const float SOF2_UNIT_SCALE = 0.0254f;
     }
 }

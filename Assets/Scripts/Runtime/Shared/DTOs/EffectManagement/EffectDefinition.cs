@@ -117,6 +117,13 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// </summary>
         [JsonProperty("cameraShake")]
         public EffectCameraShakeDefinition CameraShake;
+
+        /// <summary>
+        /// Emitter-Parameter (nur fuer type "emitter").
+        /// SoF2 Emitter-Primitive: physikalische Objekte mit 3D-Modellen (z.B. Patronenhuelsen).
+        /// </summary>
+        [JsonProperty("emitter")]
+        public EffectEmitterDefinition Emitter;
     }
 
     // ===== Tail (TrailRenderer) =====
@@ -526,5 +533,98 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// </summary>
         [JsonProperty("radius")]
         public float Radius;
+    }
+
+    // ===== Emitter (3D-Modell mit Physik) =====
+
+    /// <summary>
+    /// Emitter-Parameter fuer physikalische 3D-Objekte (SoF2 Emitter-Primitive).
+    /// Verwendet fuer Patronenhuelsen und andere ausgeworfene Objekte mit Rigidbody-Physik.
+    /// Alle Werte sind bereits in Unity-Einheiten konvertiert.
+    /// </summary>
+    [Serializable]
+    public class EffectEmitterDefinition
+    {
+        /// <summary>
+        /// Liste der Modell-Keys fuer Addressables (SoF2 models-Block, ohne .md3-Endung).
+        /// Bei mehreren Modellen wird zufaellig eines gewaehlt.
+        /// </summary>
+        [JsonProperty("models")]
+        public List<string> Models;
+
+        /// <summary>
+        /// Auswurf-Geschwindigkeit Minimum [x,y,z] in m/s (SoF2 velocity min × 0.0254).
+        /// Lokal-Space: x=rechts, y=oben, z=vorwaerts.
+        /// </summary>
+        [JsonProperty("velocityMin")]
+        public float[] VelocityMin;
+
+        /// <summary>
+        /// Auswurf-Geschwindigkeit Maximum [x,y,z] in m/s (SoF2 velocity max × 0.0254).
+        /// </summary>
+        [JsonProperty("velocityMax")]
+        public float[] VelocityMax;
+
+        /// <summary>
+        /// Rotations-Geschwindigkeit Minimum [pitch,yaw,roll] in Grad/Sekunde
+        /// (SoF2 angleDelta min × 20 fps).
+        /// </summary>
+        [JsonProperty("angleDeltaMin")]
+        public float[] AngleDeltaMin;
+
+        /// <summary>
+        /// Rotations-Geschwindigkeit Maximum [pitch,yaw,roll] in Grad/Sekunde
+        /// (SoF2 angleDelta max × 20 fps).
+        /// </summary>
+        [JsonProperty("angleDeltaMax")]
+        public float[] AngleDeltaMax;
+
+        /// <summary>
+        /// Gravitation Minimum in m/s² (SoF2 gravity min × 0.0254). Negativ = nach unten.
+        /// </summary>
+        [JsonProperty("gravityMin")]
+        public float GravityMin;
+
+        /// <summary>
+        /// Gravitation Maximum in m/s² (SoF2 gravity max × 0.0254). Negativ = nach unten.
+        /// </summary>
+        [JsonProperty("gravityMax")]
+        public float GravityMax;
+
+        /// <summary>
+        /// Abprall-Koeffizient Minimum (SoF2 bounce min, 0.0 - 1.0).
+        /// </summary>
+        [JsonProperty("bounceMin")]
+        public float BounceMin;
+
+        /// <summary>
+        /// Abprall-Koeffizient Maximum (SoF2 bounce max, 0.0 - 1.0).
+        /// </summary>
+        [JsonProperty("bounceMax")]
+        public float BounceMax;
+
+        /// <summary>
+        /// Minimale Lebensdauer in Sekunden (SoF2 life min / 1000).
+        /// </summary>
+        [JsonProperty("lifetimeMin")]
+        public float LifetimeMin;
+
+        /// <summary>
+        /// Maximale Lebensdauer in Sekunden (SoF2 life max / 1000).
+        /// </summary>
+        [JsonProperty("lifetimeMax")]
+        public float LifetimeMax;
+
+        /// <summary>
+        /// Maximale Sichtweite in Unity-Metern (SoF2 cullrange × 0.0254).
+        /// </summary>
+        [JsonProperty("cullRange")]
+        public float CullRange;
+
+        /// <summary>
+        /// Optionale Referenz auf Impact-Effekt beim Aufprall (SoF2 impactfx).
+        /// </summary>
+        [JsonProperty("impactFx")]
+        public string ImpactFx;
     }
 }

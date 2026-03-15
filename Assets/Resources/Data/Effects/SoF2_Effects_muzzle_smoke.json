@@ -1,0 +1,310 @@
+[
+  {
+    "id": "effects/muzzle_flashes/smoke_m4",
+    "displayName": "M4 Muzzle Smoke",
+    "segments": [
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke2",
+        "flags": ["depthHack", "useAlpha"],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.7,
+          "lifetimeMax": 0.9,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -3,
+          "rotationSpeedMax": 3,
+          "velocityMin": [0.127, -0.0508, -0.0508],
+          "velocityMax": [0.254, 0.0508, 0.0508],
+          "gravityModifier": -0.508,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.3,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0381,
+          "endMin": 0.2032,
+          "endMax": 0.254,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/smoke_ak74",
+    "displayName": "AK-74 Muzzle Smoke",
+    "segments": [
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke2",
+        "flags": ["useAlpha"],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.7,
+          "lifetimeMax": 0.8,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -3,
+          "rotationSpeedMax": 3,
+          "velocityMin": [0.127, 0, 0],
+          "velocityMax": [0.254, 0, 0],
+          "gravityModifier": -0.762,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [0.6549, 0.6235, 0.6039],
+          "startMax": [0.6549, 0.6235, 0.6039]
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0254,
+          "endMin": 0.2032,
+          "endMax": 0.2794,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/smoke_mm1",
+    "displayName": "MM1 Muzzle Smoke",
+    "segments": [
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": ["useAlpha"],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "delayMin": 0,
+          "delayMax": 0.3,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -7,
+          "rotationSpeedMax": 7,
+          "velocityMin": [0.254, -0.1016, -0.1016],
+          "velocityMax": [0.381, 0.1016, 0.1016],
+          "gravityModifier": -0.7,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.45,
+          "startMax": 0.6,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [0.7529, 0.7529, 0.7529],
+          "startMax": [0.6549, 0.6235, 0.6039],
+          "endMin": [0.502, 0.502, 0.502],
+          "endMax": [0.502, 0.502, 0.502]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762,
+          "endMin": 0.254,
+          "endMax": 0.3048,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "forward_smoke",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": ["useAlpha"],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.175,
+          "lifetimeMax": 0.2,
+          "delayMin": 0,
+          "delayMax": 0.1,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -6,
+          "rotationSpeedMax": 6,
+          "velocityMin": [2.54, -0.0508, -0.0508],
+          "velocityMax": [3.048, 0.0508, 0.0508],
+          "gravityModifier": -0.19,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.35,
+          "startMax": 0.45,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.1016,
+          "startMax": 0.127,
+          "endMin": 0.254,
+          "endMax": 0.3048,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/smoke_usas12",
+    "displayName": "USAS-12 Muzzle Smoke",
+    "segments": [
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke02",
+        "flags": ["useAlpha"],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.2,
+          "lifetimeMax": 0.35,
+          "delayMin": 0,
+          "delayMax": 0.03,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": 9,
+          "rotationSpeedMax": 10,
+          "originMin": [0.0254, 0, 0],
+          "originMax": [0.0508, 0, 0],
+          "velocityMin": [0.127, 0, 0],
+          "velocityMax": [0.254, 0, 0],
+          "gravityModifier": -0.89,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.3,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [0.5059, 0.4627, 0.4392],
+          "startMax": [0.5059, 0.4627, 0.4392]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762,
+          "endMin": 0.2032,
+          "endMax": 0.254,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "smoke_up",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke02",
+        "flags": ["useAlpha"],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -6,
+          "rotationSpeedMax": 6,
+          "originMin": [0.0254, 0, 0],
+          "originMax": [0.0508, 0, 0],
+          "velocityMin": [0.254, 0, 0],
+          "velocityMax": [0.508, 0, 0],
+          "gravityModifier": -0.889,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [0.6745, 0.6745, 0.6745],
+          "startMax": [0.1373, 0.1373, 0.1373],
+          "endMin": [0.5686, 0.5686, 0.5686],
+          "endMax": [0.5686, 0.5686, 0.5686]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762,
+          "endMin": 0.1524,
+          "endMax": 0.2032,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/smoke_m60",
+    "displayName": "M60 Muzzle Smoke",
+    "segments": [
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": ["useAlpha"],
+        "particle": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 0.7,
+          "lifetimeMax": 0.8,
+          "delayMin": 0,
+          "delayMax": 0.1,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -7,
+          "rotationSpeedMax": 7,
+          "originMin": [0.0508, 0, 0],
+          "originMax": [0.0762, 0, 0],
+          "velocityMin": [0.127, -0.0508, -0.0508],
+          "velocityMax": [0.254, 0.0508, 0.0508],
+          "gravityModifier": -0.762,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [0.6549, 0.6235, 0.6039],
+          "startMax": [0.6549, 0.6235, 0.6039],
+          "endMin": [0.502, 0.502, 0.502],
+          "endMax": [0.502, 0.502, 0.502]
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0305,
+          "endMin": 0.127,
+          "endMax": 0.1778,
+          "curve": "linear"
+        }
+      }
+    ]
+  }
+]

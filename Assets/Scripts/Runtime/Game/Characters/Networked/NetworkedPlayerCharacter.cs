@@ -669,6 +669,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             Vector3 aimRight = aimRotation * Vector3.right;
             Vector3 aimUp = aimRotation * Vector3.up;
 
+            // Muzzle-Effekte (Flash, Smoke, Shell) einmal pro Schuss an alle Clients
+            MuzzleEffectsClientRpc(
+                attackDef.MuzzleFlash ?? "",
+                attackDef.MuzzleSmoke ?? "",
+                attackDef.ShellCasingEject ?? "",
+                attackDef.EjectBone ?? ""
+            );
+
             for (int i = 0; i < pelletCount; i++)
             {
                 // SoF2-konforme Streuung: 0.05 * inaccuracy * gaussian auf right/up Vektoren
@@ -883,6 +891,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             Vector3 eyePos = m_ServerPlayerCharacter.GetEyePosition();
             Vector3 aimDirection = Quaternion.Euler(cmd.PitchAngle, cmd.YawAngle, 0f) * Vector3.forward;
+
+            // Muzzle-Effekte fuer Sofort-Projektile (RPG, MM1) — nicht fuer gekochte Granaten
+            MuzzleEffectsClientRpc(
+                attackDef.MuzzleFlash ?? "",
+                attackDef.MuzzleSmoke ?? "",
+                attackDef.ShellCasingEject ?? "",
+                attackDef.EjectBone ?? ""
+            );
 
             SpawnProjectile(eyePos, aimDirection, attackDef, projDef);
 
@@ -1198,6 +1214,56 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
+        /// Server → Alle Clients: Muzzle-Flash, Muzzle-Smoke und Shell-Casing-Ejektion.
+        /// Wird einmal pro Schuss gesendet (nicht pro Pellet).
+        /// SoF2 CG_FireWeapon/CG_EjectBrass: Flash am Muzzle-Bone, Huelse am Eject-Bone.
+        /// </summary>
+        [Rpc(SendTo.Everyone)]
+        private void MuzzleEffectsClientRpc(string muzzleFlashId, string muzzleSmokeId,
+            string shellCasingId, string ejectBoneName)
+        {
+            if (m_Animator == null)
+            {
+                return;
+            }
+
+            Transform ejectBone = null;
+            if (!string.IsNullOrEmpty(ejectBoneName))
+            {
+                ejectBone = FindDeepChild(m_Animator.transform, ejectBoneName);
+            }
+
+            if (ejectBone == null)
+            {
+                return;
+            }
+
+            Vector3 position = ejectBone.position;
+            Quaternion rotation = ejectBone.rotation;
+
+            EffectFactory effectFactory = ServiceLocator.Get<EffectFactory>();
+            if (effectFactory == null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(muzzleFlashId))
+            {
+                effectFactory.SpawnMuzzleEffect(position, rotation, muzzleFlashId);
+            }
+
+            if (!string.IsNullOrEmpty(muzzleSmokeId))
+            {
+                effectFactory.SpawnMuzzleEffect(position, rotation, muzzleSmokeId);
+            }
+
+            if (!string.IsNullOrEmpty(shellCasingId))
+            {
+                effectFactory.SpawnShellCasing(position, rotation, shellCasingId);
+            }
+        }
+
+        /// <summary>
         /// Server → Owner-Client: Wendet SoF2 kickAngles als View-Punch an.
         /// KickAngles-Format: [minPitch, maxPitch, minYaw, maxYaw].
         /// Pitch-Kick bewegt die Kamera nach oben (Rueckstoss), Yaw-Kick seitlich.
@@ -1261,6 +1327,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Melee/Hitscan-AltAttack: Cooldown starten + Raycast + Damage + KickAngles
             m_ServerAltAttackFramesRemaining = m_ServerAltAttackFrames;
             m_ServerAltAttackFrameAccumulator = 0f;
+
+            // Muzzle-Effekte fuer Hitscan-AltAttack (falls definiert)
+            if (altAttackDef != null)
+            {
+                MuzzleEffectsClientRpc(
+                    altAttackDef.MuzzleFlash ?? "",
+                    altAttackDef.MuzzleSmoke ?? "",
+                    altAttackDef.ShellCasingEject ?? "",
+                    altAttackDef.EjectBone ?? ""
+                );
+            }
 
             // Melee/Hitscan Raycast (einzelner Schuss, keine Pellets, keine Inaccuracy)
             if (altAttackDef != null && altAttackDef.Damage > 0 && altAttackDef.Range > 0)

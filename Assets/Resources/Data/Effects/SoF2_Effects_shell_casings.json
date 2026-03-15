@@ -1,0 +1,58 @@
+[
+  {
+    "id": "effects/shell_brass",
+    "displayName": "Brass Shell Casing",
+    "segments": [
+      {
+        "name": "shell",
+        "type": "emitter",
+        "flags": ["useModel", "usePhysics", "impactKills", "impactFx"],
+        "emitter": {
+          "models": [
+            "models/weapons/shells/shell_brass_hires"
+          ],
+          "velocityMin": [1.27, -0.254, 2.032],
+          "velocityMax": [2.54, 0.254, 3.048],
+          "angleDeltaMin": [1000, 400, 0],
+          "angleDeltaMax": [2000, 1000, 0],
+          "gravityMin": -15.24,
+          "gravityMax": -20.32,
+          "bounceMin": 0.2,
+          "bounceMax": 0.4,
+          "lifetimeMin": 3.0,
+          "lifetimeMax": 3.0,
+          "cullRange": 7.62,
+          "impactFx": "shells/shell_bouce_brass"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/shell_shotgun",
+    "displayName": "Shotgun Shell Casing",
+    "segments": [
+      {
+        "name": "shell",
+        "type": "emitter",
+        "flags": ["useModel", "usePhysics", "impactKills", "impactFx"],
+        "emitter": {
+          "models": [
+            "models/weapons/shells/shell_shotgun_hires"
+          ],
+          "velocityMin": [1.27, -0.254, 2.032],
+          "velocityMax": [2.54, 0.254, 3.048],
+          "angleDeltaMin": [1000, 400, 0],
+          "angleDeltaMax": [2000, 1000, 0],
+          "gravityMin": -15.24,
+          "gravityMax": -20.32,
+          "bounceMin": 0.2,
+          "bounceMax": 0.4,
+          "lifetimeMin": 3.0,
+          "lifetimeMax": 3.0,
+          "cullRange": 7.62,
+          "impactFx": "shells/shell_bouce_shotgun"
+        }
+      }
+    ]
+  }
+]
