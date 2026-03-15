@@ -560,6 +560,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 {
                     ApplyCameraShake(position, segment);
                 }
+                else if (segment.Type == "emitter" && segment.Emitter != null)
+                {
+                    SpawnEmitterChunks(position, Quaternion.identity, segment.Emitter);
+                    float emitterLife = Mathf.Max(segment.Emitter.LifetimeMin, segment.Emitter.LifetimeMax);
+                    maxLifetime = Mathf.Max(maxLifetime, emitterLife);
+                }
             }
 
             // Fallback-Licht wenn kein Light-Segment vorhanden
@@ -911,6 +917,156 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             flash.range = 6f;
 
             Object.Destroy(flashObj, 0.08f);
+        }
+
+        /// <summary>
+        /// Spawnt einen datengetriebenen Debris-Effekt (z.B. effects/chunks/debris_rock).
+        /// Verarbeitet Partikel-Segmente (Rauch/Staub) und Emitter-Segmente (3D-Model-Chunks mit Physik).
+        /// Wird von Surface-Impact-Code und Explosion-Code aufgerufen.
+        /// </summary>
+        public void SpawnDebris(Vector3 position, Quaternion rotation, string effectId)
+        {
+            EffectDefinition definition = GetDefinition(effectId);
+            if (definition?.Segments == null || definition.Segments.Count == 0)
+            {
+                return;
+            }
+
+            GameObject debrisRoot = new($"Debris_{definition.DisplayName}");
+            debrisRoot.transform.position = position;
+            debrisRoot.transform.rotation = rotation;
+
+            float maxLifetime = 0f;
+
+            foreach (EffectSegment segment in definition.Segments)
+            {
+                if (segment.Type == "particle" || segment.Type == "tail" || segment.Type == "line")
+                {
+                    GameObject psGo = new(segment.Name ?? "Particle");
+                    psGo.transform.SetParent(debrisRoot.transform, false);
+
+                    ParticleSystem ps = psGo.AddComponent<ParticleSystem>();
+                    ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    ConfigureParticleSystem(ps, segment);
+                    ps.Play();
+
+                    float segLife = segment.Particle != null
+                        ? segment.Particle.LifetimeMax + segment.Particle.DelayMax
+                        : (segment.Trail?.Lifetime ?? 1f);
+                    maxLifetime = Mathf.Max(maxLifetime, segLife);
+                }
+                else if (segment.Type == "emitter" && segment.Emitter != null)
+                {
+                    SpawnEmitterChunks(position, rotation, segment.Emitter);
+                    float emitterLife = Mathf.Max(segment.Emitter.LifetimeMin, segment.Emitter.LifetimeMax);
+                    maxLifetime = Mathf.Max(maxLifetime, emitterLife);
+                }
+            }
+
+            Object.Destroy(debrisRoot, maxLifetime + 1f);
+        }
+
+        /// <summary>
+        /// Spawnt mehrere 3D-Model-Chunks mit Rigidbody-Physik aus einer Emitter-Definition.
+        /// Jeder Chunk bekommt zufaellige Geschwindigkeit, Spin, Gravitation und Bounce aus den definierten Bereichen.
+        /// Modell wird zufaellig aus der Modell-Liste gewaehlt und via PrefabManager geladen.
+        /// </summary>
+        private void SpawnEmitterChunks(Vector3 position, Quaternion rotation, EffectEmitterDefinition emitter)
+        {
+            if (emitter.Models == null || emitter.Models.Count == 0)
+            {
+                return;
+            }
+
+            int count = Random.Range(emitter.CountMin, emitter.CountMax + 1);
+            PrefabManager prefabManager = ServiceLocator.Get<PrefabManager>();
+
+            for (int i = 0; i < count; i++)
+            {
+                string modelKey = emitter.Models[Random.Range(0, emitter.Models.Count)];
+                GameObject chunkObj = null;
+
+                if (prefabManager != null)
+                {
+                    GameObject prefab = prefabManager.LoadPrefab<GameObject>(modelKey);
+                    if (prefab != null)
+                    {
+                        chunkObj = Object.Instantiate(prefab, position, rotation);
+                    }
+                }
+
+                // Fallback: kleiner Quader als Chunk
+                if (chunkObj == null)
+                {
+                    chunkObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    chunkObj.name = $"Chunk_Fallback_{i}";
+                    chunkObj.transform.position = position;
+                    chunkObj.transform.rotation = rotation;
+                    chunkObj.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f);
+
+                    Renderer renderer = chunkObj.GetComponent<Renderer>();
+                    if (renderer != null)
+                    {
+                        renderer.material.color = new Color(0.4f, 0.35f, 0.3f);
+                        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    }
+                }
+
+                // Rigidbody fuer Physik-Simulation
+                Rigidbody rb = chunkObj.GetComponent<Rigidbody>();
+                if (rb == null)
+                {
+                    rb = chunkObj.AddComponent<Rigidbody>();
+                }
+
+                rb.mass = 0.05f;
+                rb.linearDamping = 0.1f;
+                rb.angularDamping = 0.2f;
+                rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
+
+                // Datengetriebene Geschwindigkeit
+                Vector3 localVelocity = new(
+                    Random.Range(emitter.VelocityMin[0], emitter.VelocityMax[0]),
+                    Random.Range(emitter.VelocityMin[1], emitter.VelocityMax[1]),
+                    Random.Range(emitter.VelocityMin[2], emitter.VelocityMax[2])
+                );
+                rb.linearVelocity = rotation * localVelocity;
+
+                // Datengetriebener Spin (Grad/s → Rad/s)
+                rb.angularVelocity = new Vector3(
+                    Random.Range(emitter.AngleDeltaMin[0], emitter.AngleDeltaMax[0]) * Mathf.Deg2Rad,
+                    Random.Range(emitter.AngleDeltaMin[1], emitter.AngleDeltaMax[1]) * Mathf.Deg2Rad,
+                    Random.Range(emitter.AngleDeltaMin[2], emitter.AngleDeltaMax[2]) * Mathf.Deg2Rad
+                );
+
+                // Datengetriebenes Bounce-Material
+                Collider col = chunkObj.GetComponent<Collider>();
+                if (col != null)
+                {
+                    PhysicsMaterial chunkMat = new()
+                    {
+                        bounciness = Random.Range(emitter.BounceMin, emitter.BounceMax),
+                        dynamicFriction = 0.5f,
+                        staticFriction = 0.5f,
+                        bounceCombine = PhysicsMaterialCombine.Maximum
+                    };
+                    col.material = chunkMat;
+                }
+
+                // SoF2-Gravitation (oft staerker als Unity-Standard)
+                float desiredGravity = Random.Range(emitter.GravityMin, emitter.GravityMax);
+                float extraAcceleration = desiredGravity - Physics.gravity.y;
+                if (Mathf.Abs(extraAcceleration) > 0.1f)
+                {
+                    ConstantForce cf = chunkObj.AddComponent<ConstantForce>();
+                    cf.force = new Vector3(0f, extraAcceleration * rb.mass, 0f);
+                }
+
+                // Lebensdauer aus Definition (gekappt auf 5s fuer Performance)
+                float lifetime = Mathf.Min(
+                    Random.Range(emitter.LifetimeMin, emitter.LifetimeMax), 5f);
+                Object.Destroy(chunkObj, lifetime);
+            }
         }
 
         /// <summary>

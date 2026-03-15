@@ -622,6 +622,20 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         public float CullRange;
 
         /// <summary>
+        /// Minimale Anzahl an gleichzeitig gespawnten Emitter-Objekten (SoF2 count min).
+        /// Standard 1 (z.B. eine einzelne Patronenhuelse).
+        /// </summary>
+        [JsonProperty("countMin")]
+        public int CountMin = 1;
+
+        /// <summary>
+        /// Maximale Anzahl an gleichzeitig gespawnten Emitter-Objekten (SoF2 count max).
+        /// Standard 1 (z.B. eine einzelne Patronenhuelse).
+        /// </summary>
+        [JsonProperty("countMax")]
+        public int CountMax = 1;
+
+        /// <summary>
         /// Optionale Referenz auf Impact-Effekt beim Aufprall (SoF2 impactfx).
         /// </summary>
         [JsonProperty("impactFx")]

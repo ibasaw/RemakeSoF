@@ -25,6 +25,12 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
+        /// Surface → AmmoType → DebrisEffectId Mapping.
+        /// </summary>
+        private readonly Dictionary<string, Dictionary<string, string>> m_SurfaceAmmoDebris =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
         /// Initialisiert den Loader und laedt die Surface-Impact-Daten automatisch.
         /// </summary>
         public SurfaceImpactDataLoader()
@@ -60,20 +66,32 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                     }
 
                     Dictionary<string, string> ammoEffects = new(StringComparer.OrdinalIgnoreCase);
+                    Dictionary<string, string> ammoDebris = new(StringComparer.OrdinalIgnoreCase);
 
                     foreach (KeyValuePair<string, JToken> ammoEntry in (JObject)ammoTypesToken)
                     {
                         string effectId = ammoEntry.Value["effect"]?.ToString();
+                        string debrisId = ammoEntry.Value["debris"]?.ToString();
 
                         if (!string.IsNullOrEmpty(effectId) && !effectId.Contains(" "))
                         {
                             ammoEffects[ammoEntry.Key] = effectId;
+                        }
+
+                        if (!string.IsNullOrEmpty(debrisId) && !debrisId.Contains(" "))
+                        {
+                            ammoDebris[ammoEntry.Key] = debrisId;
                         }
                     }
 
                     if (ammoEffects.Count > 0)
                     {
                         m_SurfaceAmmoEffects[surfaceName] = ammoEffects;
+                    }
+
+                    if (ammoDebris.Count > 0)
+                    {
+                        m_SurfaceAmmoDebris[surfaceName] = ammoDebris;
                     }
                 }
 
@@ -112,6 +130,35 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             }
 
             return DEFAULT_EFFECT;
+        }
+
+        /// <summary>
+        /// Ermittelt die Debris-Effect-ID fuer einen gegebenen Surface-Typ und Munitionstyp.
+        /// Fallback-Kette: ExacterSurface → "default" Surface → leer (kein Debris).
+        /// </summary>
+        public string GetDebrisEffectId(string surfaceType, string ammoType)
+        {
+            if (string.IsNullOrEmpty(ammoType))
+            {
+                return "";
+            }
+
+            // Versuch 1: Exakte Surface + AmmoType
+            if (!string.IsNullOrEmpty(surfaceType)
+                && m_SurfaceAmmoDebris.TryGetValue(surfaceType, out Dictionary<string, string> ammoDebris)
+                && ammoDebris.TryGetValue(ammoType, out string debrisId))
+            {
+                return debrisId;
+            }
+
+            // Versuch 2: Default-Surface + AmmoType
+            if (m_SurfaceAmmoDebris.TryGetValue(DEFAULT_SURFACE, out Dictionary<string, string> defaultDebris)
+                && defaultDebris.TryGetValue(ammoType, out string defaultDebrisId))
+            {
+                return defaultDebrisId;
+            }
+
+            return "";
         }
     }
 }

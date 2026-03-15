@@ -696,6 +696,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 Vector3 hitPoint;
                 Vector3 impactNormal = Vector3.zero;
                 string impactEffectId = "";
+                string debrisEffectId = "";
 
                 if (hitboxDist <= worldDist && didHit)
                 {
@@ -717,6 +718,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     if (surfaceLoader != null)
                     {
                         impactEffectId = surfaceLoader.GetImpactEffectId(surfaceType, ammoType);
+                        debrisEffectId = surfaceLoader.GetDebrisEffectId(surfaceType, ammoType);
                     }
                 }
                 else
@@ -746,7 +748,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
                 // Tracer + Impact pro Pellet an alle Clients senden
                 string tracerEffectId = attackDef.TracerEffect ?? "";
-                TracerClientRpc(eyePos, hitPoint, impactNormal, tracerEffectId, impactEffectId);
+                TracerClientRpc(eyePos, hitPoint, impactNormal, tracerEffectId, impactEffectId, debrisEffectId);
             }
 
             // Eigenen Collider wieder aktivieren
@@ -1132,14 +1134,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
-        /// Server → Alle Clients: Tracer-Visualisierung + Impact-Effekt fuer Hitscan-Waffen.
+        /// Server → Alle Clients: Tracer-Visualisierung + Impact-Effekt + Debris fuer Hitscan-Waffen.
         /// Spawnt einen datengetriebenen TracerVisual (TrailRenderer) der vom ejectBone
         /// der aktuellen Waffe zum HitPoint fliegt. Bei Welt-Treffer wird zusaetzlich ein
-        /// Impact-Effekt (Staub, Funken, Einschussloch) an der Einschlagstelle gespawnt.
+        /// Impact-Effekt (Staub, Funken, Einschussloch) und Surface-Debris an der Einschlagstelle gespawnt.
         /// </summary>
         [Rpc(SendTo.Everyone)]
         private void TracerClientRpc(Vector3 serverStart, Vector3 end, Vector3 hitNormal,
-            string tracerEffectId, string impactEffectId)
+            string tracerEffectId, string impactEffectId, string debrisEffectId)
         {
             // EjectBone der aktuellen Waffe als Tracer-Startpunkt suchen
             Vector3 tracerStart = serverStart;
@@ -1170,6 +1172,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             {
                 EffectFactory effectFactory = ServiceLocator.Get<EffectFactory>();
                 effectFactory?.SpawnImpactEffect(end, hitNormal, impactEffectId);
+
+                // Surface-Debris an der Einschlagstelle (3D-Chunks mit Physik)
+                if (!string.IsNullOrEmpty(debrisEffectId))
+                {
+                    Quaternion impactRotation = Quaternion.LookRotation(hitNormal);
+                    effectFactory?.SpawnDebris(end, impactRotation, debrisEffectId);
+                }
 
                 // Debug-HUD: Surface-Typ aus impactEffectId extrahieren (nur fuer lokalen Spieler)
                 if (IsOwner)
@@ -1361,6 +1370,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 Vector3 hitPoint;
                 Vector3 impactNormal = Vector3.zero;
                 string impactEffectId = "";
+                string debrisEffectId = "";
 
                 if (hitboxDist <= worldDist && didHit)
                 {
@@ -1380,6 +1390,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     if (surfaceLoader != null)
                     {
                         impactEffectId = surfaceLoader.GetImpactEffectId(surfaceType, altAmmoType);
+                        debrisEffectId = surfaceLoader.GetDebrisEffectId(surfaceType, altAmmoType);
                     }
                 }
                 else
@@ -1408,7 +1419,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_ServerPlayerCharacter.SetPhysicsColliderEnabled(true);
 
                 string altTracerEffectId = altAttackDef.TracerEffect ?? "";
-                TracerClientRpc(eyePos, hitPoint, impactNormal, altTracerEffectId, impactEffectId);
+                TracerClientRpc(eyePos, hitPoint, impactNormal, altTracerEffectId, impactEffectId, debrisEffectId);
             }
 
             // KickAngles: Rueckstoss an Owner-Client senden (falls definiert)

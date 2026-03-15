@@ -1,0 +1,77 @@
+[
+  {
+    "id": "effects/debris_largeExplosion",
+    "displayName": "Large Explosion Debris",
+    "segments": [
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": ["useModel"],
+        "emitter": {
+          "models": [],
+          "velocityMin": [4.445, -5.08, -5.08],
+          "velocityMax": [7.62, 5.08, 5.08],
+          "angleDeltaMin": [-1000, -1000, -400],
+          "angleDeltaMax": [1000, 1000, 400],
+          "gravityMin": -15.24,
+          "gravityMax": -15.24,
+          "bounceMin": 0.3,
+          "bounceMax": 0.4,
+          "lifetimeMin": 5.0,
+          "lifetimeMax": 5.0,
+          "cullRange": 7.62
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/debris_mediumExplosion",
+    "displayName": "Medium Explosion Debris",
+    "segments": [
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": ["useModel"],
+        "emitter": {
+          "models": [],
+          "velocityMin": [2.54, -3.81, -3.81],
+          "velocityMax": [5.08, 3.81, 3.81],
+          "angleDeltaMin": [-1000, -1000, -400],
+          "angleDeltaMax": [1000, 1000, 400],
+          "gravityMin": -15.24,
+          "gravityMax": -15.24,
+          "bounceMin": 0.3,
+          "bounceMax": 0.4,
+          "lifetimeMin": 5.0,
+          "lifetimeMax": 5.0,
+          "cullRange": 7.62
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/debris_smallExplosion",
+    "displayName": "Small Explosion Debris",
+    "segments": [
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": ["useModel"],
+        "emitter": {
+          "models": [],
+          "velocityMin": [1.27, -1.905, -1.905],
+          "velocityMax": [2.54, 1.905, 1.905],
+          "angleDeltaMin": [-1000, -1000, -400],
+          "angleDeltaMax": [1000, 1000, 400],
+          "gravityMin": -15.24,
+          "gravityMax": -15.24,
+          "bounceMin": 0.3,
+          "bounceMax": 0.4,
+          "lifetimeMin": 5.0,
+          "lifetimeMax": 5.0,
+          "cullRange": 7.62
+        }
+      }
+    ]
+  }
+]

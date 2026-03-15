@@ -1,0 +1,1475 @@
+[
+  {
+    "id": "effects/chunks/debris_rock",
+    "displayName": "Rock Debris",
+    "countHint": 1,
+    "segments": [
+      {
+        "name": "puff",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.5,
+          "delayMin": 0,
+          "delayMax": 0.25,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "rotationSpeedMin": -60,
+          "rotationSpeedMax": 60,
+          "gravityModifier": -0.153,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 75,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.549,
+            0.549,
+            0.549
+          ],
+          "startMax": [
+            0.5294,
+            0.4863,
+            0.4627
+          ],
+          "endMin": [
+            0.3176,
+            0.2863,
+            0.2745
+          ],
+          "endMax": [
+            0.2706,
+            0.2706,
+            0.2706
+          ]
+        },
+        "size": {
+          "startMin": 0.254,
+          "startMax": 0.381,
+          "endMin": 1.016,
+          "endMax": 1.27,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "bits",
+        "type": "particle",
+        "texture": "gfx/misc/bp_rock",
+        "flags": [
+          "usePhysics",
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 4,
+          "countMax": 7,
+          "lifetimeMin": 5.2,
+          "lifetimeMax": 5.5,
+          "delayMin": 0,
+          "delayMax": 0.1,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "velocityMin": [
+            1.27,
+            0,
+            3.175
+          ],
+          "velocityMax": [
+            2.54,
+            0,
+            3.81
+          ],
+          "gravityModifier": -1.4,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 85,
+          "curve": "clamp"
+        },
+        "color": {
+          "startMin": [
+            0.5686,
+            0.5686,
+            0.5686
+          ],
+          "startMax": [
+            0.6039,
+            0.6039,
+            0.6039
+          ],
+          "endMin": [
+            0.2078,
+            0.2078,
+            0.2078
+          ],
+          "endMax": [
+            0.2078,
+            0.2078,
+            0.2078
+          ]
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 0.0127,
+          "endMax": 0.0127
+        }
+      },
+      {
+        "name": "puff3",
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.5,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "rotationSpeedMin": -40,
+          "rotationSpeedMax": 40,
+          "gravityModifier": -1.27,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.3176,
+            0.2863,
+            0.2745
+          ],
+          "startMax": [
+            0.3176,
+            0.2863,
+            0.2745
+          ],
+          "endMin": [
+            0,
+            0,
+            0
+          ],
+          "endMax": [
+            0,
+            0,
+            0
+          ]
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 0.4064,
+          "endMax": 0.508,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics"
+        ],
+        "emitter": {
+          "models": [
+            "models/chunks/rock/rock_big",
+            "models/chunks/rock/rock_med",
+            "models/chunks/rock/rock_small"
+          ],
+          "velocityMin": [
+            1.27,
+            0,
+            0.254
+          ],
+          "velocityMax": [
+            3.81,
+            0,
+            2.54
+          ],
+          "angleDeltaMin": [
+            -100,
+            -100,
+            -100
+          ],
+          "angleDeltaMax": [
+            100,
+            100,
+            100
+          ],
+          "gravityMin": -5.08,
+          "gravityMax": -12.7,
+          "bounceMin": 0.3,
+          "bounceMax": 0.5,
+          "countMin": 5,
+          "countMax": 7,
+          "lifetimeMin": 4.0,
+          "lifetimeMax": 4.0,
+          "cullRange": 7.62
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/chunks/debris_rock_small",
+    "displayName": "Rock Debris (Small)",
+    "segments": [
+      {
+        "name": "puff",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.5,
+          "delayMin": 0,
+          "delayMax": 0.25,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "rotationSpeedMin": -60,
+          "rotationSpeedMax": 60,
+          "gravityModifier": -0.153,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 75,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.549,
+            0.549,
+            0.549
+          ],
+          "startMax": [
+            0.5294,
+            0.4863,
+            0.4627
+          ],
+          "endMin": [
+            0.3176,
+            0.2863,
+            0.2745
+          ],
+          "endMax": [
+            0.2706,
+            0.2706,
+            0.2706
+          ]
+        },
+        "size": {
+          "startMin": 0.254,
+          "startMax": 0.381,
+          "endMin": 1.016,
+          "endMax": 1.27,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "bits",
+        "type": "particle",
+        "texture": "gfx/misc/bp_rock",
+        "flags": [
+          "usePhysics",
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 11,
+          "countMax": 12,
+          "lifetimeMin": 5.2,
+          "lifetimeMax": 5.5,
+          "delayMin": 0,
+          "delayMax": 0.1,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "velocityMin": [
+            1.27,
+            0,
+            3.175
+          ],
+          "velocityMax": [
+            2.54,
+            0,
+            3.81
+          ],
+          "gravityModifier": -1.4,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 85,
+          "curve": "clamp"
+        },
+        "color": {
+          "startMin": [
+            0.5686,
+            0.5686,
+            0.5686
+          ],
+          "startMax": [
+            0.6039,
+            0.6039,
+            0.6039
+          ],
+          "endMin": [
+            0.2078,
+            0.2078,
+            0.2078
+          ],
+          "endMax": [
+            0.2078,
+            0.2078,
+            0.2078
+          ]
+        },
+        "size": {
+          "startMin": 0.00635,
+          "startMax": 0.0127,
+          "endMin": 0.0127,
+          "endMax": 0.0127
+        }
+      },
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics"
+        ],
+        "emitter": {
+          "models": [
+            "models/chunks/rock/rock_big",
+            "models/chunks/rock/rock_med",
+            "models/chunks/rock/rock_small"
+          ],
+          "velocityMin": [
+            1.27,
+            0,
+            0.254
+          ],
+          "velocityMax": [
+            3.81,
+            0,
+            2.54
+          ],
+          "angleDeltaMin": [
+            -100,
+            -100,
+            -100
+          ],
+          "angleDeltaMax": [
+            100,
+            100,
+            100
+          ],
+          "gravityMin": -5.08,
+          "gravityMax": -12.7,
+          "bounceMin": 0.3,
+          "bounceMax": 0.5,
+          "lifetimeMin": 4.0,
+          "lifetimeMax": 4.0,
+          "cullRange": 7.62,
+          "countMin": 5,
+          "countMax": 7
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/chunks/debris_wood",
+    "displayName": "Wood Debris",
+    "segments": [
+      {
+        "name": "puff",
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.7,
+          "delayMin": 0,
+          "delayMax": 0.2,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -80,
+          "rotationSpeedMax": 80,
+          "gravityModifier": 0.3,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 40,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.651,
+            0.3608,
+            0.043
+          ],
+          "startMax": [
+            0.6,
+            0.4275,
+            0.3176
+          ],
+          "endMin": [
+            0,
+            0,
+            0
+          ],
+          "endMax": [
+            0,
+            0,
+            0
+          ]
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 0.4064,
+          "endMax": 0.508,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "puff2",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 2.5,
+          "lifetimeMax": 3.0,
+          "delayMin": 0,
+          "delayMax": 0.1,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -80,
+          "rotationSpeedMax": 80,
+          "gravityModifier": 0,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.55,
+          "startMax": 0.6,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 75,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.6,
+            0.4275,
+            0.3176
+          ],
+          "startMax": [
+            0.3725,
+            0.2784,
+            0.2118
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.1524,
+          "endMin": 1.016,
+          "endMax": 1.397,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics"
+        ],
+        "emitter": {
+          "models": [
+            "models/chunks/wood/wood_big",
+            "models/chunks/wood/wood_med",
+            "models/chunks/wood/wood_small",
+            "models/chunks/wood/wood_splinter",
+            "models/chunks/wood/wood_splinter4"
+          ],
+          "velocityMin": [
+            0.762,
+            0,
+            5.08
+          ],
+          "velocityMax": [
+            3.81,
+            0,
+            11.43
+          ],
+          "angleDeltaMin": [
+            -400,
+            -400,
+            0
+          ],
+          "angleDeltaMax": [
+            400,
+            400,
+            0
+          ],
+          "gravityMin": -17.78,
+          "gravityMax": -20.32,
+          "bounceMin": 0.3,
+          "bounceMax": 0.5,
+          "lifetimeMin": 4.0,
+          "lifetimeMax": 4.0,
+          "cullRange": 7.62,
+          "countMin": 8,
+          "countMax": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/chunks/debris_metal",
+    "displayName": "Metal Debris",
+    "segments": [
+      {
+        "name": "puff",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 2.5,
+          "lifetimeMax": 3.0,
+          "delayMin": 0,
+          "delayMax": 0.1,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -80,
+          "rotationSpeedMax": 80,
+          "gravityModifier": -0.38,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 75,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.549,
+            0.549,
+            0.549
+          ],
+          "startMax": [
+            0.5294,
+            0.4863,
+            0.4627
+          ],
+          "endMin": [
+            0.3176,
+            0.2863,
+            0.2745
+          ],
+          "endMax": [
+            0.2706,
+            0.2706,
+            0.2706
+          ]
+        },
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.254,
+          "endMin": 0.762,
+          "endMax": 1.016,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics"
+        ],
+        "emitter": {
+          "models": [
+            "models/chunks/metal/metal_big",
+            "models/chunks/metal/metal_med",
+            "models/chunks/metal/metal_small"
+          ],
+          "velocityMin": [
+            1.27,
+            0,
+            2.54
+          ],
+          "velocityMax": [
+            3.81,
+            0,
+            7.62
+          ],
+          "angleDeltaMin": [
+            -100,
+            -100,
+            -100
+          ],
+          "angleDeltaMax": [
+            100,
+            100,
+            100
+          ],
+          "gravityMin": -10.16,
+          "gravityMax": -12.7,
+          "bounceMin": 0.3,
+          "bounceMax": 0.5,
+          "lifetimeMin": 4.0,
+          "lifetimeMax": 4.0,
+          "cullRange": 7.62,
+          "countMin": 6,
+          "countMax": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/chunks/debris_hollowmetal",
+    "displayName": "Hollow Metal Debris",
+    "segments": [
+      {
+        "name": "puff",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 2.5,
+          "lifetimeMax": 3.0,
+          "delayMin": 0,
+          "delayMax": 0.1,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -80,
+          "rotationSpeedMax": 80,
+          "gravityModifier": -0.254,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 75,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.549,
+            0.549,
+            0.549
+          ],
+          "startMax": [
+            0.5294,
+            0.4863,
+            0.4627
+          ],
+          "endMin": [
+            0.3176,
+            0.2863,
+            0.2745
+          ],
+          "endMax": [
+            0.2706,
+            0.2706,
+            0.2706
+          ]
+        },
+        "size": {
+          "startMin": 0.2032,
+          "startMax": 0.254,
+          "endMin": 1.778,
+          "endMax": 2.032,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "bits",
+        "type": "particle",
+        "texture": "gfx/misc/jk_bar",
+        "flags": [
+          "usePhysics",
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 7,
+          "countMax": 10,
+          "lifetimeMin": 5.2,
+          "lifetimeMax": 5.5,
+          "delayMin": 0,
+          "delayMax": 0.05,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -300,
+          "rotationSpeedMax": 300,
+          "velocityMin": [
+            1.27,
+            0,
+            2.54
+          ],
+          "velocityMax": [
+            5.08,
+            0,
+            6.35
+          ],
+          "gravityModifier": -1.143,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 85,
+          "curve": "clamp"
+        },
+        "color": {
+          "startMin": [
+            0.5686,
+            0.5686,
+            0.5686
+          ],
+          "startMax": [
+            0.6039,
+            0.6039,
+            0.6039
+          ],
+          "endMin": [
+            0.2078,
+            0.2078,
+            0.2078
+          ],
+          "endMax": [
+            0.2078,
+            0.2078,
+            0.2078
+          ]
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.127
+        }
+      },
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics"
+        ],
+        "emitter": {
+          "models": [
+            "models/chunks/metal/metal_med",
+            "models/chunks/metal/metal_small"
+          ],
+          "velocityMin": [
+            1.27,
+            0,
+            2.54
+          ],
+          "velocityMax": [
+            5.08,
+            0,
+            7.62
+          ],
+          "angleDeltaMin": [
+            -100,
+            -100,
+            -100
+          ],
+          "angleDeltaMax": [
+            100,
+            100,
+            100
+          ],
+          "gravityMin": -10.16,
+          "gravityMax": -12.7,
+          "bounceMin": 0.3,
+          "bounceMax": 0.5,
+          "lifetimeMin": 4.0,
+          "lifetimeMax": 4.5,
+          "cullRange": 7.62,
+          "countMin": 7,
+          "countMax": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/chunks/debris_hollowwood",
+    "displayName": "Hollow Wood Debris",
+    "segments": [
+      {
+        "name": "puff",
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 0.3,
+          "lifetimeMax": 0.3,
+          "delayMin": 0,
+          "delayMax": 0.2,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "rotationSpeedMin": -20,
+          "rotationSpeedMax": 20,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 50,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.651,
+            0.3608,
+            0.043
+          ],
+          "startMax": [
+            0.6,
+            0.4275,
+            0.3176
+          ],
+          "endMin": [
+            0,
+            0,
+            0
+          ],
+          "endMax": [
+            0,
+            0,
+            0
+          ]
+        },
+        "size": {
+          "startMin": 0.1016,
+          "startMax": 0.127,
+          "endMin": 0.762,
+          "endMax": 1.016,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics"
+        ],
+        "emitter": {
+          "models": [
+            "models/chunks/wood/wood_med",
+            "models/chunks/wood/wood_small",
+            "models/chunks/wood/wood_splinter",
+            "models/chunks/wood/wood_splinter4"
+          ],
+          "velocityMin": [
+            -2.54,
+            -2.54,
+            2.54
+          ],
+          "velocityMax": [
+            2.54,
+            2.54,
+            3.81
+          ],
+          "angleDeltaMin": [
+            -400,
+            -400,
+            -400
+          ],
+          "angleDeltaMax": [
+            400,
+            400,
+            400
+          ],
+          "gravityMin": -7.62,
+          "gravityMax": -7.62,
+          "bounceMin": 0.3,
+          "bounceMax": 0.5,
+          "lifetimeMin": 4.0,
+          "lifetimeMax": 4.0,
+          "cullRange": 7.62,
+          "countMin": 10,
+          "countMax": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/chunks/debris_glass",
+    "displayName": "Glass Debris",
+    "segments": [
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "useBBox"
+        ],
+        "emitter": {
+          "models": [
+            "models/chunks/ice/ice_med",
+            "models/chunks/ice/ice_small"
+          ],
+          "velocityMin": [
+            -5.08,
+            -5.08,
+            2.54
+          ],
+          "velocityMax": [
+            5.08,
+            5.08,
+            7.62
+          ],
+          "angleDeltaMin": [
+            -1000,
+            -1000,
+            -400
+          ],
+          "angleDeltaMax": [
+            1000,
+            1000,
+            400
+          ],
+          "gravityMin": -17.78,
+          "gravityMax": -17.78,
+          "bounceMin": 0.3,
+          "bounceMax": 0.4,
+          "lifetimeMin": 5.0,
+          "lifetimeMax": 5.0,
+          "cullRange": 7.62,
+          "countMin": 3,
+          "countMax": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/chunks/debris_ice",
+    "displayName": "Ice Debris",
+    "segments": [
+      {
+        "name": "bits",
+        "type": "particle",
+        "texture": "gfx/misc/specs",
+        "particle": {
+          "countMin": 15,
+          "countMax": 20,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 0.75,
+          "velocityMin": [
+            3.048,
+            -1.143,
+            -1.143
+          ],
+          "velocityMax": [
+            7.874,
+            1.143,
+            1.143
+          ],
+          "gravityModifier": -1.905,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.00254,
+          "startMax": 0.00381,
+          "endMin": 0.0381,
+          "endMax": 0.0508,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "puff",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mist",
+        "particle": {
+          "countMin": 3,
+          "countMax": 3,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "rotationMin": -20,
+          "rotationMax": 20,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 200,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.1016,
+          "endMin": 0.762,
+          "endMax": 1.016,
+          "curve": "nonlinear"
+        }
+      },
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "useBBox"
+        ],
+        "emitter": {
+          "models": [
+            "models/chunks/ice/ice_big",
+            "models/chunks/ice/ice_med",
+            "models/chunks/ice/ice_small"
+          ],
+          "velocityMin": [
+            -3.81,
+            -3.81,
+            -1.27
+          ],
+          "velocityMax": [
+            3.81,
+            3.81,
+            7.62
+          ],
+          "angleDeltaMin": [
+            0,
+            0,
+            0
+          ],
+          "angleDeltaMax": [
+            200,
+            200,
+            200
+          ],
+          "gravityMin": -10.16,
+          "gravityMax": -12.7,
+          "bounceMin": 0.4,
+          "bounceMax": 0.5,
+          "lifetimeMin": 4.0,
+          "lifetimeMax": 5.0,
+          "cullRange": 7.62,
+          "countMin": 4,
+          "countMax": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/chunks/debris_snow",
+    "displayName": "Snow Debris",
+    "segments": [
+      {
+        "name": "bits",
+        "type": "particle",
+        "texture": "gfx/misc/specs",
+        "particle": {
+          "countMin": 15,
+          "countMax": 20,
+          "lifetimeMin": 0.8,
+          "lifetimeMax": 1.0,
+          "velocityMin": [
+            -2.54,
+            -2.54,
+            1.27
+          ],
+          "velocityMax": [
+            2.54,
+            2.54,
+            6.35
+          ],
+          "gravityModifier": -1.905,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0381,
+          "endMin": 0.0381,
+          "endMax": 0.0508,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "puff",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mist",
+        "particle": {
+          "countMin": 3,
+          "countMax": 3,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "rotationMin": -20,
+          "rotationMax": 20,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 200,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.1524,
+          "startMax": 0.2032,
+          "endMin": 0.7112,
+          "endMax": 0.8382,
+          "curve": "nonlinear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/chunks/debris_computer",
+    "displayName": "Computer Debris",
+    "segments": [
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke3",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 4,
+          "countMax": 6,
+          "lifetimeMin": 2.0,
+          "lifetimeMax": 2.0,
+          "delayMin": 0.3,
+          "delayMax": 0.3,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -80,
+          "rotationSpeedMax": 80,
+          "gravityModifier": -0.381,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 75,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.254,
+          "startMax": 0.508,
+          "endMin": 1.27,
+          "endMax": 1.524,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "bang_light",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mflash_ak74",
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.35,
+          "lifetimeMax": 0.35,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 90,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 1.27,
+          "endMax": 1.524,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "sparks",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mflash_ak74",
+        "flags": [
+          "usePhysics"
+        ],
+        "particle": {
+          "countMin": 10,
+          "countMax": 15,
+          "lifetimeMin": 5.0,
+          "lifetimeMax": 5.0,
+          "velocityMin": [
+            7.62,
+            -1.905,
+            -1.905
+          ],
+          "velocityMax": [
+            10.16,
+            1.905,
+            1.905
+          ],
+          "gravityModifier": -2.159,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 1.0,
+          "endMin": 0.4,
+          "endMax": 1.0
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0381
+        }
+      },
+      {
+        "name": "chunks",
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics"
+        ],
+        "emitter": {
+          "models": [
+            "models/chunks/metal/metal_med",
+            "models/chunks/metal/metal_small"
+          ],
+          "velocityMin": [
+            5.08,
+            -2.54,
+            -2.54
+          ],
+          "velocityMax": [
+            15.24,
+            2.54,
+            2.54
+          ],
+          "angleDeltaMin": [
+            0,
+            0,
+            0
+          ],
+          "angleDeltaMax": [
+            200,
+            200,
+            200
+          ],
+          "gravityMin": -17.78,
+          "gravityMax": -20.32,
+          "bounceMin": 0.3,
+          "bounceMax": 0.5,
+          "lifetimeMin": 5.0,
+          "lifetimeMax": 5.0,
+          "cullRange": 15.24,
+          "countMin": 6,
+          "countMax": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/chunks/debris_water",
+    "displayName": "Water Debris",
+    "segments": [
+      {
+        "name": "topmist",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mist",
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 0.3,
+          "lifetimeMax": 0.4,
+          "delayMin": 0,
+          "delayMax": 0.1,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -400,
+          "rotationSpeedMax": 400,
+          "velocityMin": [
+            0.508,
+            0,
+            1.524
+          ],
+          "velocityMax": [
+            0.762,
+            0,
+            1.778
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.7,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.7922,
+            0.7922,
+            0.7922
+          ],
+          "startMax": [
+            0.6549,
+            0.6235,
+            0.6039
+          ]
+        },
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.1778,
+          "endMin": 0.381,
+          "endMax": 0.508,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "waterdrops",
+        "type": "particle",
+        "texture": "gfx/misc/bp_water_droplets01",
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 10,
+          "countMax": 12,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.0,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -140,
+          "rotationSpeedMax": 140,
+          "velocityMin": [
+            1.27,
+            0,
+            1.27
+          ],
+          "velocityMax": [
+            2.032,
+            0,
+            2.032
+          ],
+          "gravityModifier": -1.905,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.7,
+          "startMax": 0.8,
+          "endMin": 0.2,
+          "endMax": 0.3,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.7922,
+            0.7922,
+            0.7922
+          ],
+          "startMax": [
+            0.6549,
+            0.6235,
+            0.6039
+          ]
+        },
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.1524,
+          "endMin": 0.254,
+          "endMax": 0.508,
+          "curve": "linear"
+        }
+      }
+    ]
+  }
+]

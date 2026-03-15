@@ -30,6 +30,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0d29ead66afccf3478c7694f739c2d60
+    m_Address: models/chunks/ice/ice_big
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0f67940ae0a19d243bde5abb10c9e400
     m_Address: models/characters/gore/bone_long/bone_long_mp.glm
     m_ReadOnly: 0
@@ -50,8 +55,23 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 16356302a926e0046b6133f5d2d2bf2b
+    m_Address: models/chunks/rock/rock_med
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 18c8358552509bb41b9bd15ab987c050
     m_Address: ak74
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1a8678b5f139cae48b1308da54f5cd95
+    m_Address: models/chunks/wood/wood_big
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1c92ce631fe5b8b4aae3ab4e8af5b5dc
+    m_Address: models/chunks/wood/wood_small
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -65,8 +85,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2281aff7d04679f42ab0ff8b11a09923
+    m_Address: models/chunks/wood/wood_med
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 287ed5aa4f997684b87d95f8467f3350
     m_Address: models/weapons/shells/shell_brass_large
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d24e47e381ac454d9d54441be5eb342
+    m_Address: models/chunks/ice/ice_small
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -77,6 +107,26 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 305aa99bddacd1f4c9e727190b450ac8
     m_Address: m60
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 368a7c0795d5500459753f7d010243f9
+    m_Address: models/chunks/metal/metal_med
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3afb4ed7f713eee45aaceeb7dca37d06
+    m_Address: models/chunks/wood/wood_splinter4
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4894783626909ca44ba5d834a11f02c1
+    m_Address: models/chunks/rock/rock_big
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 646fb1bededdb2749beeb6cbcac2fdc7
+    m_Address: models/chunks/metal/metal_big
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -92,6 +142,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6e077d41b1616514f81c0734b1b61081
     m_Address: characters/models/fat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6f173d15890179f4fbd34aadc7c1a5d6
+    m_Address: models/chunks/wood/wood_splinter
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -125,8 +180,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 88514314410347545ab2baf54a36ff05
+    m_Address: models/chunks/rock/rock_small
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 88ed268c36a8edf45b17dd6407819a8e
     m_Address: maps/cem1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9264ec14d8c84784fbeb8e36a166f3a4
+    m_Address: models/chunks/ice/ice_med
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -137,6 +202,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: acae1b99ec54d864f99c3cdc6a5069b6
     m_Address: models/animator/loadout_average_sleeves
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b039a71148b0757449cd48e77b6fe7cb
+    m_Address: models/chunks/metal/metal_small
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
