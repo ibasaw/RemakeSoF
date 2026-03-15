@@ -104,6 +104,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Autoritativer Crouch-State vom Server.</summary>
         public bool IsCrouching;
 
+        /// <summary>SoF2 PMF_TIME_KNOCKBACK Timer (Sekunden). Verhindert Friction waehrend Knockback.</summary>
+        public float KnockbackTime;
+
         /// <summary>
         /// Serialisiert das Acknowledgement für Netcode RPC-Transport.
         /// </summary>
@@ -115,6 +118,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             serializer.SerializeValue(ref IsGrounded);
             serializer.SerializeValue(ref IsJumping);
             serializer.SerializeValue(ref IsCrouching);
+            serializer.SerializeValue(ref KnockbackTime);
         }
     }
 }

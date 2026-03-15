@@ -81,11 +81,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Instanziiertes Projektil-Model (geladen via PrefabManager).</summary>
         private GameObject m_ModelInstance;
 
+        /// <summary>
+        /// SoF2 Bounce-Stop-Threshold: 40 QU/s * 0.0254 = 1.016 m/s (g_missile.c:37/59).
+        /// Granate stoppt auf horizontaler Flaeche (normal.y > 0.2) wenn Geschwindigkeit darunter.
+        /// </summary>
+        private const float BOUNCE_STOP_SPEED = 1.016f;
+
         /// <summary>Akkumulierter ROLL-Winkel fuer Messer-Wurfrotation (SoF2: lerpAngles[ROLL] += cg.time * 1.75).</summary>
         private float m_KnifeRollAngle;
 
-        /// <summary>Z-Rotation fuer SoF2/Ghoul2-Models (identisch zum WeaponLoader).</summary>
-        private const float MODEL_Z_ROTATION = -90f;
+        /// <summary>
+        /// Model-Korrektur fuer SoF2/Ghoul2-Projektile.
+        /// Grenade/RPG: Euler(0, 0, -90) — identisch zum WeaponLoader (Hand-Attachment).
+        /// Knife: Euler(-90, 0, 0) — Blade (lokale Y-Achse) auf Flugrichtung (Z) ausrichten.
+        /// </summary>
+        private static readonly Quaternion MODEL_ROTATION_DEFAULT = Quaternion.Euler(0f, 0f, -90f);
+        private static readonly Quaternion MODEL_ROTATION_KNIFE = Quaternion.Euler(0f, -90f, 0f);
 
         /// <summary>Rotationsgeschwindigkeit fuer Messer-Wurfrotation in Grad/Sek (SoF2: 1.75 Grad/ms = 1750 Grad/s).</summary>
         private const float KNIFE_ROTATION_SPEED = 1750f;
@@ -154,8 +165,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             {
                 CreateDataDrivenVisuals(factory, definition);
             }
-            else
+            else if (!hasModel)
             {
+                // Fallback-Trail nur wenn kein 3D-Model vorhanden.
+                // SoF2: Knife hat keinen Trail (cg_weaponinit.c: kein tracerEffect fuer WP_KNIFE).
                 CreateFallbackTrail();
             }
         }
@@ -183,8 +196,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             m_ModelInstance = Instantiate(prefab, transform);
             m_ModelInstance.name = $"ProjectileModel_{m_ModelKey}";
 
-            // SoF2/Ghoul2-Models sind um Z-Achse gedreht relativ zu Unity (wie im WeaponLoader)
-            m_ModelInstance.transform.localRotation = Quaternion.Euler(0f, 0f, MODEL_Z_ROTATION);
+            // SoF2/Ghoul2 Model-Korrektur: Knife hat Blade entlang Y, andere Models brauchen Z-Rotation
+            m_ModelInstance.transform.localRotation = m_ModelKey == "knife"
+                ? MODEL_ROTATION_KNIFE
+                : MODEL_ROTATION_DEFAULT;
 
             // Collider entfernen (Projektil-Models sind rein visuell, Kollision ist punkt-basiert)
             foreach (Collider col in m_ModelInstance.GetComponentsInChildren<Collider>())
@@ -273,11 +288,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 }
             }
 
-            // Fallback: Wenn kein Tail-Segment vorhanden, einfachen Trail hinzufuegen
-            if (m_Trail == null)
-            {
-                CreateFallbackTrail();
-            }
+            // Kein Fallback-Trail wenn datengetriebene Visuals vorhanden (z.B. m203_trail hat nur Partikel).
+            // SoF2: Wenn ein Effect nur Partikel definiert, gibt es keinen Trail.
         }
 
         /// <summary>
@@ -354,15 +366,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             // Rotation in Flugrichtung aktualisieren
             if (m_Velocity.sqrMagnitude > 0.001f)
             {
-                transform.rotation = Quaternion.LookRotation(m_Velocity);
+                Quaternion flightRotation = Quaternion.LookRotation(m_Velocity);
 
                 // SoF2 Knife ROLL-Rotation: cg_ents.c CG_Missile() → lerpAngles[ROLL] += cg.time * 1.75
-                // 1.75 Grad/ms = 1750 Grad/s auf ROLL-Achse (lokale Forward/Z-Achse)
+                // 1.75 Grad/ms = 1750 Grad/s. Model-Korrektur Euler(0,-90,0) legt die Klinge entlang Z,
+                // deshalb Spin um die rechte Achse (X) damit die Klinge sichtbar rotiert.
                 if (m_ModelKey == "knife")
                 {
                     m_KnifeRollAngle += KNIFE_ROTATION_SPEED * dt;
-                    transform.rotation *= Quaternion.AngleAxis(m_KnifeRollAngle, Vector3.forward);
+                    flightRotation *= Quaternion.AngleAxis(m_KnifeRollAngle, Vector3.right);
                 }
+
+                transform.rotation = flightRotation;
             }
 
             // Bewegung mit Kollisionserkennung
@@ -397,6 +412,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 if (m_Bounce > 0f)
                 {
                     m_Velocity = Vector3.Reflect(m_Velocity, hit.normal) * m_Bounce;
+
+                    // SoF2 g_missile.c:37/59: Granate stoppt auf horizontaler Flaeche bei niedriger Geschwindigkeit
+                    if (hit.normal.y > 0.2f && m_Velocity.magnitude < BOUNCE_STOP_SPEED)
+                    {
+                        m_Velocity = Vector3.zero;
+                    }
                 }
                 else
                 {

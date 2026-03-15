@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
@@ -46,6 +47,12 @@ namespace Tolik.RemakeSoF.Runtime
         /// Gecachte PlayerCharacter-Referenz fuer HUD Weapon-Swap Prediction.
         /// </summary>
         private ClientPlayerCharacter m_PlayerCharacter;
+
+        /// <summary>
+        /// Client-seitiger Ammo-Cache pro Waffe. Wird bei jedem OnAmmoChanged/OnWeaponChangedHud
+        /// aktualisiert, damit Weapon-Swap-Prediction korrekte Werte anzeigt statt StartClip/StartReserve.
+        /// </summary>
+        private readonly Dictionary<string, (int clip, int reserve)> m_ClientAmmoCache = new();
 
         void Awake()
         {
@@ -270,6 +277,7 @@ namespace Tolik.RemakeSoF.Runtime
             string weaponName = m_CharacterState.CurrentWeaponName;
             if (!string.IsNullOrEmpty(weaponName))
             {
+                m_ClientAmmoCache[weaponName] = (clipAmmo, reserveAmmo);
                 UpdateWeaponHud(weaponName, clipAmmo, reserveAmmo);
             }
         }
@@ -284,7 +292,10 @@ namespace Tolik.RemakeSoF.Runtime
                 return;
             }
 
-            UpdateWeaponHud(weaponName, m_CharacterState.CurrentClipAmmo, m_CharacterState.ReserveAmmo);
+            int clip = m_CharacterState.CurrentClipAmmo;
+            int reserve = m_CharacterState.ReserveAmmo;
+            m_ClientAmmoCache[weaponName] = (clip, reserve);
+            UpdateWeaponHud(weaponName, clip, reserve);
         }
 
         /// <summary>
@@ -293,6 +304,14 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         private void OnWeaponSwapTargetChanged(string weaponName)
         {
+            // Client-Cache hat die tatsaechlichen Werte der letzten Nutzung dieser Waffe
+            if (m_ClientAmmoCache.TryGetValue(weaponName, out (int clip, int reserve) cached))
+            {
+                UpdateWeaponHud(weaponName, cached.clip, cached.reserve);
+                return;
+            }
+
+            // Fallback: Erste Auswahl dieser Waffe, noch nie equipped → StartClip/StartReserve
             WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
             if (loader == null)
             {
@@ -313,6 +332,25 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         private void OnWeaponSwapRaiseStarted(string weaponName)
         {
+            // Primaer: Server hat schon committed → NetworkVariable aktuell
+            if (m_CharacterState != null &&
+                string.Equals(m_CharacterState.CurrentWeaponName, weaponName, StringComparison.Ordinal))
+            {
+                int clip = m_CharacterState.CurrentClipAmmo;
+                int reserve = m_CharacterState.ReserveAmmo;
+                m_ClientAmmoCache[weaponName] = (clip, reserve);
+                UpdateWeaponHud(weaponName, clip, reserve);
+                return;
+            }
+
+            // Sekundaer: Client-Cache hat Werte der letzten Nutzung
+            if (m_ClientAmmoCache.TryGetValue(weaponName, out (int clip, int reserve) cached))
+            {
+                UpdateWeaponHud(weaponName, cached.clip, cached.reserve);
+                return;
+            }
+
+            // Fallback: Erste Auswahl, noch nie equipped
             WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
             if (loader == null)
             {
@@ -322,15 +360,6 @@ namespace Tolik.RemakeSoF.Runtime
             WeaponDefinition weapon = loader.GetById(weaponName);
             int predictedClip = weapon?.Ammo?.StartClip ?? 0;
             int predictedReserve = weapon?.Ammo?.StartReserve ?? 0;
-
-            // Versuche gespeicherte Ammo-Werte vom CharacterState zu holen
-            // (falls Server schon committed hat, sind die Werte aktueller)
-            if (m_CharacterState != null &&
-                string.Equals(m_CharacterState.CurrentWeaponName, weaponName, StringComparison.Ordinal))
-            {
-                predictedClip = m_CharacterState.CurrentClipAmmo;
-                predictedReserve = m_CharacterState.ReserveAmmo;
-            }
 
             UpdateWeaponHud(weaponName, predictedClip, predictedReserve);
         }

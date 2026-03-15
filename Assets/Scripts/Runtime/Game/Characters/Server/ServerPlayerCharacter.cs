@@ -161,6 +161,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                 IsGrounded = m_Simulation.IsGrounded,
                 IsJumping = m_Simulation.IsJumping,
                 IsCrouching = m_Simulation.IsCrouching,
+                KnockbackTime = m_Simulation.KnockbackTime,
             };
         }
 
@@ -191,5 +192,56 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         /// AnimationEvent: Land (wird auf Server ignoriert, aber benötigt wegen NetworkAnimator).
         /// </summary>
         private void OnLand(AnimationEvent animationEvent) { }
+
+        // ===== SoF2 Knockback (g_combat.c:543) =====
+
+        /// <summary>
+        /// SoF2 g_knockback Cvar Default (700 QU/s Basisgeschwindigkeit).
+        /// </summary>
+        private const float SOF2_KNOCKBACK = 700f;
+
+        /// <summary>
+        /// SoF2 Spieler-Masse Default (200 Units).
+        /// </summary>
+        private const float SOF2_MASS = 200f;
+
+        /// <summary>
+        /// SoF2 Unit-Konvertierung (1 QU = 0.0254m).
+        /// </summary>
+        private const float SOF2_UNIT_SCALE = 0.0254f;
+
+        /// <summary>
+        /// SoF2 Schwerkraft-Skalierung fuer Knockback (0.8 bei g_gravity > 0).
+        /// </summary>
+        private const float SOF2_KNOCKBACK_GRAVITY_SCALE = 0.8f;
+
+        /// <summary>
+        /// Wendet SoF2-authentischen Knockback auf den Spieler an.
+        /// Formel: kvel = dir * g_knockback(700) * knockback / mass(200) * 0.8
+        /// Setzt pm_time fuer Knockback-Schutz (Spieler kann Momentum nicht sofort canceln).
+        /// Velocity-Aenderung wird beim naechsten ServerMovementAck an den Client propagiert.
+        /// </summary>
+        /// <param name="direction">Normalisierte Richtung der Kraft (Explosion → Spieler).</param>
+        /// <param name="knockback">Knockback-Wert (bereits auf 200 geclampt).</param>
+        public void ApplyKnockback(Vector3 direction, float knockback)
+        {
+            // SoF2: VectorScale(newDir, g_knockback * knockback / mass * 0.8, kvel)
+            // Ergebnis ist in QU/s → konvertieren zu Unity m/s
+            Vector3 kvel = direction * (SOF2_KNOCKBACK * knockback / SOF2_MASS * SOF2_KNOCKBACK_GRAVITY_SCALE * SOF2_UNIT_SCALE);
+
+            m_Simulation.Velocity += kvel;
+
+            // SoF2 g_combat.c:580 — set PMF_TIME_KNOCKBACK timer
+            // Duration: knockback * 2 ms, clamped to [50, 200] ms
+            // Prevents player from cancelling knockback momentum via friction
+            if (m_Simulation.KnockbackTime <= 0f)
+            {
+                float knockbackTimeMs = Mathf.Clamp(knockback * 2f, 50f, 200f);
+                m_Simulation.KnockbackTime = knockbackTimeMs * 0.001f;
+            }
+
+            Debug.Log($"[Knockback] dir={direction} kb={knockback} kvel={kvel} " +
+                       $"vel={m_Simulation.Velocity} kbTime={m_Simulation.KnockbackTime:F3}s");
+        }
     }
 }

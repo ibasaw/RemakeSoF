@@ -3,6 +3,7 @@ using UnityEngine;
 namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 {
     using Characters.Networked;
+    using Characters.Server;
     using Characters.Shared;
     /// <summary>
     /// Server-seitiges Projektil (RPG, Granate, MM1, Knife-Throw).
@@ -20,11 +21,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>SoF2 Gravitation in Unity-Meter/s² (800 QU/s² × 0.0254 = 20.32).</summary>
         private const float SOF2_GRAVITY = 20.32f;
 
-        /// <summary>Physics Layer Name fuer Hitbox-Collider.</summary>
+        /// <summary>Physics Layer Name fuer Hitbox-Collider (Hitscan/Direkt-Treffer).</summary>
         private const string HITBOX_LAYER_NAME = "Hitbox";
+
+        /// <summary>Physics Layer Name fuer Spieler-Collider (Explosions-Erkennung).</summary>
+        private const string PLAYER_LAYER_NAME = "Player";
 
         /// <summary>Max Lebensdauer in Sekunden (Safety-Cleanup fuer verlorene Projektile).</summary>
         private const float MAX_LIFETIME = 15f;
+
+        /// <summary>
+        /// SoF2 Bounce-Stop-Threshold: Granate stoppt wenn auf horizontaler Flaeche (normal.y > 0.2)
+        /// und Geschwindigkeit unter 40 QU/s (g_missile.c:37/59). 40 QU/s * 0.0254 = 1.016 m/s.
+        /// </summary>
+        private const float BOUNCE_STOP_SPEED = 1.016f;
 
         /// <summary>Aktuelle Flugrichtung und -geschwindigkeit (Unity-Meter/Sek).</summary>
         private Vector3 m_Velocity;
@@ -71,8 +81,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Pickup-Radius in Unity-Metern fuer Sticky-Projektile.</summary>
         private const float PICKUP_RADIUS = 0.75f;
 
-        /// <summary>LayerMask fuer Hitbox-Raycasts.</summary>
+        /// <summary>LayerMask fuer Hitbox-Raycasts (Direkt-Treffer per Bone).</summary>
         private int m_HitboxLayerMask;
+
+        /// <summary>LayerMask fuer Explosions-Erkennung (Player-Physics-Collider).</summary>
+        private int m_ExplosionLayerMask;
 
         /// <summary>LayerMask fuer Welt-Kollision (alles ausser Hitbox).</summary>
         private int m_WorldLayerMask;
@@ -114,6 +127,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             m_IsStuck = false;
 
             m_HitboxLayerMask = LayerMask.GetMask(HITBOX_LAYER_NAME);
+            // SoF2 G_RadiusDamage nutzt Entity-Origins, nicht per-Bone Hitboxen.
+            // Explosions-Erkennung ueber Player-Physics-Collider (BoxCollider auf Player-Layer).
+            m_ExplosionLayerMask = LayerMask.GetMask(PLAYER_LAYER_NAME);
             // Welt-Kollision: Default Layer (alles was nicht Hitbox ist)
             m_WorldLayerMask = ~m_HitboxLayerMask;
 
@@ -209,6 +225,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 if (m_Bounce > 0f)
                 {
                     m_Velocity = Vector3.Reflect(m_Velocity, worldHit.normal) * m_Bounce;
+
+                    // SoF2 g_missile.c:37/59: Granate stoppt auf horizontaler Flaeche bei niedriger Geschwindigkeit
+                    if (worldHit.normal.y > 0.2f && m_Velocity.magnitude < BOUNCE_STOP_SPEED)
+                    {
+                        m_Velocity = Vector3.zero;
+                    }
                 }
                 else
                 {
@@ -219,7 +241,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             }
 
             // Raycast fuer Hitbox-Kollision (Spieler direkt treffen)
-            if (Physics.Raycast(transform.position, direction, out RaycastHit hitboxHit, distance, m_HitboxLayerMask))
+            if (Physics.Raycast(transform.position, direction, out RaycastHit hitboxHit, distance, m_HitboxLayerMask, QueryTriggerInteraction.Collide))
             {
                 if (m_Detonation == "impact")
                 {
@@ -240,7 +262,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         }
 
         /// <summary>
-        /// Detoniert das Projektil: Explosions-Damage im Radius anwenden.
+        /// SoF2 maximaler Knockback-Wert (g_combat.c:844: knockback > 200 → 200).
+        /// </summary>
+        private const float MAX_KNOCKBACK = 200f;
+
+        /// <summary>
+        /// Detoniert das Projektil: Explosions-Damage und Knockback im Radius anwenden.
+        /// SoF2-authentisch: Self-Damage ×2, Knockback = min(damage, 200),
+        /// kvel = dir * 700 * knockback / 200 * 0.8 (g_combat.c:543).
         /// </summary>
         private void Detonate(Vector3 explosionPoint)
         {
@@ -253,21 +282,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
             float radiusMeters = m_Radius * SOF2_UNIT_SCALE;
 
-            // Alle Hitboxen im Explosionsradius finden
-            Collider[] hits = Physics.OverlapSphere(explosionPoint, radiusMeters, m_HitboxLayerMask);
+            // SoF2 G_RadiusDamage: OverlapSphere auf Player-Physics-Collider (nicht per-Bone Hitboxen).
+            // Hitbox-Trigger-Collider an Animator-Bones werden von OverlapSphere nicht zuverlaessig gefunden.
+            Collider[] hits = Physics.OverlapSphere(explosionPoint, radiusMeters, m_ExplosionLayerMask);
 
-            // Pro Spieler nur einmal Schaden anwenden (hoechster Treffer zaehlt)
-            System.Collections.Generic.Dictionary<NetworkedCharacterState, float> damagePerTarget =
+            // Pro Spieler: Damage mit Distanz-Falloff sammeln
+            System.Collections.Generic.Dictionary<NetworkedCharacterState, (float damage, Vector3 hitPos)> damagePerTarget =
                 new();
 
             foreach (Collider col in hits)
             {
-                HitboxCollider hitbox = col.GetComponent<HitboxCollider>();
-                if (hitbox == null)
-                {
-                    continue;
-                }
-
                 NetworkedCharacterState targetState =
                     col.GetComponentInParent<NetworkedCharacterState>();
                 if (targetState == null)
@@ -275,31 +299,58 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                     continue;
                 }
 
-                // Distanz-basierter Damage-Falloff (linear: voller Damage im Zentrum, 0 am Rand)
+                // SoF2 G_RadiusDamage: Distanz von Explosion zum Entity-Origin (Collider-Center)
                 float distance = Vector3.Distance(explosionPoint, col.transform.position);
                 float falloff = 1f - Mathf.Clamp01(distance / radiusMeters);
                 float effectiveDamage = m_Damage * falloff;
 
-                // Hoechsten Damage pro Spieler merken
-                if (!damagePerTarget.ContainsKey(targetState) || damagePerTarget[targetState] < effectiveDamage)
+                // Hoechsten Damage pro Spieler merken (mit Position fuer Knockback-Richtung)
+                if (!damagePerTarget.ContainsKey(targetState) || damagePerTarget[targetState].damage < effectiveDamage)
                 {
-                    damagePerTarget[targetState] = effectiveDamage;
+                    damagePerTarget[targetState] = (effectiveDamage, col.transform.position);
                 }
             }
 
-            // Damage anwenden
-            foreach (System.Collections.Generic.KeyValuePair<NetworkedCharacterState, float> kvp in damagePerTarget)
+            // Damage + Knockback anwenden
+            foreach (System.Collections.Generic.KeyValuePair<NetworkedCharacterState, (float damage, Vector3 hitPos)> kvp in damagePerTarget)
             {
-                int finalDamage = Mathf.RoundToInt(kvp.Value);
+                float baseDamage = kvp.Value.damage;
+                bool isSelf = kvp.Key.OwnerClientId == m_OwnerClientId;
+
+                // SoF2 g_combat.c:916: Self-Damage × 2
+                float take = isSelf ? baseDamage * 2f : baseDamage;
+
+                int finalDamage = Mathf.RoundToInt(take);
                 if (finalDamage <= 0)
                 {
                     continue;
                 }
 
+                // Damage anwenden
                 int newHealth = Mathf.Max(0, kvp.Key.Health - finalDamage);
                 kvp.Key.SetHealth(newHealth);
 
-                Debug.Log($"[ServerProjectile] Explosion hit {kvp.Key.CharacterName} | Damage={finalDamage} | Health={newHealth}");
+                // SoF2 Knockback (g_combat.c:844): knockback = min(baseDamage, 200), NICHT take
+                float knockback = Mathf.Min(baseDamage, MAX_KNOCKBACK);
+
+                // Knockback-Richtung: Explosion → Spieler
+                // Q3-Style: Center-of-Mass 24 QU höher als origin, damit Explosionen
+                // unter den Füßen den Spieler nach oben schleudern (Rocket-Jumping).
+                // SoF2 hat dir[2]=0 (kein vertikaler KB), aber wir wollen Rocket-Jump.
+                Vector3 knockbackDir = kvp.Value.hitPos - explosionPoint;
+                knockbackDir.y += 24f * SOF2_UNIT_SCALE;
+                if (knockbackDir.sqrMagnitude < 0.001f)
+                {
+                    knockbackDir = Vector3.up;
+                }
+                knockbackDir.Normalize();
+
+                // ServerPlayerCharacter fuer Velocity-Aenderung finden
+                ServerPlayerCharacter serverPlayer = kvp.Key.GetComponentInParent<ServerPlayerCharacter>();
+                if (serverPlayer != null && knockback > 0f)
+                {
+                    serverPlayer.ApplyKnockback(knockbackDir, knockback);
+                }
             }
 
             // Event fuer Visual-RPC

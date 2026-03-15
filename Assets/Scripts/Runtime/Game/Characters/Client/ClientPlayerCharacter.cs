@@ -959,7 +959,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             // Reconciliation: Server-State uebernehmen
-            m_Simulation.SetState(ack.Velocity, ack.IsGrounded, ack.IsJumping, ack.IsCrouching);
+            m_Simulation.SetState(ack.Velocity, ack.IsGrounded, ack.IsJumping, ack.IsCrouching,
+                                  ack.KnockbackTime);
             Vector3 replayPosition = ack.Position;
 
             // Eigenen Collider deaktivieren damit ResolvePenetration's OverlapBox

@@ -221,27 +221,34 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <summary>Name der Zielwaffe beim Waffenwechsel.</summary>
         private string m_ServerSwapTargetWeapon;
 
-        // ===== Server-Side Grenade Cook/Throw (Two-Phase Attack) =====
+        // ===== Server-Side Grenade Cook/Throw (SoF2-authentic hold-to-cook) =====
 
-        /// <summary>Ob gerade eine Granate gekocht wird (GRENADE_START Phase).</summary>
+        /// <summary>Ob gerade eine Granate gekocht wird (WEAPON_CHARGING Phase).</summary>
         private bool m_ServerIsGrenadeCooking;
 
-        /// <summary>Verbleibende Cook-Frames (GRENADE_START Animation).</summary>
+        /// <summary>Verbleibende Cook-Frames (GRENADE_START Animation, nur fuer Animation-Blocking).</summary>
         private int m_ServerGrenadeCookFramesRemaining;
 
-        /// <summary>Frame-Akkumulator fuer Grenade-Cook-Timing.</summary>
+        /// <summary>Frame-Akkumulator fuer Grenade-Cook-Animation-Timing.</summary>
         private float m_ServerGrenadeCookFrameAccumulator;
 
         /// <summary>Cook-FPS (aus mp_attack Animation der Granate).</summary>
         private int m_ServerGrenadeCookFps = 20;
 
-        /// <summary>Cook-Dauer in Sekunden (aus mp_attack Frames/FPS).</summary>
-        private float m_ServerGrenadeCookDuration;
+        /// <summary>
+        /// SoF2 grenadeTimer: Zaehlt in Echtzeit herunter waehrend Granate gehalten wird.
+        /// Startet bei projDef.Timer (z.B. 3.0s). Verbleibender Wert wird als Projektil-Timer genutzt.
+        /// SoF2 bg_pmove.c:2867-2874: grenadeTimer -= pml.msec; if (grenadeTimer <= 0) grenadeTimer = 1;
+        /// </summary>
+        private float m_ServerGrenadeTimer;
 
-        /// <summary>Gespeicherter PlayerCommand.PitchAngle zum Zeitpunkt des Wurfs.</summary>
+        /// <summary>Ob die GRENADE_START Animation abgeschlossen ist (Spieler haelt Granate bereit).</summary>
+        private bool m_ServerGrenadeAnimComplete;
+
+        /// <summary>Gespeicherter PlayerCommand.PitchAngle (wird bei Wurf aktualisiert).</summary>
         private float m_ServerGrenadePitchAngle;
 
-        /// <summary>Gespeicherter PlayerCommand.YawAngle zum Zeitpunkt des Wurfs.</summary>
+        /// <summary>Gespeicherter PlayerCommand.YawAngle (wird bei Wurf aktualisiert).</summary>
         private float m_ServerGrenadeYawAngle;
 
         /// <summary>Ob AltAttack-Granate (langsamerer Wurf, weniger Bounce).</summary>
@@ -255,6 +262,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>Throw-FPS (aus mp_attackEnd Animation).</summary>
         private int m_ServerGrenadeThrowFps = 20;
+
+        /// <summary>Minimaler grenadeTimer-Wert bevor Zwangs-Detonation (SoF2: 50ms).</summary>
+        private const float GRENADE_MIN_TIMER = 0.05f;
 
         // ===== Movement Sync =====
 
@@ -815,7 +825,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>
         /// Server: Verarbeitet einen Projektil-Angriff.
-        /// Fuer Timer-Granaten (F1): Startet Cook-Phase (GRENADE_START), Projektil wird erst bei Wurf gespawnt.
+        /// Fuer Timer-Granaten (F1): Startet SoF2-authentische Hold-to-Cook-Phase.
+        /// Spieler haelt Button → grenadeTimer zaehlt in Echtzeit herunter.
+        /// Button losgelassen → Wurf mit verbleibendem Timer.
         /// Fuer Impact-Projektile (RPG7, MM1): Spawnt sofort ein ServerProjectile.
         /// </summary>
         private void ProcessProjectileAttack(PlayerCommand cmd, WeaponAttackDefinition attackDef, WeaponDefinition weapon, bool isAlt)
@@ -824,20 +836,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             if (projDef.Detonation == "timer")
             {
-                // Granate: Cook-Phase starten (GRENADE_START)
-                // Projektil spawnt erst wenn Cook-Animation fertig ist
+                // SoF2 bg_pmove.c:3289-3303: grenadeTimer = attackData->projectileLifetime
+                // Starte WEAPON_CHARGING Phase — Timer zaehlt in Echtzeit herunter
                 string attackAnimKey = isAlt ? "mp_altAttack" : "mp_attack";
                 if (weapon.Animations != null && weapon.Animations.TryGetValue(attackAnimKey, out WeaponAnimationEntry cookAnim))
                 {
                     m_ServerGrenadeCookFramesRemaining = cookAnim.Duration;
                     m_ServerGrenadeCookFps = cookAnim.Fps;
-                    m_ServerGrenadeCookDuration = (float)cookAnim.Duration / cookAnim.Fps;
                 }
                 else
                 {
                     m_ServerGrenadeCookFramesRemaining = 23;
                     m_ServerGrenadeCookFps = 20;
-                    m_ServerGrenadeCookDuration = 23f / 20f;
                 }
 
                 m_ServerIsGrenadeCooking = true;
@@ -845,13 +855,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_ServerGrenadePitchAngle = cmd.PitchAngle;
                 m_ServerGrenadeYawAngle = cmd.YawAngle;
                 m_ServerGrenadeIsAlt = isAlt;
+                m_ServerGrenadeTimer = projDef.Timer;
+                m_ServerGrenadeAnimComplete = false;
 
                 // Attack-Cooldown: Cook-Frames blockieren weitere Aktionen
-                m_ServerAttackFramesRemaining = m_ServerGrenadeCookFramesRemaining;
+                // (wird von TickServerGrenadeCook zurueckgesetzt sobald Button losgelassen)
+                m_ServerAttackFramesRemaining = 9999;
                 m_ServerAttackFrameAccumulator = 0f;
                 m_ServerAttackFps = m_ServerGrenadeCookFps;
 
-                Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade cook started for client {OwnerClientId} — {m_ServerGrenadeCookFramesRemaining}f @ {m_ServerGrenadeCookFps}fps (isAlt={isAlt})");
+                Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade cook started for client {OwnerClientId} — Timer={projDef.Timer:F2}s (isAlt={isAlt})");
                 return;
             }
 
@@ -929,30 +942,59 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>
         /// Server: Tickt die Grenade-Cook-Phase (GRENADE_START Animation).
-        /// Wenn Cook-Frames abgelaufen sind: Projektil spawnen und Throw-Phase starten.
+        /// SoF2-authentisch: grenadeTimer zaehlt in Echtzeit herunter waehrend Button gehalten.
+        /// Button losgelassen → Wurf mit verbleibendem Timer.
+        /// Timer abgelaufen → Zwangs-Wurf (explodiert fast sofort).
+        /// SoF2 bg_pmove.c:2866-2874: grenadeTimer -= pml.msec
+        /// SoF2 g_weapon.c:724-736: projectileLifetime = grenadeTimer; if (< 50) → explode
         /// </summary>
         private void TickServerGrenadeCook(PlayerCommand cmd)
         {
-            m_ServerGrenadeCookFrameAccumulator += cmd.DeltaTime;
-            float frameInterval = 1f / m_ServerGrenadeCookFps;
-
-            while (m_ServerGrenadeCookFrameAccumulator >= frameInterval && m_ServerGrenadeCookFramesRemaining > 0)
+            // GRENADE_START Animation-Frames herunterzaehlen (nur fuer Animation-Blocking)
+            if (m_ServerGrenadeCookFramesRemaining > 0)
             {
-                m_ServerGrenadeCookFrameAccumulator -= frameInterval;
-                m_ServerGrenadeCookFramesRemaining--;
+                m_ServerGrenadeCookFrameAccumulator += cmd.DeltaTime;
+                float frameInterval = 1f / m_ServerGrenadeCookFps;
+
+                while (m_ServerGrenadeCookFrameAccumulator >= frameInterval && m_ServerGrenadeCookFramesRemaining > 0)
+                {
+                    m_ServerGrenadeCookFrameAccumulator -= frameInterval;
+                    m_ServerGrenadeCookFramesRemaining--;
+                }
+
+                if (m_ServerGrenadeCookFramesRemaining <= 0)
+                {
+                    m_ServerGrenadeAnimComplete = true;
+                }
             }
+
+            // SoF2: grenadeTimer zaehlt in Echtzeit herunter waehrend gehalten
+            m_ServerGrenadeTimer -= cmd.DeltaTime;
 
             // Blickrichtung aktualisieren (Spieler kann sich waehrend Cook drehen)
             m_ServerGrenadePitchAngle = cmd.PitchAngle;
             m_ServerGrenadeYawAngle = cmd.YawAngle;
 
-            if (m_ServerGrenadeCookFramesRemaining > 0)
+            // SoF2 g_weapon.c:734-736: Timer abgelaufen → Zwangs-Detonation
+            // (projectileLifetime < 50ms → flags &= ~PROJECTILE_TIMED → explodiert sofort)
+            bool timerExpired = m_ServerGrenadeTimer <= GRENADE_MIN_TIMER;
+
+            // Pruefe ob Button losgelassen wurde (SoF2: !(attackButtons & BUTTON_ATTACK))
+            // ODER Timer abgelaufen UND Animation fertig
+            bool buttonHeld = m_ServerGrenadeIsAlt
+                ? cmd.HasButton(CommandButtons.AltAttack)
+                : cmd.HasButton(CommandButtons.Attack);
+
+            bool shouldThrow = (!buttonHeld && m_ServerGrenadeAnimComplete) || timerExpired;
+
+            if (!shouldThrow)
             {
                 return;
             }
 
-            // Cook fertig: Projektil spawnen (Wurf)
+            // Granate werfen
             m_ServerIsGrenadeCooking = false;
+            m_ServerAttackFramesRemaining = 0;
 
             WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
             WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
@@ -969,14 +1011,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             Vector3 eyePos = m_ServerPlayerCharacter.GetEyePosition();
             Vector3 aimDirection = Quaternion.Euler(m_ServerGrenadePitchAngle, m_ServerGrenadeYawAngle, 0f) * Vector3.forward;
 
-            // Timer reduzieren: Granate kocht waehrend GRENADE_START
-            float cookedTimer = projDef.Timer - m_ServerGrenadeCookDuration;
-            if (cookedTimer < 0.1f)
-            {
-                cookedTimer = 0.1f;
-            }
+            // SoF2: Timer = verbleibender grenadeTimer (mindestens GRENADE_MIN_TIMER)
+            float remainingTimer = Mathf.Max(m_ServerGrenadeTimer, GRENADE_MIN_TIMER);
 
-            // Projektil spawnen mit reduziertem Timer
+            // SoF2 g_weapon.c:734: Wenn Timer < 50ms → nicht mehr PROJECTILE_TIMED → explodiert sofort
+            string detonation = timerExpired ? "impact" : projDef.Detonation;
+
+            // Projektil spawnen mit verbleibendem Timer
             uint projectileId = m_NextProjectileId++;
             GameObject projectileObj = new($"Grenade_{m_CharacterState.CurrentWeaponName}_{OwnerClientId}");
             ServerProjectile projectile = projectileObj.AddComponent<ServerProjectile>();
@@ -987,8 +1028,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 projDef.Speed,
                 projDef.Gravity,
                 projDef.Bounce,
-                projDef.Detonation,
-                cookedTimer,
+                detonation,
+                remainingTimer,
                 attackDef.Damage,
                 attackDef.Radius,
                 OwnerClientId,
@@ -1000,7 +1041,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             string grenadeEffectPath = projDef.Effect ?? "";
             string grenadeExplosionEffectPath = projDef.ExplosionEffect ?? "";
             string grenadeModelKey = projDef.Model ?? "";
-            ProjectileSpawnClientRpc(eyePos, aimDirection, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "timer", cookedTimer, projectileId, grenadeEffectPath, grenadeExplosionEffectPath, grenadeModelKey);
+            ProjectileSpawnClientRpc(eyePos, aimDirection, projDef.Speed, projDef.Gravity, projDef.Bounce, detonation ?? "timer", remainingTimer, projectileId, grenadeEffectPath, grenadeExplosionEffectPath, grenadeModelKey);
 
             // Throw-Follow-Through-Phase starten (mp_attackEnd = GRENADE_END)
             if (weapon?.Animations != null && weapon.Animations.TryGetValue("mp_attackEnd", out WeaponAnimationEntry throwAnim))
@@ -1016,7 +1057,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             m_ServerGrenadeThrowFrameAccumulator = 0f;
 
-            Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade thrown for client {OwnerClientId} — CookedTimer={cookedTimer:F2}s, ThrowFrames={m_ServerGrenadeThrowFramesRemaining}");
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade thrown for client {OwnerClientId} — RemainingTimer={remainingTimer:F2}s, TimerExpired={timerExpired}, ThrowFrames={m_ServerGrenadeThrowFramesRemaining}");
         }
 
         /// <summary>

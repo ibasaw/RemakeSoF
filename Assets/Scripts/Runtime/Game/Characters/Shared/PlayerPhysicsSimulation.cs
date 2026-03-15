@@ -116,6 +116,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>SoF2 pm_time: Landing-Lockout-Timer nach harter Landung (Sekunden, countdown).</summary>
         [NonSerialized] public float JumpDebounce;
 
+        /// <summary>
+        /// SoF2 PMF_TIME_KNOCKBACK Timer (Sekunden, countdown).
+        /// Wenn > 0: Friction deaktiviert, Air-Accelerate am Boden, Gravity am Boden.
+        /// Verhindert dass der Spieler Knockback-Momentum sofort canceln kann.
+        /// </summary>
+        [NonSerialized] public float KnockbackTime;
+
         /// <summary>Gespeicherter Ground-Hit für externe Abfragen.</summary>
         [NonSerialized] public RaycastHit LastGroundHit;
 
@@ -267,12 +274,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// Setzt den Simulations-State extern (für Reconciliation).
         /// Client ruft dies auf wenn der Server eine Korrektur sendet.
         /// </summary>
-        public void SetState(Vector3 velocity, bool isGrounded, bool isJumping, bool isCrouching)
+        public void SetState(Vector3 velocity, bool isGrounded, bool isJumping, bool isCrouching,
+                             float knockbackTime = 0f)
         {
             Velocity = velocity;
             IsGrounded = isGrounded;
             IsJumping = isJumping;
             IsCrouching = isCrouching;
+            KnockbackTime = knockbackTime;
         }
 
         // ===================================================================
@@ -328,6 +337,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             if (JumpDebounce > 0f)
             {
                 JumpDebounce -= m_DeltaTime;
+            }
+
+            // SoF2: PMF_TIME_KNOCKBACK countdown (g_combat.c:580)
+            if (KnockbackTime > 0f)
+            {
+                KnockbackTime -= m_DeltaTime;
+                if (KnockbackTime < 0f)
+                {
+                    KnockbackTime = 0f;
+                }
             }
 
             // 2. Movement (includes friction, acceleration, collision, gravity in air)
@@ -736,7 +755,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             }
 
             // Friction nur am Boden (SoF2: pml.walking && !SURF_SLICK)
-            if (m_Walking)
+            // SoF2: if (!(pm->ps->pm_flags & PMF_TIME_KNOCKBACK)) — skip friction during knockback
+            if (m_Walking && KnockbackTime <= 0f)
             {
                 float control = speed < PmStopSpeed ? PmStopSpeed : speed;
                 drop += control * PmFriction * m_DeltaTime;
@@ -901,13 +921,28 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             }
 
             // SoF2: accelerate faster when ducked (bg_pmove.c: accelerate *= 2)
-            float accelerate = PmAccelerate;
-            if (IsCrouching)
+            // SoF2: PMF_TIME_KNOCKBACK → use air-accelerate on ground (bg_pmove.c:780)
+            float accelerate;
+            if (KnockbackTime > 0f)
             {
-                accelerate *= 2f;
+                accelerate = PmAirAccelerate;
+            }
+            else
+            {
+                accelerate = PmAccelerate;
+                if (IsCrouching)
+                {
+                    accelerate *= 2f;
+                }
             }
 
             PM_Accelerate(wishdir, wishspeed, accelerate);
+
+            // SoF2: PMF_TIME_KNOCKBACK → apply gravity while on ground (bg_pmove.c:797)
+            if (KnockbackTime > 0f)
+            {
+                Velocity.y -= PmGravity * m_DeltaTime;
+            }
 
             // SoF2: clip velocity to ground plane + speed restore
             // "don't decrease velocity when going up or down a slope"
