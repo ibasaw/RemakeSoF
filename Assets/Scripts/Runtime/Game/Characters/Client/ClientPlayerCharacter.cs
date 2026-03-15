@@ -339,6 +339,52 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         private bool m_IsRemoteMode;
 
+        // ===== Fire Mode =====
+
+        /// <summary>
+        /// Aktueller Feuermodus der Waffe ("single", "burst", "auto").
+        /// Wird bei Waffenwechsel aus der WeaponDefinition initialisiert
+        /// und per SwitchFireMode-Input zyklisch gewechselt.
+        /// </summary>
+        private string m_CurrentFireMode = "auto";
+
+        /// <summary>
+        /// Verfuegbare Feuermodi der aktuellen Waffe (z.B. ["single", "burst", "auto"]).
+        /// Null oder leer wenn die Waffe keine wechselbaren Feuermodi hat.
+        /// </summary>
+        private System.Collections.Generic.List<string> m_AvailableFireModes;
+
+        /// <summary>
+        /// Index in m_AvailableFireModes fuer den aktuellen Modus.
+        /// </summary>
+        private int m_CurrentFireModeIndex;
+
+        /// <summary>
+        /// Laufende Attack-Sequenznummer fuer Animator Re-Trigger.
+        /// Wird bei jedem neuen Angriff inkrementiert.
+        /// </summary>
+        private byte m_AttackSequence;
+
+        /// <summary>
+        /// Verbleibende Burst-Schuesse (nur im "burst"-Modus).
+        /// </summary>
+        private int m_BurstShotsRemaining;
+
+        /// <summary>
+        /// Ob der Attack-Button in diesem Frame erstmals gedrueckt wurde (fuer "single"-Modus).
+        /// </summary>
+        private bool m_AttackButtonWasPressed;
+
+        /// <summary>
+        /// Feuert wenn der Feuermodus gewechselt wird. Parameter: neuer Feuermodus-String.
+        /// </summary>
+        internal event Action<string> OnFireModeChanged;
+
+        /// <summary>
+        /// Aktueller Feuermodus (fuer HUD-Anzeige).
+        /// </summary>
+        internal string CurrentFireMode => m_CurrentFireMode;
+
         // ===== Weapon =====
 
         /// <summary>
@@ -590,6 +636,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_PlayerActions.NextWeapon.performed -= OnNextWeaponPerformed;
             m_PlayerActions.PreviousWeapon.performed -= OnPreviousWeaponPerformed;
             m_PlayerActions.ReloadWeapon.performed -= OnReloadPerformed;
+            m_PlayerActions.SwitchFireMode.performed -= OnSwitchFireModePerformed;
 
             // Visual-Event abmelden
             if (m_SkinHandler != null)
@@ -653,6 +700,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             // Reload per Callback (R-Taste)
             m_PlayerActions.ReloadWeapon.performed += OnReloadPerformed;
+
+            // Fire-Mode-Wechsel per Callback
+            m_PlayerActions.SwitchFireMode.performed += OnSwitchFireModePerformed;
 
             // Server-Acknowledgement fuer Reconciliation abonnieren
             m_NetworkedPlayerCharacter.OnMovementAcknowledged += OnServerAcknowledgement;
@@ -727,6 +777,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private void OnReloadPerformed(InputAction.CallbackContext context)
         {
             TryStartReload();
+        }
+
+        /// <summary>
+        /// Callback fuer SwitchFireMode-Input. Wechselt zyklisch durch die
+        /// verfuegbaren Feuermodi der aktuellen Waffe (falls vorhanden).
+        /// </summary>
+        private void OnSwitchFireModePerformed(InputAction.CallbackContext context)
+        {
+            if (m_AvailableFireModes == null || m_AvailableFireModes.Count <= 1)
+            {
+                return;
+            }
+
+            m_CurrentFireModeIndex = (m_CurrentFireModeIndex + 1) % m_AvailableFireModes.Count;
+            m_CurrentFireMode = m_AvailableFireModes[m_CurrentFireModeIndex];
+            m_BurstShotsRemaining = 0;
+            OnFireModeChanged?.Invoke(m_CurrentFireMode);
         }
 
         private void Update()
@@ -1194,6 +1261,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>
         /// Aktionen (Attack, AltAttack, Reload) client-seitig verarbeiten.
+        /// Fire-Mode-abhaengig: "auto" = Dauerfeuer bei gehaltenem Button,
+        /// "single" = ein Schuss pro Tastendruck, "burst" = 3 Schuesse pro Tastendruck.
         /// </summary>
         private void HandleActionInput()
         {
@@ -1217,8 +1286,32 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
                 if (m_AttackFramesRemaining <= 0)
                 {
-                    m_IsAttacking = false;
-                    m_AttackFrameAccumulator = 0f;
+                    // Fire-Mode-abhaengiges Re-Trigger bei gehaltener Maustaste
+                    bool hasAmmo = m_CurrentWeaponInfiniteAmmo || m_CharacterState.CurrentClipAmmo > 0;
+                    bool shouldRetrigger = false;
+
+                    if (m_CurrentFireMode == "auto" && m_PlayerActions.Attack.IsPressed() && hasAmmo)
+                    {
+                        shouldRetrigger = true;
+                    }
+                    else if (m_CurrentFireMode == "burst" && m_BurstShotsRemaining > 0 && hasAmmo)
+                    {
+                        m_BurstShotsRemaining--;
+                        shouldRetrigger = true;
+                    }
+
+                    if (shouldRetrigger)
+                    {
+                        // Sofort neuen Angriff starten (kein Frame mit IsAttacking=false)
+                        m_AttackFramesRemaining = m_AttackFrames;
+                        m_AttackFrameAccumulator = 0f;
+                        m_AttackSequence++;
+                    }
+                    else
+                    {
+                        m_IsAttacking = false;
+                        m_AttackFrameAccumulator = 0f;
+                    }
                 }
             }
 
@@ -1271,14 +1364,40 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Keine neue Aktion starten wenn eine laeuft
             bool noActionRunning = !m_IsAttacking && !m_IsAltAttacking && !m_IsReloading;
 
-            // SoF2: Maus gehalten = automatisch wiederholen nach Cooldown (wie BUTTON_ATTACK in usercmd_t)
-            // Client-Prediction: Nur starten wenn Munition vorhanden oder Waffe unendlich
-            bool hasAmmo = m_CurrentWeaponInfiniteAmmo || m_CharacterState.CurrentClipAmmo > 0;
-            if (m_PlayerActions.Attack.IsPressed() && noActionRunning && hasAmmo)
+            // Fire-Mode-abhaengiger Attack-Start
+            bool hasStartAmmo = m_CurrentWeaponInfiniteAmmo || m_CharacterState.CurrentClipAmmo > 0;
+            bool attackPressed = m_PlayerActions.Attack.IsPressed();
+            bool canStartAttack = false;
+
+            if (m_CurrentFireMode == "auto")
+            {
+                // Auto: Dauerfeuer solange gehalten
+                canStartAttack = attackPressed;
+            }
+            else if (m_CurrentFireMode == "single")
+            {
+                // Single: nur bei frischer Tastenbetaetigung (nicht gehalten)
+                canStartAttack = attackPressed && !m_AttackButtonWasPressed;
+            }
+            else if (m_CurrentFireMode == "burst")
+            {
+                // Burst: bei frischer Tastenbetaetigung starten, dann 2 weitere automatisch
+                if (attackPressed && !m_AttackButtonWasPressed)
+                {
+                    canStartAttack = true;
+                    m_BurstShotsRemaining = 2;
+                }
+            }
+
+            // Rising-Edge-Tracking fuer "single" und "burst"
+            m_AttackButtonWasPressed = attackPressed;
+
+            if (canStartAttack && noActionRunning && hasStartAmmo)
             {
                 m_IsAttacking = true;
                 m_AttackFramesRemaining = m_AttackFrames;
                 m_AttackFrameAccumulator = 0f;
+                m_AttackSequence++;
             }
 
             // AltAttack (Rechtsklick): SecondAttack Input
@@ -1290,7 +1409,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             // Auto-Reload: Wenn Maus gedrueckt, kein Angriff laeuft und Magazin leer
-            if (m_AutoReload && m_PlayerActions.Attack.IsPressed() && noActionRunning && !hasAmmo)
+            if (m_AutoReload && attackPressed && noActionRunning && !hasStartAmmo)
             {
                 TryStartReload();
             }
@@ -1571,6 +1690,37 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_IsAltAttacking = false;
             m_AltAttackFramesRemaining = 0;
             m_AltAttackFrameAccumulator = 0f;
+
+            // Fire-Mode aus Waffen-Definition initialisieren
+            m_AvailableFireModes = weapon.Attack?.FireModes;
+            string defaultFireMode = weapon.Attack?.FireMode ?? "auto";
+
+            // Wenn der aktuelle Modus in den verfuegbaren Modi enthalten ist, beibehalten
+            // (damit beim Waffenwechsel zurueck der letzte Modus erhalten bleibt).
+            // Sonst auf den Default-Modus der Waffe setzen.
+            if (m_AvailableFireModes != null && m_AvailableFireModes.Count > 0)
+            {
+                int existingIndex = m_AvailableFireModes.IndexOf(m_CurrentFireMode);
+                if (existingIndex >= 0)
+                {
+                    m_CurrentFireModeIndex = existingIndex;
+                }
+                else
+                {
+                    m_CurrentFireModeIndex = m_AvailableFireModes.IndexOf(defaultFireMode);
+                    if (m_CurrentFireModeIndex < 0) m_CurrentFireModeIndex = 0;
+                    m_CurrentFireMode = m_AvailableFireModes[m_CurrentFireModeIndex];
+                }
+            }
+            else
+            {
+                m_CurrentFireMode = defaultFireMode;
+                m_CurrentFireModeIndex = 0;
+            }
+
+            m_BurstShotsRemaining = 0;
+            m_AttackButtonWasPressed = false;
+            OnFireModeChanged?.Invoke(m_CurrentFireMode);
         }
 
         /// <summary>
@@ -1790,6 +1940,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 PitchAngle = m_PitchTarget != null ? m_PitchTarget.eulerAngles.x : 0f,
                 CurrentWeapon = (byte)NetworkedCharacterState.GetWeaponAnimatorIndex(m_CharacterState.CurrentWeaponName),
                 Ammo = (short)m_CharacterState.CurrentClipAmmo,
+                AttackSequence = m_AttackSequence,
             };
 
             // In NetworkVariable schreiben + lokal auf Animator anwenden

@@ -61,6 +61,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public short Ammo;
 
         /// <summary>
+        /// Laufende Sequenznummer fuer Attack-Re-Trigger.
+        /// Wird bei jedem neuen Angriff inkrementiert, damit Remote-Clients
+        /// die Attack-Animation erneut abspielen koennen (auch wenn IsAttacking true bleibt).
+        /// </summary>
+        public byte AttackSequence;
+
+        /// <summary>
         /// Ob der Character sich bewegt (horizontale Geschwindigkeit > Schwellwert).
         /// </summary>
         public bool IsMoving
@@ -144,6 +151,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             serializer.SerializeValue(ref Flags);
             serializer.SerializeValue(ref CurrentWeapon);
             serializer.SerializeValue(ref Ammo);
+            serializer.SerializeValue(ref AttackSequence);
         }
 
         /// <inheritdoc/>
@@ -157,7 +165,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                    Mathf.Approximately(PitchAngle, other.PitchAngle) &&
                    Flags == other.Flags &&
                    CurrentWeapon == other.CurrentWeapon &&
-                   Ammo == other.Ammo;
+                   Ammo == other.Ammo &&
+                   AttackSequence == other.AttackSequence;
         }
 
         /// <inheritdoc/>
@@ -169,7 +178,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <inheritdoc/>
         public override readonly int GetHashCode()
         {
-            return HashCode.Combine(Speed, Horizontal, Vertical, MoveInputX, MoveInputY, PitchAngle, Flags, CurrentWeapon) ^ Ammo.GetHashCode();
+            return HashCode.Combine(Speed, Horizontal, Vertical, MoveInputX, MoveInputY, PitchAngle, Flags, CurrentWeapon) ^ HashCode.Combine(Ammo, AttackSequence);
         }
     }
 }

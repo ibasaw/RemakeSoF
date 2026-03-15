@@ -132,7 +132,7 @@
     },
     "animations": {
       "mp_idle": {
-        "name": "TORSO_IDLE_RPG",
+        "name": "RPG_IDLE",
         "source": "male01_normal_rpg7aim",
         "startFrame": 710,
         "duration": 40,
@@ -140,7 +140,7 @@
         "loop": true
       },
       "mp_attack": {
-        "name": "TORSO_ATTACK_RPG",
+        "name": "RPG_ATTACK",
         "source": "male01_normal_rpg7fire",
         "startFrame": 693,
         "duration": 17,
@@ -164,7 +164,7 @@
         "loop": false
       },
       "mp_reload": {
-        "name": "TORSO_RELOAD_RPG",
+        "name": "RPG_RELOAD",
         "source": "refillrpg7_mp",
         "startFrame": 750,
         "duration": 29,
@@ -246,7 +246,7 @@
     },
     "animations": {
       "mp_idle": {
-        "name": "TORSO_IDLE_M4",
+        "name": "M4_IDLE",
         "source": "m4aim_mp",
         "startFrame": 924,
         "duration": 40,
@@ -254,7 +254,7 @@
         "loop": true
       },
       "mp_attack": {
-        "name": "TORSO_ATTACK_M4",
+        "name": "M4_ATTACK",
         "source": "m4fire_mp",
         "startFrame": 964,
         "duration": 2,

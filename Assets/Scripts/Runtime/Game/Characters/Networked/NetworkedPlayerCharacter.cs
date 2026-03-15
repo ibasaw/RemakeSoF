@@ -97,6 +97,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         public NetworkAnimationState CurrentAnimationState => m_AnimationState.Value;
 
+        /// <summary>
+        /// Letzte bekannte AttackSequence fuer Re-Trigger-Erkennung.
+        /// Wenn sich die Sequenznummer aendert, wird die Attack-Animation
+        /// auf dem Torso-Layer von Frame 0 neu gestartet.
+        /// </summary>
+        private byte m_LastAttackSequence;
+
         // ===== Server-Side Attack Gating (SoF2: weaponTime in playerState_t) =====
 
         /// <summary>SoF2-Unit → Unity-Meter Konvertierungsfaktor (1 QU = 1 Inch = 0.0254m).</summary>
@@ -1082,19 +1089,35 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // AltAttack-Parameter von aktueller Waffe laden
             UpdateServerAltAttackParameters();
 
-            if (m_ServerAltAttackFrames <= 0)
-            {
-                return;
-            }
-
-            // Pruefen ob AltAttack ein Projektil hat (F1 Grenade Underhand-Throw)
+            // Pruefen ob AltAttack ein Projektil hat (Knife-Throw, M4 M203)
             WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
             WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
             WeaponAttackDefinition altAttackDef = weapon?.AltAttack;
 
             if (altAttackDef?.Projectile != null)
             {
+                // Fallback-Cooldown: Wenn kein mp_altAttack, mp_attack als Cooldown nutzen
+                if (m_ServerAltAttackFrames <= 0 && weapon?.Animations != null
+                    && weapon.Animations.TryGetValue("mp_attack", out WeaponAnimationEntry fallbackAnim))
+                {
+                    m_ServerAltAttackFrames = fallbackAnim.Duration;
+                    m_ServerAltAttackFps = fallbackAnim.Fps;
+                }
+
                 ProcessProjectileAttack(cmd, altAttackDef, weapon, true);
+
+                // Alt-Ammo auto-reload nach Projektil-Spawn (z.B. M4 M203)
+                if (m_CharacterState.CanAltReload())
+                {
+                    m_CharacterState.CompleteAltReload();
+                    Debug.Log($"[NetworkedPlayerCharacter] Server: Alt-ammo auto-reload after projectile for client {OwnerClientId}");
+                }
+
+                return;
+            }
+
+            if (m_ServerAltAttackFrames <= 0)
+            {
                 return;
             }
 
@@ -1529,6 +1552,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_Animator.SetBool(s_IsSwappingHash, state.IsSwapping);
             m_Animator.SetInteger(s_CurrentWeaponHash, state.CurrentWeapon);
             m_Animator.SetInteger(s_AmmoHash, state.Ammo);
+
+            // Attack-Animation Re-Trigger: wenn IsAttacking true und AttackSequence sich
+            // geaendert hat, Attack-State auf dem Torso-Layer von Frame 0 neu starten.
+            // Noetig weil die Attack-Animationen loop=false haben und der Animator sie
+            // bei unveraendertem Bool nicht erneut abspielt.
+            if (state.IsAttacking && state.AttackSequence != m_LastAttackSequence)
+            {
+                AnimatorStateInfo torsoState = m_Animator.GetCurrentAnimatorStateInfo(TORSO_LAYER_INDEX);
+                m_Animator.Play(torsoState.fullPathHash, TORSO_LAYER_INDEX, 0f);
+            }
+
+            m_LastAttackSequence = state.AttackSequence;
         }
 
         /// <summary>

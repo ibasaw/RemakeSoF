@@ -93,6 +93,7 @@ namespace Tolik.RemakeSoF.Runtime
             m_CharacterState.OnHealthChanged += OnHealthChanged;
             m_PlayerCharacter.OnWeaponSwapRaiseStarted += OnWeaponSwapRaiseStarted;
             m_PlayerCharacter.OnWeaponSwapTargetChanged += OnWeaponSwapTargetChanged;
+            m_PlayerCharacter.OnFireModeChanged += OnFireModeChanged;
 
             // Sofort aus aktuellem State initialisieren (falls Werte schon da sind).
             TryInitializeHudFromCurrentState();
@@ -117,6 +118,7 @@ namespace Tolik.RemakeSoF.Runtime
             {
                 m_PlayerCharacter.OnWeaponSwapRaiseStarted -= OnWeaponSwapRaiseStarted;
                 m_PlayerCharacter.OnWeaponSwapTargetChanged -= OnWeaponSwapTargetChanged;
+                m_PlayerCharacter.OnFireModeChanged -= OnFireModeChanged;
                 m_PlayerCharacter = null;
             }
 
@@ -378,6 +380,16 @@ namespace Tolik.RemakeSoF.Runtime
             }
 
             View.UpdateWeaponHud(displayName, ammoType, clipAmmo, reserveAmmo, hideAmmoRow, hasAltAmmo, altAmmoType, altClipAmmo, altReserveAmmo);
+
+            // FireMode-Anzeige aktualisieren (Waffe koennte andere verfuegbare Modi haben)
+            if (m_PlayerCharacter != null)
+            {
+                string fireMode = m_PlayerCharacter.CurrentFireMode;
+                WeaponDataLoader fmLoader = ServiceLocator.Get<WeaponDataLoader>();
+                WeaponDefinition fmWeapon = fmLoader?.GetById(weaponName);
+                bool hasMultipleModes = fmWeapon?.Attack?.FireModes != null && fmWeapon.Attack.FireModes.Count > 1;
+                View.UpdateFireModeHud(fireMode, hasMultipleModes);
+            }
         }
 
         /// <summary>
@@ -394,6 +406,23 @@ namespace Tolik.RemakeSoF.Runtime
         private void OnHealthChanged(int health)
         {
             View.UpdateHealthHud(health);
+        }
+
+        /// <summary>
+        /// Callback wenn der Feuermodus gewechselt wird.
+        /// Aktualisiert die FireMode-Anzeige im Waffen-HUD.
+        /// </summary>
+        private void OnFireModeChanged(string fireMode)
+        {
+            bool hasMultipleModes = false;
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader != null && m_CharacterState != null)
+            {
+                WeaponDefinition weapon = loader.GetById(m_CharacterState.CurrentWeaponName);
+                hasMultipleModes = weapon?.Attack?.FireModes != null && weapon.Attack.FireModes.Count > 1;
+            }
+
+            View.UpdateFireModeHud(fireMode, hasMultipleModes);
         }
     }
 }

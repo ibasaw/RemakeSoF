@@ -40,6 +40,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         // Weapon HUD Labels
         Label m_WeaponNameLabel;
+        Label m_FireModeLabel;
         Label m_AmmoTypeLabel;
         Label m_ClipAmmoLabel;
         Label m_ReserveAmmoLabel;
@@ -100,6 +101,7 @@ namespace Tolik.RemakeSoF.Runtime
 
             // Weapon HUD
             m_WeaponNameLabel = root.Query<Label>("weaponNameLabel");
+            m_FireModeLabel = root.Query<Label>("fireModeLabel");
             m_AmmoTypeLabel = root.Query<Label>("ammoTypeLabel");
             m_ClipAmmoLabel = root.Query<Label>("clipAmmoLabel");
             m_ReserveAmmoLabel = root.Query<Label>("reserveAmmoLabel");
@@ -290,6 +292,22 @@ namespace Tolik.RemakeSoF.Runtime
         internal void UpdateHealthHud(int health)
         {
             m_HealthLabel.text = health.ToString();
+        }
+
+        /// <summary>
+        /// Aktualisiert die FireMode-Anzeige.
+        /// Zeigt den Modus nur an wenn die Waffe wechselbare Feuermodi hat.
+        /// </summary>
+        internal void UpdateFireModeHud(string fireMode, bool hasMultipleModes)
+        {
+            if (!hasMultipleModes || string.IsNullOrEmpty(fireMode))
+            {
+                m_FireModeLabel.style.display = DisplayStyle.None;
+                return;
+            }
+
+            m_FireModeLabel.style.display = DisplayStyle.Flex;
+            m_FireModeLabel.text = fireMode.ToUpperInvariant();
         }
     }
 }
