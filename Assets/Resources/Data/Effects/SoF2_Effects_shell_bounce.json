@@ -1,0 +1,110 @@
+[
+  {
+    "id": "shells/shell_bouce_brass",
+    "displayName": "Brass Shell Bounce",
+    "segments": [
+      {
+        "name": "brass",
+        "type": "emitter",
+        "flags": ["useModel", "usePhysics", "useBBox"],
+        "emitter": {
+          "models": [
+            "models/weapons/shells/shell_brass"
+          ],
+          "velocityMin": [1.27, -0.508, -0.508],
+          "velocityMax": [3.175, 0.508, 0.508],
+          "angleDeltaMin": [200, 0, 0],
+          "angleDeltaMax": [1000, 200, 600],
+          "gravityMin": -5.08,
+          "gravityMax": -7.62,
+          "bounceMin": 0.1,
+          "bounceMax": 0.3,
+          "lifetimeMin": 5.0,
+          "lifetimeMax": 5.0,
+          "cullRange": 7.62
+        }
+      }
+    ]
+  },
+  {
+    "id": "shells/shell_bouce_brass_large",
+    "displayName": "Brass Shell Bounce (Large)",
+    "segments": [
+      {
+        "name": "brass",
+        "type": "emitter",
+        "flags": ["useModel", "usePhysics"],
+        "emitter": {
+          "models": [
+            "models/weapons/shells/shell_brass_large"
+          ],
+          "velocityMin": [1.27, -0.508, -0.508],
+          "velocityMax": [3.175, 0.508, 0.508],
+          "angleDeltaMin": [200, 200, 200],
+          "angleDeltaMax": [1000, 400, 0],
+          "gravityMin": -5.08,
+          "gravityMax": -7.62,
+          "bounceMin": 0.1,
+          "bounceMax": 0.3,
+          "lifetimeMin": 5.0,
+          "lifetimeMax": 5.0,
+          "cullRange": 7.62
+        }
+      }
+    ]
+  },
+  {
+    "id": "shells/shell_bouce_brass_small",
+    "displayName": "Brass Shell Bounce (Small)",
+    "segments": [
+      {
+        "name": "brass",
+        "type": "emitter",
+        "flags": ["useModel", "usePhysics"],
+        "emitter": {
+          "models": [
+            "models/weapons/shells/shell_brass"
+          ],
+          "velocityMin": [1.27, -0.508, -0.508],
+          "velocityMax": [3.175, 0.508, 0.508],
+          "angleDeltaMin": [200, 200, 0],
+          "angleDeltaMax": [1000, 600, 600],
+          "gravityMin": -5.08,
+          "gravityMax": -7.62,
+          "bounceMin": 0.1,
+          "bounceMax": 0.3,
+          "lifetimeMin": 5.0,
+          "lifetimeMax": 5.0,
+          "cullRange": 7.62
+        }
+      }
+    ]
+  },
+  {
+    "id": "shells/shell_bouce_shotgun",
+    "displayName": "Shotgun Shell Bounce",
+    "segments": [
+      {
+        "name": "brass",
+        "type": "emitter",
+        "flags": ["useModel", "usePhysics", "expensivePhysics"],
+        "emitter": {
+          "models": [
+            "models/weapons/shells/shell_shotgun"
+          ],
+          "velocityMin": [1.27, -0.508, -0.508],
+          "velocityMax": [3.175, 0.508, 0.508],
+          "angleDeltaMin": [200, 0, 0],
+          "angleDeltaMax": [1000, 200, 600],
+          "gravityMin": -5.08,
+          "gravityMax": -7.62,
+          "bounceMin": 0.2,
+          "bounceMax": 0.5,
+          "lifetimeMin": 5.0,
+          "lifetimeMax": 5.0,
+          "cullRange": 7.62
+        }
+      }
+    ]
+  }
+]

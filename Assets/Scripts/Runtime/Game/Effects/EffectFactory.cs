@@ -1022,6 +1022,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                     cf.force = new Vector3(0f, extraAcceleration * rb.mass, 0f);
                 }
 
+                // SoF2 impactFx: Beim ersten Aufprall Impact-Effekt spawnen
+                // (z.B. shell_bouce_brass → LOD-Huelse die weiterhuepft)
+                if (!string.IsNullOrEmpty(emitter.ImpactFx))
+                {
+                    bool impactKills = definition.Segments[0].Flags != null
+                        && definition.Segments[0].Flags.Contains("impactKills");
+                    ShellCasingBehaviour behaviour = shellObj.AddComponent<ShellCasingBehaviour>();
+                    behaviour.Initialize(emitter.ImpactFx, impactKills);
+                }
+
                 // Lebensdauer aus Definition (gekappt auf 5s fuer Performance)
                 float lifetime = Mathf.Min(
                     Random.Range(emitter.LifetimeMin, emitter.LifetimeMax), 5f);
