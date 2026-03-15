@@ -29,6 +29,14 @@ namespace Tolik.RemakeSoF.Runtime.WeaponManagement
         public int Radius;
 
         /// <summary>
+        /// Knockback-Staerke fuer Explosionen (SoF2 default: g_knockback = 700).
+        /// Konfigurierbar pro Waffe fuer unterschiedliche Rueckstoss-Werte.
+        /// 0 oder fehlend = Standard (700).
+        /// </summary>
+        [JsonProperty("knockback")]
+        public int Knockback;
+
+        /// <summary>
         /// Feuermodus ("single", "burst", "auto").
         /// </summary>
         [JsonProperty("fireMode")]

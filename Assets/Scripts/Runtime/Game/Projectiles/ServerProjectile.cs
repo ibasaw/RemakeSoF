@@ -57,6 +57,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Explosions-Radius in SoF2-Units.</summary>
         private int m_Radius;
 
+        /// <summary>Knockback-Staerke (SoF2 g_knockback, default 700). Konfigurierbar pro Waffe.</summary>
+        private int m_Knockback;
+
         /// <summary>Seit Spawn vergangene Zeit.</summary>
         private float m_Lifetime;
 
@@ -107,6 +110,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             float timer,
             int damage,
             int radiusQU,
+            int knockback,
             ulong ownerClientId,
             string weaponName = "",
             uint projectileId = 0)
@@ -120,6 +124,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             m_Timer = timer;
             m_Damage = damage;
             m_Radius = radiusQU;
+            m_Knockback = knockback > 0 ? knockback : 700;
             m_OwnerClientId = ownerClientId;
             m_WeaponName = weaponName;
             m_Lifetime = 0f;
@@ -349,7 +354,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 ServerPlayerCharacter serverPlayer = kvp.Key.GetComponentInParent<ServerPlayerCharacter>();
                 if (serverPlayer != null && knockback > 0f)
                 {
-                    serverPlayer.ApplyKnockback(knockbackDir, knockback);
+                    serverPlayer.ApplyKnockback(knockbackDir, knockback, m_Knockback);
                 }
             }
 

@@ -217,17 +217,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
 
         /// <summary>
         /// Wendet SoF2-authentischen Knockback auf den Spieler an.
-        /// Formel: kvel = dir * g_knockback(700) * knockback / mass(200) * 0.8
+        /// Formel: kvel = dir * g_knockback * knockback / mass(200) * 0.8
         /// Setzt pm_time fuer Knockback-Schutz (Spieler kann Momentum nicht sofort canceln).
         /// Velocity-Aenderung wird beim naechsten ServerMovementAck an den Client propagiert.
         /// </summary>
         /// <param name="direction">Normalisierte Richtung der Kraft (Explosion → Spieler).</param>
         /// <param name="knockback">Knockback-Wert (bereits auf 200 geclampt).</param>
-        public void ApplyKnockback(Vector3 direction, float knockback)
+        /// <param name="gKnockback">SoF2 g_knockback Cvar (default 700). Konfigurierbar pro Waffe.</param>
+        public void ApplyKnockback(Vector3 direction, float knockback, float gKnockback = SOF2_KNOCKBACK)
         {
             // SoF2: VectorScale(newDir, g_knockback * knockback / mass * 0.8, kvel)
             // Ergebnis ist in QU/s → konvertieren zu Unity m/s
-            Vector3 kvel = direction * (SOF2_KNOCKBACK * knockback / SOF2_MASS * SOF2_KNOCKBACK_GRAVITY_SCALE * SOF2_UNIT_SCALE);
+            Vector3 kvel = direction * (gKnockback * knockback / SOF2_MASS * SOF2_KNOCKBACK_GRAVITY_SCALE * SOF2_UNIT_SCALE);
 
             m_Simulation.Velocity += kvel;
 

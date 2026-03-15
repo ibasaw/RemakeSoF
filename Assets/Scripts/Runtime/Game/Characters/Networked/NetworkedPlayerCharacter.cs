@@ -922,6 +922,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 timer,
                 attackDef.Damage,
                 attackDef.Radius,
+                attackDef.Knockback,
                 OwnerClientId,
                 m_CharacterState.CurrentWeaponName,
                 projectileId
@@ -1032,6 +1033,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 remainingTimer,
                 attackDef.Damage,
                 attackDef.Radius,
+                attackDef.Knockback,
                 OwnerClientId,
                 m_CharacterState.CurrentWeaponName,
                 projectileId
