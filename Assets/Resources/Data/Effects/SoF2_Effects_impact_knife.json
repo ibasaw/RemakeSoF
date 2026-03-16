@@ -1,711 +1,772 @@
-﻿[
-    {
-        "id": "effects/impacts/knife_concrete",
-        "displayName": "Knife Concrete",
-        "segments": [
-            {
-                "name": "smokepuff",
-                "type": "particle",
-                "texture": "gfx/misc/jk_smoke3",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 0.7,
-                    "lifetimeMax": 1.2,
-                    "gravityModifier": -0.0259,
-                    "velocityMin": [
-                        -0.254,
-                        -0.127,
-                        1.016
-                    ],
-                    "velocityMax": [
-                        0.254,
-                        0.381,
-                        1.27
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.09,
-                    "startMax": 0.09,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "size": {
-                    "startMin": 0.1524,
-                    "startMax": 0.1778,
-                    "endMin": 0.381,
-                    "endMax": 0.4826,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "dustparticles",
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 2,
-                    "lifetimeMin": 0.8,
-                    "lifetimeMax": 1,
-                    "rotationSpeedMin": -360,
-                    "rotationSpeedMax": 360,
-                    "gravityModifier": 0.4143,
-                    "velocityMin": [
-                        -0.3556,
-                        -0.3556,
-                        2.032
-                    ],
-                    "velocityMax": [
-                        0.3556,
-                        0.3556,
-                        2.54
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.8,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.6863
-                    ],
-                    "startMax": [
-                        0.9608
-                    ],
-                    "endMin": [
-                        0.6863
-                    ],
-                    "endMax": [
-                        0.9608
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0508,
-                    "startMax": 0.1016,
-                    "endMin": 0.381,
-                    "endMax": 0.4572,
-                    "curve": "linear"
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/bp_rock",
-                "flags": [
-                    "usePhysics",
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 2,
-                    "lifetimeMin": 0.7,
-                    "lifetimeMax": 0.7,
-                    "rotationMin": 0,
-                    "rotationMax": 1000,
-                    "rotationSpeedMin": 0,
-                    "rotationSpeedMax": 2000,
-                    "gravityModifier": 2.0714,
-                    "originMin": [
-                        -0.0254,
-                        0,
-                        0
-                    ],
-                    "originMax": [
-                        0.0254,
-                        0,
-                        0
-                    ],
-                    "velocityMin": [
-                        -0.508,
-                        -0.508,
-                        2.286
-                    ],
-                    "velocityMax": [
-                        0.508,
-                        0.508,
-                        3.81
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 85,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.6275
-                    ],
-                    "startMax": [
-                        0.6275
-                    ],
-                    "endMin": [
-                        0.6275
-                    ],
-                    "endMax": [
-                        0.6275
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0127,
-                    "startMax": 0.0381,
-                    "endMin": 0.0127,
-                    "endMax": 0.0381
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/knife_slash",
-                "decal": {
-                    "sizeMin": 0.0254,
-                    "sizeMax": 0.0762,
-                    "rotationMin": 0,
-                    "rotationMax": 45,
-                    "lifetime": 30
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impacts/knife_default",
-        "displayName": "Knife Default",
-        "segments": [
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/knife_slash",
-                "decal": {
-                    "lifetime": 30
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impacts/knife_dirt",
-        "displayName": "Knife Dirt",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 7,
-                    "countMax": 10,
-                    "lifetimeMin": 0.6,
-                    "lifetimeMax": 0.7,
-                    "gravityModifier": 1.1651,
-                    "velocityMin": [
-                        -0.508,
-                        -0.508,
-                        2.032
-                    ],
-                    "velocityMax": [
-                        0.508,
-                        0.508,
-                        3.81
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.3843
-                    ],
-                    "startMax": [
-                        0.502
-                    ],
-                    "endMin": [
-                        0.7176
-                    ],
-                    "endMax": [
-                        0.702
-                    ]
-                },
-                "size": {
-                    "endMin": 0.254,
-                    "endMax": 0.4064,
-                    "curve": "linear"
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/gb_softfill",
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "rotationSpeedMin": 200,
-                    "rotationSpeedMax": 300,
-                    "velocityMin": [
-                        0,
-                        0,
-                        0.5588
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        0.6604
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.5098
-                    ],
-                    "startMax": [
-                        0.3176
-                    ],
-                    "endMin": [
-                        0.3098
-                    ],
-                    "endMax": [
-                        0.2549
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0381,
-                    "startMax": 0.0508,
-                    "endMin": 0.1905,
-                    "endMax": 0.254,
-                    "curve": "linear"
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 7,
-                    "countMax": 9,
-                    "lifetimeMin": 0.5,
-                    "lifetimeMax": 0.5,
-                    "delayMin": 0,
-                    "delayMax": 0.004,
-                    "gravityModifier": 0.1295,
-                    "velocityMin": [
-                        0,
-                        0,
-                        0.762
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        1.016
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0
-                },
-                "color": {
-                    "startMin": [
-                        0.502
-                    ],
-                    "startMax": [
-                        0.502
-                    ],
-                    "endMin": [
-                        0.8275
-                    ],
-                    "endMax": [
-                        0.8275
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0381,
-                    "startMax": 0.0508,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/knife_slash",
-                "decal": {
-                    "sizeMin": 0.0508,
-                    "sizeMax": 0.0584,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "lifetime": 30
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impacts/knife_flesh",
-        "displayName": "Knife Flesh",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_drop",
-                "flags": [
-                    "usePhysics",
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 6,
-                    "countMax": 9,
-                    "lifetimeMin": 0.6,
-                    "lifetimeMax": 1,
-                    "delayMin": 0.01,
-                    "delayMax": 0.1,
-                    "rotationMin": 0,
-                    "rotationMax": 300,
-                    "gravityModifier": 1.5535,
-                    "velocityMin": [
-                        -1.27,
-                        -1.27,
-                        1.905
-                    ],
-                    "velocityMax": [
-                        1.27,
-                        1.27,
-                        2.54
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 85,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.502
-                    ],
-                    "startMax": [
-                        0.3569
-                    ],
-                    "endMin": [
-                        0.3569
-                    ],
-                    "endMax": [
-                        0.3569
-                    ]
-                },
-                "size": {
-                    "startMin": 0.00635,
-                    "startMax": 0.0127,
-                    "endMin": 0.01905,
-                    "endMax": 0.0254
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impacts/knife_metal",
-        "displayName": "Knife Metal",
-        "segments": [
-            {
-                "type": "tail",
-                "texture": "gfx/misc/spark",
-                "spawnFlags": [
-                    "absoluteAccel"
-                ],
-                "trail": {
-                    "lifetime": 0.125,
-                    "countMin": 5,
-                    "countMax": 7,
-                    "startWidth": 0.0127,
-                    "endWidth": 0.0254,
-                    "lengthMin": 0.381,
-                    "lengthMax": 0.381,
-                    "speed": 2.8575
-                },
-                "alpha": {
-                    "startMin": 0.5,
-                    "startMax": 1,
-                    "endMin": 0.3,
-                    "endMax": 0.6,
-                    "curve": "linear"
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_spark",
-                "flags": [
-                    "usePhysics"
-                ],
-                "particle": {
-                    "countMin": 3,
-                    "countMax": 5,
-                    "lifetimeMin": 0.9,
-                    "lifetimeMax": 1,
-                    "gravityModifier": 1.9419,
-                    "velocityMin": [
-                        -0.889,
-                        -0.889,
-                        7.62
-                    ],
-                    "velocityMax": [
-                        0.889,
-                        0.889,
-                        0.635
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 80,
-                    "curve": "nonlinear"
-                },
-                "size": {
-                    "startMin": 0.01016,
-                    "startMax": 0.01524,
-                    "endMin": 0.02032,
-                    "endMax": 0.01524
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_smoke2",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 2,
-                    "lifetimeMin": 2,
-                    "lifetimeMax": 2.5,
-                    "delayMin": 0,
-                    "delayMax": 0.2,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": 40,
-                    "rotationSpeedMax": 100,
-                    "velocityMin": [
-                        0,
-                        0,
-                        0.2032
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        0.2794
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.2,
-                    "startMax": 0.2,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.2667
-                    ],
-                    "startMax": [
-                        0.2667
-                    ],
-                    "endMin": [
-                        0
-                    ],
-                    "endMax": [
-                        0
-                    ]
-                },
-                "size": {
-                    "endMin": 0.127,
-                    "endMax": 0.2286,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/knife_slash",
-                "decal": {
-                    "sizeMin": 0.0457,
-                    "sizeMax": 0.0635,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "lifetime": 30
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impacts/knife_wood",
-        "displayName": "Knife Wood",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_bar",
-                "flags": [
-                    "usePhysics",
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 6,
-                    "countMax": 9,
-                    "lifetimeMin": 0.6,
-                    "lifetimeMax": 1,
-                    "delayMin": 0.01,
-                    "delayMax": 0.1,
-                    "rotationMin": 0,
-                    "rotationMax": 300,
-                    "gravityModifier": 1.5535,
-                    "velocityMin": [
-                        -1.27,
-                        -1.27,
-                        1.905
-                    ],
-                    "velocityMax": [
-                        1.27,
-                        1.27,
-                        2.54
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 85,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.6667
-                    ],
-                    "startMax": [
-                        0.6667
-                    ],
-                    "endMin": [
-                        0.6667
-                    ],
-                    "endMax": [
-                        0.6667
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0127,
-                    "startMax": 0.0254,
-                    "endMin": 0.01905,
-                    "endMax": 0.0254
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/gb_softfill",
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 1,
-                    "lifetimeMax": 1,
-                    "velocityMin": [
-                        0,
-                        0,
-                        0.381
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        0.635
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.3,
-                    "startMax": 0.3,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.4392
-                    ],
-                    "startMax": [
-                        0.4392
-                    ],
-                    "endMin": [
-                        0.7098
-                    ],
-                    "endMax": [
-                        0.7098
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0762,
-                    "startMax": 0.0762,
-                    "endMin": 0.1778,
-                    "endMax": 0.254,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/knife_slash",
-                "decal": {
-                    "sizeMin": 0.0406,
-                    "sizeMax": 0.0559,
-                    "rotationMin": -20,
-                    "rotationMax": 20,
-                    "lifetime": 30
-                }
-            }
-        ]
-    }
+[
+  {
+    "id": "effects/impacts/knife_concrete",
+    "displayName": "Knife Concrete",
+    "segments": [
+      {
+        "name": "smokepuff",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke3",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.7,
+          "lifetimeMax": 1.2,
+          "gravityModifier": -0.0259,
+          "velocityMin": [
+            -0.254,
+            -0.127,
+            1.016
+          ],
+          "velocityMax": [
+            0.254,
+            0.381,
+            1.27
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.09,
+          "startMax": 0.09,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.1524,
+          "startMax": 0.1778,
+          "endMin": 0.381,
+          "endMax": 0.4826,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "dustparticles",
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 0.8,
+          "lifetimeMax": 1,
+          "rotationSpeedMin": -360,
+          "rotationSpeedMax": 360,
+          "gravityModifier": 0.4143,
+          "velocityMin": [
+            -0.3556,
+            -0.3556,
+            2.032
+          ],
+          "velocityMax": [
+            0.3556,
+            0.3556,
+            2.54
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.6863
+          ],
+          "startMax": [
+            0.9608
+          ],
+          "endMin": [
+            0.6863
+          ],
+          "endMax": [
+            0.9608
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.1016,
+          "endMin": 0.381,
+          "endMax": 0.4572,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_rock",
+        "flags": [
+          "usePhysics",
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.7,
+          "lifetimeMax": 0.7,
+          "rotationMin": 0,
+          "rotationMax": 1000,
+          "rotationSpeedMin": 0,
+          "rotationSpeedMax": 2000,
+          "gravityModifier": 2.0714,
+          "originMin": [
+            -0.0254,
+            0,
+            0
+          ],
+          "originMax": [
+            0.0254,
+            0,
+            0
+          ],
+          "velocityMin": [
+            -0.508,
+            -0.508,
+            2.286
+          ],
+          "velocityMax": [
+            0.508,
+            0.508,
+            3.81
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 85,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.6275
+          ],
+          "startMax": [
+            0.6275
+          ],
+          "endMin": [
+            0.6275
+          ],
+          "endMax": [
+            0.6275
+          ]
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0381,
+          "endMin": 0.0127,
+          "endMax": 0.0381
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/knife_slash",
+        "decal": {
+          "sizeMin": 0.0254,
+          "sizeMax": 0.0762,
+          "rotationMin": 0,
+          "rotationMax": 45,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/knife/default0.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impacts/knife_default",
+    "displayName": "Knife Default",
+    "segments": [
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/knife_slash",
+        "decal": {
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/knife/default0.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impacts/knife_dirt",
+    "displayName": "Knife Dirt",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 7,
+          "countMax": 10,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 0.7,
+          "gravityModifier": 1.1651,
+          "velocityMin": [
+            -0.508,
+            -0.508,
+            2.032
+          ],
+          "velocityMax": [
+            0.508,
+            0.508,
+            3.81
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.3843
+          ],
+          "startMax": [
+            0.502
+          ],
+          "endMin": [
+            0.7176
+          ],
+          "endMax": [
+            0.702
+          ]
+        },
+        "size": {
+          "endMin": 0.254,
+          "endMax": 0.4064,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/gb_softfill",
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "rotationSpeedMin": 200,
+          "rotationSpeedMax": 300,
+          "velocityMin": [
+            0,
+            0,
+            0.5588
+          ],
+          "velocityMax": [
+            0,
+            0,
+            0.6604
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.5098
+          ],
+          "startMax": [
+            0.3176
+          ],
+          "endMin": [
+            0.3098
+          ],
+          "endMax": [
+            0.2549
+          ]
+        },
+        "size": {
+          "startMin": 0.0381,
+          "startMax": 0.0508,
+          "endMin": 0.1905,
+          "endMax": 0.254,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 7,
+          "countMax": 9,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.5,
+          "delayMin": 0,
+          "delayMax": 0.004,
+          "gravityModifier": 0.1295,
+          "velocityMin": [
+            0,
+            0,
+            0.762
+          ],
+          "velocityMax": [
+            0,
+            0,
+            1.016
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0
+        },
+        "color": {
+          "startMin": [
+            0.502
+          ],
+          "startMax": [
+            0.502
+          ],
+          "endMin": [
+            0.8275
+          ],
+          "endMax": [
+            0.8275
+          ]
+        },
+        "size": {
+          "startMin": 0.0381,
+          "startMax": 0.0508,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/knife_slash",
+        "decal": {
+          "sizeMin": 0.0508,
+          "sizeMax": 0.0584,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/knife/earth0.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impacts/knife_flesh",
+    "displayName": "Knife Flesh",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_drop",
+        "flags": [
+          "usePhysics",
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 6,
+          "countMax": 9,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 1,
+          "delayMin": 0.01,
+          "delayMax": 0.1,
+          "rotationMin": 0,
+          "rotationMax": 300,
+          "gravityModifier": 1.5535,
+          "velocityMin": [
+            -1.27,
+            -1.27,
+            1.905
+          ],
+          "velocityMax": [
+            1.27,
+            1.27,
+            2.54
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 85,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.502
+          ],
+          "startMax": [
+            0.3569
+          ],
+          "endMin": [
+            0.3569
+          ],
+          "endMax": [
+            0.3569
+          ]
+        },
+        "size": {
+          "startMin": 0.00635,
+          "startMax": 0.0127,
+          "endMin": 0.01905,
+          "endMax": 0.0254
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/knife/slash01.wav",
+            "sound/weapons/knife/slash02.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impacts/knife_metal",
+    "displayName": "Knife Metal",
+    "segments": [
+      {
+        "type": "tail",
+        "texture": "gfx/misc/spark",
+        "spawnFlags": [
+          "absoluteAccel"
+        ],
+        "trail": {
+          "lifetime": 0.125,
+          "countMin": 5,
+          "countMax": 7,
+          "startWidth": 0.0127,
+          "endWidth": 0.0254,
+          "lengthMin": 0.381,
+          "lengthMax": 0.381,
+          "speed": 2.8575
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 1,
+          "endMin": 0.3,
+          "endMax": 0.6,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_spark",
+        "flags": [
+          "usePhysics"
+        ],
+        "particle": {
+          "countMin": 3,
+          "countMax": 5,
+          "lifetimeMin": 0.9,
+          "lifetimeMax": 1,
+          "gravityModifier": 1.9419,
+          "velocityMin": [
+            -0.889,
+            -0.889,
+            7.62
+          ],
+          "velocityMax": [
+            0.889,
+            0.889,
+            0.635
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 80,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.01016,
+          "startMax": 0.01524,
+          "endMin": 0.02032,
+          "endMax": 0.01524
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke2",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 2,
+          "lifetimeMax": 2.5,
+          "delayMin": 0,
+          "delayMax": 0.2,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": 40,
+          "rotationSpeedMax": 100,
+          "velocityMin": [
+            0,
+            0,
+            0.2032
+          ],
+          "velocityMax": [
+            0,
+            0,
+            0.2794
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.2,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.2667
+          ],
+          "startMax": [
+            0.2667
+          ],
+          "endMin": [
+            0
+          ],
+          "endMax": [
+            0
+          ]
+        },
+        "size": {
+          "endMin": 0.127,
+          "endMax": 0.2286,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/knife_slash",
+        "decal": {
+          "sizeMin": 0.0457,
+          "sizeMax": 0.0635,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/knife/metal0.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impacts/knife_wood",
+    "displayName": "Knife Wood",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_bar",
+        "flags": [
+          "usePhysics",
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 6,
+          "countMax": 9,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 1,
+          "delayMin": 0.01,
+          "delayMax": 0.1,
+          "rotationMin": 0,
+          "rotationMax": 300,
+          "gravityModifier": 1.5535,
+          "velocityMin": [
+            -1.27,
+            -1.27,
+            1.905
+          ],
+          "velocityMax": [
+            1.27,
+            1.27,
+            2.54
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 85,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.6667
+          ],
+          "startMax": [
+            0.6667
+          ],
+          "endMin": [
+            0.6667
+          ],
+          "endMax": [
+            0.6667
+          ]
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0254,
+          "endMin": 0.01905,
+          "endMax": 0.0254
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/gb_softfill",
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 1,
+          "lifetimeMax": 1,
+          "velocityMin": [
+            0,
+            0,
+            0.381
+          ],
+          "velocityMax": [
+            0,
+            0,
+            0.635
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.3,
+          "startMax": 0.3,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.4392
+          ],
+          "startMax": [
+            0.4392
+          ],
+          "endMin": [
+            0.7098
+          ],
+          "endMax": [
+            0.7098
+          ]
+        },
+        "size": {
+          "startMin": 0.0762,
+          "startMax": 0.0762,
+          "endMin": 0.1778,
+          "endMax": 0.254,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/knife_slash",
+        "decal": {
+          "sizeMin": 0.0406,
+          "sizeMax": 0.0559,
+          "rotationMin": -20,
+          "rotationMax": 20,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/knife/wood0.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  }
 ]

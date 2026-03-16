@@ -2,6 +2,7 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.EffectManagement;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
+using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
@@ -195,6 +196,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
             m_ModelInstance = Instantiate(prefab, transform);
             m_ModelInstance.name = $"ProjectileModel_{m_ModelKey}";
+
+            // Ghoul2Meta-Texturen anwenden (mapped_texture_0..N)
+            PrefabTextureApplier.ApplyTextures(m_ModelInstance);
 
             // SoF2/Ghoul2 Model-Korrektur: Knife hat Blade entlang Y, andere Models brauchen Z-Rotation
             m_ModelInstance.transform.localRotation = m_ModelKey == "knife"

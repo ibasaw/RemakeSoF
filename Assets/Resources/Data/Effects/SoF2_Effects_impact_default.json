@@ -1,77 +1,88 @@
-﻿[
-    {
-        "id": "effects/impact_default",
-        "displayName": "Impact Default",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/bp_smoke01",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 0.45,
-                    "lifetimeMax": 0.7,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -200,
-                    "rotationSpeedMax": 200,
-                    "gravityModifier": -0.0233,
-                    "velocityMin": [
-                        -0.0508,
-                        -0.0508,
-                        0.2032
-                    ],
-                    "velocityMax": [
-                        0.0508,
-                        0.0508,
-                        0.3556
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.5,
-                    "startMax": 0.6,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 40,
-                    "curve": "linear nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.7294
-                    ],
-                    "startMax": [
-                        0.9961
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0508,
-                    "startMax": 0.0762,
-                    "endMin": 0.127,
-                    "endMax": 0.1524,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/misc/gb_scorch",
-                "decal": {
-                    "sizeMin": 0.0508,
-                    "sizeMax": 0.0508,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "alphaMin": 0.2,
-                    "alphaMax": 0.2,
-                    "lifetime": 30
-                }
-            }
-        ]
-    }
+[
+  {
+    "id": "effects/impact_default",
+    "displayName": "Impact Default",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.45,
+          "lifetimeMax": 0.7,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 200,
+          "gravityModifier": -0.0233,
+          "velocityMin": [
+            -0.0508,
+            -0.0508,
+            0.2032
+          ],
+          "velocityMax": [
+            0.0508,
+            0.0508,
+            0.3556
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.6,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 40,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.7294
+          ],
+          "startMax": [
+            0.9961
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762,
+          "endMin": 0.127,
+          "endMax": 0.1524,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/misc/gb_scorch",
+        "decal": {
+          "sizeMin": 0.0508,
+          "sizeMax": 0.0508,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "alphaMin": 0.2,
+          "alphaMax": 0.2,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/default/default0.wav",
+            "sound/player/bullet_impacts/default/default1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  }
 ]

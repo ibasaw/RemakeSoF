@@ -7,7 +7,7 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
     /// <summary>
     /// Root-Definition eines visuellen Effekts (z.B. Tracer, Projektil-Trail, MuzzleFlash).
     /// SoF2-Effekte bestehen aus einem oder mehreren Segmenten (Tail, Particle).
-    /// Wird aus SoF2_Effects.json geladen.
+    /// Wird aus den JSON-Dateien im Effects/-Unterordner geladen.
     /// </summary>
     [Serializable]
     public class EffectDefinition
@@ -124,6 +124,13 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// </summary>
         [JsonProperty("emitter")]
         public EffectEmitterDefinition Emitter;
+
+        /// <summary>
+        /// Sound-Parameter (nur fuer type "sound").
+        /// SoF2 Sound-Primitive: spielt Audio ab bei Effekt-Ausloesung.
+        /// </summary>
+        [JsonProperty("sound")]
+        public EffectSoundDefinition Sound;
     }
 
     // ===== Tail (TrailRenderer) =====
@@ -405,7 +412,15 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         public float EndMax;
 
         /// <summary>
-        /// Verlaufskurve: "linear", "nonlinear".
+        /// SoF2 parm: Prozent der Lebensdauer bei dem der Endwert erreicht wird (0-100).
+        /// Nur relevant bei Curve = "clamp".
+        /// </summary>
+        [JsonProperty("parm")]
+        public int Parm;
+
+        /// <summary>
+        /// Verlaufskurve: "linear", "nonlinear", "clamp".
+        /// Bei "clamp" wird der Endwert bei Parm% der Lebensdauer erreicht und gehalten.
         /// </summary>
         [JsonProperty("curve")]
         public string Curve;
@@ -546,7 +561,7 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
     public class EffectEmitterDefinition
     {
         /// <summary>
-        /// Liste der Modell-Keys fuer Addressables (SoF2 models-Block, ohne .md3-Endung).
+        /// Liste der Modell-Keys fuer Addressables (SoF2 models-Block, ohne .md3-Endung!).
         /// Bei mehreren Modellen wird zufaellig eines gewaehlt.
         /// </summary>
         [JsonProperty("models")]
@@ -640,5 +655,35 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// </summary>
         [JsonProperty("impactFx")]
         public string ImpactFx;
+
+        /// <summary>
+        /// Optionale Referenz auf Sub-Effekt der waehrend der Flugzeit emittiert wird (SoF2 emitfx).
+        /// Wird periodisch am Emitter-Objekt gespawnt (z.B. Rauchschweif hinter Truemmer).
+        /// </summary>
+        [JsonProperty("emitFx")]
+        public string EmitFx;
+    }
+
+    // ===== Sound =====
+
+    /// <summary>
+    /// Sound-Parameter fuer Sound-Segmente (SoF2 Sound-Primitive → Unity AudioSource.PlayOneShot).
+    /// SoF2-Sounds werden relativ zur Effektposition als 3D-Sound abgespielt.
+    /// </summary>
+    [Serializable]
+    public class EffectSoundDefinition
+    {
+        /// <summary>
+        /// Pfade zu den Sound-Dateien (SoF2 sound-Block).
+        /// Bei mehreren Pfaden wird zufaellig einer gewaehlt.
+        /// </summary>
+        [JsonProperty("files")]
+        public List<string> Files;
+
+        /// <summary>
+        /// Spawn-Verzoegerung in Sekunden (SoF2 delay / 1000). 0 = sofort.
+        /// </summary>
+        [JsonProperty("delay")]
+        public float Delay;
     }
 }

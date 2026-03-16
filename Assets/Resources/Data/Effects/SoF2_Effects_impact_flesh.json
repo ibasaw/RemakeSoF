@@ -1,396 +1,418 @@
-﻿[
-    {
-        "id": "effects/impact_flesh",
-        "displayName": "Impact Flesh",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_drop",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 20,
-                    "countMax": 30,
-                    "lifetimeMin": 1,
-                    "lifetimeMax": 1.5,
-                    "rotationMin": -180,
-                    "rotationMax": 180,
-                    "rotationSpeedMin": -100,
-                    "rotationSpeedMax": 100,
-                    "gravityModifier": 0.6214,
-                    "velocityMin": [
-                        -1.905,
-                        -1.905,
-                        0.762
-                    ],
-                    "velocityMax": [
-                        1.905,
-                        1.905,
-                        2.286
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 75
-                },
-                "color": {
-                    "startMin": [
-                        0.5176
-                    ],
-                    "startMax": [
-                        0.3176
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0127,
-                    "startMax": 0.0508,
-                    "endMin": 1.27,
-                    "endMax": 1.524
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 2,
-                    "lifetimeMin": 0.6,
-                    "lifetimeMax": 0.8,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -200,
-                    "rotationSpeedMax": 200,
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.5,
-                    "startMax": 0.5,
-                    "endMin": 0,
-                    "endMax": 0
-                },
-                "color": {
-                    "startMin": [
-                        0.502
-                    ],
-                    "startMax": [
-                        0.502
-                    ],
-                    "endMin": [
-                        0.502
-                    ],
-                    "endMax": [
-                        0.502
-                    ]
-                },
-                "size": {
-                    "endMin": 1.016,
-                    "endMax": 1.27,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "Copy of Unnamed Particle 1",
-                "type": "particle",
-                "texture": "gfx/misc/jk_smoke4",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 0.3,
-                    "lifetimeMax": 0.35,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -200,
-                    "rotationSpeedMax": 200,
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.25,
-                    "startMax": 0.5,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.2902
-                    ],
-                    "startMax": [
-                        0.502
-                    ],
-                    "endMin": [
-                        0.502
-                    ],
-                    "endMax": [
-                        0.502
-                    ]
-                },
-                "size": {
-                    "endMin": 1.27,
-                    "endMax": 1.524,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "Copy of Unnamed Particle 0",
-                "type": "particle",
-                "texture": "gfx/misc/jk_drop",
-                "flags": [
-                    "usePhysics",
-                    "impactFx",
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 3,
-                    "lifetimeMin": 1,
-                    "lifetimeMax": 1.5,
-                    "rotationMin": -180,
-                    "rotationMax": 180,
-                    "rotationSpeedMin": -100,
-                    "rotationSpeedMax": 100,
-                    "gravityModifier": 0.0388,
-                    "velocityMin": [
-                        -1.27,
-                        -1.27,
-                        6.35
-                    ],
-                    "velocityMax": [
-                        1.27,
-                        1.27,
-                        7.62
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 75
-                },
-                "color": {
-                    "startMin": [
-                        0.5176
-                    ],
-                    "startMax": [
-                        0.3176
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0127,
-                    "startMax": 0.0508,
-                    "endMin": 1.27,
-                    "endMax": 1.524
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_flesh_small",
-        "displayName": "Impact Flesh Small",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_drop",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 5,
-                    "lifetimeMin": 1,
-                    "lifetimeMax": 1.5,
-                    "rotationMin": -180,
-                    "rotationMax": 180,
-                    "rotationSpeedMin": -100,
-                    "rotationSpeedMax": 100,
-                    "gravityModifier": 0.0388,
-                    "velocityMin": [
-                        -1.905,
-                        -1.905,
-                        -1.905
-                    ],
-                    "velocityMax": [
-                        1.905,
-                        1.905,
-                        1.905
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 75
-                },
-                "color": {
-                    "startMin": [
-                        0.5176
-                    ],
-                    "startMax": [
-                        0.3176
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0127,
-                    "startMax": 0.0508,
-                    "endMin": 1.27,
-                    "endMax": 1.524
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 2,
-                    "lifetimeMin": 0.6,
-                    "lifetimeMax": 0.8,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -200,
-                    "rotationSpeedMax": 200,
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.5,
-                    "startMax": 0.5,
-                    "endMin": 0,
-                    "endMax": 0
-                },
-                "color": {
-                    "startMin": [
-                        0.502
-                    ],
-                    "startMax": [
-                        0.502
-                    ],
-                    "endMin": [
-                        0.502
-                    ],
-                    "endMax": [
-                        0.502
-                    ]
-                },
-                "size": {
-                    "endMin": 0.508,
-                    "endMax": 0.635,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "Copy of Unnamed Particle 1",
-                "type": "particle",
-                "texture": "gfx/misc/jk_smoke4",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 2,
-                    "lifetimeMin": 0.5,
-                    "lifetimeMax": 0.6,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -200,
-                    "rotationSpeedMax": 200,
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.5,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.2902
-                    ],
-                    "startMax": [
-                        0.502
-                    ],
-                    "endMin": [
-                        0.502
-                    ],
-                    "endMax": [
-                        0.502
-                    ]
-                },
-                "size": {
-                    "endMin": 1.27,
-                    "endMax": 1.524,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "Copy of Unnamed Particle 0",
-                "type": "particle",
-                "texture": "gfx/misc/jk_drop",
-                "flags": [
-                    "usePhysics",
-                    "impactFx",
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 1,
-                    "lifetimeMax": 1.5,
-                    "rotationMin": -180,
-                    "rotationMax": 180,
-                    "rotationSpeedMin": -100,
-                    "rotationSpeedMax": 100,
-                    "gravityModifier": 0.0388,
-                    "velocityMin": [
-                        -1.27,
-                        -1.27,
-                        6.35
-                    ],
-                    "velocityMax": [
-                        1.27,
-                        1.27,
-                        7.62
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 75
-                },
-                "color": {
-                    "startMin": [
-                        0.5176
-                    ],
-                    "startMax": [
-                        0.3176
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0127,
-                    "startMax": 0.0508,
-                    "endMin": 1.27,
-                    "endMax": 1.524
-                }
-            }
-        ]
-    }
+[
+  {
+    "id": "effects/impact_flesh",
+    "displayName": "Impact Flesh",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_drop",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 20,
+          "countMax": 30,
+          "lifetimeMin": 1,
+          "lifetimeMax": 1.5,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "rotationSpeedMin": -100,
+          "rotationSpeedMax": 100,
+          "gravityModifier": 0.6214,
+          "velocityMin": [
+            -1.905,
+            -1.905,
+            0.762
+          ],
+          "velocityMax": [
+            1.905,
+            1.905,
+            2.286
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 75
+        },
+        "color": {
+          "startMin": [
+            0.5176
+          ],
+          "startMax": [
+            0.3176
+          ]
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0508,
+          "endMin": 1.27,
+          "endMax": 1.524
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 0.8,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 200,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0
+        },
+        "color": {
+          "startMin": [
+            0.502
+          ],
+          "startMax": [
+            0.502
+          ],
+          "endMin": [
+            0.502
+          ],
+          "endMax": [
+            0.502
+          ]
+        },
+        "size": {
+          "endMin": 1.016,
+          "endMax": 1.27,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Copy of Unnamed Particle 1",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke4",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.3,
+          "lifetimeMax": 0.35,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 200,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.25,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.2902
+          ],
+          "startMax": [
+            0.502
+          ],
+          "endMin": [
+            0.502
+          ],
+          "endMax": [
+            0.502
+          ]
+        },
+        "size": {
+          "endMin": 1.27,
+          "endMax": 1.524,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Copy of Unnamed Particle 0",
+        "type": "particle",
+        "texture": "gfx/misc/jk_drop",
+        "flags": [
+          "usePhysics",
+          "impactFx",
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 1,
+          "lifetimeMax": 1.5,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "rotationSpeedMin": -100,
+          "rotationSpeedMax": 100,
+          "gravityModifier": 0.0388,
+          "velocityMin": [
+            -1.27,
+            -1.27,
+            6.35
+          ],
+          "velocityMax": [
+            1.27,
+            1.27,
+            7.62
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 75
+        },
+        "color": {
+          "startMin": [
+            0.5176
+          ],
+          "startMax": [
+            0.3176
+          ]
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0508,
+          "endMin": 1.27,
+          "endMax": 1.524
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/gore/body_impact0.wav",
+            "sound/player/bullet_impacts/gore/body_impact1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_flesh_small",
+    "displayName": "Impact Flesh Small",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_drop",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 5,
+          "lifetimeMin": 1,
+          "lifetimeMax": 1.5,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "rotationSpeedMin": -100,
+          "rotationSpeedMax": 100,
+          "gravityModifier": 0.0388,
+          "velocityMin": [
+            -1.905,
+            -1.905,
+            -1.905
+          ],
+          "velocityMax": [
+            1.905,
+            1.905,
+            1.905
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 75
+        },
+        "color": {
+          "startMin": [
+            0.5176
+          ],
+          "startMax": [
+            0.3176
+          ]
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0508,
+          "endMin": 1.27,
+          "endMax": 1.524
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 0.8,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 200,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0
+        },
+        "color": {
+          "startMin": [
+            0.502
+          ],
+          "startMax": [
+            0.502
+          ],
+          "endMin": [
+            0.502
+          ],
+          "endMax": [
+            0.502
+          ]
+        },
+        "size": {
+          "endMin": 0.508,
+          "endMax": 0.635,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Copy of Unnamed Particle 1",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke4",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 200,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.2902
+          ],
+          "startMax": [
+            0.502
+          ],
+          "endMin": [
+            0.502
+          ],
+          "endMax": [
+            0.502
+          ]
+        },
+        "size": {
+          "endMin": 1.27,
+          "endMax": 1.524,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Copy of Unnamed Particle 0",
+        "type": "particle",
+        "texture": "gfx/misc/jk_drop",
+        "flags": [
+          "usePhysics",
+          "impactFx",
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 1,
+          "lifetimeMax": 1.5,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "rotationSpeedMin": -100,
+          "rotationSpeedMax": 100,
+          "gravityModifier": 0.0388,
+          "velocityMin": [
+            -1.27,
+            -1.27,
+            6.35
+          ],
+          "velocityMax": [
+            1.27,
+            1.27,
+            7.62
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 75
+        },
+        "color": {
+          "startMin": [
+            0.5176
+          ],
+          "startMax": [
+            0.3176
+          ]
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0508,
+          "endMin": 1.27,
+          "endMax": 1.524
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/gore/body_impact0.wav",
+            "sound/player/bullet_impacts/gore/body_impact1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  }
 ]

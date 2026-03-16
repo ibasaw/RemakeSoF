@@ -12,6 +12,7 @@ using ConnectionEvent = Tolik.RemakeSoF.Runtime.ConnectionManagement.ConnectionE
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.ConsoleManagement;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
+using Tolik.RemakeSoF.Runtime.SoundManagement;
 
 namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 {
@@ -148,6 +149,9 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 
                         EffectDataLoader effectDataLoader = new();
                         ServiceLocator.Register(effectDataLoader);
+
+                        SoundManager soundManager = new();
+                        ServiceLocator.Register(soundManager);
 
                         EffectFactory effectFactory = new();
                         ServiceLocator.Register(effectFactory);

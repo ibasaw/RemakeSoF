@@ -1,753 +1,797 @@
-﻿[
-    {
-        "id": "effects/impact_short_grass",
-        "displayName": "Impact Short Grass",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 3,
-                    "countMax": 4,
-                    "lifetimeMin": 0.6,
-                    "lifetimeMax": 0.7,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -120,
-                    "rotationSpeedMax": 120,
-                    "gravityModifier": 0.6473,
-                    "originMin": [
-                        0,
-                        0,
-                        0.254
-                    ],
-                    "originMax": [
-                        0,
-                        0,
-                        0.381
-                    ],
-                    "velocityMin": [
-                        -0.762,
-                        -0.762,
-                        1.905
-                    ],
-                    "velocityMax": [
-                        0.762,
-                        0.762,
-                        2.54
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 65,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.549
-                    ],
-                    "startMax": [
-                        0.4157
-                    ],
-                    "endMin": [
-                        0.7176
-                    ],
-                    "endMax": [
-                        0.702
-                    ]
-                },
-                "size": {
-                    "startMin": 0.1524,
-                    "startMax": 0.2032,
-                    "endMin": 0.3048,
-                    "endMax": 0.4064,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/dirt",
-                "decal": {
-                    "sizeMin": 0.0508,
-                    "sizeMax": 0.0584,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "alphaMin": 0.4,
-                    "alphaMax": 0.4,
-                    "lifetime": 30
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_smoke5",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 1.2,
-                    "lifetimeMax": 1.2,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "originMin": [
-                        0,
-                        0,
-                        0.127
-                    ],
-                    "originMax": [
-                        0,
-                        0,
-                        0.254
-                    ],
-                    "velocityMin": [
-                        -0.127,
-                        -0.127,
-                        0.508
-                    ],
-                    "velocityMax": [
-                        0.127,
-                        0.127,
-                        0.762
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.4,
-                    "startMax": 0.5,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 30,
-                    "curve": "linear nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.5059
-                    ],
-                    "startMax": [
-                        0.2941
-                    ],
-                    "endMin": [
-                        0.5725
-                    ],
-                    "endMax": [
-                        0.5725
-                    ]
-                },
-                "size": {
-                    "startMin": 0.2032,
-                    "startMax": 0.2032,
-                    "endMin": 0.508,
-                    "endMax": 0.6096,
-                    "curve": "linear"
-                }
-            },
-            {
-                "type": "tail",
-                "texture": "gfx/misc/bp_smoke01",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "orgOnCylinder",
-                    "axisFromSphere",
-                    "rgbComponentInterpolation"
-                ],
-                "trail": {
-                    "lifetime": 0.5,
-                    "countMin": 2,
-                    "countMax": 3,
-                    "startWidth": 0.0635,
-                    "endWidth": 0.127,
-                    "lengthMin": 0.635,
-                    "lengthMax": 1.016,
-                    "speed": 0.0254,
-                    "radius": 0.0762
-                },
-                "alpha": {
-                    "startMin": 0.7,
-                    "startMax": 0.8,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.302
-                    ],
-                    "startMax": [
-                        0.4824
-                    ]
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_short_grass_12g",
-        "displayName": "Impact Short Grass 12G",
-        "segments": [
-            {
-                "name": "GrassBits",
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 3,
-                    "lifetimeMin": 0.6,
-                    "lifetimeMax": 0.7,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -120,
-                    "rotationSpeedMax": 120,
-                    "gravityModifier": 0.6473,
-                    "originMin": [
-                        0,
-                        0,
-                        0.254
-                    ],
-                    "originMax": [
-                        0,
-                        0,
-                        0.381
-                    ],
-                    "velocityMin": [
-                        -0.762,
-                        -0.762,
-                        1.905
-                    ],
-                    "velocityMax": [
-                        0.762,
-                        0.762,
-                        2.54
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 65,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.549
-                    ],
-                    "startMax": [
-                        0.4157
-                    ],
-                    "endMin": [
-                        0.7176
-                    ],
-                    "endMax": [
-                        0.702
-                    ]
-                },
-                "size": {
-                    "startMin": 0.1524,
-                    "startMax": 0.2032,
-                    "endMin": 0.3048,
-                    "endMax": 0.4064,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/dirt",
-                "decal": {
-                    "sizeMin": 0.0508,
-                    "sizeMax": 0.0584,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "alphaMin": 0.4,
-                    "alphaMax": 0.4,
-                    "lifetime": 30
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_smoke5",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 1.1,
-                    "lifetimeMax": 1.6,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "originMin": [
-                        0,
-                        0,
-                        0.127
-                    ],
-                    "originMax": [
-                        0,
-                        0,
-                        0.254
-                    ],
-                    "velocityMin": [
-                        -0.254,
-                        -0.254,
-                        0.508
-                    ],
-                    "velocityMax": [
-                        0.254,
-                        0.254,
-                        0.762
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.4,
-                    "startMax": 0.5,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 30,
-                    "curve": "linear nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.5059
-                    ],
-                    "startMax": [
-                        0.2941
-                    ]
-                },
-                "size": {
-                    "startMin": 0.2032,
-                    "startMax": 0.2032,
-                    "endMin": 0.508,
-                    "endMax": 0.6096,
-                    "curve": "linear"
-                }
-            },
-            {
-                "type": "tail",
-                "texture": "gfx/misc/bp_smoke01",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "orgOnCylinder",
-                    "axisFromSphere",
-                    "rgbComponentInterpolation"
-                ],
-                "trail": {
-                    "lifetime": 0.5,
-                    "countMin": 1,
-                    "countMax": 2,
-                    "startWidth": 0.0635,
-                    "endWidth": 0.127,
-                    "lengthMin": 0.635,
-                    "lengthMax": 1.016,
-                    "speed": 0.0254,
-                    "radius": 0.0762
-                },
-                "alpha": {
-                    "startMin": 0.7,
-                    "startMax": 0.8,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.302
-                    ],
-                    "startMax": [
-                        0.4824
-                    ]
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_short_grass_belt",
-        "displayName": "Impact Short Grass Belt",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 4,
-                    "countMax": 4,
-                    "lifetimeMin": 0.85,
-                    "lifetimeMax": 1.1,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -120,
-                    "rotationSpeedMax": 120,
-                    "gravityModifier": 0.6473,
-                    "originMin": [
-                        0,
-                        0,
-                        0.381
-                    ],
-                    "originMax": [
-                        0,
-                        0,
-                        0.508
-                    ],
-                    "velocityMin": [
-                        -1.016,
-                        -1.016,
-                        3.175
-                    ],
-                    "velocityMax": [
-                        1.016,
-                        1.016,
-                        4.445
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 65,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.549
-                    ],
-                    "startMax": [
-                        0.4157
-                    ],
-                    "endMin": [
-                        0.7176
-                    ],
-                    "endMax": [
-                        0.702
-                    ]
-                },
-                "size": {
-                    "startMin": 0.3048,
-                    "startMax": 0.3048,
-                    "endMin": 0.508,
-                    "endMax": 0.6096,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/dirt",
-                "decal": {
-                    "sizeMin": 0.1778,
-                    "sizeMax": 0.2286,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "alphaMin": 0.4,
-                    "alphaMax": 0.4,
-                    "lifetime": 30
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_smoke5",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 1.3,
-                    "lifetimeMax": 1.75,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "velocityMin": [
-                        -0.127,
-                        -0.127,
-                        0.508
-                    ],
-                    "velocityMax": [
-                        0.127,
-                        0.127,
-                        0.762
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.4,
-                    "startMax": 0.5,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 30,
-                    "curve": "linear nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.5059
-                    ],
-                    "startMax": [
-                        0.2941
-                    ]
-                },
-                "size": {
-                    "startMin": 0.254,
-                    "startMax": 0.254,
-                    "endMin": 0.6096,
-                    "endMax": 0.7112,
-                    "curve": "linear"
-                }
-            },
-            {
-                "type": "tail",
-                "texture": "gfx/misc/bp_smoke01",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "orgOnCylinder",
-                    "axisFromSphere",
-                    "rgbComponentInterpolation"
-                ],
-                "trail": {
-                    "lifetime": 0.8,
-                    "countMin": 3,
-                    "countMax": 4,
-                    "startWidth": 0.1143,
-                    "endWidth": 0.2032,
-                    "lengthMin": 1.524,
-                    "lengthMax": 2.54,
-                    "speed": 0.0254,
-                    "radius": 0.0762
-                },
-                "alpha": {
-                    "startMin": 0.75,
-                    "startMax": 0.85,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.302
-                    ],
-                    "startMax": [
-                        0.4824
-                    ]
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_short_grass3",
-        "displayName": "Impact Short Grass3",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 3,
-                    "countMax": 4,
-                    "lifetimeMin": 0.7,
-                    "lifetimeMax": 0.9,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -120,
-                    "rotationSpeedMax": 120,
-                    "gravityModifier": 0.6473,
-                    "originMin": [
-                        0,
-                        0,
-                        0.254
-                    ],
-                    "originMax": [
-                        0,
-                        0,
-                        0.381
-                    ],
-                    "velocityMin": [
-                        -0.889,
-                        -0.889,
-                        2.54
-                    ],
-                    "velocityMax": [
-                        0.889,
-                        0.889,
-                        3.175
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 65,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.549
-                    ],
-                    "startMax": [
-                        0.4157
-                    ],
-                    "endMin": [
-                        0.7176
-                    ],
-                    "endMax": [
-                        0.702
-                    ]
-                },
-                "size": {
-                    "startMin": 0.2032,
-                    "startMax": 0.254,
-                    "endMin": 0.4064,
-                    "endMax": 0.4572,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/dirt",
-                "decal": {
-                    "sizeMin": 0.0508,
-                    "sizeMax": 0.0584,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "alphaMin": 0.4,
-                    "alphaMax": 0.4,
-                    "lifetime": 30
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_smoke5",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 1.3,
-                    "lifetimeMax": 1.75,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "velocityMin": [
-                        -0.127,
-                        -0.127,
-                        0.508
-                    ],
-                    "velocityMax": [
-                        0.127,
-                        0.127,
-                        0.762
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.4,
-                    "startMax": 0.5,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 30,
-                    "curve": "linear nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.5059
-                    ],
-                    "startMax": [
-                        0.2941
-                    ]
-                },
-                "size": {
-                    "startMin": 0.254,
-                    "startMax": 0.254,
-                    "endMin": 0.6096,
-                    "endMax": 0.7112,
-                    "curve": "linear"
-                }
-            },
-            {
-                "type": "tail",
-                "texture": "gfx/misc/bp_smoke01",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "orgOnCylinder",
-                    "axisFromSphere",
-                    "rgbComponentInterpolation"
-                ],
-                "trail": {
-                    "lifetime": 0.6,
-                    "countMin": 3,
-                    "countMax": 3,
-                    "startWidth": 0.0889,
-                    "endWidth": 0.1524,
-                    "lengthMin": 0.9144,
-                    "lengthMax": 1.3716,
-                    "speed": 0.0254,
-                    "radius": 0.0762
-                },
-                "alpha": {
-                    "startMin": 0.75,
-                    "startMax": 0.85,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.302
-                    ],
-                    "startMax": [
-                        0.4824
-                    ]
-                }
-            }
-        ]
-    }
+[
+  {
+    "id": "effects/impact_short_grass",
+    "displayName": "Impact Short Grass",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 3,
+          "countMax": 4,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 0.7,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -120,
+          "rotationSpeedMax": 120,
+          "gravityModifier": 0.6473,
+          "originMin": [
+            0,
+            0,
+            0.254
+          ],
+          "originMax": [
+            0,
+            0,
+            0.381
+          ],
+          "velocityMin": [
+            -0.762,
+            -0.762,
+            1.905
+          ],
+          "velocityMax": [
+            0.762,
+            0.762,
+            2.54
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 65,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.549
+          ],
+          "startMax": [
+            0.4157
+          ],
+          "endMin": [
+            0.7176
+          ],
+          "endMax": [
+            0.702
+          ]
+        },
+        "size": {
+          "startMin": 0.1524,
+          "startMax": 0.2032,
+          "endMin": 0.3048,
+          "endMax": 0.4064,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/dirt",
+        "decal": {
+          "sizeMin": 0.0508,
+          "sizeMax": 0.0584,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "alphaMin": 0.4,
+          "alphaMax": 0.4,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke5",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 1.2,
+          "lifetimeMax": 1.2,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "originMin": [
+            0,
+            0,
+            0.127
+          ],
+          "originMax": [
+            0,
+            0,
+            0.254
+          ],
+          "velocityMin": [
+            -0.127,
+            -0.127,
+            0.508
+          ],
+          "velocityMax": [
+            0.127,
+            0.127,
+            0.762
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 30,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.5059
+          ],
+          "startMax": [
+            0.2941
+          ],
+          "endMin": [
+            0.5725
+          ],
+          "endMax": [
+            0.5725
+          ]
+        },
+        "size": {
+          "startMin": 0.2032,
+          "startMax": 0.2032,
+          "endMin": 0.508,
+          "endMax": 0.6096,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "tail",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "orgOnCylinder",
+          "axisFromSphere",
+          "rgbComponentInterpolation"
+        ],
+        "trail": {
+          "lifetime": 0.5,
+          "countMin": 2,
+          "countMax": 3,
+          "startWidth": 0.0635,
+          "endWidth": 0.127,
+          "lengthMin": 0.635,
+          "lengthMax": 1.016,
+          "speed": 0.0254,
+          "radius": 0.0762
+        },
+        "alpha": {
+          "startMin": 0.7,
+          "startMax": 0.8,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.302
+          ],
+          "startMax": [
+            0.4824
+          ]
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_short_grass_12g",
+    "displayName": "Impact Short Grass 12G",
+    "segments": [
+      {
+        "name": "GrassBits",
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 0.7,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -120,
+          "rotationSpeedMax": 120,
+          "gravityModifier": 0.6473,
+          "originMin": [
+            0,
+            0,
+            0.254
+          ],
+          "originMax": [
+            0,
+            0,
+            0.381
+          ],
+          "velocityMin": [
+            -0.762,
+            -0.762,
+            1.905
+          ],
+          "velocityMax": [
+            0.762,
+            0.762,
+            2.54
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 65,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.549
+          ],
+          "startMax": [
+            0.4157
+          ],
+          "endMin": [
+            0.7176
+          ],
+          "endMax": [
+            0.702
+          ]
+        },
+        "size": {
+          "startMin": 0.1524,
+          "startMax": 0.2032,
+          "endMin": 0.3048,
+          "endMax": 0.4064,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/dirt",
+        "decal": {
+          "sizeMin": 0.0508,
+          "sizeMax": 0.0584,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "alphaMin": 0.4,
+          "alphaMax": 0.4,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke5",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 1.1,
+          "lifetimeMax": 1.6,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "originMin": [
+            0,
+            0,
+            0.127
+          ],
+          "originMax": [
+            0,
+            0,
+            0.254
+          ],
+          "velocityMin": [
+            -0.254,
+            -0.254,
+            0.508
+          ],
+          "velocityMax": [
+            0.254,
+            0.254,
+            0.762
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 30,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.5059
+          ],
+          "startMax": [
+            0.2941
+          ]
+        },
+        "size": {
+          "startMin": 0.2032,
+          "startMax": 0.2032,
+          "endMin": 0.508,
+          "endMax": 0.6096,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "tail",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "orgOnCylinder",
+          "axisFromSphere",
+          "rgbComponentInterpolation"
+        ],
+        "trail": {
+          "lifetime": 0.5,
+          "countMin": 1,
+          "countMax": 2,
+          "startWidth": 0.0635,
+          "endWidth": 0.127,
+          "lengthMin": 0.635,
+          "lengthMax": 1.016,
+          "speed": 0.0254,
+          "radius": 0.0762
+        },
+        "alpha": {
+          "startMin": 0.7,
+          "startMax": 0.8,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.302
+          ],
+          "startMax": [
+            0.4824
+          ]
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_short_grass_belt",
+    "displayName": "Impact Short Grass Belt",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 4,
+          "countMax": 4,
+          "lifetimeMin": 0.85,
+          "lifetimeMax": 1.1,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -120,
+          "rotationSpeedMax": 120,
+          "gravityModifier": 0.6473,
+          "originMin": [
+            0,
+            0,
+            0.381
+          ],
+          "originMax": [
+            0,
+            0,
+            0.508
+          ],
+          "velocityMin": [
+            -1.016,
+            -1.016,
+            3.175
+          ],
+          "velocityMax": [
+            1.016,
+            1.016,
+            4.445
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 65,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.549
+          ],
+          "startMax": [
+            0.4157
+          ],
+          "endMin": [
+            0.7176
+          ],
+          "endMax": [
+            0.702
+          ]
+        },
+        "size": {
+          "startMin": 0.3048,
+          "startMax": 0.3048,
+          "endMin": 0.508,
+          "endMax": 0.6096,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/dirt",
+        "decal": {
+          "sizeMin": 0.1778,
+          "sizeMax": 0.2286,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "alphaMin": 0.4,
+          "alphaMax": 0.4,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke5",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 1.3,
+          "lifetimeMax": 1.75,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "velocityMin": [
+            -0.127,
+            -0.127,
+            0.508
+          ],
+          "velocityMax": [
+            0.127,
+            0.127,
+            0.762
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 30,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.5059
+          ],
+          "startMax": [
+            0.2941
+          ]
+        },
+        "size": {
+          "startMin": 0.254,
+          "startMax": 0.254,
+          "endMin": 0.6096,
+          "endMax": 0.7112,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "tail",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "orgOnCylinder",
+          "axisFromSphere",
+          "rgbComponentInterpolation"
+        ],
+        "trail": {
+          "lifetime": 0.8,
+          "countMin": 3,
+          "countMax": 4,
+          "startWidth": 0.1143,
+          "endWidth": 0.2032,
+          "lengthMin": 1.524,
+          "lengthMax": 2.54,
+          "speed": 0.0254,
+          "radius": 0.0762
+        },
+        "alpha": {
+          "startMin": 0.75,
+          "startMax": 0.85,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.302
+          ],
+          "startMax": [
+            0.4824
+          ]
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/chopper/earth/earth0.wav",
+            "sound/player/bullet_impacts/chopper/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_short_grass3",
+    "displayName": "Impact Short Grass3",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 3,
+          "countMax": 4,
+          "lifetimeMin": 0.7,
+          "lifetimeMax": 0.9,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -120,
+          "rotationSpeedMax": 120,
+          "gravityModifier": 0.6473,
+          "originMin": [
+            0,
+            0,
+            0.254
+          ],
+          "originMax": [
+            0,
+            0,
+            0.381
+          ],
+          "velocityMin": [
+            -0.889,
+            -0.889,
+            2.54
+          ],
+          "velocityMax": [
+            0.889,
+            0.889,
+            3.175
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 65,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.549
+          ],
+          "startMax": [
+            0.4157
+          ],
+          "endMin": [
+            0.7176
+          ],
+          "endMax": [
+            0.702
+          ]
+        },
+        "size": {
+          "startMin": 0.2032,
+          "startMax": 0.254,
+          "endMin": 0.4064,
+          "endMax": 0.4572,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/dirt",
+        "decal": {
+          "sizeMin": 0.0508,
+          "sizeMax": 0.0584,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "alphaMin": 0.4,
+          "alphaMax": 0.4,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke5",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 1.3,
+          "lifetimeMax": 1.75,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "velocityMin": [
+            -0.127,
+            -0.127,
+            0.508
+          ],
+          "velocityMax": [
+            0.127,
+            0.127,
+            0.762
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 30,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.5059
+          ],
+          "startMax": [
+            0.2941
+          ]
+        },
+        "size": {
+          "startMin": 0.254,
+          "startMax": 0.254,
+          "endMin": 0.6096,
+          "endMax": 0.7112,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "tail",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "orgOnCylinder",
+          "axisFromSphere",
+          "rgbComponentInterpolation"
+        ],
+        "trail": {
+          "lifetime": 0.6,
+          "countMin": 3,
+          "countMax": 3,
+          "startWidth": 0.0889,
+          "endWidth": 0.1524,
+          "lengthMin": 0.9144,
+          "lengthMax": 1.3716,
+          "speed": 0.0254,
+          "radius": 0.0762
+        },
+        "alpha": {
+          "startMin": 0.75,
+          "startMax": 0.85,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.302
+          ],
+          "startMax": [
+            0.4824
+          ]
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  }
 ]

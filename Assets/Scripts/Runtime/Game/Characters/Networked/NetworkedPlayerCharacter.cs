@@ -1225,7 +1225,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <summary>
         /// Server → Alle Clients: Muzzle-Flash, Muzzle-Smoke und Shell-Casing-Ejektion.
         /// Wird einmal pro Schuss gesendet (nicht pro Pellet).
-        /// SoF2 CG_FireWeapon/CG_EjectBrass: Flash am Muzzle-Bone, Huelse am Eject-Bone.
+        /// SoF2 CG_FireWeapon/CG_EjectBrass: Flash am Muzzle-Bone (flash_X), Huelse am Eject-Bone (ejection_X).
+        /// Flash-Bone wird vom Eject-Bone abgeleitet: ejection_X → flash_X.
+        /// Sonderfaelle: OICW (flashtop_oicw), Granaten (ejectBone=gun → flashBone=flash).
         /// </summary>
         [Rpc(SendTo.Everyone)]
         private void MuzzleEffectsClientRpc(string muzzleFlashId, string muzzleSmokeId,
@@ -1247,29 +1249,71 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
-            Vector3 position = ejectBone.position;
-            Quaternion rotation = ejectBone.rotation;
-
             EffectFactory effectFactory = ServiceLocator.Get<EffectFactory>();
             if (effectFactory == null)
             {
                 return;
             }
 
-            if (!string.IsNullOrEmpty(muzzleFlashId))
+            // Muzzle-Flash und -Smoke am flash_-Bone spawnen (SoF2: Lauf-Ende)
+            if (!string.IsNullOrEmpty(muzzleFlashId) || !string.IsNullOrEmpty(muzzleSmokeId))
             {
-                effectFactory.SpawnMuzzleEffect(position, rotation, muzzleFlashId);
+                string flashBoneName = DeriveFlashBoneName(ejectBoneName);
+                Transform flashBone = FindDeepChild(m_Animator.transform, flashBoneName);
+
+                // Fallback auf ejectBone wenn flash-Bone nicht existiert
+                if (flashBone == null)
+                {
+                    flashBone = ejectBone;
+                }
+
+                Vector3 flashPos = flashBone.position;
+                Quaternion flashRot = flashBone.rotation;
+
+                if (!string.IsNullOrEmpty(muzzleFlashId))
+                {
+                    effectFactory.SpawnMuzzleEffect(flashPos, flashRot, muzzleFlashId);
+                }
+
+                if (!string.IsNullOrEmpty(muzzleSmokeId))
+                {
+                    effectFactory.SpawnMuzzleEffect(flashPos, flashRot, muzzleSmokeId);
+                }
             }
 
-            if (!string.IsNullOrEmpty(muzzleSmokeId))
-            {
-                effectFactory.SpawnMuzzleEffect(position, rotation, muzzleSmokeId);
-            }
-
+            // Shell-Casing am ejection_-Bone spawnen (SoF2: Kammer)
             if (!string.IsNullOrEmpty(shellCasingId))
             {
-                effectFactory.SpawnShellCasing(position, rotation, shellCasingId);
+                effectFactory.SpawnShellCasing(ejectBone.position, ejectBone.rotation, shellCasingId);
             }
+        }
+
+        /// <summary>
+        /// Leitet den MuzzleFlash-Bone-Namen vom EjectBone-Namen ab.
+        /// SoF2 Konvention: ejection_m4 → flash_m4, ejection_oicw → flashtop_oicw.
+        /// Fallback fuer generische Bones (gun, etc.): "flash".
+        /// </summary>
+        private static string DeriveFlashBoneName(string ejectBoneName)
+        {
+            if (string.IsNullOrEmpty(ejectBoneName))
+            {
+                return "flash";
+            }
+
+            // OICW Sonderfall: ejection_oicw → flashtop_oicw
+            if (ejectBoneName == "ejection_oicw")
+            {
+                return "flashtop_oicw";
+            }
+
+            // Standard: ejection_X → flash_X
+            if (ejectBoneName.StartsWith("ejection_"))
+            {
+                return "flash_" + ejectBoneName.Substring("ejection_".Length);
+            }
+
+            // Generische Bones (gun, etc.) → flash
+            return "flash";
         }
 
         /// <summary>

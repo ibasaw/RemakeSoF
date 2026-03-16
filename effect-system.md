@@ -536,7 +536,7 @@ Material GetMaterial(string texturePath, bool useAlphaBlend)
 | Shape | Sphere/Cone basierend auf OriginMin/Max |
 | Velocity over Lifetime | VelocityMin/Max → Random Between Two Constants |
 | Color over Lifetime | BuildGradient() aus Color + Alpha Definitionen |
-| Size over Lifetime | StartSize → EndSize Interpolation |
+| Size over Lifetime | StartSize → EndSize Interpolation via BuildSizeCurve(). Unterstuetzt `clamp` (Endwert bei parm% erreicht und gehalten), `nonlinear` (EaseInOut), `linear` (Default) |
 
 ### CameraShake
 
@@ -673,3 +673,115 @@ Der Client spawnt aus diesen 3 Effect-IDs:
   Kein manuelles Cleanup nötig.
 - **CullRange:** Emitter-Chunks haben eine maximale Sichtweite.
   Chunks außerhalb werden nicht gespawnt.
+
+---
+
+## SoF2 Effect Flags — Referenz
+
+Flags stammen 1:1 aus den originalen `.efx`-Dateien und steuern Rendering- und Physik-Verhalten
+der einzelnen Effekt-Segmente. Sie werden als `string[]` im JSON-Feld `flags` gespeichert.
+
+### Vollständige Flag-Liste
+
+| Flag | Vorkommen | Status | Beschreibung |
+|------|-----------|--------|-------------|
+| `useAlpha` | 65× | **Implementiert** | Alpha-Blending statt Additive Blending. Rauch/Staub/Dreck verdecken statt zu leuchten. `EffectFactory.cs` prüft dieses Flag und setzt `SrcAlpha → OneMinusSrcAlpha` statt `SrcAlpha → One`. |
+| `depthHack` | 46× | **Implementiert** | Muzzle-Flash-Partikel werden vor Viewmodel-Geometrie gerendert. `renderQueue = 3100` + `sortingOrder = 10` verhindern Z-Fighting. Nur auf Particle-Segmenten (alle Muzzle-Flashes). |
+| `usePhysics` | 31× | **Implementiert** | Partikel kollidieren mit der Welt (Debris-Bits, Impact-Splitter). `ParticleSystem.CollisionModule` mit World-Collision, Medium Quality, Bounce 0.2-0.5.  |
+| `useModel` | 22× | **Implementiert** | Alle 22 Vorkommen sind Emitter-Segmente — werden bereits via `SpawnEmitterChunks()` als 3D-Modelle per PrefabManager geladen. Flag ist Metadaten-Bestätigung. |
+| `impactKills` | 5× | **Implementiert** | Zerstört das Emitter-Objekt beim ersten Aufprall. `ShellCasingBehaviour.OnCollisionEnter()` nutzt dieses Flag — Patronenhülse verschwindet und spawnt den Impact-FX. |
+| `expensivePhysics` | 4× | **Implementiert** | Höhere Kollisionsgenauigkeit: Particle-Segmente → `CollisionQuality.High`, Emitter-Segmente → `CollisionDetectionMode.Continuous`. |
+| `useBBox` | 4× | **Implementiert** | Particle-Segmente: über `originMin/originMax → Box Shape` im ShapeModule. Emitter-Segmente: Rigidbody-Collider liefern BBox-Kollision implizit. |
+| `impactFx` | 4× | **Implementiert** (indirekt) | Markiert Emitter die beim Aufprall einen referenzierten Sub-Effekt spawnen. Wird über `EffectEmitterDefinition.ImpactFx` als String-Feld verarbeitet, nicht direkt aus dem Flag gelesen. |
+| `emitFx` | 2× | **Implementiert** | Emitter spawnt periodisch Sub-Effekte während des Flugs via `EmitFxBehaviour` MonoBehaviour. Sub-Effekte: `embers_for_emitter` (Incendiary-Glutfunken), `underwater_chunk_trail` (Unterwasser-Blasenspur). |
+
+### Implementierungs-Status Zusammenfassung
+
+- **9 von 9 Flags aktiv implementiert**: Alle SoF2-Effekt-Flags werden verarbeitet
+- Alle Flags bleiben in den JSON-Definitionen erhalten (keine Daten gehen verloren)
+
+---
+
+## .efx → JSON Konvertierungs-Bugfixes (Session 2025)
+
+### Behobene Konvertierungsfehler
+
+Folgende Bugs wurden im Python-Parser (`efx_parser.py`) und den generierten JSON-Dateien gefunden und behoben:
+
+#### 1. Gravity-Werte ~9.81× zu groß + falsches Vorzeichen
+
+**Problem:** Parser rechnete SoF2-Gravity direkt mit `× 0.0254`, aber Unity's `ParticleSystem.gravityModifier`
+multipliziert intern mit `Physics.gravity` (9.81 m/s²).
+
+**Formel-Korrektur:**
+```
+Particle gravity:   -(SoF2_value × 0.0254 / 9.81)
+Emitter gravity:     SoF2_value × 0.0254  (direkt, da Rigidbody ConstantForce)
+```
+
+**Betroffene Dateien:** SoF2_Effects.json (141 Fixes), muzzle_flashes.json (9), muzzle_smoke.json (9)
+
+#### 2. ParticleSystem Endlos-Loop
+
+**Problem:** `EffectFactory.ConfigureParticleSystem()` setzte nie `main.loop = false`.
+Unity-Default ist `loop = true` → One-Shot-Effekte (Explosion, Muzzleflash) liefen endlos.
+
+**Fix:** `main.loop = false` in `ConfigureParticleSystem()` und `ConfigureTailAsParticleSystem()` hinzugefügt.
+
+#### 3. Achsen-Mapping fehlte
+
+**Problem:** SoF2 Koordinatensystem [X=forward, Y=left, Z=up] ≠ Unity [X=right, Y=up, Z=forward].
+Origin/Velocity-Vektoren für World-Space-Effekte waren falsch orientiert.
+
+**Remap-Regel:** `SoF2 [A, B, C] → Unity [B, C, A]` (Y←X, Z←Y, X←Z) für World-Space-Effekte.
+Muzzle-Effekte (Local-Space) brauchen kein Remap.
+
+**Betroffene Dateien:** SoF2_Effects.json (Explosionen), shell_casings.json
+
+#### 4. CameraShake/Decal Struktur falsch
+
+**Problem:** Parser schrieb CameraShake/Decal-Properties flach auf das Segment statt in
+verschachtelte `cameraShake: {}` / `decal: {}` Objekte.
+
+**Betroffene Dateien:** SoF2_Effects.json (4 CameraShake + 3 Decal Segmente)
+
+---
+
+## Tracer-System — Detailreferenz
+
+### tracerTest2 (Standard-Hitscan-Tracer)
+
+| Parameter | SoF2 Original | Unity (konvertiert) |
+|-----------|--------------|-------------------|
+| Velocity | 5000 QU/s | 127.0 m/s |
+| Lifetime | 500 ms | 0.5 s |
+| Length End | 400–450 QU | 10.16–11.43 m (nicht von TrailRenderer genutzt) |
+| Width Start | ~3 QU | 0.08 m |
+| Width End | ~0.5 QU | 0.01 m |
+| Color Start | (255, 217, 51) | (1.0, 0.85, 0.2) gelb-orange |
+| Color End | (255, 128, 26) | (1.0, 0.5, 0.1) rötlich-orange |
+| Alpha | 1.0 → 0.5 | 1.0 → 0.5 |
+| Texture | `gfx/misc/jk_tracer` | Lazy-loaded via TextureManager |
+| Blending | Additive | SrcAlpha → One (kein `useAlpha`-Flag) |
+
+### Timing-Verhalten
+
+Hitscan = **Schaden sofort** (Server-Raycast), Tracer = **visuell verzögert** (127 m/s Flugzeit).
+Das ist identisch zum SoF2-Original.
+
+| Distanz | Tracer-Ankunft |
+|---------|---------------|
+| 25 m | ~0.2 s |
+| 50 m | ~0.4 s |
+| 100 m | ~0.8 s |
+
+### TracerVisual.cs Ablauf
+
+1. `TracerVisual.Create(start, end, effectId)` — statische Factory
+2. Holt `EffectDefinition`, sucht erstes `tail`-Segment
+3. Erstellt GameObject mit `TrailRenderer`, konfiguriert via `EffectFactory.ConfigureTrailRenderer()`
+4. Textur `gfx/misc/jk_tracer` → TextureManager → LazyTextureLoader → `Assets/Art/Textures/gfx/misc/jk_tracer.jpg`
+5. Material: URP Particles/Unlit, Additive Blending, Transparent Surface
+6. `Update()`: Linearer Flug von Start → End mit konstanter Geschwindigkeit
+7. Auto-Destroy bei Ankunft + Trail-Fadeout (kurze Verzögerung für letzte Trail-Segmente)
+8. Fallback-Werte: `FALLBACK_SPEED = 300 m/s`, `MAX_LIFETIME = 3 s`

@@ -8,7 +8,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
     /// Visueller Hitscan-Tracer der von Start nach End fliegt (SoF2 tracerTest2 Tail-Effekt).
     /// Bewegt sich mit der definierten Geschwindigkeit und hinterlaesst einen TrailRenderer.
     /// Wird vom Server-RPC fuer jedes Hitscan-Pellet gespawnt.
-    /// Datengetrieben via EffectDefinition aus SoF2_Effects.json.
+    /// Datengetrieben via EffectDefinition aus den JSON-Dateien im Effects/-Unterordner.
     /// </summary>
     public class TracerVisual : MonoBehaviour
     {
@@ -75,13 +75,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             if (tailSegment != null && factory != null)
             {
                 factory.ConfigureTrailRenderer(trail, tailSegment);
+
+                // trail.time bestimmt sichtbare Trail-Laenge (= time × speed).
+                // SoF2 length.end definiert gewuenschte Trail-Laenge, nicht trail.Lifetime.
+                if (tailSegment.Trail != null)
+                {
+                    float avgLength = (tailSegment.Trail.LengthMin + tailSegment.Trail.LengthMax) * 0.5f;
+                    if (avgLength > 0f && speed > 0f)
+                    {
+                        trail.time = avgLength / speed;
+                    }
+                }
             }
             else
             {
                 // Fallback: SoF2-typischer gelb-oranger Tracer
-                trail.time = lifetime;
-                trail.startWidth = 0.08f;
-                trail.endWidth = 0.01f;
+                trail.time = 0.08f;
+                trail.startWidth = 0.02f;
+                trail.endWidth = 0.005f;
                 trail.material = new Material(Shader.Find("Sprites/Default"));
 
                 Gradient gradient = new();

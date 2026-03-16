@@ -1,160 +1,182 @@
-﻿[
-    {
-        "id": "effects/impact_canvas",
-        "displayName": "Impact Canvas",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/bp_smoke01",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "cheapOrgCalc",
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 0.45,
-                    "lifetimeMax": 0.55,
-                    "rotationMin": -180,
-                    "rotationMax": 180,
-                    "rotationSpeedMin": -40,
-                    "rotationSpeedMax": 40,
-                    "gravityModifier": -0.0194,
-                    "velocityMin": [
-                        0,
-                        0,
-                        0.2032
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        0.3048
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 20,
-                    "curve": "linear nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.5725
-                    ],
-                    "startMax": [
-                        0.3804
-                    ],
-                    "endMin": [
-                        0.4588
-                    ],
-                    "endMax": [
-                        0.4588
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0254,
-                    "startMax": 0.0508,
-                    "endMin": 0.1524,
-                    "endMax": 0.3302,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/wood",
-                "decal": {
-                    "sizeMin": 0.0381,
-                    "sizeMax": 0.0432,
-                    "rotationMin": -180,
-                    "rotationMax": 180,
-                    "lifetime": 30
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_canvas_12g",
-        "displayName": "Impact Canvas 12G",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/gb_softfill",
-                "spawnFlags": [
-                    "cheapOrgCalc"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 0.35,
-                    "lifetimeMax": 0.5,
-                    "delayMin": 0,
-                    "delayMax": 0.2,
-                    "rotationMin": -180,
-                    "rotationMax": 180,
-                    "rotationSpeedMin": -40,
-                    "rotationSpeedMax": 40,
-                    "gravityModifier": -0.0518,
-                    "velocityMin": [
-                        0,
-                        0,
-                        0.254
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        0.381
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.7,
-                    "startMax": 0.75,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 50,
-                    "curve": "linear nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.4392
-                    ],
-                    "startMax": [
-                        0.4392
-                    ],
-                    "endMin": [
-                        0.7098
-                    ],
-                    "endMax": [
-                        0.7098
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0508,
-                    "startMax": 0.0889,
-                    "endMin": 0.1524,
-                    "endMax": 0.2032,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/wood",
-                "decal": {
-                    "sizeMin": 0.0254,
-                    "sizeMax": 0.0305,
-                    "rotationMin": -180,
-                    "rotationMax": 180,
-                    "lifetime": 30
-                }
-            }
-        ]
-    }
+[
+  {
+    "id": "effects/impact_canvas",
+    "displayName": "Impact Canvas",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "cheapOrgCalc",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.45,
+          "lifetimeMax": 0.55,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "rotationSpeedMin": -40,
+          "rotationSpeedMax": 40,
+          "gravityModifier": -0.0194,
+          "velocityMin": [
+            0,
+            0,
+            0.2032
+          ],
+          "velocityMax": [
+            0,
+            0,
+            0.3048
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 20,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.5725
+          ],
+          "startMax": [
+            0.3804
+          ],
+          "endMin": [
+            0.4588
+          ],
+          "endMax": [
+            0.4588
+          ]
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 0.1524,
+          "endMax": 0.3302,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/wood",
+        "decal": {
+          "sizeMin": 0.0381,
+          "sizeMax": 0.0432,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_canvas_12g",
+    "displayName": "Impact Canvas 12G",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/gb_softfill",
+        "spawnFlags": [
+          "cheapOrgCalc"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.35,
+          "lifetimeMax": 0.5,
+          "delayMin": 0,
+          "delayMax": 0.2,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "rotationSpeedMin": -40,
+          "rotationSpeedMax": 40,
+          "gravityModifier": -0.0518,
+          "velocityMin": [
+            0,
+            0,
+            0.254
+          ],
+          "velocityMax": [
+            0,
+            0,
+            0.381
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.7,
+          "startMax": 0.75,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 50,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.4392
+          ],
+          "startMax": [
+            0.4392
+          ],
+          "endMin": [
+            0.7098
+          ],
+          "endMax": [
+            0.7098
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0889,
+          "endMin": 0.1524,
+          "endMax": 0.2032,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/wood",
+        "decal": {
+          "sizeMin": 0.0254,
+          "sizeMax": 0.0305,
+          "rotationMin": -180,
+          "rotationMax": 180,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  }
 ]

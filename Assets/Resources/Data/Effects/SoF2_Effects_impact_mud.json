@@ -1,406 +1,428 @@
-﻿[
-    {
-        "id": "effects/impact_mud",
-        "displayName": "Impact Mud",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/bp_blob",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "absoluteAccel",
-                    "orgOnSphere",
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 3,
-                    "lifetimeMin": 0.4,
-                    "lifetimeMax": 0.55,
-                    "gravityModifier": 1.1651,
-                    "velocityMin": [
-                        -1.524,
-                        -1.524,
-                        2.54
-                    ],
-                    "velocityMax": [
-                        1.524,
-                        1.524,
-                        3.048
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.5,
-                    "startMax": 0.65,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 80,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.5373
-                    ],
-                    "startMax": [
-                        0.3922
-                    ],
-                    "endMin": [
-                        0.5373
-                    ],
-                    "endMax": [
-                        0.3922
-                    ]
-                },
-                "size": {
-                    "startMin": 0.03048,
-                    "startMax": 0.04572,
-                    "endMin": 0,
-                    "endMax": 0
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/bp_blob",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 0.7,
-                    "lifetimeMax": 0.7,
-                    "gravityModifier": 1.4241,
-                    "originMin": [
-                        0,
-                        0,
-                        0.254
-                    ],
-                    "originMax": [
-                        0,
-                        0,
-                        0.381
-                    ],
-                    "velocityMin": [
-                        -0.2032,
-                        -0.2032,
-                        4.572
-                    ],
-                    "velocityMax": [
-                        0.2032,
-                        0.2032,
-                        4.572
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.5,
-                    "startMax": 0.5,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 90,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.5373
-                    ],
-                    "startMax": [
-                        0.4078
-                    ],
-                    "endMin": [
-                        0.5373
-                    ],
-                    "endMax": [
-                        0.4078
-                    ]
-                },
-                "size": {
-                    "startMin": 0.04064,
-                    "startMax": 0.0635,
-                    "endMin": 0.0127,
-                    "endMax": 0.0254
-                }
-            },
-            {
-                "type": "line",
-                "texture": "gfx/misc/bp_blob",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 3,
-                    "countMax": 3,
-                    "lifetimeMin": 0.1,
-                    "lifetimeMax": 0.125,
-                    "originMin": [
-                        -0.0762,
-                        -0.0762,
-                        -0.1016
-                    ],
-                    "originMax": [
-                        0.0762,
-                        0.0762,
-                        -0.1016
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.4,
-                    "startMax": 0.6,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 80
-                },
-                "color": {
-                    "startMin": [
-                        0.4157
-                    ],
-                    "startMax": [
-                        0.3529
-                    ]
-                },
-                "size": {
-                    "startMin": 0.03556,
-                    "startMax": 0.04064
-                }
-            },
-            {
-                "type": "tail",
-                "texture": "gfx/misc/bp_blob",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "trail": {
-                    "lifetime": 0.2375,
-                    "endWidth": 0.1016,
-                    "lengthMin": 0.4572,
-                    "lengthMax": 0.508,
-                    "speed": 0.508
-                },
-                "alpha": {
-                    "startMin": 0.5,
-                    "startMax": 0.5
-                },
-                "color": {
-                    "startMin": [
-                        0.4392
-                    ],
-                    "startMax": [
-                        0.4784
-                    ]
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_mud_12g",
-        "displayName": "Impact Mud 12G",
-        "segments": [
-            {
-                "type": "particle",
-                "texture": "gfx/misc/bp_blob",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "absoluteAccel",
-                    "orgOnSphere",
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 2,
-                    "lifetimeMin": 0.4,
-                    "lifetimeMax": 0.55,
-                    "gravityModifier": 1.2299,
-                    "velocityMin": [
-                        -1.905,
-                        -1.905,
-                        2.032
-                    ],
-                    "velocityMax": [
-                        1.905,
-                        1.905,
-                        3.048
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0.6,
-                    "endMax": 0.8,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.5373
-                    ],
-                    "startMax": [
-                        0.3922
-                    ],
-                    "endMin": [
-                        0.5373
-                    ],
-                    "endMax": [
-                        0.3922
-                    ]
-                },
-                "size": {
-                    "startMin": 0.03048,
-                    "startMax": 0.04572,
-                    "endMin": 0.00508,
-                    "endMax": 0.01016
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/bp_blob",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 0.6,
-                    "lifetimeMax": 0.6,
-                    "gravityModifier": 1.1651,
-                    "velocityMin": [
-                        -0.2032,
-                        -0.2032,
-                        3.81
-                    ],
-                    "velocityMax": [
-                        0.2032,
-                        0.2032,
-                        4.445
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.8,
-                    "startMax": 1,
-                    "endMin": 0.6,
-                    "endMax": 0.8
-                },
-                "color": {
-                    "startMin": [
-                        0.5373
-                    ],
-                    "startMax": [
-                        0.4078
-                    ],
-                    "endMin": [
-                        0.5373
-                    ],
-                    "endMax": [
-                        0.4078
-                    ]
-                },
-                "size": {
-                    "startMin": 0.04064,
-                    "startMax": 0.06096,
-                    "endMin": 0.0127,
-                    "endMax": 0.0254
-                }
-            },
-            {
-                "type": "line",
-                "texture": "gfx/misc/bp_blob",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 2,
-                    "lifetimeMin": 0.1,
-                    "lifetimeMax": 0.125,
-                    "originMin": [
-                        -0.0762,
-                        -0.0762,
-                        -0.1016
-                    ],
-                    "originMax": [
-                        0.0762,
-                        0.0762,
-                        -0.1016
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.8,
-                    "startMax": 1,
-                    "endMin": 0.3,
-                    "endMax": 0.5
-                },
-                "color": {
-                    "startMin": [
-                        0.4157
-                    ],
-                    "startMax": [
-                        0.3529
-                    ]
-                },
-                "size": {
-                    "startMin": 0.03556,
-                    "startMax": 0.04064
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/dirt",
-                "decal": {
-                    "sizeMin": 0.0508,
-                    "sizeMax": 0.0762,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "lifetime": 30
-                }
-            },
-            {
-                "type": "tail",
-                "texture": "gfx/misc/bp_blob",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "trail": {
-                    "lifetime": 0.2375,
-                    "endWidth": 0.1016,
-                    "lengthMin": 0.4572,
-                    "lengthMax": 0.508,
-                    "speed": 0.508
-                },
-                "color": {
-                    "startMin": [
-                        0.4392
-                    ],
-                    "startMax": [
-                        0.4784
-                    ]
-                }
-            }
-        ]
-    }
+[
+  {
+    "id": "effects/impact_mud",
+    "displayName": "Impact Mud",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_blob",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "absoluteAccel",
+          "orgOnSphere",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.55,
+          "gravityModifier": 1.1651,
+          "velocityMin": [
+            -1.524,
+            -1.524,
+            2.54
+          ],
+          "velocityMax": [
+            1.524,
+            1.524,
+            3.048
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.65,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 80,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.5373
+          ],
+          "startMax": [
+            0.3922
+          ],
+          "endMin": [
+            0.5373
+          ],
+          "endMax": [
+            0.3922
+          ]
+        },
+        "size": {
+          "startMin": 0.03048,
+          "startMax": 0.04572,
+          "endMin": 0,
+          "endMax": 0
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_blob",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.7,
+          "lifetimeMax": 0.7,
+          "gravityModifier": 1.4241,
+          "originMin": [
+            0,
+            0,
+            0.254
+          ],
+          "originMax": [
+            0,
+            0,
+            0.381
+          ],
+          "velocityMin": [
+            -0.2032,
+            -0.2032,
+            4.572
+          ],
+          "velocityMax": [
+            0.2032,
+            0.2032,
+            4.572
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 90,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.5373
+          ],
+          "startMax": [
+            0.4078
+          ],
+          "endMin": [
+            0.5373
+          ],
+          "endMax": [
+            0.4078
+          ]
+        },
+        "size": {
+          "startMin": 0.04064,
+          "startMax": 0.0635,
+          "endMin": 0.0127,
+          "endMax": 0.0254
+        }
+      },
+      {
+        "type": "line",
+        "texture": "gfx/misc/bp_blob",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 3,
+          "countMax": 3,
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.125,
+          "originMin": [
+            -0.0762,
+            -0.0762,
+            -0.1016
+          ],
+          "originMax": [
+            0.0762,
+            0.0762,
+            -0.1016
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.6,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 80
+        },
+        "color": {
+          "startMin": [
+            0.4157
+          ],
+          "startMax": [
+            0.3529
+          ]
+        },
+        "size": {
+          "startMin": 0.03556,
+          "startMax": 0.04064
+        }
+      },
+      {
+        "type": "tail",
+        "texture": "gfx/misc/bp_blob",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "trail": {
+          "lifetime": 0.2375,
+          "endWidth": 0.1016,
+          "lengthMin": 0.4572,
+          "lengthMax": 0.508,
+          "speed": 0.508
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5
+        },
+        "color": {
+          "startMin": [
+            0.4392
+          ],
+          "startMax": [
+            0.4784
+          ]
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/ice/ice0.wav",
+            "sound/player/bullet_impacts/ice/ice1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_mud_12g",
+    "displayName": "Impact Mud 12G",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_blob",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "absoluteAccel",
+          "orgOnSphere",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.55,
+          "gravityModifier": 1.2299,
+          "velocityMin": [
+            -1.905,
+            -1.905,
+            2.032
+          ],
+          "velocityMax": [
+            1.905,
+            1.905,
+            3.048
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0.6,
+          "endMax": 0.8,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.5373
+          ],
+          "startMax": [
+            0.3922
+          ],
+          "endMin": [
+            0.5373
+          ],
+          "endMax": [
+            0.3922
+          ]
+        },
+        "size": {
+          "startMin": 0.03048,
+          "startMax": 0.04572,
+          "endMin": 0.00508,
+          "endMax": 0.01016
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_blob",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 0.6,
+          "gravityModifier": 1.1651,
+          "velocityMin": [
+            -0.2032,
+            -0.2032,
+            3.81
+          ],
+          "velocityMax": [
+            0.2032,
+            0.2032,
+            4.445
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 1,
+          "endMin": 0.6,
+          "endMax": 0.8
+        },
+        "color": {
+          "startMin": [
+            0.5373
+          ],
+          "startMax": [
+            0.4078
+          ],
+          "endMin": [
+            0.5373
+          ],
+          "endMax": [
+            0.4078
+          ]
+        },
+        "size": {
+          "startMin": 0.04064,
+          "startMax": 0.06096,
+          "endMin": 0.0127,
+          "endMax": 0.0254
+        }
+      },
+      {
+        "type": "line",
+        "texture": "gfx/misc/bp_blob",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.125,
+          "originMin": [
+            -0.0762,
+            -0.0762,
+            -0.1016
+          ],
+          "originMax": [
+            0.0762,
+            0.0762,
+            -0.1016
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 1,
+          "endMin": 0.3,
+          "endMax": 0.5
+        },
+        "color": {
+          "startMin": [
+            0.4157
+          ],
+          "startMax": [
+            0.3529
+          ]
+        },
+        "size": {
+          "startMin": 0.03556,
+          "startMax": 0.04064
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/dirt",
+        "decal": {
+          "sizeMin": 0.0508,
+          "sizeMax": 0.0762,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "tail",
+        "texture": "gfx/misc/bp_blob",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "trail": {
+          "lifetime": 0.2375,
+          "endWidth": 0.1016,
+          "lengthMin": 0.4572,
+          "lengthMax": 0.508,
+          "speed": 0.508
+        },
+        "color": {
+          "startMin": [
+            0.4392
+          ],
+          "startMax": [
+            0.4784
+          ]
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/ice/ice0.wav",
+            "sound/player/bullet_impacts/ice/ice1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  }
 ]

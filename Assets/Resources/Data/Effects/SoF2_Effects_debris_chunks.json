@@ -59,8 +59,8 @@
         "size": {
           "startMin": 0.254,
           "startMax": 0.381,
-          "endMin": 1.016,
-          "endMax": 1.27,
+          "endMin": 0.6096,
+          "endMax": 0.762,
           "curve": "linear"
         }
       },
@@ -94,7 +94,7 @@
             0,
             3.81
           ],
-          "gravityModifier": -1.4,
+          "gravityModifier": 1.4,
           "burst": true
         },
         "alpha": {
@@ -148,7 +148,7 @@
           "rotationMax": 180,
           "rotationSpeedMin": -40,
           "rotationSpeedMax": 40,
-          "gravityModifier": -1.27,
+          "gravityModifier": 1.27,
           "burst": true
         },
         "alpha": {
@@ -181,8 +181,8 @@
         "size": {
           "startMin": 0.0254,
           "startMax": 0.0508,
-          "endMin": 0.4064,
-          "endMax": 0.508,
+          "endMin": 0.2438,
+          "endMax": 0.3048,
           "curve": "linear"
         }
       },
@@ -291,8 +291,8 @@
         "size": {
           "startMin": 0.254,
           "startMax": 0.381,
-          "endMin": 1.016,
-          "endMax": 1.27,
+          "endMin": 0.6096,
+          "endMax": 0.762,
           "curve": "linear"
         }
       },
@@ -326,7 +326,7 @@
             0,
             3.81
           ],
-          "gravityModifier": -1.4,
+          "gravityModifier": 1.4,
           "burst": true
         },
         "alpha": {
@@ -466,8 +466,8 @@
         "size": {
           "startMin": 0.0254,
           "startMax": 0.0508,
-          "endMin": 0.4064,
-          "endMax": 0.508,
+          "endMin": 0.2438,
+          "endMax": 0.3048,
           "curve": "linear"
         }
       },
@@ -518,8 +518,8 @@
         "size": {
           "startMin": 0.0508,
           "startMax": 0.1524,
-          "endMin": 1.016,
-          "endMax": 1.397,
+          "endMin": 0.6096,
+          "endMax": 0.8382,
           "curve": "linear"
         }
       },
@@ -630,8 +630,8 @@
         "size": {
           "startMin": 0.127,
           "startMax": 0.254,
-          "endMin": 0.762,
-          "endMax": 1.016,
+          "endMin": 0.4572,
+          "endMax": 0.6096,
           "curve": "linear"
         }
       },
@@ -740,8 +740,8 @@
         "size": {
           "startMin": 0.2032,
           "startMax": 0.254,
-          "endMin": 1.778,
-          "endMax": 2.032,
+          "endMin": 1.0668,
+          "endMax": 1.2192,
           "curve": "linear"
         }
       },
@@ -774,7 +774,7 @@
             0,
             6.35
           ],
-          "gravityModifier": -1.143,
+          "gravityModifier": 1.143,
           "burst": true
         },
         "alpha": {
@@ -852,6 +852,17 @@
           "countMin": 7,
           "countMax": 10
         }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/explosions/metal_scrape.mp3",
+            "sound/weapons/explosions/metal_scrape2.mp3"
+          ],
+          "delay": 0.0
+        }
       }
     ]
   },
@@ -910,8 +921,8 @@
         "size": {
           "startMin": 0.1016,
           "startMax": 0.127,
-          "endMin": 0.762,
-          "endMax": 1.016,
+          "endMin": 0.4572,
+          "endMax": 0.6096,
           "curve": "linear"
         }
       },
@@ -1035,7 +1046,7 @@
             1.143,
             1.143
           ],
-          "gravityModifier": -1.905,
+          "gravityModifier": 1.905,
           "burst": true
         },
         "alpha": {
@@ -1076,8 +1087,8 @@
         "size": {
           "startMin": 0.0508,
           "startMax": 0.1016,
-          "endMin": 0.762,
-          "endMax": 1.016,
+          "endMin": 0.4572,
+          "endMax": 0.6096,
           "curve": "nonlinear"
         }
       },
@@ -1151,7 +1162,7 @@
             2.54,
             6.35
           ],
-          "gravityModifier": -1.905,
+          "gravityModifier": 1.905,
           "burst": true
         },
         "alpha": {
@@ -1192,8 +1203,8 @@
         "size": {
           "startMin": 0.1524,
           "startMax": 0.2032,
-          "endMin": 0.7112,
-          "endMax": 0.8382,
+          "endMin": 0.4267,
+          "endMax": 0.5029,
           "curve": "nonlinear"
         }
       }
@@ -1235,8 +1246,8 @@
         "size": {
           "startMin": 0.254,
           "startMax": 0.508,
-          "endMin": 1.27,
-          "endMax": 1.524,
+          "endMin": 0.762,
+          "endMax": 0.9144,
           "curve": "linear"
         }
       },
@@ -1294,7 +1305,7 @@
             1.905,
             1.905
           ],
-          "gravityModifier": -2.159,
+          "gravityModifier": 2.159,
           "burst": true
         },
         "alpha": {
@@ -1349,6 +1360,27 @@
           "cullRange": 15.24,
           "countMin": 6,
           "countMax": 8
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/misc/confused/small_impact.wav"
+          ],
+          "delay": 0.0
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/ambience/generic/sparks0.wav",
+            "sound/ambience/generic/sparks3.wav"
+          ],
+          "delay": 0.5
         }
       }
     ]
@@ -1440,7 +1472,7 @@
             0,
             2.032
           ],
-          "gravityModifier": -1.905,
+          "gravityModifier": 1.905,
           "burst": true
         },
         "alpha": {
@@ -1468,6 +1500,16 @@
           "endMin": 0.254,
           "endMax": 0.508,
           "curve": "linear"
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/ambience/generic/water_spray.wav"
+          ],
+          "delay": 0.0
         }
       }
     ]

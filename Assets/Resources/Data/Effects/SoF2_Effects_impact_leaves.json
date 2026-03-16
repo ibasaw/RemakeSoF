@@ -1,610 +1,654 @@
-﻿[
-    {
-        "id": "effects/impact_leaves-dry",
-        "displayName": "Impact Leaves Dry",
-        "segments": [
-            {
-                "name": "leafBits",
-                "type": "particle",
-                "texture": "gfx/misc/bp_shape",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 3,
-                    "countMax": 5,
-                    "lifetimeMin": 1.6,
-                    "lifetimeMax": 1.6,
-                    "rotationMin": 10,
-                    "rotationMax": 200,
-                    "rotationSpeedMin": 200,
-                    "rotationSpeedMax": 1000,
-                    "gravityModifier": 0.356,
-                    "velocityMin": [
-                        -0.3556,
-                        -0.3556,
-                        1.524
-                    ],
-                    "velocityMax": [
-                        0.3556,
-                        0.3556,
-                        1.778
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0.7,
-                    "endMax": 0.8,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.4706
-                    ],
-                    "startMax": [
-                        0.4196
-                    ]
-                },
-                "size": {
-                    "startMin": 0.00127,
-                    "startMax": 0.00762,
-                    "endMin": 0.0381,
-                    "endMax": 0.0762,
-                    "curve": "nonlinear"
-                }
-            },
-            {
-                "name": "Snowcloud",
-                "type": "particle",
-                "texture": "gfx/misc/gb_dotfill",
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 0.25,
-                    "lifetimeMax": 0.4,
-                    "rotationMin": -20,
-                    "rotationMax": 20,
-                    "rotationSpeedMin": -200,
-                    "rotationSpeedMax": 2000,
-                    "gravityModifier": 0.0259,
-                    "velocityMin": [
-                        0,
-                        0,
-                        0.6604
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        0.7366
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.8,
-                    "startMax": 0.8,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.4196
-                    ],
-                    "startMax": [
-                        0.4196
-                    ],
-                    "endMin": [
-                        0.4196
-                    ],
-                    "endMax": [
-                        0.4196
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0508,
-                    "startMax": 0.0508,
-                    "endMin": 0.3048,
-                    "endMax": 0.381,
-                    "curve": "linear"
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 3,
-                    "countMax": 5,
-                    "lifetimeMin": 0.5,
-                    "lifetimeMax": 0.6,
-                    "gravityModifier": 1.1651,
-                    "velocityMin": [
-                        -0.508,
-                        -0.508,
-                        2.032
-                    ],
-                    "velocityMax": [
-                        0.508,
-                        0.508,
-                        3.81
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.8,
-                    "startMax": 0.9,
-                    "endMin": 0.2,
-                    "endMax": 0.3
-                },
-                "color": {
-                    "startMin": [
-                        0.3922
-                    ],
-                    "startMax": [
-                        0.3922
-                    ],
-                    "endMin": [
-                        0.6824
-                    ],
-                    "endMax": [
-                        0.6824
-                    ]
-                },
-                "size": {
-                    "endMin": 0.254,
-                    "endMax": 0.3302,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/dirt",
-                "decal": {
-                    "sizeMin": 0.0762,
-                    "sizeMax": 0.1016,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "lifetime": 30
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_leaves-dry_12g",
-        "displayName": "Impact Leaves Dry 12G",
-        "segments": [
-            {
-                "name": "leafBits",
-                "type": "particle",
-                "texture": "gfx/misc/bp_shape",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 3,
-                    "lifetimeMin": 1.2,
-                    "lifetimeMax": 1.3,
-                    "rotationMin": 10,
-                    "rotationMax": 200,
-                    "rotationSpeedMin": 200,
-                    "rotationSpeedMax": 1000,
-                    "gravityModifier": 0.356,
-                    "velocityMin": [
-                        -0.508,
-                        -0.508,
-                        1.27
-                    ],
-                    "velocityMax": [
-                        0.508,
-                        0.508,
-                        1.524
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0.7,
-                    "endMax": 0.8,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.4706
-                    ],
-                    "startMax": [
-                        0.4196
-                    ]
-                },
-                "size": {
-                    "startMin": 0.00127,
-                    "startMax": 0.00762,
-                    "endMin": 0.0381,
-                    "endMax": 0.0762,
-                    "curve": "nonlinear"
-                }
-            },
-            {
-                "name": "Snowcloud",
-                "type": "particle",
-                "texture": "gfx/misc/gb_dotfill",
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 0.25,
-                    "lifetimeMax": 0.3,
-                    "rotationMin": -20,
-                    "rotationMax": 20,
-                    "rotationSpeedMin": -200,
-                    "rotationSpeedMax": 2000,
-                    "gravityModifier": 0.0259,
-                    "velocityMin": [
-                        0,
-                        0,
-                        0.6604
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        0.7366
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.8,
-                    "startMax": 0.8,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.4196
-                    ],
-                    "startMax": [
-                        0.4196
-                    ],
-                    "endMin": [
-                        0.4196
-                    ],
-                    "endMax": [
-                        0.4196
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0508,
-                    "startMax": 0.0508,
-                    "endMin": 0.254,
-                    "endMax": 0.3048,
-                    "curve": "linear"
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 2,
-                    "lifetimeMin": 0.4,
-                    "lifetimeMax": 0.5,
-                    "gravityModifier": 1.1651,
-                    "velocityMin": [
-                        -0.508,
-                        -0.508,
-                        2.032
-                    ],
-                    "velocityMax": [
-                        0.508,
-                        0.508,
-                        3.81
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.8,
-                    "startMax": 0.9,
-                    "endMin": 0.2,
-                    "endMax": 0.3
-                },
-                "color": {
-                    "startMin": [
-                        0.3922
-                    ],
-                    "startMax": [
-                        0.3922
-                    ],
-                    "endMin": [
-                        0.6824
-                    ],
-                    "endMax": [
-                        0.6824
-                    ]
-                },
-                "size": {
-                    "endMin": 0.2032,
-                    "endMax": 0.254,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/dirt",
-                "decal": {
-                    "sizeMin": 0.0508,
-                    "sizeMax": 0.0762,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "lifetime": 30
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_leaves-green",
-        "displayName": "Impact Leaves Green",
-        "segments": [
-            {
-                "name": "Leaves",
-                "type": "particle",
-                "texture": "gfx/misc/bp_shape",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 3,
-                    "countMax": 4,
-                    "lifetimeMin": 1.6,
-                    "lifetimeMax": 1.6,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": 400,
-                    "rotationSpeedMax": 1200,
-                    "gravityModifier": 0.1036,
-                    "originMin": [
-                        -0.254,
-                        -0.254,
-                        0
-                    ],
-                    "originMax": [
-                        0.254,
-                        0.254,
-                        0.127
-                    ],
-                    "velocityMin": [
-                        -0.127,
-                        -0.127,
-                        0.127
-                    ],
-                    "velocityMax": [
-                        0.127,
-                        0.127,
-                        0.254
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 60,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.4118
-                    ],
-                    "startMax": [
-                        0.2627
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0381,
-                    "startMax": 0.0762,
-                    "endMin": 0.0381,
-                    "endMax": 0.0762
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 2,
-                    "lifetimeMin": 1.2,
-                    "lifetimeMax": 1.5,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -160,
-                    "rotationSpeedMax": 160,
-                    "gravityModifier": 0.0647,
-                    "velocityMin": [
-                        -0.381,
-                        -0.381,
-                        0.254
-                    ],
-                    "velocityMax": [
-                        0.381,
-                        0.381,
-                        0.508
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 50,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.5373
-                    ],
-                    "startMax": [
-                        0.4157
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0508,
-                    "startMax": 0.0508,
-                    "endMin": 0.3048,
-                    "endMax": 0.381,
-                    "curve": "linear"
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_leaves-green_12g",
-        "displayName": "Impact Leaves Green 12G",
-        "segments": [
-            {
-                "name": "Leaves",
-                "type": "particle",
-                "texture": "gfx/misc/bp_shape",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 3,
-                    "lifetimeMin": 1.6,
-                    "lifetimeMax": 1.8,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": 400,
-                    "rotationSpeedMax": 1200,
-                    "gravityModifier": 0.1036,
-                    "originMin": [
-                        -0.254,
-                        -0.254,
-                        0
-                    ],
-                    "originMax": [
-                        0.254,
-                        0.254,
-                        0.127
-                    ],
-                    "velocityMin": [
-                        -0.127,
-                        -0.127,
-                        0.127
-                    ],
-                    "velocityMax": [
-                        0.127,
-                        0.127,
-                        0.254
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 60,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.4118
-                    ],
-                    "startMax": [
-                        0.2627
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0381,
-                    "startMax": 0.0762,
-                    "endMin": 0.0381,
-                    "endMax": 0.0762
-                }
-            },
-            {
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 2,
-                    "lifetimeMin": 1.2,
-                    "lifetimeMax": 1.5,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -160,
-                    "rotationSpeedMax": 160,
-                    "gravityModifier": 0.0647,
-                    "velocityMin": [
-                        -0.381,
-                        -0.381,
-                        0.254
-                    ],
-                    "velocityMax": [
-                        0.381,
-                        0.381,
-                        0.508
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 50,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.5373
-                    ],
-                    "startMax": [
-                        0.4157
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0508,
-                    "startMax": 0.0508,
-                    "endMin": 0.3048,
-                    "endMax": 0.381,
-                    "curve": "linear"
-                }
-            }
-        ]
-    }
+[
+  {
+    "id": "effects/impact_leaves-dry",
+    "displayName": "Impact Leaves Dry",
+    "segments": [
+      {
+        "name": "leafBits",
+        "type": "particle",
+        "texture": "gfx/misc/bp_shape",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 3,
+          "countMax": 5,
+          "lifetimeMin": 1.6,
+          "lifetimeMax": 1.6,
+          "rotationMin": 10,
+          "rotationMax": 200,
+          "rotationSpeedMin": 200,
+          "rotationSpeedMax": 1000,
+          "gravityModifier": 0.356,
+          "velocityMin": [
+            -0.3556,
+            -0.3556,
+            1.524
+          ],
+          "velocityMax": [
+            0.3556,
+            0.3556,
+            1.778
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0.7,
+          "endMax": 0.8,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.4706
+          ],
+          "startMax": [
+            0.4196
+          ]
+        },
+        "size": {
+          "startMin": 0.00127,
+          "startMax": 0.00762,
+          "endMin": 0.0381,
+          "endMax": 0.0762,
+          "curve": "nonlinear"
+        }
+      },
+      {
+        "name": "Snowcloud",
+        "type": "particle",
+        "texture": "gfx/misc/gb_dotfill",
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.25,
+          "lifetimeMax": 0.4,
+          "rotationMin": -20,
+          "rotationMax": 20,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 2000,
+          "gravityModifier": 0.0259,
+          "velocityMin": [
+            0,
+            0,
+            0.6604
+          ],
+          "velocityMax": [
+            0,
+            0,
+            0.7366
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 0.8,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.4196
+          ],
+          "startMax": [
+            0.4196
+          ],
+          "endMin": [
+            0.4196
+          ],
+          "endMax": [
+            0.4196
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0508,
+          "endMin": 0.3048,
+          "endMax": 0.381,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 3,
+          "countMax": 5,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "gravityModifier": 1.1651,
+          "velocityMin": [
+            -0.508,
+            -0.508,
+            2.032
+          ],
+          "velocityMax": [
+            0.508,
+            0.508,
+            3.81
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 0.9,
+          "endMin": 0.2,
+          "endMax": 0.3
+        },
+        "color": {
+          "startMin": [
+            0.3922
+          ],
+          "startMax": [
+            0.3922
+          ],
+          "endMin": [
+            0.6824
+          ],
+          "endMax": [
+            0.6824
+          ]
+        },
+        "size": {
+          "endMin": 0.254,
+          "endMax": 0.3302,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/dirt",
+        "decal": {
+          "sizeMin": 0.0762,
+          "sizeMax": 0.1016,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_leaves-dry_12g",
+    "displayName": "Impact Leaves Dry 12G",
+    "segments": [
+      {
+        "name": "leafBits",
+        "type": "particle",
+        "texture": "gfx/misc/bp_shape",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 1.2,
+          "lifetimeMax": 1.3,
+          "rotationMin": 10,
+          "rotationMax": 200,
+          "rotationSpeedMin": 200,
+          "rotationSpeedMax": 1000,
+          "gravityModifier": 0.356,
+          "velocityMin": [
+            -0.508,
+            -0.508,
+            1.27
+          ],
+          "velocityMax": [
+            0.508,
+            0.508,
+            1.524
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0.7,
+          "endMax": 0.8,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.4706
+          ],
+          "startMax": [
+            0.4196
+          ]
+        },
+        "size": {
+          "startMin": 0.00127,
+          "startMax": 0.00762,
+          "endMin": 0.0381,
+          "endMax": 0.0762,
+          "curve": "nonlinear"
+        }
+      },
+      {
+        "name": "Snowcloud",
+        "type": "particle",
+        "texture": "gfx/misc/gb_dotfill",
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.25,
+          "lifetimeMax": 0.3,
+          "rotationMin": -20,
+          "rotationMax": 20,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 2000,
+          "gravityModifier": 0.0259,
+          "velocityMin": [
+            0,
+            0,
+            0.6604
+          ],
+          "velocityMax": [
+            0,
+            0,
+            0.7366
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 0.8,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.4196
+          ],
+          "startMax": [
+            0.4196
+          ],
+          "endMin": [
+            0.4196
+          ],
+          "endMax": [
+            0.4196
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0508,
+          "endMin": 0.254,
+          "endMax": 0.3048,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.5,
+          "gravityModifier": 1.1651,
+          "velocityMin": [
+            -0.508,
+            -0.508,
+            2.032
+          ],
+          "velocityMax": [
+            0.508,
+            0.508,
+            3.81
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 0.9,
+          "endMin": 0.2,
+          "endMax": 0.3
+        },
+        "color": {
+          "startMin": [
+            0.3922
+          ],
+          "startMax": [
+            0.3922
+          ],
+          "endMin": [
+            0.6824
+          ],
+          "endMax": [
+            0.6824
+          ]
+        },
+        "size": {
+          "endMin": 0.2032,
+          "endMax": 0.254,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/dirt",
+        "decal": {
+          "sizeMin": 0.0508,
+          "sizeMax": 0.0762,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_leaves-green",
+    "displayName": "Impact Leaves Green",
+    "segments": [
+      {
+        "name": "Leaves",
+        "type": "particle",
+        "texture": "gfx/misc/bp_shape",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 3,
+          "countMax": 4,
+          "lifetimeMin": 1.6,
+          "lifetimeMax": 1.6,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": 400,
+          "rotationSpeedMax": 1200,
+          "gravityModifier": 0.1036,
+          "originMin": [
+            -0.254,
+            -0.254,
+            0
+          ],
+          "originMax": [
+            0.254,
+            0.254,
+            0.127
+          ],
+          "velocityMin": [
+            -0.127,
+            -0.127,
+            0.127
+          ],
+          "velocityMax": [
+            0.127,
+            0.127,
+            0.254
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 60,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.4118
+          ],
+          "startMax": [
+            0.2627
+          ]
+        },
+        "size": {
+          "startMin": 0.0381,
+          "startMax": 0.0762,
+          "endMin": 0.0381,
+          "endMax": 0.0762
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 1.2,
+          "lifetimeMax": 1.5,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -160,
+          "rotationSpeedMax": 160,
+          "gravityModifier": 0.0647,
+          "velocityMin": [
+            -0.381,
+            -0.381,
+            0.254
+          ],
+          "velocityMax": [
+            0.381,
+            0.381,
+            0.508
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 50,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.5373
+          ],
+          "startMax": [
+            0.4157
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0508,
+          "endMin": 0.3048,
+          "endMax": 0.381,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_leaves-green_12g",
+    "displayName": "Impact Leaves Green 12G",
+    "segments": [
+      {
+        "name": "Leaves",
+        "type": "particle",
+        "texture": "gfx/misc/bp_shape",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 1.6,
+          "lifetimeMax": 1.8,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": 400,
+          "rotationSpeedMax": 1200,
+          "gravityModifier": 0.1036,
+          "originMin": [
+            -0.254,
+            -0.254,
+            0
+          ],
+          "originMax": [
+            0.254,
+            0.254,
+            0.127
+          ],
+          "velocityMin": [
+            -0.127,
+            -0.127,
+            0.127
+          ],
+          "velocityMax": [
+            0.127,
+            0.127,
+            0.254
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 60,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.4118
+          ],
+          "startMax": [
+            0.2627
+          ]
+        },
+        "size": {
+          "startMin": 0.0381,
+          "startMax": 0.0762,
+          "endMin": 0.0381,
+          "endMax": 0.0762
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 1.2,
+          "lifetimeMax": 1.5,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -160,
+          "rotationSpeedMax": 160,
+          "gravityModifier": 0.0647,
+          "velocityMin": [
+            -0.381,
+            -0.381,
+            0.254
+          ],
+          "velocityMax": [
+            0.381,
+            0.381,
+            0.508
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 50,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.5373
+          ],
+          "startMax": [
+            0.4157
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0508,
+          "endMin": 0.3048,
+          "endMax": 0.381,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  }
 ]

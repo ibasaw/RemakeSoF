@@ -4,6 +4,7 @@ using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.EffectManagement;
 using Tolik.RemakeSoF.Runtime.Game.Camera;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
+using Tolik.RemakeSoF.Runtime.SoundManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
 
@@ -76,8 +77,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             if (def != null)
             {
                 trail.time = def.Lifetime;
-                trail.startWidth = def.StartWidth;
-                trail.endWidth = def.EndWidth;
+
+                // Breite: Segment-Size-Block bevorzugen (korrekte SoF2-Width).
+                // trail.StartWidth speichert oft length.start (initiale Trail-LAENGE, nicht Breite).
+                EffectSizeDefinition size = segment.Size;
+                if (size != null && size.StartMax > 0f)
+                {
+                    trail.startWidth = (size.StartMin + size.StartMax) * 0.5f;
+                    trail.endWidth = size.EndMax > 0f
+                        ? (size.EndMin + size.EndMax) * 0.5f
+                        : trail.startWidth * 0.1f;
+                }
+                else
+                {
+                    trail.startWidth = def.StartWidth;
+                    trail.endWidth = def.EndWidth;
+                }
             }
 
             // Farbverlauf aus Segment-Daten
@@ -146,18 +161,35 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             EffectSizeDefinition size = segment.Size;
             if (size != null)
             {
-                main.startSize = new ParticleSystem.MinMaxCurve(size.StartMin, size.StartMax);
-
-                // Size over Lifetime
-                ParticleSystem.SizeOverLifetimeModule sol = ps.sizeOverLifetime;
-                sol.enabled = true;
-
                 float avgStart = (size.StartMin + size.StartMax) * 0.5f;
                 float avgEnd = (size.EndMin + size.EndMax) * 0.5f;
-                float endRatio = avgStart > 0f ? avgEnd / avgStart : 1f;
 
-                AnimationCurve sizeCurve = AnimationCurve.Linear(0f, 1f, 1f, endRatio);
-                sol.size = new ParticleSystem.MinMaxCurve(1f, sizeCurve);
+                // SoF2: When startSize == 0 but endSize > 0, the particle grows from 0 to endSize.
+                // Unity startSize=0 would make the particle invisible, so use endSize as startSize
+                // and drive Size over Lifetime from 0 → 1.
+                if (avgStart <= 0f && avgEnd > 0f)
+                {
+                    main.startSize = new ParticleSystem.MinMaxCurve(size.EndMin, size.EndMax);
+
+                    ParticleSystem.SizeOverLifetimeModule sol = ps.sizeOverLifetime;
+                    sol.enabled = true;
+                    AnimationCurve sizeCurve = BuildSizeCurve(1f, size.Curve, size.Parm);
+                    // Curve from 0 → 1: particle grows from invisible to full endSize
+                    AnimationCurve growCurve = new(
+                        new Keyframe(0f, 0f, 0f, 2f),
+                        new Keyframe(1f, 1f, 0f, 0f));
+                    sol.size = new ParticleSystem.MinMaxCurve(1f, growCurve);
+                }
+                else
+                {
+                    main.startSize = new ParticleSystem.MinMaxCurve(size.StartMin, size.StartMax);
+
+                    ParticleSystem.SizeOverLifetimeModule sol = ps.sizeOverLifetime;
+                    sol.enabled = true;
+                    float endRatio = avgStart > 0f ? avgEnd / avgStart : 1f;
+                    AnimationCurve sizeCurve = BuildSizeCurve(endRatio, size.Curve, size.Parm);
+                    sol.size = new ParticleSystem.MinMaxCurve(1f, sizeCurve);
+                }
             }
 
             // === Emission Module ===
@@ -166,16 +198,35 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
 
             if (def.Burst)
             {
-                // Explosions: Alle Partikel sofort als Burst spawnen
-                emission.rateOverTime = 0f;
-                emission.rateOverDistance = 0f;
-                short burstCount = (short)Mathf.Max(1, (def.CountMin + def.CountMax) / 2);
-                emission.SetBursts(new ParticleSystem.Burst[] { new(0f, burstCount) });
+                float delaySpan = def.DelayMax - def.DelayMin;
+                int avgCount = Mathf.Max(1, (def.CountMin + def.CountMax) / 2);
 
-                // Start Delay fuer gestaffeltes Spawnen
-                if (def.DelayMin > 0f || def.DelayMax > 0f)
+                // SoF2 semantics: each particle picks a random spawn time in [delayMin, delayMax].
+                // When the delay range is wide, particles are spread continuously over that window.
+                // Threshold: if delaySpan > particle lifetime, treat as continuous emission.
+                if (delaySpan > main.startLifetime.constantMax && delaySpan > 0.5f)
                 {
-                    main.startDelay = new ParticleSystem.MinMaxCurve(def.DelayMin, def.DelayMax);
+                    // Continuous emission over the delay window
+                    float rate = avgCount / delaySpan;
+                    emission.rateOverTime = rate;
+                    emission.rateOverDistance = 0f;
+                    main.startDelay = new ParticleSystem.MinMaxCurve(def.DelayMin);
+                    main.duration = delaySpan;
+                    main.loop = false;
+                }
+                else
+                {
+                    // Standard burst: all particles spawn at once
+                    emission.rateOverTime = 0f;
+                    emission.rateOverDistance = 0f;
+                    short burstCount = (short)avgCount;
+                    emission.SetBursts(new ParticleSystem.Burst[] { new(0f, burstCount) });
+
+                    // Start Delay fuer gestaffeltes Spawnen
+                    if (def.DelayMin > 0f || def.DelayMax > 0f)
+                    {
+                        main.startDelay = new ParticleSystem.MinMaxCurve(def.DelayMin, def.DelayMax);
+                    }
                 }
             }
             else
@@ -227,12 +278,36 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 col.color = new ParticleSystem.MinMaxGradient(gradient);
             }
 
+            // === Collision (usePhysics / expensivePhysics) ===
+            bool hasPhysics = segment.Flags != null && segment.Flags.Contains("usePhysics");
+            bool hasExpensivePhysics = segment.Flags != null && segment.Flags.Contains("expensivePhysics");
+            if (hasPhysics || hasExpensivePhysics)
+            {
+                ParticleSystem.CollisionModule collision = ps.collision;
+                collision.enabled = true;
+                collision.type = ParticleSystemCollisionType.World;
+                collision.bounce = new ParticleSystem.MinMaxCurve(0.2f, 0.5f);
+                collision.lifetimeLoss = 0.1f;
+                collision.dampen = new ParticleSystem.MinMaxCurve(0.1f, 0.3f);
+                collision.quality = hasExpensivePhysics
+                    ? ParticleSystemCollisionQuality.High
+                    : ParticleSystemCollisionQuality.Medium;
+            }
+
             // === Renderer ===
             ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
             if (renderer != null)
             {
                 renderer.material = GetMaterial(segment.Texture, useAlpha);
                 renderer.renderMode = ParticleSystemRenderMode.Billboard;
+
+                // depthHack: Render in front of viewmodel geometry (muzzle flashes)
+                bool depthHack = segment.Flags != null && segment.Flags.Contains("depthHack");
+                if (depthHack)
+                {
+                    renderer.sortingOrder = 10;
+                    renderer.material.renderQueue = 3100;
+                }
             }
         }
 
@@ -252,8 +327,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             main.maxParticles = Mathf.Max(trail.CountMax, 1) * 4;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
 
-            // Size: StartWidth als Partikelgroesse
-            main.startSize = new ParticleSystem.MinMaxCurve(trail.StartWidth, trail.StartWidth * 1.5f);
+            // Size: Segment-Size-Block bevorzugen (korrekte SoF2-Width).
+            // trail.StartWidth speichert oft length.start (initiale Trail-LAENGE, nicht Breite).
+            EffectSizeDefinition sizeBlock = segment.Size;
+            float startWidth;
+            float endWidth;
+            if (sizeBlock != null && sizeBlock.StartMax > 0f)
+            {
+                startWidth = (sizeBlock.StartMin + sizeBlock.StartMax) * 0.5f;
+                endWidth = sizeBlock.EndMax > 0f
+                    ? (sizeBlock.EndMin + sizeBlock.EndMax) * 0.5f
+                    : startWidth;
+            }
+            else
+            {
+                startWidth = trail.StartWidth > 0f ? trail.StartWidth : 0.05f;
+                endWidth = trail.EndWidth > 0f ? trail.EndWidth : startWidth * 0.2f;
+            }
+
+            main.startSize = new ParticleSystem.MinMaxCurve(startWidth, startWidth * 1.5f);
 
             // === Emission (Burst) ===
             ParticleSystem.EmissionModule emission = ps.emission;
@@ -288,8 +380,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             vel.y = new ParticleSystem.MinMaxCurve(-speed * 0.5f, speed * 0.5f);
             vel.z = new ParticleSystem.MinMaxCurve(speed, speed + length);
 
-            // === Size over Lifetime: von StartWidth zu EndWidth schrumpfen ===
-            float endRatio = trail.StartWidth > 0f ? trail.EndWidth / trail.StartWidth : 0.2f;
+            // === Size over Lifetime: von Start- zu End-Width schrumpfen ===
+            float endRatio = startWidth > 0f ? endWidth / startWidth : 0.2f;
             ParticleSystem.SizeOverLifetimeModule sol = ps.sizeOverLifetime;
             sol.enabled = true;
             sol.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, endRatio));
@@ -310,9 +402,39 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             {
                 renderer.material = GetMaterial(segment.Texture, useAlpha);
                 renderer.renderMode = ParticleSystemRenderMode.Stretch;
-                renderer.lengthScale = length > 0f ? length / Mathf.Max(trail.StartWidth, 0.001f) : 4f;
+                renderer.lengthScale = length > 0f ? length / Mathf.Max(startWidth, 0.001f) : 4f;
                 renderer.velocityScale = 0.1f;
             }
+        }
+
+        /// <summary>
+        /// Baut eine AnimationCurve fuer Size-Over-Lifetime basierend auf SoF2 Curve-Typ und Parm.
+        /// Bei "clamp" wird endRatio bei parm% der Lebensdauer erreicht und dann konstant gehalten.
+        /// Bei "nonlinear" wird eine Ease-In/Out-Kurve erzeugt.
+        /// Bei "linear" (oder Default) wird linear interpoliert.
+        /// </summary>
+        private AnimationCurve BuildSizeCurve(float endRatio, string curve, int parm)
+        {
+            bool isClamp = !string.IsNullOrEmpty(curve) &&
+                           curve.Contains("clamp", System.StringComparison.OrdinalIgnoreCase);
+            bool isNonlinear = !string.IsNullOrEmpty(curve) &&
+                               curve.Contains("nonlinear", System.StringComparison.OrdinalIgnoreCase);
+
+            if (isClamp && parm > 0 && parm <= 100)
+            {
+                float clampTime = parm / 100f;
+                Keyframe k0 = new(0f, 1f) { outTangent = (endRatio - 1f) / clampTime };
+                Keyframe k1 = new(clampTime, endRatio) { inTangent = (endRatio - 1f) / clampTime, outTangent = 0f };
+                Keyframe k2 = new(1f, endRatio) { inTangent = 0f };
+                return new AnimationCurve(k0, k1, k2);
+            }
+
+            if (isNonlinear)
+            {
+                return AnimationCurve.EaseInOut(0f, 1f, 1f, endRatio);
+            }
+
+            return AnimationCurve.Linear(0f, 1f, 1f, endRatio);
         }
 
         /// <summary>
@@ -446,7 +568,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 TextureData textureData = textureManager.GetTextureData(texturePath);
                 if (textureData != null && textureData.HasTexture())
                 {
-                    material.mainTexture = textureData.Texture;
+                    // URP Particles/Unlit verwendet _BaseMap, nicht _MainTex
+                    if (material.HasProperty("_BaseMap"))
+                    {
+                        material.SetTexture("_BaseMap", textureData.Texture);
+                    }
+                    else
+                    {
+                        material.mainTexture = textureData.Texture;
+                    }
                 }
                 else
                 {
@@ -458,6 +588,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             material.SetFloat("_Surface", 1f);
             material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             material.renderQueue = 3000;
+
+            // ZWrite OFF: Ohne dies schreiben Partikel in den Depth-Buffer und
+            // schneiden dahinterliegende Partikel weg → sichtbare Loecher/Rechtecke
+            material.SetFloat("_ZWrite", 0f);
+            material.DisableKeyword("_ZWRITE_ON");
+
+            // Backface-Culling OFF: Partikel muessen von allen Blickwinkeln sichtbar sein
+            material.SetFloat("_Cull", 0f);
+
+            // Grundfarbe Weiss mit vollem Alpha als Basis fuer ParticleSystem-Tinting
+            material.SetColor("_BaseColor", Color.white);
 
             if (useAlphaBlend)
             {
@@ -508,6 +649,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
 
             GameObject explosionObj = new($"Explosion_{definition.DisplayName}");
             explosionObj.transform.position = position;
+
+            // SoF2 Effekt-Koordinaten: X = "forward" (Surface-Normal), Y/Z = perpendicular
+            // Fuer Boden-Explosionen: X = nach oben, Y/Z = horizontal
+            // Rotation so setzen, dass lokale Z-Achse (= JSON-Achse fuer Q3-X) nach oben zeigt
+            // Damit werden Origin/Velocity korrekt orientiert (Feuer horizontal, Rauch steigt auf)
+            explosionObj.transform.rotation = Quaternion.LookRotation(Vector3.up);
 
             float maxLifetime = 0f;
             bool hasLightSegment = false;
@@ -564,9 +711,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 }
                 else if (segment.Type == "emitter" && segment.Emitter != null)
                 {
-                    SpawnEmitterChunks(position, Quaternion.identity, segment.Emitter);
+                    SpawnEmitterChunks(position, explosionObj.transform.rotation, segment.Emitter, segment.Flags);
                     float emitterLife = Mathf.Max(segment.Emitter.LifetimeMin, segment.Emitter.LifetimeMax);
                     maxLifetime = Mathf.Max(maxLifetime, emitterLife);
+                }
+                else if (segment.Type == "sound")
+                {
+                    PlayEffectSound(position, segment);
                 }
             }
 
@@ -574,6 +725,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             if (!hasLightSegment)
             {
                 SpawnExplosionLight(explosionObj.transform, null);
+            }
+
+            // M84 Flashbang: Bildschirm-Flash fuer lokalen Spieler (SoF2 damageType "flash")
+            if (effectId.Contains("stun_flash"))
+            {
+                FlashbangScreenEffect.TriggerFlash(position);
             }
 
             Object.Destroy(explosionObj, maxLifetime + 1f);
@@ -774,6 +931,51 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
         }
 
         /// <summary>
+        /// Spielt einen 3D-Sound an der angegebenen Position ab.
+        /// Waehlt zufaellig eine der Sound-Dateien aus und spielt sie per AudioSource.PlayClipAtPoint.
+        /// Optional verzoegert (SoF2 Sound delay).
+        /// </summary>
+        private static void PlayEffectSound(Vector3 position, EffectSegment segment)
+        {
+            EffectSoundDefinition def = segment?.Sound;
+            if (def?.Files == null || def.Files.Count == 0)
+            {
+                return;
+            }
+
+            SoundManager soundManager = ServiceLocator.Get<SoundManager>();
+            if (soundManager == null)
+            {
+                return;
+            }
+
+            // Zufaellige Datei waehlen (SoF2: mehrere Sounds werden alterniert)
+            string soundPath = def.Files[Random.Range(0, def.Files.Count)];
+            AudioClip clip = soundManager.GetClip(soundPath);
+            if (clip == null)
+            {
+                return;
+            }
+
+            if (def.Delay > 0f)
+            {
+                // Verzoegerter Sound: temporaeres GameObject mit AudioSource
+                GameObject soundObj = new("EffectSound");
+                soundObj.transform.position = position;
+                AudioSource source = soundObj.AddComponent<AudioSource>();
+                source.clip = clip;
+                source.spatialBlend = 1f;
+                source.playOnAwake = false;
+                source.PlayDelayed(def.Delay);
+                Object.Destroy(soundObj, def.Delay + clip.length + 0.5f);
+            }
+            else
+            {
+                AudioSource.PlayClipAtPoint(clip, position);
+            }
+        }
+
+        /// <summary>
         /// Spawnt einen datengetriebenen Impact-Effekt an der Einschlagstelle.
         /// Partikel werden relativ zur Oberflaechen-Normalen orientiert (weg von der Wand).
         /// Erzeugt Staub, Funken, Decal etc. je nach Surface-Typ und Munitionstyp.
@@ -837,6 +1039,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 {
                     SpawnDecal(hitPoint, hitNormal, segment);
                 }
+                else if (segment.Type == "sound")
+                {
+                    PlayEffectSound(hitPoint, segment);
+                }
             }
 
             Object.Destroy(impactObj, maxLifetime + 1f);
@@ -897,6 +1103,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 else if (segment.Type == "light")
                 {
                     SpawnExplosionLight(effectObj.transform, segment);
+                }
+                else if (segment.Type == "sound")
+                {
+                    PlayEffectSound(position, segment);
                 }
             }
 
@@ -959,9 +1169,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 }
                 else if (segment.Type == "emitter" && segment.Emitter != null)
                 {
-                    SpawnEmitterChunks(position, rotation, segment.Emitter);
+                    SpawnEmitterChunks(position, rotation, segment.Emitter, segment.Flags);
                     float emitterLife = Mathf.Max(segment.Emitter.LifetimeMin, segment.Emitter.LifetimeMax);
                     maxLifetime = Mathf.Max(maxLifetime, emitterLife);
+                }
+                else if (segment.Type == "sound")
+                {
+                    PlayEffectSound(position, segment);
                 }
             }
 
@@ -972,10 +1186,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
         /// Spawnt mehrere 3D-Model-Chunks mit Rigidbody-Physik aus einer Emitter-Definition.
         /// Jeder Chunk bekommt zufaellige Geschwindigkeit, Spin, Gravitation und Bounce aus den definierten Bereichen.
         /// Modell wird zufaellig aus der Modell-Liste gewaehlt und via PrefabManager geladen.
+        /// Unterstuetzt emitFx (Sub-Effekt-Spawning waehrend Flugzeit) und expensivePhysics (Continuous Collision).
         /// </summary>
-        private void SpawnEmitterChunks(Vector3 position, Quaternion rotation, EffectEmitterDefinition emitter)
+        private void SpawnEmitterChunks(Vector3 position, Quaternion rotation, EffectEmitterDefinition emitter, List<string> flags = null)
         {
-            if (emitter.Models == null || emitter.Models.Count == 0)
+            bool hasModels = emitter.Models != null && emitter.Models.Count > 0;
+            bool hasEmitFx = !string.IsNullOrEmpty(emitter.EmitFx);
+
+            // Ohne Modelle und ohne emitFx nichts zu tun
+            if (!hasModels && !hasEmitFx)
             {
                 return;
             }
@@ -985,33 +1204,48 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
 
             for (int i = 0; i < count; i++)
             {
-                string modelKey = emitter.Models[Random.Range(0, emitter.Models.Count)];
                 GameObject chunkObj = null;
 
-                if (prefabManager != null)
+                // 3D-Modell laden wenn vorhanden
+                if (hasModels)
                 {
-                    GameObject prefab = prefabManager.LoadPrefab<GameObject>(modelKey);
-                    if (prefab != null)
+                    string modelKey = emitter.Models[Random.Range(0, emitter.Models.Count)];
+
+                    if (prefabManager != null)
                     {
-                        chunkObj = Object.Instantiate(prefab, position, rotation);
+                        GameObject prefab = prefabManager.LoadPrefab<GameObject>(modelKey);
+                        if (prefab != null)
+                        {
+                            chunkObj = Object.Instantiate(prefab, position, rotation);
+                            PrefabTextureApplier.ApplyTextures(chunkObj);
+                        }
+                    }
+
+                    // Fallback: kleiner Quader als Chunk
+                    if (chunkObj == null)
+                    {
+                        chunkObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        chunkObj.name = $"Chunk_Fallback_{i}";
+                        chunkObj.transform.position = position;
+                        chunkObj.transform.rotation = rotation;
+                        chunkObj.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f);
+
+                        Renderer renderer = chunkObj.GetComponent<Renderer>();
+                        if (renderer != null)
+                        {
+                            renderer.material.color = new Color(0.4f, 0.35f, 0.3f);
+                            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                        }
                     }
                 }
-
-                // Fallback: kleiner Quader als Chunk
-                if (chunkObj == null)
+                else
                 {
-                    chunkObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    chunkObj.name = $"Chunk_Fallback_{i}";
+                    // emitFx-only: unsichtbares Physik-Objekt als Traeger fuer Sub-Effekte
+                    chunkObj = new($"EmitFx_Carrier_{i}");
                     chunkObj.transform.position = position;
                     chunkObj.transform.rotation = rotation;
-                    chunkObj.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f);
-
-                    Renderer renderer = chunkObj.GetComponent<Renderer>();
-                    if (renderer != null)
-                    {
-                        renderer.material.color = new Color(0.4f, 0.35f, 0.3f);
-                        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                    }
+                    SphereCollider sphere = chunkObj.AddComponent<SphereCollider>();
+                    sphere.radius = 0.05f;
                 }
 
                 // Rigidbody fuer Physik-Simulation
@@ -1024,7 +1258,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 rb.mass = 0.05f;
                 rb.linearDamping = 0.1f;
                 rb.angularDamping = 0.2f;
-                rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
+
+                // expensivePhysics: hoehere Kollisionsgenauigkeit (SoF2 rpg7 chunks, shotgun shells)
+                bool expensive = flags != null && flags.Contains("expensivePhysics");
+                rb.collisionDetectionMode = expensive
+                    ? CollisionDetectionMode.Continuous
+                    : CollisionDetectionMode.Discrete;
 
                 // Datengetriebene Geschwindigkeit
                 Vector3 localVelocity = new(
@@ -1034,12 +1273,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 );
                 rb.linearVelocity = rotation * localVelocity;
 
-                // Datengetriebener Spin (Grad/s → Rad/s)
-                rb.angularVelocity = new Vector3(
-                    Random.Range(emitter.AngleDeltaMin[0], emitter.AngleDeltaMax[0]) * Mathf.Deg2Rad,
-                    Random.Range(emitter.AngleDeltaMin[1], emitter.AngleDeltaMax[1]) * Mathf.Deg2Rad,
-                    Random.Range(emitter.AngleDeltaMin[2], emitter.AngleDeltaMax[2]) * Mathf.Deg2Rad
-                );
+                // Datengetriebener Spin (Grad/s → Rad/s) — optional, nicht alle Emitter definieren angleDelta
+                if (emitter.AngleDeltaMin != null && emitter.AngleDeltaMax != null)
+                {
+                    rb.angularVelocity = new Vector3(
+                        Random.Range(emitter.AngleDeltaMin[0], emitter.AngleDeltaMax[0]) * Mathf.Deg2Rad,
+                        Random.Range(emitter.AngleDeltaMin[1], emitter.AngleDeltaMax[1]) * Mathf.Deg2Rad,
+                        Random.Range(emitter.AngleDeltaMin[2], emitter.AngleDeltaMax[2]) * Mathf.Deg2Rad
+                    );
+                }
 
                 // Datengetriebenes Bounce-Material
                 Collider col = chunkObj.GetComponent<Collider>();
@@ -1067,6 +1309,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 // Lebensdauer aus Definition (gekappt auf 5s fuer Performance)
                 float lifetime = Mathf.Min(
                     Random.Range(emitter.LifetimeMin, emitter.LifetimeMax), 5f);
+
+                // emitFx: Sub-Effekt waehrend Flugzeit spawnen (z.B. Rauchschweif hinter Truemmern)
+                if (!string.IsNullOrEmpty(emitter.EmitFx))
+                {
+                    EmitFxBehaviour emitBehaviour = chunkObj.AddComponent<EmitFxBehaviour>();
+                    emitBehaviour.Initialize(emitter.EmitFx, lifetime);
+                }
+
                 Object.Destroy(chunkObj, lifetime);
             }
         }
@@ -1096,7 +1346,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
 
             GameObject shellObj = null;
 
-            // Modell aus Emitter-Definition laden (Addressables-Key ohne .md3)
+            // Modell aus Emitter-Definition laden (Addressables-Key ohne .md3!)
             if (emitter?.Models != null && emitter.Models.Count > 0)
             {
                 string modelKey = emitter.Models[Random.Range(0, emitter.Models.Count)];
@@ -1107,6 +1357,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                     if (prefab != null)
                     {
                         shellObj = Object.Instantiate(prefab, position, rotation);
+                        PrefabTextureApplier.ApplyTextures(shellObj);
                     }
                 }
             }

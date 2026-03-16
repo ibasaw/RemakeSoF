@@ -1,304 +1,5 @@
 [
   {
-    "id": "effects/tracerTest2",
-    "displayName": "Hitscan Tracer",
-    "segments": [
-      {
-        "type": "tail",
-        "texture": "gfx/misc/jk_tracer",
-        "flags": [
-          "usePhysics",
-          "expensivePhysics",
-          "impactKills"
-        ],
-        "trail": {
-          "lifetime": 0.5,
-          "startWidth": 0.08,
-          "endWidth": 0.01,
-          "lengthMin": 10.16,
-          "lengthMax": 11.43,
-          "speed": 127.0
-        },
-        "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
-          "endMin": 0.5,
-          "endMax": 0.5,
-          "curve": "linear"
-        },
-        "color": {
-          "startMin": [
-            1.0,
-            0.85,
-            0.2
-          ],
-          "startMax": [
-            1.0,
-            0.85,
-            0.2
-          ],
-          "endMin": [
-            1.0,
-            0.5,
-            0.1
-          ],
-          "endMax": [
-            1.0,
-            0.5,
-            0.1
-          ]
-        }
-      }
-    ]
-  },
-  {
-    "id": "effects/m203_trail",
-    "displayName": "M203 Grenade Trail",
-    "segments": [
-      {
-        "type": "particle",
-        "texture": "gfx/misc/gb_smoke",
-        "flags": [
-          "useAlpha"
-        ],
-        "particle": {
-          "countMin": 5,
-          "countMax": 5,
-          "lifetimeMin": 0.5,
-          "lifetimeMax": 1.5,
-          "delayMin": 0.0,
-          "delayMax": 0.1,
-          "rotationMin": -180.0,
-          "rotationMax": 180.0,
-          "rotationSpeedMin": -100.0,
-          "rotationSpeedMax": 100.0,
-          "gravityModifier": 0.065
-        },
-        "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
-          "endMin": 0.0,
-          "endMax": 0.0,
-          "parm": 50,
-          "curve": "linear"
-        },
-        "size": {
-          "startMin": 0.076,
-          "startMax": 0.178,
-          "endMin": 0.762,
-          "endMax": 1.016,
-          "curve": "linear"
-        }
-      }
-    ]
-  },
-  {
-    "id": "effects/grenade_trail",
-    "displayName": "Grenade Smoke Trail",
-    "segments": [
-      {
-        "type": "particle",
-        "texture": "gfx/misc/jk_smoke5",
-        "flags": [
-          "useAlpha"
-        ],
-        "spawnFlags": [
-          "evenDistribution",
-          "rgbComponentInterpolation"
-        ],
-        "particle": {
-          "countMin": 4,
-          "countMax": 4,
-          "lifetimeMin": 1.2,
-          "lifetimeMax": 1.4,
-          "delayMin": 0.0,
-          "delayMax": 0.05,
-          "rotationMin": -180.0,
-          "rotationMax": 180.0,
-          "rotationSpeedMin": -100.0,
-          "rotationSpeedMax": 100.0,
-          "gravityModifier": 0.058,
-          "originMin": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "originMax": [
-            0.076,
-            0.0,
-            0.0
-          ]
-        },
-        "color": {
-          "startMin": [
-            0.5765,
-            0.5765,
-            0.5765
-          ],
-          "startMax": [
-            0.7373,
-            0.7373,
-            0.7373
-          ]
-        },
-        "alpha": {
-          "startMin": 0.02,
-          "startMax": 0.05,
-          "endMin": 0.0,
-          "endMax": 0.0,
-          "parm": 50,
-          "curve": "linear"
-        },
-        "size": {
-          "startMin": 0.051,
-          "startMax": 0.076,
-          "endMin": 0.152,
-          "endMax": 0.254,
-          "curve": "linear"
-        }
-      }
-    ]
-  },
-  {
-    "id": "effects/rpg7_trail",
-    "displayName": "RPG-7 Rocket Trail",
-    "segments": [
-      {
-        "name": "Smoke",
-        "type": "particle",
-        "texture": "gfx/misc/gb_smoke",
-        "flags": [
-          "useAlpha"
-        ],
-        "spawnFlags": [
-          "evenDistribution",
-          "rgbComponentInterpolation"
-        ],
-        "particle": {
-          "countMin": 5,
-          "countMax": 5,
-          "lifetimeMin": 0.8,
-          "lifetimeMax": 1.2,
-          "delayMin": 0.0,
-          "delayMax": 0.05,
-          "rotationMin": -180.0,
-          "rotationMax": 180.0,
-          "rotationSpeedMin": -100.0,
-          "rotationSpeedMax": 100.0,
-          "gravityModifier": 0.039,
-          "originMin": [
-            -0.508,
-            0.0,
-            0.0
-          ],
-          "originMax": [
-            0.508,
-            0.0,
-            0.0
-          ],
-          "velocityMin": [
-            0.0,
-            -0.127,
-            -0.127
-          ],
-          "velocityMax": [
-            0.0,
-            0.127,
-            0.127
-          ]
-        },
-        "color": {
-          "startMin": [
-            0.2353,
-            0.2353,
-            0.2353
-          ],
-          "startMax": [
-            0.6745,
-            0.6745,
-            0.6902
-          ]
-        },
-        "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
-          "endMin": 0.0,
-          "endMax": 0.0,
-          "parm": 50,
-          "curve": "linear"
-        },
-        "size": {
-          "startMin": 0.076,
-          "startMax": 0.178,
-          "endMin": 0.508,
-          "endMax": 0.635,
-          "curve": "linear"
-        }
-      },
-      {
-        "name": "Flash Trail",
-        "type": "tail",
-        "texture": "gfx/misc/jk_sniper_flash",
-        "spawnFlags": [
-          "evenDistribution"
-        ],
-        "trail": {
-          "lifetime": 0.1,
-          "startWidth": 0.051,
-          "endWidth": 0.01,
-          "lengthMin": 0.254,
-          "lengthMax": 0.508,
-          "speed": 5.08,
-          "radius": 0.254
-        },
-        "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
-          "endMin": 0.0,
-          "endMax": 0.0,
-          "curve": "linear"
-        },
-        "size": {
-          "startMin": 0.0,
-          "startMax": 0.0,
-          "endMin": 0.051,
-          "endMax": 0.051,
-          "curve": "linear"
-        }
-      },
-      {
-        "name": "Flash Particles",
-        "type": "particle",
-        "texture": "gfx/misc/jk_sniper_flash",
-        "spawnFlags": [
-          "evenDistribution"
-        ],
-        "particle": {
-          "countMin": 5,
-          "countMax": 5,
-          "lifetimeMin": 0.1,
-          "lifetimeMax": 0.1,
-          "delayMin": 0.0,
-          "delayMax": 0.05
-        },
-        "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
-          "endMin": 0.0,
-          "endMax": 0.0,
-          "curve": "linear"
-        },
-        "size": {
-          "startMin": 0.076,
-          "startMax": 0.076,
-          "endMin": 0.635,
-          "endMax": 0.762,
-          "curve": "linear"
-        }
-      }
-    ]
-  },
-  {
     "id": "effects/explosions/fragment_explosion",
     "displayName": "Fragment Explosion (F1 Grenade)",
     "segments": [
@@ -582,28 +283,21 @@
       },
       {
         "name": "sparks",
-        "type": "particle",
+        "type": "tail",
         "texture": "gfx/misc/jk_fireball",
         "spawnFlags": [
           "orgOnCylinder",
           "axisFromSphere"
         ],
-        "particle": {
-          "burst": true,
+        "trail": {
           "countMin": 7,
           "countMax": 7,
-          "lifetimeMin": 0.45,
-          "lifetimeMax": 0.7,
-          "velocityMin": [
-            0.0,
-            -3.81,
-            -10.16
-          ],
-          "velocityMax": [
-            0.0,
-            -7.62,
-            -5.08
-          ]
+          "lifetime": 0.575,
+          "speed": 0.0,
+          "startWidth": 0.254,
+          "lengthMin": 13.97,
+          "lengthMax": 15.24,
+          "radius": 0.254
         },
         "alpha": {
           "startMin": 0.6,
@@ -766,6 +460,18 @@
           "rotationMin": 0.0,
           "rotationMax": 360.0,
           "lifetime": 30.0
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/frag_grenade/boom01.wav",
+            "sound/weapons/frag_grenade/boom02.wav",
+            "sound/weapons/frag_grenade/boom03.wav"
+          ],
+          "delay": 0.0
         }
       }
     ]
@@ -1156,44 +862,6 @@
         }
       },
       {
-        "name": "sparks",
-        "type": "particle",
-        "texture": "gfx/misc/jk_sniper_flash",
-        "particle": {
-          "burst": true,
-          "countMin": 8,
-          "countMax": 8,
-          "lifetimeMin": 0.5,
-          "lifetimeMax": 0.75,
-          "gravityModifier": -0.001,
-          "velocityMin": [
-            -0.152,
-            -0.152,
-            -0.076
-          ],
-          "velocityMax": [
-            0.152,
-            0.152,
-            -0.127
-          ]
-        },
-        "alpha": {
-          "startMin": 0.5,
-          "startMax": 0.8,
-          "endMin": 0.0,
-          "endMax": 0.0,
-          "parm": 35,
-          "curve": "linear"
-        },
-        "size": {
-          "startMin": 0.254,
-          "startMax": 0.381,
-          "endMin": 0.889,
-          "endMax": 1.27,
-          "curve": "linear"
-        }
-      },
-      {
         "name": "horz_ring",
         "type": "orientedParticle",
         "texture": "gfx/misc/jk_ring",
@@ -1228,6 +896,101 @@
           "rotationMin": 0.0,
           "rotationMax": 400.0,
           "lifetime": 30.0
+        }
+      },
+      {
+        "type": "emitter",
+        "name": "chunks",
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 15,
+          "countMax": 15,
+          "lifetime": 10000.0,
+          "bounce": 0.2,
+          "originMin": [
+            0.0,
+            -0.0762,
+            -0.0762
+          ],
+          "originMax": [
+            0.0,
+            0.0762,
+            0.0762
+          ],
+          "angleDeltaMin": [
+            -100.0,
+            -5.0,
+            0.0
+          ],
+          "angleDeltaMax": [
+            100.0,
+            5.0,
+            0.0
+          ],
+          "velocityMin": [
+            7.62,
+            -5.08,
+            -5.08
+          ],
+          "velocityMax": [
+            15.24,
+            5.08,
+            5.08
+          ],
+          "gravityMin": -15.24,
+          "gravityMax": -17.78,
+          "sizeMin": 0.0254,
+          "sizeMax": 0.0381,
+          "models": [
+            "models/chunks/rock/rock_med",
+            "models/chunks/wood/wood_med"
+          ],
+          "impactFxId": "effects/explosions/debri_impact_sound"
+        }
+      },
+      {
+        "type": "tail",
+        "name": "sparks",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "trail": {
+          "countMin": 8,
+          "countMax": 8,
+          "lifetime": 0.625,
+          "speed": 0.0,
+          "startWidth": 0.3175,
+          "lengthMin": 1.016,
+          "lengthMax": 1.27
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.8,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 35,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.254,
+          "startMax": 0.381,
+          "endMin": 0.889,
+          "endMax": 1.27,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/explosions/explosion_short01.wav",
+            "sound/weapons/explosions/explosion_short02.wav"
+          ],
+          "delay": 0.0
         }
       }
     ]
@@ -1740,6 +1503,80 @@
           "rotationMin": 0.0,
           "rotationMax": 360.0,
           "lifetime": 30.0
+        }
+      },
+      {
+        "type": "emitter",
+        "name": "flying_chunk01",
+        "flags": [
+          "useModel",
+          "usePhysics"
+        ],
+        "emitter": {
+          "countMin": 25,
+          "countMax": 40,
+          "lifetime": 10000.0,
+          "bounce": 0.55,
+          "originMin": [
+            0.127,
+            -0.127,
+            -0.127
+          ],
+          "originMax": [
+            0.254,
+            0.127,
+            0.127
+          ],
+          "angleDeltaMin": [
+            -100.0,
+            0.0,
+            0.0
+          ],
+          "angleDeltaMax": [
+            100.0,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            7.62,
+            -6.35,
+            -6.35
+          ],
+          "velocityMax": [
+            15.24,
+            6.35,
+            6.35
+          ],
+          "gravityMin": -12.7,
+          "gravityMax": -17.78,
+          "sizeMin": 0.0127,
+          "sizeMax": 0.0381,
+          "models": [
+            "models/chunks/metal/metal_big",
+            "models/chunks/metal/metal_med",
+            "models/chunks/metal/metal_small"
+          ]
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/mm1/mm1_boom1.wav",
+            "sound/weapons/mm1/mm1_boom2.wav"
+          ],
+          "delay": 0.0
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/explosions/debris_fall.wav"
+          ],
+          "delay": 1.2
         }
       }
     ]
@@ -2277,9 +2114,6 @@
         }
       },
       {
-        "type": "sound"
-      },
-      {
         "type": "particle",
         "name": "Copy of bang_light",
         "texture": "gfx/misc/jk_fireball",
@@ -2330,6 +2164,18 @@
           "endMax": 4.572,
           "parm": 90,
           "curve": "clamp"
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/frag_grenade/boom01.wav",
+            "sound/weapons/frag_grenade/boom02.wav",
+            "sound/weapons/frag_grenade/boom03.wav"
+          ],
+          "delay": 0.0
         }
       }
     ]
@@ -2639,6 +2485,8 @@
           "axisFromSphere"
         ],
         "emitter": {
+          "countMin": 3,
+          "countMax": 4,
           "velocityMin": [
             2.54,
             -5.08,
@@ -2652,11 +2500,9 @@
           "gravityMin": -12.7,
           "gravityMax": -12.7,
           "lifetimeMin": 1.0,
-          "lifetimeMax": 1.0
+          "lifetimeMax": 1.0,
+          "emitFx": "effects/explosions/embers_for_emitter"
         }
-      },
-      {
-        "type": "sound"
       },
       {
         "type": "orientedParticle",
@@ -2881,6 +2727,16 @@
           "parm": 450,
           "curve": "linear"
         }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/incendiary_grenade/incen01.wav"
+          ],
+          "delay": 0.0
+        }
       }
     ]
   },
@@ -3037,7 +2893,7 @@
           "endMin": 2.54,
           "endMax": 2.54,
           "parm": 3,
-          "curve": "linear"
+          "curve": "clamp"
         },
         "color": {
           "startMin": [
@@ -3051,9 +2907,6 @@
             0.9176
           ]
         }
-      },
-      {
-        "type": "sound"
       },
       {
         "type": "particle",
@@ -3110,7 +2963,7 @@
           "endMin": 2.54,
           "endMax": 2.54,
           "parm": 3,
-          "curve": "linear"
+          "curve": "clamp"
         },
         "color": {
           "startMin": [
@@ -3180,7 +3033,7 @@
           "endMin": 2.54,
           "endMax": 2.54,
           "parm": 3,
-          "curve": "linear"
+          "curve": "clamp"
         },
         "color": {
           "startMin": [
@@ -3250,7 +3103,7 @@
           "endMin": 2.54,
           "endMax": 2.54,
           "parm": 3,
-          "curve": "linear"
+          "curve": "clamp"
         },
         "color": {
           "startMin": [
@@ -3480,6 +3333,16 @@
             0.9725,
             0.9451
           ]
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/phos_grenade/phos01.wav"
+          ],
+          "delay": 0.0
         }
       }
     ]
@@ -3793,9 +3656,6 @@
         }
       },
       {
-        "type": "sound"
-      },
-      {
         "type": "particle",
         "name": "boom1",
         "texture": "gfx/misc/jk_sniper_flash",
@@ -4069,6 +3929,16 @@
           "cheapOrgCalc",
           "orgOnCylinder"
         ]
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/explosions/explosion_short01.wav"
+          ],
+          "delay": 0.0
+        }
       }
     ]
   },
@@ -4117,7 +3987,14 @@
         }
       },
       {
-        "type": "sound"
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/stun_grenade/sonic01.mp3"
+          ],
+          "delay": 0.0
+        }
       }
     ]
   },
@@ -4402,10 +4279,6 @@
         }
       },
       {
-        "type": "sound",
-        "name": "Sound"
-      },
-      {
         "type": "tail",
         "texture": "gfx/misc/bp_splash",
         "flags": [
@@ -4550,6 +4423,16 @@
             0.8824,
             0.8863
           ]
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/explosions/explosion_water01.wav"
+          ],
+          "delay": 0.0
         }
       }
     ]
@@ -4810,7 +4693,8 @@
           "gravityMin": 1.016,
           "gravityMax": -5.08,
           "lifetimeMin": 1.0,
-          "lifetimeMax": 1.0
+          "lifetimeMax": 1.0,
+          "emitFx": "effects/explosions/underwater_chunk_trail"
         }
       },
       {
@@ -4899,7 +4783,49 @@
         }
       },
       {
-        "type": "sound"
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/weapons/explosions/explosion_water02.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/explosions/embers_for_emitter",
+    "displayName": "embers_for_emitter",
+    "segments": [
+      {
+        "type": "particle",
+        "name": "embers",
+        "texture": "gfx/misc/jk_embers",
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.0,
+          "rotationMin": -10.0,
+          "rotationMax": 10.0,
+          "rotationSpeedMin": -60.0,
+          "rotationSpeedMax": 60.0,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 10,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.127,
+          "endMin": 0.508,
+          "endMax": 0.508,
+          "curve": "linear"
+        }
       }
     ]
   }

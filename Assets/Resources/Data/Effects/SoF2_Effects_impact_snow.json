@@ -1,624 +1,668 @@
-﻿[
-    {
-        "id": "effects/impact_snow",
-        "displayName": "Impact Snow",
-        "segments": [
-            {
-                "name": "SnowBits",
-                "type": "particle",
-                "texture": "gfx/misc/jk_mist",
-                "particle": {
-                    "countMin": 5,
-                    "countMax": 5,
-                    "lifetimeMin": 0.45,
-                    "lifetimeMax": 0.65,
-                    "gravityModifier": 1.4241,
-                    "velocityMin": [
-                        -1.143,
-                        -1.143,
-                        3.81
-                    ],
-                    "velocityMax": [
-                        1.143,
-                        1.143,
-                        6.35
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 45,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.851
-                    ],
-                    "startMax": [
-                        0.851
-                    ]
-                },
-                "size": {
-                    "startMin": 0.01016,
-                    "startMax": 0.0127,
-                    "endMin": 0.0127,
-                    "endMax": 0.0254,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "Snowcloud",
-                "type": "particle",
-                "texture": "gfx/misc/bp_smoke01",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 0.65,
-                    "lifetimeMax": 0.65,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -120,
-                    "rotationSpeedMax": 120,
-                    "gravityModifier": -0.0259,
-                    "velocityMin": [
-                        0,
-                        0,
-                        2.032
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        2.032
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.4,
-                    "startMax": 0.5,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 50,
-                    "curve": "linear nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.8588
-                    ],
-                    "startMax": [
-                        0.9961
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0762,
-                    "startMax": 0.1016,
-                    "endMin": 0.3048,
-                    "endMax": 0.381,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "VipLines",
-                "type": "line",
-                "texture": "gfx/misc/jk_smoke",
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 3,
-                    "countMax": 4,
-                    "lifetimeMin": 0.15,
-                    "lifetimeMax": 0.5,
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.2,
-                    "startMax": 0.4,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.7529
-                    ],
-                    "startMax": [
-                        1
-                    ],
-                    "endMin": [
-                        0.502
-                    ],
-                    "endMax": [
-                        0.7529
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0508,
-                    "startMax": 0.0762,
-                    "endMin": 0.01016,
-                    "endMax": 0.01524,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/snow",
-                "decal": {
-                    "sizeMin": 0.0508,
-                    "sizeMax": 0.0635,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "lifetime": 30
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_snow_12g",
-        "displayName": "Impact Snow 12G",
-        "segments": [
-            {
-                "name": "SnowBits",
-                "type": "particle",
-                "texture": "gfx/misc/jk_mist",
-                "particle": {
-                    "countMin": 2,
-                    "countMax": 3,
-                    "lifetimeMin": 0.5,
-                    "lifetimeMax": 0.6,
-                    "gravityModifier": 1.0357,
-                    "velocityMin": [
-                        -1.016,
-                        -1.016,
-                        3.556
-                    ],
-                    "velocityMax": [
-                        1.016,
-                        1.016,
-                        4.064
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 50,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.851
-                    ],
-                    "startMax": [
-                        0.851
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0127,
-                    "startMax": 0.0127,
-                    "endMin": 0.0127,
-                    "endMax": 0.0254,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "Snowcloud",
-                "type": "particle",
-                "texture": "gfx/misc/bp_smoke01",
-                "flags": [
-                    "useAlpha"
-                ],
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 1,
-                    "lifetimeMin": 0.4,
-                    "lifetimeMax": 0.5,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -200,
-                    "rotationSpeedMax": 200,
-                    "velocityMin": [
-                        0,
-                        0,
-                        1.651
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        1.905
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.5,
-                    "startMax": 0.6,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 50,
-                    "curve": "linear nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.8588
-                    ],
-                    "startMax": [
-                        0.9961
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0762,
-                    "startMax": 0.1016,
-                    "endMin": 0.254,
-                    "endMax": 0.3048,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "VipLines",
-                "type": "line",
-                "texture": "gfx/misc/jk_smoke",
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 2,
-                    "lifetimeMin": 0.15,
-                    "lifetimeMax": 0.5,
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.2,
-                    "startMax": 0.4,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.7529
-                    ],
-                    "startMax": [
-                        1
-                    ],
-                    "endMin": [
-                        0.502
-                    ],
-                    "endMax": [
-                        0.7529
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0508,
-                    "startMax": 0.0762,
-                    "endMin": 0.01016,
-                    "endMax": 0.01524,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/sand",
-                "decal": {
-                    "sizeMin": 0.0381,
-                    "sizeMax": 0.0457,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "alphaMin": 0.2,
-                    "alphaMax": 0.3,
-                    "lifetime": 30
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_snow_belt",
-        "displayName": "Impact Snow Belt",
-        "segments": [
-            {
-                "name": "SnowBits",
-                "type": "particle",
-                "texture": "gfx/misc/jk_dirt_grey",
-                "flags": [
-                    "useAlpha"
-                ],
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 2,
-                    "lifetimeMin": 0.7,
-                    "lifetimeMax": 0.8,
-                    "delayMin": 0.05,
-                    "delayMax": 0.05,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -200,
-                    "rotationSpeedMax": 200,
-                    "gravityModifier": 1.5535,
-                    "velocityMin": [
-                        -0.635,
-                        -0.635,
-                        3.81
-                    ],
-                    "velocityMax": [
-                        0.635,
-                        0.635,
-                        6.35
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 80,
-                    "curve": "nonlinear"
-                },
-                "size": {
-                    "startMin": 0.127,
-                    "startMax": 0.254,
-                    "endMin": 0.508,
-                    "endMax": 0.762,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "Snowcloud",
-                "type": "particle",
-                "texture": "gfx/misc/jk_mist",
-                "particle": {
-                    "countMin": 1,
-                    "countMax": 2,
-                    "lifetimeMin": 0.3,
-                    "lifetimeMax": 0.4,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -200,
-                    "rotationSpeedMax": 200,
-                    "velocityMin": [
-                        0,
-                        0,
-                        2.286
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        2.794
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.05,
-                    "startMax": 0.2,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "size": {
-                    "startMin": 0.1524,
-                    "startMax": 0.2032,
-                    "endMin": 0.7112,
-                    "endMax": 0.8382,
-                    "curve": "nonlinear"
-                }
-            },
-            {
-                "name": "VipLines",
-                "type": "line",
-                "texture": "gfx/misc/jk_smoke",
-                "particle": {
-                    "countMin": 3,
-                    "countMax": 4,
-                    "lifetimeMin": 0.3,
-                    "lifetimeMax": 0.5,
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.2,
-                    "startMax": 0.4,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.7529
-                    ],
-                    "startMax": [
-                        1
-                    ],
-                    "endMin": [
-                        0.502
-                    ],
-                    "endMax": [
-                        0.7529
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0508,
-                    "startMax": 0.0635,
-                    "endMin": 0.01524,
-                    "endMax": 0.02032,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/sand",
-                "decal": {
-                    "sizeMin": 0.1016,
-                    "sizeMax": 0.127,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "alphaMin": 0.4,
-                    "alphaMax": 0.6,
-                    "lifetime": 30
-                }
-            }
-        ]
-    },
-    {
-        "id": "effects/impact_snow2",
-        "displayName": "Impact Snow2",
-        "segments": [
-            {
-                "name": "SnowBits",
-                "type": "particle",
-                "texture": "gfx/misc/jk_mist",
-                "particle": {
-                    "countMin": 7,
-                    "countMax": 7,
-                    "lifetimeMin": 0.5,
-                    "lifetimeMax": 0.65,
-                    "gravityModifier": 1.4241,
-                    "velocityMin": [
-                        -1.143,
-                        -1.143,
-                        3.81
-                    ],
-                    "velocityMax": [
-                        1.143,
-                        1.143,
-                        6.35
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 1,
-                    "startMax": 1,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "parm": 50,
-                    "curve": "nonlinear"
-                },
-                "color": {
-                    "startMin": [
-                        0.8549
-                    ],
-                    "startMax": [
-                        0.8549
-                    ]
-                },
-                "size": {
-                    "startMin": 0.01016,
-                    "startMax": 0.02032,
-                    "endMin": 0.0127,
-                    "endMax": 0.0254
-                }
-            },
-            {
-                "name": "Snowcloud",
-                "type": "particle",
-                "texture": "gfx/misc/jk_mist",
-                "particle": {
-                    "countMin": 3,
-                    "countMax": 3,
-                    "lifetimeMin": 0.5,
-                    "lifetimeMax": 0.6,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "rotationSpeedMin": -200,
-                    "rotationSpeedMax": 200,
-                    "velocityMin": [
-                        0,
-                        0,
-                        2.286
-                    ],
-                    "velocityMax": [
-                        0,
-                        0,
-                        2.794
-                    ],
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.05,
-                    "startMax": 0.2,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "size": {
-                    "startMin": 0.1524,
-                    "startMax": 0.2032,
-                    "endMin": 0.7112,
-                    "endMax": 0.8382,
-                    "curve": "nonlinear"
-                }
-            },
-            {
-                "name": "VipLines",
-                "type": "line",
-                "texture": "gfx/misc/jk_smoke",
-                "spawnFlags": [
-                    "rgbComponentInterpolation"
-                ],
-                "particle": {
-                    "countMin": 4,
-                    "countMax": 5,
-                    "lifetimeMin": 0.3,
-                    "lifetimeMax": 0.5,
-                    "burst": true
-                },
-                "alpha": {
-                    "startMin": 0.2,
-                    "startMax": 0.4,
-                    "endMin": 0,
-                    "endMax": 0,
-                    "curve": "linear"
-                },
-                "color": {
-                    "startMin": [
-                        0.7529
-                    ],
-                    "startMax": [
-                        1
-                    ],
-                    "endMin": [
-                        0.502
-                    ],
-                    "endMax": [
-                        0.7529
-                    ]
-                },
-                "size": {
-                    "startMin": 0.0508,
-                    "startMax": 0.0635,
-                    "endMin": 0.01524,
-                    "endMax": 0.02032,
-                    "curve": "linear"
-                }
-            },
-            {
-                "name": "decal",
-                "type": "decal",
-                "texture": "gfx/decals/impact/sand",
-                "decal": {
-                    "sizeMin": 0.1016,
-                    "sizeMax": 0.127,
-                    "rotationMin": 0,
-                    "rotationMax": 360,
-                    "alphaMin": 0.4,
-                    "alphaMax": 0.6,
-                    "lifetime": 30
-                }
-            }
-        ]
-    }
+[
+  {
+    "id": "effects/impact_snow",
+    "displayName": "Impact Snow",
+    "segments": [
+      {
+        "name": "SnowBits",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mist",
+        "particle": {
+          "countMin": 5,
+          "countMax": 5,
+          "lifetimeMin": 0.45,
+          "lifetimeMax": 0.65,
+          "gravityModifier": 1.4241,
+          "velocityMin": [
+            -1.143,
+            -1.143,
+            3.81
+          ],
+          "velocityMax": [
+            1.143,
+            1.143,
+            6.35
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 45,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.851
+          ],
+          "startMax": [
+            0.851
+          ]
+        },
+        "size": {
+          "startMin": 0.01016,
+          "startMax": 0.0127,
+          "endMin": 0.0127,
+          "endMax": 0.0254,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Snowcloud",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.65,
+          "lifetimeMax": 0.65,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -120,
+          "rotationSpeedMax": 120,
+          "gravityModifier": -0.0259,
+          "velocityMin": [
+            0,
+            0,
+            2.032
+          ],
+          "velocityMax": [
+            0,
+            0,
+            2.032
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 50,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.8588
+          ],
+          "startMax": [
+            0.9961
+          ]
+        },
+        "size": {
+          "startMin": 0.0762,
+          "startMax": 0.1016,
+          "endMin": 0.3048,
+          "endMax": 0.381,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "VipLines",
+        "type": "line",
+        "texture": "gfx/misc/jk_smoke",
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 3,
+          "countMax": 4,
+          "lifetimeMin": 0.15,
+          "lifetimeMax": 0.5,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.7529
+          ],
+          "startMax": [
+            1
+          ],
+          "endMin": [
+            0.502
+          ],
+          "endMax": [
+            0.7529
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762,
+          "endMin": 0.01016,
+          "endMax": 0.01524,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/snow",
+        "decal": {
+          "sizeMin": 0.0508,
+          "sizeMax": 0.0635,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_snow_12g",
+    "displayName": "Impact Snow 12G",
+    "segments": [
+      {
+        "name": "SnowBits",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mist",
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "gravityModifier": 1.0357,
+          "velocityMin": [
+            -1.016,
+            -1.016,
+            3.556
+          ],
+          "velocityMax": [
+            1.016,
+            1.016,
+            4.064
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 50,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.851
+          ],
+          "startMax": [
+            0.851
+          ]
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0127,
+          "endMin": 0.0127,
+          "endMax": 0.0254,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Snowcloud",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.5,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 200,
+          "velocityMin": [
+            0,
+            0,
+            1.651
+          ],
+          "velocityMax": [
+            0,
+            0,
+            1.905
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.6,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 50,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.8588
+          ],
+          "startMax": [
+            0.9961
+          ]
+        },
+        "size": {
+          "startMin": 0.0762,
+          "startMax": 0.1016,
+          "endMin": 0.254,
+          "endMax": 0.3048,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "VipLines",
+        "type": "line",
+        "texture": "gfx/misc/jk_smoke",
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.15,
+          "lifetimeMax": 0.5,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.7529
+          ],
+          "startMax": [
+            1
+          ],
+          "endMin": [
+            0.502
+          ],
+          "endMax": [
+            0.7529
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762,
+          "endMin": 0.01016,
+          "endMax": 0.01524,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/sand",
+        "decal": {
+          "sizeMin": 0.0381,
+          "sizeMax": 0.0457,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "alphaMin": 0.2,
+          "alphaMax": 0.3,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_snow_belt",
+    "displayName": "Impact Snow Belt",
+    "segments": [
+      {
+        "name": "SnowBits",
+        "type": "particle",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.7,
+          "lifetimeMax": 0.8,
+          "delayMin": 0.05,
+          "delayMax": 0.05,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 200,
+          "gravityModifier": 1.5535,
+          "velocityMin": [
+            -0.635,
+            -0.635,
+            3.81
+          ],
+          "velocityMax": [
+            0.635,
+            0.635,
+            6.35
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 80,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.254,
+          "endMin": 0.508,
+          "endMax": 0.762,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Snowcloud",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mist",
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.3,
+          "lifetimeMax": 0.4,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 200,
+          "velocityMin": [
+            0,
+            0,
+            2.286
+          ],
+          "velocityMax": [
+            0,
+            0,
+            2.794
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.05,
+          "startMax": 0.2,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.1524,
+          "startMax": 0.2032,
+          "endMin": 0.7112,
+          "endMax": 0.8382,
+          "curve": "nonlinear"
+        }
+      },
+      {
+        "name": "VipLines",
+        "type": "line",
+        "texture": "gfx/misc/jk_smoke",
+        "particle": {
+          "countMin": 3,
+          "countMax": 4,
+          "lifetimeMin": 0.3,
+          "lifetimeMax": 0.5,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.7529
+          ],
+          "startMax": [
+            1
+          ],
+          "endMin": [
+            0.502
+          ],
+          "endMax": [
+            0.7529
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0635,
+          "endMin": 0.01524,
+          "endMax": 0.02032,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/sand",
+        "decal": {
+          "sizeMin": 0.1016,
+          "sizeMax": 0.127,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "alphaMin": 0.4,
+          "alphaMax": 0.6,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_snow2",
+    "displayName": "Impact Snow2",
+    "segments": [
+      {
+        "name": "SnowBits",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mist",
+        "particle": {
+          "countMin": 7,
+          "countMax": 7,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.65,
+          "gravityModifier": 1.4241,
+          "velocityMin": [
+            -1.143,
+            -1.143,
+            3.81
+          ],
+          "velocityMax": [
+            1.143,
+            1.143,
+            6.35
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 1,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 50,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.8549
+          ],
+          "startMax": [
+            0.8549
+          ]
+        },
+        "size": {
+          "startMin": 0.01016,
+          "startMax": 0.02032,
+          "endMin": 0.0127,
+          "endMax": 0.0254
+        }
+      },
+      {
+        "name": "Snowcloud",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mist",
+        "particle": {
+          "countMin": 3,
+          "countMax": 3,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -200,
+          "rotationSpeedMax": 200,
+          "velocityMin": [
+            0,
+            0,
+            2.286
+          ],
+          "velocityMax": [
+            0,
+            0,
+            2.794
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.05,
+          "startMax": 0.2,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.1524,
+          "startMax": 0.2032,
+          "endMin": 0.7112,
+          "endMax": 0.8382,
+          "curve": "nonlinear"
+        }
+      },
+      {
+        "name": "VipLines",
+        "type": "line",
+        "texture": "gfx/misc/jk_smoke",
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 4,
+          "countMax": 5,
+          "lifetimeMin": 0.3,
+          "lifetimeMax": 0.5,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.7529
+          ],
+          "startMax": [
+            1
+          ],
+          "endMin": [
+            0.502
+          ],
+          "endMax": [
+            0.7529
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0635,
+          "endMin": 0.01524,
+          "endMax": 0.02032,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "decal",
+        "type": "decal",
+        "texture": "gfx/decals/impact/sand",
+        "decal": {
+          "sizeMin": 0.1016,
+          "sizeMax": 0.127,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "alphaMin": 0.4,
+          "alphaMax": 0.6,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/earth/earth0.wav",
+            "sound/player/bullet_impacts/earth/earth1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  }
 ]

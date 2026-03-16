@@ -145,8 +145,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
         public void CreateMaterialsFromSkinDefinition(SkinDefinition skinDefinition)
         {
-            LegacyShaderLoader shaderLoader = ServiceLocator.Get<LegacyShaderLoader>();
-            Dictionary<string, Dictionary<string, ShaderEntry>> allShaderDefinitions = shaderLoader.GetAll();
+
             foreach (var mdef in skinDefinition.materials)
             {
                 string partName = mdef.name ?? "unnamed_part";
@@ -174,7 +173,8 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                     else
                     { // try material from legacy shader definition
                         ShaderEntry foundEntry = null;
-
+                        LegacyShaderLoader shaderLoader = ServiceLocator.Get<LegacyShaderLoader>();
+                        Dictionary<string, Dictionary<string, ShaderEntry>> allShaderDefinitions = shaderLoader.GetAll();
                         // Durch alle Model-Shader-Dictionaries iterieren
                         if (allShaderDefinitions != null)
                         {

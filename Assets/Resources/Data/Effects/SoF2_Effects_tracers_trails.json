@@ -1,0 +1,367 @@
+[
+  {
+    "id": "effects/tracerTest2",
+    "displayName": "Hitscan Tracer",
+    "segments": [
+      {
+        "type": "tail",
+        "texture": "gfx/misc/jk_tracer",
+        "flags": [
+          "usePhysics",
+          "expensivePhysics",
+          "impactKills"
+        ],
+        "trail": {
+          "lifetime": 0.5,
+          "startWidth": 0.02,
+          "endWidth": 0.005,
+          "lengthMin": 10.16,
+          "lengthMax": 11.43,
+          "speed": 127.0
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.5,
+          "endMax": 0.5,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            1.0,
+            0.85,
+            0.2
+          ],
+          "startMax": [
+            1.0,
+            0.85,
+            0.2
+          ],
+          "endMin": [
+            1.0,
+            0.5,
+            0.1
+          ],
+          "endMax": [
+            1.0,
+            0.5,
+            0.1
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/m203_trail",
+    "displayName": "M203 Grenade Trail",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/gb_smoke",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 5,
+          "countMax": 5,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 1.5,
+          "delayMin": 0.0,
+          "delayMax": 0.1,
+          "rotationMin": -180.0,
+          "rotationMax": 180.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "gravityModifier": 0.065
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 50,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.076,
+          "startMax": 0.178,
+          "endMin": 0.762,
+          "endMax": 1.016,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/grenade_trail",
+    "displayName": "Grenade Smoke Trail",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke5",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "evenDistribution",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 4,
+          "countMax": 4,
+          "lifetimeMin": 1.2,
+          "lifetimeMax": 1.4,
+          "delayMin": 0.0,
+          "delayMax": 0.05,
+          "rotationMin": -180.0,
+          "rotationMax": 180.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "gravityModifier": 0.058,
+          "originMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.076,
+            0.0,
+            0.0
+          ]
+        },
+        "color": {
+          "startMin": [
+            0.5765,
+            0.5765,
+            0.5765
+          ],
+          "startMax": [
+            0.7373,
+            0.7373,
+            0.7373
+          ]
+        },
+        "alpha": {
+          "startMin": 0.02,
+          "startMax": 0.05,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 50,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.051,
+          "startMax": 0.076,
+          "endMin": 0.152,
+          "endMax": 0.254,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/rpg7_trail",
+    "displayName": "RPG-7 Rocket Trail",
+    "segments": [
+      {
+        "name": "Smoke",
+        "type": "particle",
+        "texture": "gfx/misc/gb_smoke",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "evenDistribution",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 5,
+          "countMax": 5,
+          "lifetimeMin": 0.8,
+          "lifetimeMax": 1.2,
+          "delayMin": 0.0,
+          "delayMax": 0.05,
+          "rotationMin": -180.0,
+          "rotationMax": 180.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "gravityModifier": 0.039,
+          "originMin": [
+            -0.508,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.508,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.0,
+            -0.127,
+            -0.127
+          ],
+          "velocityMax": [
+            0.0,
+            0.127,
+            0.127
+          ]
+        },
+        "color": {
+          "startMin": [
+            0.2353,
+            0.2353,
+            0.2353
+          ],
+          "startMax": [
+            0.6745,
+            0.6745,
+            0.6902
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 50,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.076,
+          "startMax": 0.178,
+          "endMin": 0.508,
+          "endMax": 0.635,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Flash Trail",
+        "type": "tail",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "spawnFlags": [
+          "evenDistribution"
+        ],
+        "trail": {
+          "lifetime": 0.1,
+          "startWidth": 0.051,
+          "endWidth": 0.01,
+          "lengthMin": 0.254,
+          "lengthMax": 0.508,
+          "speed": 5.08,
+          "radius": 0.254
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0,
+          "startMax": 0.0,
+          "endMin": 0.051,
+          "endMax": 0.051,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Flash Particles",
+        "type": "particle",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "spawnFlags": [
+          "evenDistribution"
+        ],
+        "particle": {
+          "countMin": 5,
+          "countMax": 5,
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "delayMin": 0.0,
+          "delayMax": 0.05
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.076,
+          "startMax": 0.076,
+          "endMin": 0.635,
+          "endMax": 0.762,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/explosions/underwater_chunk_trail",
+    "displayName": "underwater_chunk_trail",
+    "segments": [
+      {
+        "type": "particle",
+        "name": "chunk",
+        "texture": "gfx/misc/bp_rock",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.05,
+          "lifetimeMax": 0.05,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0.8,
+          "endMax": 0.8,
+          "parm": 7
+        },
+        "size": {
+          "startMin": 0.178,
+          "startMax": 0.178,
+          "endMin": 0.178,
+          "endMax": 0.178
+        }
+      },
+      {
+        "type": "particle",
+        "name": "bubble_trail",
+        "texture": "gfx/misc/bp_water_droplets01",
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 2.0,
+          "lifetimeMax": 2.5,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -60.0,
+          "rotationSpeedMax": 60.0,
+          "gravityModifier": -0.1165,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.6,
+          "startMax": 0.8,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.305,
+          "startMax": 0.381,
+          "endMin": 0.635,
+          "endMax": 0.889,
+          "curve": "linear"
+        }
+      }
+    ]
+  }
+]

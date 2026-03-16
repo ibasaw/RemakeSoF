@@ -8,13 +8,12 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
 {
     /// <summary>
     /// Pure Service fuer das Laden und Parsen von Effektdefinitionen aus JSON-Dateien.
-    /// Laedt SoF2_Effects.json (Tracer/Trail/Explosions) und alle Dateien im Effects/-Unterordner
-    /// (Impact-Effekte pro Surface-Typ). Stellt Effektdaten anhand ihrer ID bereit.
+    /// Laedt alle JSON-Dateien im Effects/-Unterordner (Impact, Debris, Explosions, Muzzle, etc.).
+    /// Stellt Effektdaten anhand ihrer ID bereit.
     /// Zugreifbar ueber ServiceLocator.
     /// </summary>
     public class EffectDataLoader
     {
-        private const string RESOURCE_PATH = "Data/SoF2_Effects";
         private const string EFFECTS_FOLDER = "Data/Effects";
 
         private readonly Dictionary<string, EffectDefinition> m_EffectsById = new(StringComparer.OrdinalIgnoreCase);
@@ -28,16 +27,13 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         }
 
         /// <summary>
-        /// Laedt alle Effektdefinitionen: Haupt-JSON + alle Dateien im Effects/-Unterordner.
+        /// Laedt alle Effektdefinitionen aus dem Effects/-Unterordner.
         /// </summary>
         private void LoadFromResources()
         {
             m_EffectsById.Clear();
 
-            // Haupt-Datei laden (Tracer, Trails, Explosions)
-            LoadJsonFile(RESOURCE_PATH);
-
-            // Alle JSON-Dateien im Effects/-Unterordner laden (Impact-Effekte)
+            // Alle JSON-Dateien im Effects/-Unterordner laden
             TextAsset[] effectFiles = Resources.LoadAll<TextAsset>(EFFECTS_FOLDER);
             foreach (TextAsset file in effectFiles)
             {
@@ -45,21 +41,6 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             }
 
             Debug.Log($"[EffectDataLoader] Loaded {m_EffectsById.Count} effects total");
-        }
-
-        /// <summary>
-        /// Laedt eine einzelne JSON-Datei aus Resources anhand des Pfads.
-        /// </summary>
-        private void LoadJsonFile(string resourcePath)
-        {
-            TextAsset file = Resources.Load<TextAsset>(resourcePath);
-            if (file == null)
-            {
-                Debug.LogWarning($"[EffectDataLoader] Could not load {resourcePath}");
-                return;
-            }
-
-            LoadJsonAsset(file);
         }
 
         /// <summary>
