@@ -98,11 +98,11 @@ bool exists = loader.HasWeapon("knife");
 | MaxInaccuracy | `float` | `"maxInaccuracy"` | Max-Streuung bei Dauerfeuer |
 | Pellets | `int` | `"pellets"` | Projektile pro Schuss (Schrotflinten) |
 | Spread | `float` | `"spread"` | Zusätzliche Streuung pro Pellet |
-| MuzzleFlash | `string` | `"muzzleFlash"` | Muzzle-Flash Effekt |
-| MuzzleSmoke | `string` | `"muzzleSmoke"` | Muzzle-Smoke Effekt |
-| ShellCasingEject | `string` | `"shellCasingEject"` | Shell-Casing Effekt |
+| MuzzleFlash | `string` | `"muzzleFlash"` | Muzzle-Flash Effekt (→ effect-system.md) |
+| MuzzleSmoke | `string` | `"muzzleSmoke"` | Muzzle-Smoke Effekt (→ effect-system.md) |
+| ShellCasingEject | `string` | `"shellCasingEject"` | Shell-Casing Effekt (→ effect-system.md) |
 | EjectBone | `string` | `"ejectBone"` | Bone für Shell-Ejektion (z.B. "ejection_m4") |
-| TracerEffect | `string` | `"tracerEffect"` | Tracer-Effekt |
+| TracerEffect | `string` | `"tracerEffect"` | Tracer-Effekt (→ effect-system.md) |
 | FireModes | `List<string>` | `"fireModes"` | Verfügbare Feuer-Modi |
 | Melee | `string` | `"melee"` | Nahkampf-Typ für Alt-Attack ("bayonet") |
 | Projectile | `WeaponProjectileDefinition` | `"projectile"` | Projektil-Definition |

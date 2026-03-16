@@ -117,6 +117,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
 
             // === Main Module ===
             ParticleSystem.MainModule main = ps.main;
+            main.loop = false;
             main.startLifetime = new ParticleSystem.MinMaxCurve(def.LifetimeMin, def.LifetimeMax);
             main.startSpeed = 0f; // Velocity ueber Velocity over Lifetime
             main.maxParticles = def.CountMax * 4;
@@ -245,6 +246,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
 
             // === Main Module ===
             ParticleSystem.MainModule main = ps.main;
+            main.loop = false;
             main.startLifetime = trail.Lifetime;
             main.startSpeed = 0f;
             main.maxParticles = Mathf.Max(trail.CountMax, 1) * 4;

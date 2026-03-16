@@ -979,7 +979,7 @@
       "mp_raise": {
         "name": "TORSO_RAISE_ONEHANDED",
         "source": "weaponready_onehanded_mp",
-        "startFrame": 292,
+        "startFrame": 298,
         "duration": 6,
         "fps": 10,
         "loop": false
@@ -987,7 +987,7 @@
       "mp_drop": {
         "name": "TORSO_DROP_ONEHANDED",
         "source": "weapondone_onehanded_mp",
-        "startFrame": 298,
+        "startFrame": 292,
         "duration": 6,
         "fps": 10,
         "loop": false
@@ -1096,7 +1096,7 @@
       "mp_raise": {
         "name": "TORSO_RAISE_ONEHANDED",
         "source": "weaponready_onehanded_mp",
-        "startFrame": 292,
+        "startFrame": 298,
         "duration": 6,
         "fps": 10,
         "loop": false
@@ -1104,9 +1104,1350 @@
       "mp_drop": {
         "name": "TORSO_DROP_ONEHANDED",
         "source": "weapondone_onehanded_mp",
+        "startFrame": 292,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "ussocom",
+    "displayName": "US SOCOM",
+    "category": 2,
+    "animatorIndex": 11,
+    "menuImage": "hud/weapon_icons/ussocom_icon",
+    "worldModel": "models/weapons/ussocom/world/ussocomworld",
+    "viewModel": "models/weapons/ussocom/ussocom",
+    "isMelee": false,
+    "ammo": {
+      "type": ".45 ACP",
+      "maxClip": 12,
+      "extraClips": 3,
+      "startClip": 12,
+      "startReserve": 36,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 40,
+      "range": 8192,
+      "fireMode": "single",
+      "gore": true,
+      "volume": 0.75,
+      "kickAngles": [ 1, 5, -2, 1 ],
+      "inaccuracy": 0.25,
+      "maxInaccuracy": 2.0,
+      "muzzleFlash": "effects/muzzle_flashes/mflash_ussocom_final",
+      "silencedFlash": "effects/muzzle_flashes/mflash_silencer",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_m4",
+      "shellCasingEject": "effects/shell_brass_small",
+      "ejectBone": "ejection_USSOCOM"
+    },
+    "altAttack": {
+      "damage": 70,
+      "range": 60,
+      "fireMode": "auto",
+      "gore": false,
+      "volume": 0.1,
+      "melee": "blunt"
+    },
+    "sounds": {
+      "fire": [
+        "sound/weapons/ussocom/unsfire01",
+        "sound/weapons/ussocom/unsfire02"
+      ],
+      "altFire": [
+        "sound/weapons/m1911a1/swing01",
+        "sound/weapons/m1911a1/swing02"
+      ],
+      "silencedFire": [
+        "sound/weapons/ussocom/socomfire01",
+        "sound/weapons/ussocom/socomfire02"
+      ],
+      "hammerBack": "sound/weapons/ussocom/hammerback",
+      "clipOut": "sound/weapons/ussocom/clipout",
+      "clipIn": "sound/weapons/ussocom/clipin",
+      "slideRelease": "sound/weapons/ussocom/slide",
+      "slideBack": "sound/weapons/ussocom/slideback",
+      "ready": "sound/weapons/ussocom/spin"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_PISTOL",
+        "source": "pistolsoldierstandaim01_mp",
+        "startFrame": 362,
+        "duration": 40,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_PISTOL",
+        "source": "pistolsoldierstandfire01_mp",
+        "startFrame": 402,
+        "duration": 2,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_altAttack": {
+        "name": "TORSO_ATTACK_PISTOLWHIP",
+        "source": "pistolwhip_mp",
+        "startFrame": 404,
+        "duration": 21,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE_ONEHANDED",
+        "source": "weaponready_onehanded_mp",
         "startFrame": 298,
         "duration": 6,
         "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP_ONEHANDED",
+        "source": "weapondone_onehanded_mp",
+        "startFrame": 292,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_reload": {
+        "name": "TORSO_RELOAD_PISTOL",
+        "source": "refillpistol01_mp",
+        "startFrame": 425,
+        "duration": 29,
+        "fps": 20,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "m67",
+    "displayName": "M67 Grenade",
+    "category": 8,
+    "animatorIndex": 12,
+    "menuImage": "hud/weapon_icons/m67_icon",
+    "worldModel": "models/weapons/m67/world/m67world",
+    "viewModel": "models/weapons/m67/m67",
+    "isMelee": false,
+    "ammo": {
+      "type": "M67",
+      "maxClip": 1,
+      "extraClips": 1,
+      "startClip": 1,
+      "startReserve": 1,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 200,
+      "radius": 300,
+      "knockback": 800,
+      "fireMode": "single",
+      "gore": true,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 1000,
+        "bounce": 0.45,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "m67",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/fragment_upward_explosion",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "altAttack": {
+      "damage": 200,
+      "radius": 300,
+      "knockback": 800,
+      "gore": true,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 700,
+        "bounce": 0.25,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "m67",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/fragment_explosion",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "sounds": {
+      "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
+      "pinPull": "sound/weapons/frag_grenade/pin_pull",
+      "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "toss": "sound/weapons/frag_grenade/throw_idle"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_GRENADE",
+        "source": "grenade_hold_mp",
+        "startFrame": 650,
+        "duration": 2,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_GRENADE_START",
+        "source": "grenade_throw_start_mp",
+        "startFrame": 652,
+        "duration": 23,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_attackEnd": {
+        "name": "TORSO_ATTACK_GRENADE_END",
+        "source": "grenade_throw_end_mp",
+        "startFrame": 675,
+        "duration": 18,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE_ONEHANDED",
+        "source": "weaponready_onehanded_mp",
+        "startFrame": 298,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP_ONEHANDED",
+        "source": "weapondone_onehanded_mp",
+        "startFrame": 292,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "microuzi",
+    "displayName": "Micro Uzi",
+    "category": 4,
+    "animatorIndex": 13,
+    "menuImage": "hud/weapon_icons/microuzi_icon",
+    "worldModel": "models/weapons/microuzi/world/microuziworld",
+    "viewModel": "models/weapons/microuzi/microuzi",
+    "isMelee": false,
+    "ammo": {
+      "type": "9mm",
+      "maxClip": 30,
+      "extraClips": 3,
+      "startClip": 30,
+      "startReserve": 90,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 40,
+      "range": 8192,
+      "fireMode": "auto",
+      "gore": true,
+      "volume": 0.75,
+      "kickAngles": [ 1, 2, -2, 1 ],
+      "inaccuracy": 0.50,
+      "maxInaccuracy": 2.0,
+      "muzzleFlash": "effects/muzzle_flashes/mflash_uzi",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_uzi",
+      "shellCasingEject": "effects/shell_brass_small",
+      "ejectBone": "ejection_microuzi",
+      "fireModes": [ "burst", "auto" ]
+    },
+    "sounds": {
+      "fire": [
+        "sound/weapons/micro_uzi/fire01",
+        "sound/weapons/micro_uzi/fire02",
+        "sound/weapons/micro_uzi/fire03"
+      ],
+      "ready": "sound/weapons/micro_uzi/ready",
+      "clipOut": "sound/weapons/micro_uzi/clipout",
+      "clipIn": "sound/weapons/micro_uzi/clipin",
+      "bolt": "sound/weapons/micro_uzi/bolt"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_PISTOL",
+        "source": "pistolsoldierstandaim01_mp",
+        "startFrame": 362,
+        "duration": 40,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_PISTOL",
+        "source": "pistolsoldierstandfire01_mp",
+        "startFrame": 402,
+        "duration": 2,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE_ONEHANDED",
+        "source": "weaponready_onehanded_mp",
+        "startFrame": 298,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP_ONEHANDED",
+        "source": "weapondone_onehanded_mp",
+        "startFrame": 292,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_reload": {
+        "name": "TORSO_RELOAD_PISTOL",
+        "source": "refillpistol01_mp",
+        "startFrame": 425,
+        "duration": 29,
+        "fps": 20,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "oicw",
+    "displayName": "OICW",
+    "category": 5,
+    "animatorIndex": 14,
+    "menuImage": "hud/weapon_icons/oicw_icon",
+    "worldModel": "models/weapons/oicw/world/oicwworld",
+    "viewModel": "models/weapons/oicw/oicw",
+    "isMelee": false,
+    "ammo": {
+      "type": "5.56mm",
+      "maxClip": 30,
+      "extraClips": 3,
+      "startClip": 30,
+      "startReserve": 90,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 70,
+      "range": 16384,
+      "fireMode": "auto",
+      "gore": true,
+      "volume": 0.75,
+      "kickAngles": [ 1, 3, -2, 1 ],
+      "armorPiercing": 0.25,
+      "muzzleFlash": "effects/muzzle_flashes/mflash_oicw",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_oicw",
+      "shellCasingEject": "effects/shell_brass",
+      "ejectBone": "ejection_oicw",
+      "tracerEffect": "effects/tracerTest2",
+      "fireModes": [ "single", "burst", "auto" ]
+    },
+    "altAttack": {
+      "damage": 100,
+      "radius": 300,
+      "gore": true,
+      "volume": 0.9,
+      "kickAngles": [ 1, 6, -2, 1 ],
+      "zoom": true,
+      "zoomFov": [ 80, 20, 10, 5 ],
+      "muzzleFlash": "effects/muzzle_flashes/mflash_mm1",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_mm1",
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 1500,
+        "detonation": "timer",
+        "effect": "effects/m203_trail",
+        "explosionEffect": "effects/explosions/rpg7_explosion",
+        "explosionSound": "sound/weapons/frag_grenade/boom02"
+      },
+      "ammo": {
+        "type": "20mm grenade",
+        "maxClip": 8,
+        "extraClips": 1,
+        "startClip": 8,
+        "startReserve": 8
+      }
+    },
+    "sounds": {
+      "fire": [
+        "sound/weapons/oicw/fire01",
+        "sound/weapons/oicw/fire02"
+      ],
+      "altFire": "sound/weapons/m4/glaunch",
+      "ready": "sound/weapons/oicw/ready",
+      "clipOut": "sound/weapons/oicw/clipout",
+      "clipIn": "sound/weapons/oicw/clipin",
+      "bolt": "sound/weapons/oicw/bolt",
+      "boltForward": "sound/weapons/oicw/bolt_forward"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_RIFLE",
+        "source": "soldieraimrifle02_mp",
+        "startFrame": 454,
+        "duration": 40,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_RIFLE",
+        "source": "riflestandsoldiersingle02_mp",
+        "startFrame": 494,
+        "duration": 2,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE",
+        "source": "weaponready01_mp",
+        "startFrame": 286,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP",
+        "source": "weapondone01_mp",
+        "startFrame": 280,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_reload": {
+        "name": "TORSO_RELOAD_RIFLE",
+        "source": "refillrifle01_mp",
+        "startFrame": 510,
+        "duration": 36,
+        "fps": 20,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "m3a1",
+    "displayName": "M3A1",
+    "category": 4,
+    "animatorIndex": 15,
+    "menuImage": "hud/weapon_icons/m3a1_icon",
+    "worldModel": "models/weapons/m3a1/world/m3a1world",
+    "viewModel": "models/weapons/m3a1/m3a1",
+    "isMelee": false,
+    "ammo": {
+      "type": ".45 ACP",
+      "maxClip": 30,
+      "extraClips": 3,
+      "startClip": 30,
+      "startReserve": 90,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 50,
+      "range": 8192,
+      "fireMode": "auto",
+      "gore": true,
+      "volume": 0.75,
+      "kickAngles": [ 1, 3, -2, 1 ],
+      "inaccuracy": 0.35,
+      "maxInaccuracy": 1.5,
+      "armorPiercing": 0.25,
+      "muzzleFlash": "effects/muzzle_flashes/mflash_m3",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_m4",
+      "shellCasingEject": "effects/shell_brass",
+      "ejectBone": "ejection_m3a1",
+      "tracerEffect": "effects/tracerTest2"
+    },
+    "sounds": {
+      "fire": [
+        "sound/weapons/m3a1/fire01",
+        "sound/weapons/m3a1/fire02"
+      ],
+      "ready": "sound/weapons/m3a1/ready",
+      "clipOut": "sound/weapons/m3a1/clip_out",
+      "clipIn": "sound/weapons/m3a1/clip_in",
+      "boltBack": "sound/weapons/m3a1/bolt_back",
+      "boltForward": "sound/weapons/m3a1/bolt_forward",
+      "coverDown": "sound/weapons/m3a1/cover_down",
+      "coverUp": "sound/weapons/m3a1/cover_up"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_RIFLE",
+        "source": "soldieraimrifle02_mp",
+        "startFrame": 454,
+        "duration": 40,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_RIFLE",
+        "source": "riflestandsoldiersingle02_mp",
+        "startFrame": 494,
+        "duration": 2,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE",
+        "source": "weaponready01_mp",
+        "startFrame": 286,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP",
+        "source": "weapondone01_mp",
+        "startFrame": 280,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_reload": {
+        "name": "TORSO_RELOAD_RIFLE",
+        "source": "refillrifle01_mp",
+        "startFrame": 510,
+        "duration": 36,
+        "fps": 20,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "m84",
+    "displayName": "M84 Flashbang",
+    "category": 8,
+    "animatorIndex": 16,
+    "menuImage": "hud/weapon_icons/m84_icon",
+    "worldModel": "models/weapons/m84/world/m84world",
+    "viewModel": "models/weapons/m84/m84",
+    "isMelee": false,
+    "ammo": {
+      "type": "M84",
+      "maxClip": 1,
+      "extraClips": 1,
+      "startClip": 1,
+      "startReserve": 1,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 5,
+      "damageType": "flash",
+      "radius": 800,
+      "fireMode": "single",
+      "gore": false,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 1000,
+        "bounce": 0.45,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "m84",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/stun_flash_mp",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "explosionSound": "sound/weapons/stun_grenade/sonic01",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "altAttack": {
+      "damage": 5,
+      "damageType": "flash",
+      "radius": 800,
+      "gore": false,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 700,
+        "bounce": 0.25,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "m84",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/stun_flash_mp",
+        "explosionSound": "sound/weapons/stun_grenade/sonic01",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "sounds": {
+      "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
+      "pinPull": "sound/weapons/frag_grenade/pin_pull",
+      "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "toss": "sound/weapons/frag_grenade/throw_idle"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_GRENADE",
+        "source": "grenade_hold_mp",
+        "startFrame": 650,
+        "duration": 2,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_GRENADE_START",
+        "source": "grenade_throw_start_mp",
+        "startFrame": 652,
+        "duration": 23,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_attackEnd": {
+        "name": "TORSO_ATTACK_GRENADE_END",
+        "source": "grenade_throw_end_mp",
+        "startFrame": 675,
+        "duration": 18,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE_ONEHANDED",
+        "source": "weaponready_onehanded_mp",
+        "startFrame": 298,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP_ONEHANDED",
+        "source": "weapondone_onehanded_mp",
+        "startFrame": 292,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "anm14",
+    "displayName": "ANM14 Incendiary",
+    "category": 8,
+    "animatorIndex": 17,
+    "menuImage": "hud/weapon_icons/anm14_icon",
+    "worldModel": "models/weapons/anm14/world/anm14world",
+    "viewModel": "models/weapons/anm14/anm14",
+    "isMelee": false,
+    "ammo": {
+      "type": "ANM14",
+      "maxClip": 1,
+      "extraClips": 1,
+      "startClip": 1,
+      "startReserve": 1,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 150,
+      "damageType": "incendiary",
+      "radius": 300,
+      "fireMode": "single",
+      "gore": true,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 1000,
+        "bounce": 0.45,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "anm14",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/incendiary_explosion_mp",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "altAttack": {
+      "damage": 200,
+      "radius": 300,
+      "gore": true,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 700,
+        "bounce": 0.25,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "anm14",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/incendiary_explosion_mp",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "explosionSound": "sound/weapons/incendiary_grenade/incen01",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "sounds": {
+      "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
+      "pinPull": "sound/weapons/frag_grenade/pin_pull",
+      "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "toss": "sound/weapons/frag_grenade/throw_idle"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_GRENADE",
+        "source": "grenade_hold_mp",
+        "startFrame": 650,
+        "duration": 2,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_GRENADE_START",
+        "source": "grenade_throw_start_mp",
+        "startFrame": 652,
+        "duration": 23,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_attackEnd": {
+        "name": "TORSO_ATTACK_GRENADE_END",
+        "source": "grenade_throw_end_mp",
+        "startFrame": 675,
+        "duration": 18,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE_ONEHANDED",
+        "source": "weaponready_onehanded_mp",
+        "startFrame": 298,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP_ONEHANDED",
+        "source": "weapondone_onehanded_mp",
+        "startFrame": 292,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "l2a2",
+    "displayName": "L2A2 Grenade",
+    "category": 8,
+    "animatorIndex": 18,
+    "menuImage": "hud/weapon_icons/l2a2_icon",
+    "worldModel": "models/weapons/l2a2/world/l2a2world",
+    "viewModel": "models/weapons/l2a2/l2a2",
+    "isMelee": false,
+    "ammo": {
+      "type": "L2A2",
+      "maxClip": 1,
+      "extraClips": 1,
+      "startClip": 1,
+      "startReserve": 1,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 200,
+      "radius": 300,
+      "knockback": 800,
+      "fireMode": "single",
+      "gore": true,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 1000,
+        "bounce": 0.45,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "l2a2",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/fragment_upward_explosion",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "altAttack": {
+      "damage": 200,
+      "radius": 300,
+      "knockback": 800,
+      "gore": true,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 700,
+        "bounce": 0.25,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "l2a2",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/fragment_explosion",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "sounds": {
+      "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
+      "pinPull": "sound/weapons/frag_grenade/pin_pull",
+      "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "toss": "sound/weapons/frag_grenade/throw_idle"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_GRENADE",
+        "source": "grenade_hold_mp",
+        "startFrame": 650,
+        "duration": 2,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_GRENADE_START",
+        "source": "grenade_throw_start_mp",
+        "startFrame": 652,
+        "duration": 23,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_attackEnd": {
+        "name": "TORSO_ATTACK_GRENADE_END",
+        "source": "grenade_throw_end_mp",
+        "startFrame": 675,
+        "duration": 18,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE_ONEHANDED",
+        "source": "weaponready_onehanded_mp",
+        "startFrame": 298,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP_ONEHANDED",
+        "source": "weapondone_onehanded_mp",
+        "startFrame": 292,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "m15",
+    "displayName": "M15 Phosphorus",
+    "category": 8,
+    "animatorIndex": 19,
+    "menuImage": "hud/weapon_icons/m15_icon",
+    "worldModel": "models/weapons/m15/world/m15world",
+    "viewModel": "models/weapons/m15/m15",
+    "isMelee": false,
+    "ammo": {
+      "type": "M15",
+      "maxClip": 1,
+      "extraClips": 1,
+      "startClip": 1,
+      "startReserve": 1,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 1,
+      "damageType": "phosphorous",
+      "radius": 300,
+      "fireMode": "single",
+      "gore": false,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 1000,
+        "bounce": 0.45,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "m15",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/phosphorus_explosion_mp",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "explosionSound": "sound/weapons/phos_grenade/phos01",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "altAttack": {
+      "damage": 1,
+      "damageType": "phosphorous",
+      "radius": 300,
+      "gore": false,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 700,
+        "bounce": 0.25,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "m15",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/phosphorus_explosion_mp",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "explosionSound": "sound/weapons/phos_grenade/phos01",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "sounds": {
+      "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
+      "pinPull": "sound/weapons/frag_grenade/pin_pull",
+      "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "toss": "sound/weapons/frag_grenade/throw_idle"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_GRENADE",
+        "source": "grenade_hold_mp",
+        "startFrame": 650,
+        "duration": 2,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_GRENADE_START",
+        "source": "grenade_throw_start_mp",
+        "startFrame": 652,
+        "duration": 23,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_attackEnd": {
+        "name": "TORSO_ATTACK_GRENADE_END",
+        "source": "grenade_throw_end_mp",
+        "startFrame": 675,
+        "duration": 18,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE_ONEHANDED",
+        "source": "weaponready_onehanded_mp",
+        "startFrame": 298,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP_ONEHANDED",
+        "source": "weapondone_onehanded_mp",
+        "startFrame": 292,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "mdn11",
+    "displayName": "MDN11 Grenade",
+    "category": 8,
+    "animatorIndex": 20,
+    "menuImage": "hud/weapon_icons/mdn11_icon",
+    "worldModel": "models/weapons/mdn11/world/mdn11world",
+    "viewModel": "models/weapons/mdn11/mdn11",
+    "isMelee": false,
+    "ammo": {
+      "type": "MDN11",
+      "maxClip": 1,
+      "extraClips": 1,
+      "startClip": 1,
+      "startReserve": 1,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 200,
+      "radius": 300,
+      "knockback": 800,
+      "fireMode": "single",
+      "gore": true,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 1000,
+        "bounce": 0.45,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "mdn11",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/fragment_upward_explosion",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "altAttack": {
+      "damage": 200,
+      "radius": 300,
+      "knockback": 800,
+      "gore": true,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 700,
+        "bounce": 0.25,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "mdn11",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/fragment_explosion",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "sounds": {
+      "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
+      "pinPull": "sound/weapons/frag_grenade/pin_pull",
+      "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "toss": "sound/weapons/frag_grenade/throw_idle"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_GRENADE",
+        "source": "grenade_hold_mp",
+        "startFrame": 650,
+        "duration": 2,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_GRENADE_START",
+        "source": "grenade_throw_start_mp",
+        "startFrame": 652,
+        "duration": 23,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_attackEnd": {
+        "name": "TORSO_ATTACK_GRENADE_END",
+        "source": "grenade_throw_end_mp",
+        "startFrame": 675,
+        "duration": 18,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE_ONEHANDED",
+        "source": "weaponready_onehanded_mp",
+        "startFrame": 298,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP_ONEHANDED",
+        "source": "weapondone_onehanded_mp",
+        "startFrame": 292,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "smohg92",
+    "displayName": "SMOHG92 Grenade",
+    "category": 8,
+    "animatorIndex": 21,
+    "menuImage": "hud/weapon_icons/smohg92_icon",
+    "worldModel": "models/weapons/smohg92/world/smohg92world",
+    "viewModel": "models/weapons/smohg92/smohg92",
+    "isMelee": false,
+    "ammo": {
+      "type": "SMOHG92",
+      "maxClip": 1,
+      "extraClips": 1,
+      "startClip": 1,
+      "startReserve": 1,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 200,
+      "radius": 300,
+      "knockback": 800,
+      "fireMode": "single",
+      "gore": true,
+      "volume": 0.9,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 1000,
+        "bounce": 0.45,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "smohg92",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/fragment_explosion",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "altAttack": {
+      "damage": 200,
+      "radius": 300,
+      "knockback": 800,
+      "gore": true,
+      "volume": 0.7,
+      "projectile": {
+        "gravity": 1.0,
+        "speed": 700,
+        "bounce": 0.25,
+        "detonation": "timer",
+        "timer": 3.0,
+        "model": "smohg92",
+        "effect": "effects/grenade_trail",
+        "explosionEffect": "effects/explosions/fragment_explosion",
+        "underwaterEffect": "effects/explosions/water_explosion_under",
+        "waterExplosionEffect": "effects/explosions/water_explosion",
+        "loopSound": "sound/weapons/frag_grenade/in_air"
+      }
+    },
+    "sounds": {
+      "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
+      "pinPull": "sound/weapons/frag_grenade/pin_pull",
+      "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "toss": "sound/weapons/frag_grenade/throw_idle"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_GRENADE",
+        "source": "grenade_hold_mp",
+        "startFrame": 650,
+        "duration": 2,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_GRENADE_START",
+        "source": "grenade_throw_start_mp",
+        "startFrame": 652,
+        "duration": 23,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_attackEnd": {
+        "name": "TORSO_ATTACK_GRENADE_END",
+        "source": "grenade_throw_end_mp",
+        "startFrame": 675,
+        "duration": 18,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE_ONEHANDED",
+        "source": "weaponready_onehanded_mp",
+        "startFrame": 298,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP_ONEHANDED",
+        "source": "weapondone_onehanded_mp",
+        "startFrame": 292,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "mp5",
+    "displayName": "MP5",
+    "category": 4,
+    "animatorIndex": 22,
+    "menuImage": "hud/weapon_icons/mp5_icon",
+    "worldModel": "models/weapons/mp5/world/mp5world",
+    "viewModel": "models/weapons/mp5/mp5",
+    "isMelee": false,
+    "ammo": {
+      "type": "9mm",
+      "maxClip": 30,
+      "extraClips": 3,
+      "startClip": 30,
+      "startReserve": 90,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 60,
+      "range": 8192,
+      "fireMode": "auto",
+      "gore": true,
+      "volume": 0.75,
+      "kickAngles": [ 1, 2.1, -2, 1 ],
+      "inaccuracy": 0.20,
+      "maxInaccuracy": 1.7,
+      "muzzleFlash": "effects/muzzle_flashes/mflash_silencer_mp5",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_m4",
+      "shellCasingEject": "effects/shell_brass_small",
+      "ejectBone": "ejection_mp5",
+      "fireModes": [ "single", "burst", "auto" ]
+    },
+    "sounds": {
+      "fire": [
+        "sound/weapons/mp5/mp5_fire"
+      ],
+      "ready": "sound/weapons/mp5/pull_lever",
+      "clipOut": "sound/weapons/mp5/clipout",
+      "clipIn": "sound/weapons/mp5/clipin",
+      "bolt": "sound/weapons/mp5/pull_lever"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_MSG90A1_ZOOMED",
+        "source": "male01_zoomed_aimmsg90_mp",
+        "startFrame": 1066,
+        "duration": 40,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_MSG90A1_ZOOMED",
+        "source": "male01_zoomed_msg90_fire_mp",
+        "startFrame": 1106,
+        "duration": 5,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE",
+        "source": "weaponready01_mp",
+        "startFrame": 286,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP",
+        "source": "weapondone01_mp",
+        "startFrame": 280,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_reload": {
+        "name": "TORSO_RELOAD_RIFLE",
+        "source": "refillrifle01_mp",
+        "startFrame": 510,
+        "duration": 36,
+        "fps": 20,
+        "loop": false
+      }
+    }
+  },
+  {
+    "id": "silver_talon",
+    "displayName": "Silver Talon",
+    "category": 2,
+    "animatorIndex": 23,
+    "menuImage": "hud/weapon_icons/silver_talon_icon",
+    "menuImageDual": "hud/weapon_icons/silver_talon2_icon",
+    "worldModel": "models/weapons/silver_talon/world/silver_talonworld",
+    "viewModel": "models/weapons/silver_talon/silver_talon",
+    "isMelee": false,
+    "oneHanded": true,
+    "ammo": {
+      "type": ".45 ACP",
+      "maxClip": 7,
+      "extraClips": 4,
+      "startClip": 7,
+      "startReserve": 28,
+      "infinite": false
+    },
+    "attack": {
+      "damage": 100,
+      "range": 8192,
+      "fireMode": "single",
+      "gore": true,
+      "volume": 0.75,
+      "kickAngles": [ 1, 10, -2, 1 ],
+      "inaccuracy": 0.5,
+      "maxInaccuracy": 4.5,
+      "armorPiercing": 0.25,
+      "muzzleFlash": "effects/muzzle_flashes/mflash_silver_talon",
+      "muzzleSmoke": "effects/muzzle_flashes/smoke_m4",
+      "shellCasingEject": "effects/shell_brass_large",
+      "ejectBone": "ejection_m1911"
+    },
+    "altAttack": {
+      "damage": 70,
+      "range": 60,
+      "fireMode": "auto",
+      "gore": false,
+      "volume": 0.0,
+      "melee": "blunt"
+    },
+    "sounds": {
+      "fire": [
+        "sound/weapons/silver_talon/fire",
+        "sound/weapons/silver_talon/firetempcrack"
+      ],
+      "altFire": [
+        "sound/weapons/m1911a1/swing01",
+        "sound/weapons/m1911a1/swing02"
+      ],
+      "hammerBack": "sound/weapons/silver_talon/cock",
+      "clipOut": "sound/weapons/silver_talon/pullout",
+      "clipIn": "sound/weapons/silver_talon/putin",
+      "slideRelease": "sound/weapons/m1911a1/slide"
+    },
+    "animations": {
+      "mp_idle": {
+        "name": "TORSO_IDLE_PISTOL",
+        "source": "pistolsoldierstandaim01_mp",
+        "startFrame": 362,
+        "duration": 40,
+        "fps": 20,
+        "loop": true
+      },
+      "mp_attack": {
+        "name": "TORSO_ATTACK_PISTOL",
+        "source": "pistolsoldierstandfire01_mp",
+        "startFrame": 402,
+        "duration": 2,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_altAttack": {
+        "name": "TORSO_ATTACK_PISTOLWHIP",
+        "source": "pistolwhip_mp",
+        "startFrame": 404,
+        "duration": 21,
+        "fps": 20,
+        "loop": false
+      },
+      "mp_raise": {
+        "name": "TORSO_RAISE_ONEHANDED",
+        "source": "weaponready_onehanded_mp",
+        "startFrame": 298,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_drop": {
+        "name": "TORSO_DROP_ONEHANDED",
+        "source": "weapondone_onehanded_mp",
+        "startFrame": 292,
+        "duration": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "mp_reload": {
+        "name": "TORSO_RELOAD_PISTOL",
+        "source": "refillpistol01_mp",
+        "startFrame": 425,
+        "duration": 29,
+        "fps": 20,
         "loop": false
       }
     }

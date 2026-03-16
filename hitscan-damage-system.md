@@ -215,6 +215,26 @@ Wenn aktiv:
 
 Tracer-Startpunkt: EjectBone der Waffe (z.B. `ejection_m4`), gefunden via `FindDeepChild()`.
 
+### Visual Effects bei Hitscan-Treffern
+
+Neben dem Debug-Tracer werden bei jedem Hitscan-Treffer daten-getriebene Effekte gespawnt:
+
+```
+TracerClientRpc(serverStart, end, hitNormal, tracerEffectId, impactEffectId, debrisEffectId)
+  ├─ TracerVisual.Create()       → Trail von Mündung zum Einschlag
+  ├─ SpawnMuzzleEffect() ×2      → Mündungsfeuer + Rauch
+  ├─ SpawnShellCasing()           → Hülsenauswurf (3D-Modell mit Physik)
+  ├─ SpawnImpactEffect()          → Einschlag-Partikel + Decal
+  └─ SpawnDebris()                → Trümmer-Chunks + Staub-Puff
+```
+
+Die Effect-IDs werden aufgelöst über:
+- `tracerEffectId` ← `WeaponAttackDefinition.TracerEffect`
+- `impactEffectId` ← `SurfaceImpactDataLoader.GetImpactEffectId(surfaceType, ammoType)`
+- `debrisEffectId` ← `SurfaceImpactDataLoader.GetDebrisEffectId(surfaceType, ammoType)`
+
+→ Vollständige Dokumentation: siehe **effect-system.md**
+
 ---
 
 ## fireDelay (noch nicht implementiert)

@@ -70,6 +70,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1b38503a7e98545479f6b3f43908c7ca
+    m_Address: mdn11
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1c92ce631fe5b8b4aae3ab4e8af5b5dc
     m_Address: models/chunks/wood/wood_small
     m_ReadOnly: 0
@@ -82,6 +87,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1eac7eaef928a5a478a4237df0efcf58
     m_Address: models/weapons/shells/shell_shotgun
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 202f4b8c4b055d24abed74941a941ce8
+    m_Address: smohg92
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -115,8 +125,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 36eac69193ff65b43af0d241835aac3e
+    m_Address: m67
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3afb4ed7f713eee45aaceeb7dca37d06
     m_Address: models/chunks/wood/wood_splinter4
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3c95e37f22de9aa4d806893fabae2de9
+    m_Address: ussocom
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -125,13 +145,28 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4e3b8f35f0521db4287aa3df7db4bbe0
+    m_Address: silver_talon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 646fb1bededdb2749beeb6cbcac2fdc7
     m_Address: models/chunks/metal/metal_big
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 68ef1620bf885334b9278c3a63a84197
+    m_Address: m3a1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 69c525f7aabd64145a31c59c5c703574
     m_Address: characters/models/female_armor
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6a27db24074cdd24fa40e7e242e06ac5
+    m_Address: m84
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -190,6 +225,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8cccb0ce51cd5a74590816a1944857be
+    m_Address: l2a2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 90a0ab57043109f4484aa2299f24cad3
+    m_Address: models/weapons/shells/shell_brass_large_hires
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9264ec14d8c84784fbeb8e36a166f3a4
     m_Address: models/chunks/ice/ice_med
     m_ReadOnly: 0
@@ -197,6 +242,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 946cfc264987bfa4db94ad069480e56a
     m_Address: models/animator/loadout_female_pants
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9cbeff14fa3503c4cbc27e5f6035112f
+    m_Address: microuzi
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -225,6 +275,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bcd4f1d7d24ced6419b2ff9ba28c7fe7
+    m_Address: mp5
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: be0359e19fa88f742846db940c2d9e1b
     m_Address: knife
     m_ReadOnly: 0
@@ -250,13 +305,38 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d9ea82bb602589b4680c15d80d60464c
+    m_Address: models/weapons/shells/shell_brass_small_hires
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: db86cabdfd2d1f3469df9dcf905d6884
     m_Address: rpg7
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df6ab89a34766e14b940cc547379bb17
+    m_Address: oicw
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e18b431239260f7408fe1643afd3687b
     m_Address: f1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ecddc9fbd2b5b574f8a26e226136a35f
+    m_Address: m15
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ef78fc725cc187b4283e068b9981766c
+    m_Address: anm14
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa8166f5f5af2d942ba750e1289439da
+    m_Address: sig551
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

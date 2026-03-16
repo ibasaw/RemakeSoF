@@ -75,6 +75,11 @@ Creates `ClientProjectileVisual` with:
 3. Fallback colored sphere + simple trail (if neither available)
 4. Knife-specific end-over-end rotation on `knifeworldbase` bone
 
+### Explosion mit Debris
+Bei Detonation ruft `ClientProjectileVisual.Detonate()` → `EffectFactory.SpawnExplosion(explosionEffectId)` auf.
+Sofern die Explosion Emitter-Segmente enthält, werden physikalische 3D-Debris-Chunks gespawnt.
+→ Vollständige Dokumentation: siehe **effect-system.md**
+
 ## EjectBone Mapping
 - RPG7: `ejection_rpg7`
 - MM1: `ejection_mm1`

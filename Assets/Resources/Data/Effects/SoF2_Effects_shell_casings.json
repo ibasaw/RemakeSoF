@@ -6,15 +6,36 @@
       {
         "name": "shell",
         "type": "emitter",
-        "flags": ["useModel", "usePhysics", "impactKills", "impactFx"],
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
         "emitter": {
           "models": [
             "models/weapons/shells/shell_brass_hires"
           ],
-          "velocityMin": [1.27, -0.254, 2.032],
-          "velocityMax": [2.54, 0.254, 3.048],
-          "angleDeltaMin": [1000, 400, 0],
-          "angleDeltaMax": [2000, 1000, 0],
+          "velocityMin": [
+            1.27,
+            -0.254,
+            2.032
+          ],
+          "velocityMax": [
+            2.54,
+            0.254,
+            3.048
+          ],
+          "angleDeltaMin": [
+            1000,
+            400,
+            0
+          ],
+          "angleDeltaMax": [
+            2000,
+            1000,
+            0
+          ],
           "gravityMin": -15.24,
           "gravityMax": -20.32,
           "bounceMin": 0.2,
@@ -34,15 +55,36 @@
       {
         "name": "shell",
         "type": "emitter",
-        "flags": ["useModel", "usePhysics", "impactKills", "impactFx"],
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
         "emitter": {
           "models": [
             "models/weapons/shells/shell_shotgun_hires"
           ],
-          "velocityMin": [1.27, -0.254, 2.032],
-          "velocityMax": [2.54, 0.254, 3.048],
-          "angleDeltaMin": [1000, 400, 0],
-          "angleDeltaMax": [2000, 1000, 0],
+          "velocityMin": [
+            1.27,
+            -0.254,
+            2.032
+          ],
+          "velocityMax": [
+            2.54,
+            0.254,
+            3.048
+          ],
+          "angleDeltaMin": [
+            1000,
+            400,
+            0
+          ],
+          "angleDeltaMax": [
+            2000,
+            1000,
+            0
+          ],
           "gravityMin": -15.24,
           "gravityMax": -20.32,
           "bounceMin": 0.2,
@@ -51,6 +93,106 @@
           "lifetimeMax": 3.0,
           "cullRange": 7.62,
           "impactFx": "shells/shell_bouce_shotgun"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/shell_brass_large",
+    "displayName": "Large Brass Shell Casing",
+    "segments": [
+      {
+        "type": "emitter",
+        "name": "shell",
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
+        "emitter": {
+          "models": [
+            "models/weapons/shells/shell_brass_large_hires"
+          ],
+          "velocityMin": [
+            -0.254,
+            2.032,
+            1.27
+          ],
+          "velocityMax": [
+            0.254,
+            3.048,
+            2.54
+          ],
+          "angleDeltaMin": [
+            20.0,
+            0.0,
+            50.0
+          ],
+          "angleDeltaMax": [
+            50.0,
+            0.0,
+            100.0
+          ],
+          "gravityMin": -15.24,
+          "gravityMax": -20.32,
+          "bounceMin": 0.2,
+          "bounceMax": 0.4,
+          "lifetimeMin": 10.0,
+          "lifetimeMax": 10.0,
+          "cullRange": 7.62,
+          "impactFx": "shells/shell_bouce_brass_large",
+          "materialImpact": "shellsound"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/shell_brass_small",
+    "displayName": "Small Brass Shell Casing",
+    "segments": [
+      {
+        "type": "emitter",
+        "name": "shell",
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
+        "emitter": {
+          "models": [
+            "models/weapons/shells/shell_brass_small_hires"
+          ],
+          "velocityMin": [
+            -0.254,
+            2.032,
+            1.27
+          ],
+          "velocityMax": [
+            0.254,
+            3.048,
+            2.54
+          ],
+          "angleDeltaMin": [
+            20.0,
+            0.0,
+            50.0
+          ],
+          "angleDeltaMax": [
+            50.0,
+            0.0,
+            100.0
+          ],
+          "gravityMin": -15.24,
+          "gravityMax": -20.32,
+          "bounceMin": 0.2,
+          "bounceMax": 0.4,
+          "lifetimeMin": 10.0,
+          "lifetimeMax": 10.0,
+          "cullRange": 7.62,
+          "impactFx": "shells/shell_bouce_brass_small",
+          "materialImpact": "shellsound"
         }
       }
     ]

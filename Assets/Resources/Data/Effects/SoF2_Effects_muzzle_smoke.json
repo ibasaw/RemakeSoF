@@ -7,7 +7,10 @@
         "name": "smoke",
         "type": "particle",
         "texture": "gfx/misc/jk_smoke2",
-        "flags": ["depthHack", "useAlpha"],
+        "flags": [
+          "depthHack",
+          "useAlpha"
+        ],
         "particle": {
           "countMin": 1,
           "countMax": 1,
@@ -17,9 +20,17 @@
           "rotationMax": 360,
           "rotationSpeedMin": -3,
           "rotationSpeedMax": 3,
-          "velocityMin": [0.127, -0.0508, -0.0508],
-          "velocityMax": [0.254, 0.0508, 0.0508],
-          "gravityModifier": -0.508,
+          "velocityMin": [
+            0.127,
+            -0.0508,
+            -0.0508
+          ],
+          "velocityMax": [
+            0.254,
+            0.0508,
+            0.0508
+          ],
+          "gravityModifier": -0.0518,
           "burst": true
         },
         "alpha": {
@@ -47,7 +58,9 @@
         "name": "smoke",
         "type": "particle",
         "texture": "gfx/misc/jk_smoke2",
-        "flags": ["useAlpha"],
+        "flags": [
+          "useAlpha"
+        ],
         "particle": {
           "countMin": 1,
           "countMax": 1,
@@ -57,9 +70,17 @@
           "rotationMax": 360,
           "rotationSpeedMin": -3,
           "rotationSpeedMax": 3,
-          "velocityMin": [0.127, 0, 0],
-          "velocityMax": [0.254, 0, 0],
-          "gravityModifier": -0.762,
+          "velocityMin": [
+            0.127,
+            0,
+            0
+          ],
+          "velocityMax": [
+            0.254,
+            0,
+            0
+          ],
+          "gravityModifier": -0.0777,
           "burst": true
         },
         "alpha": {
@@ -70,8 +91,16 @@
           "curve": "linear"
         },
         "color": {
-          "startMin": [0.6549, 0.6235, 0.6039],
-          "startMax": [0.6549, 0.6235, 0.6039]
+          "startMin": [
+            0.6549,
+            0.6235,
+            0.6039
+          ],
+          "startMax": [
+            0.6549,
+            0.6235,
+            0.6039
+          ]
         },
         "size": {
           "startMin": 0.0254,
@@ -91,7 +120,9 @@
         "name": "smoke",
         "type": "particle",
         "texture": "gfx/misc/bp_smoke01",
-        "flags": ["useAlpha"],
+        "flags": [
+          "useAlpha"
+        ],
         "particle": {
           "countMin": 2,
           "countMax": 3,
@@ -103,9 +134,17 @@
           "rotationMax": 360,
           "rotationSpeedMin": -7,
           "rotationSpeedMax": 7,
-          "velocityMin": [0.254, -0.1016, -0.1016],
-          "velocityMax": [0.381, 0.1016, 0.1016],
-          "gravityModifier": -0.7,
+          "velocityMin": [
+            0.254,
+            -0.1016,
+            -0.1016
+          ],
+          "velocityMax": [
+            0.381,
+            0.1016,
+            0.1016
+          ],
+          "gravityModifier": -0.0714,
           "burst": true
         },
         "alpha": {
@@ -116,10 +155,26 @@
           "curve": "linear"
         },
         "color": {
-          "startMin": [0.7529, 0.7529, 0.7529],
-          "startMax": [0.6549, 0.6235, 0.6039],
-          "endMin": [0.502, 0.502, 0.502],
-          "endMax": [0.502, 0.502, 0.502]
+          "startMin": [
+            0.7529,
+            0.7529,
+            0.7529
+          ],
+          "startMax": [
+            0.6549,
+            0.6235,
+            0.6039
+          ],
+          "endMin": [
+            0.502,
+            0.502,
+            0.502
+          ],
+          "endMax": [
+            0.502,
+            0.502,
+            0.502
+          ]
         },
         "size": {
           "startMin": 0.0508,
@@ -133,7 +188,9 @@
         "name": "forward_smoke",
         "type": "particle",
         "texture": "gfx/misc/bp_smoke01",
-        "flags": ["useAlpha"],
+        "flags": [
+          "useAlpha"
+        ],
         "particle": {
           "countMin": 1,
           "countMax": 2,
@@ -145,9 +202,17 @@
           "rotationMax": 360,
           "rotationSpeedMin": -6,
           "rotationSpeedMax": 6,
-          "velocityMin": [2.54, -0.0508, -0.0508],
-          "velocityMax": [3.048, 0.0508, 0.0508],
-          "gravityModifier": -0.19,
+          "velocityMin": [
+            2.54,
+            -0.0508,
+            -0.0508
+          ],
+          "velocityMax": [
+            3.048,
+            0.0508,
+            0.0508
+          ],
+          "gravityModifier": -0.0194,
           "burst": true
         },
         "alpha": {
@@ -175,7 +240,9 @@
         "name": "smoke",
         "type": "particle",
         "texture": "gfx/misc/bp_smoke02",
-        "flags": ["useAlpha"],
+        "flags": [
+          "useAlpha"
+        ],
         "particle": {
           "countMin": 1,
           "countMax": 2,
@@ -187,11 +254,27 @@
           "rotationMax": 360,
           "rotationSpeedMin": 9,
           "rotationSpeedMax": 10,
-          "originMin": [0.0254, 0, 0],
-          "originMax": [0.0508, 0, 0],
-          "velocityMin": [0.127, 0, 0],
-          "velocityMax": [0.254, 0, 0],
-          "gravityModifier": -0.89,
+          "originMin": [
+            0.0254,
+            0,
+            0
+          ],
+          "originMax": [
+            0.0508,
+            0,
+            0
+          ],
+          "velocityMin": [
+            0.127,
+            0,
+            0
+          ],
+          "velocityMax": [
+            0.254,
+            0,
+            0
+          ],
+          "gravityModifier": -0.0907,
           "burst": true
         },
         "alpha": {
@@ -202,8 +285,16 @@
           "curve": "linear"
         },
         "color": {
-          "startMin": [0.5059, 0.4627, 0.4392],
-          "startMax": [0.5059, 0.4627, 0.4392]
+          "startMin": [
+            0.5059,
+            0.4627,
+            0.4392
+          ],
+          "startMax": [
+            0.5059,
+            0.4627,
+            0.4392
+          ]
         },
         "size": {
           "startMin": 0.0508,
@@ -217,7 +308,9 @@
         "name": "smoke_up",
         "type": "particle",
         "texture": "gfx/misc/bp_smoke02",
-        "flags": ["useAlpha"],
+        "flags": [
+          "useAlpha"
+        ],
         "particle": {
           "countMin": 1,
           "countMax": 1,
@@ -227,11 +320,27 @@
           "rotationMax": 360,
           "rotationSpeedMin": -6,
           "rotationSpeedMax": 6,
-          "originMin": [0.0254, 0, 0],
-          "originMax": [0.0508, 0, 0],
-          "velocityMin": [0.254, 0, 0],
-          "velocityMax": [0.508, 0, 0],
-          "gravityModifier": -0.889,
+          "originMin": [
+            0.0254,
+            0,
+            0
+          ],
+          "originMax": [
+            0.0508,
+            0,
+            0
+          ],
+          "velocityMin": [
+            0.254,
+            0,
+            0
+          ],
+          "velocityMax": [
+            0.508,
+            0,
+            0
+          ],
+          "gravityModifier": -0.0906,
           "burst": true
         },
         "alpha": {
@@ -242,10 +351,26 @@
           "curve": "linear"
         },
         "color": {
-          "startMin": [0.6745, 0.6745, 0.6745],
-          "startMax": [0.1373, 0.1373, 0.1373],
-          "endMin": [0.5686, 0.5686, 0.5686],
-          "endMax": [0.5686, 0.5686, 0.5686]
+          "startMin": [
+            0.6745,
+            0.6745,
+            0.6745
+          ],
+          "startMax": [
+            0.1373,
+            0.1373,
+            0.1373
+          ],
+          "endMin": [
+            0.5686,
+            0.5686,
+            0.5686
+          ],
+          "endMax": [
+            0.5686,
+            0.5686,
+            0.5686
+          ]
         },
         "size": {
           "startMin": 0.0508,
@@ -265,7 +390,9 @@
         "name": "smoke",
         "type": "particle",
         "texture": "gfx/misc/bp_smoke01",
-        "flags": ["useAlpha"],
+        "flags": [
+          "useAlpha"
+        ],
         "particle": {
           "countMin": 2,
           "countMax": 2,
@@ -277,11 +404,27 @@
           "rotationMax": 360,
           "rotationSpeedMin": -7,
           "rotationSpeedMax": 7,
-          "originMin": [0.0508, 0, 0],
-          "originMax": [0.0762, 0, 0],
-          "velocityMin": [0.127, -0.0508, -0.0508],
-          "velocityMax": [0.254, 0.0508, 0.0508],
-          "gravityModifier": -0.762,
+          "originMin": [
+            0.0508,
+            0,
+            0
+          ],
+          "originMax": [
+            0.0762,
+            0,
+            0
+          ],
+          "velocityMin": [
+            0.127,
+            -0.0508,
+            -0.0508
+          ],
+          "velocityMax": [
+            0.254,
+            0.0508,
+            0.0508
+          ],
+          "gravityModifier": -0.0777,
           "burst": true
         },
         "alpha": {
@@ -292,10 +435,26 @@
           "curve": "linear"
         },
         "color": {
-          "startMin": [0.6549, 0.6235, 0.6039],
-          "startMax": [0.6549, 0.6235, 0.6039],
-          "endMin": [0.502, 0.502, 0.502],
-          "endMax": [0.502, 0.502, 0.502]
+          "startMin": [
+            0.6549,
+            0.6235,
+            0.6039
+          ],
+          "startMax": [
+            0.6549,
+            0.6235,
+            0.6039
+          ],
+          "endMin": [
+            0.502,
+            0.502,
+            0.502
+          ],
+          "endMax": [
+            0.502,
+            0.502,
+            0.502
+          ]
         },
         "size": {
           "startMin": 0.0254,
@@ -303,6 +462,168 @@
           "endMin": 0.127,
           "endMax": 0.1778,
           "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/smoke_oicw",
+    "displayName": "OICW Muzzle Smoke",
+    "segments": [
+      {
+        "type": "particle",
+        "name": "smoke",
+        "texture": "gfx/misc/bp_smoke02",
+        "flags": [
+          "depthHack",
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "evenDistribution",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.5,
+          "delayMin": 0.0,
+          "delayMax": 0.3,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -7.0,
+          "rotationSpeedMax": 7.0,
+          "gravityModifier": -0.0647,
+          "velocityMin": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.254,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.25,
+          "startMax": 0.4,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "curve": "linear"
+        },
+        "size": {
+          "endMin": 0.1016,
+          "endMax": 0.1524,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.6549,
+            0.6235,
+            0.6039
+          ],
+          "startMax": [
+            0.6549,
+            0.6235,
+            0.6039
+          ],
+          "endMin": [
+            0.5686,
+            0.5686,
+            0.5686
+          ],
+          "endMax": [
+            0.5686,
+            0.5686,
+            0.5686
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/smoke_uzi",
+    "displayName": "Micro Uzi Muzzle Smoke",
+    "segments": [
+      {
+        "type": "particle",
+        "name": "smoke",
+        "texture": "gfx/misc/bp_smoke02",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.5,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -7.0,
+          "rotationSpeedMax": 7.0,
+          "gravityModifier": -0.0712,
+          "originMin": [
+            0.0254,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.1524,
+            -0.0762,
+            -0.0762
+          ],
+          "velocityMax": [
+            0.254,
+            0.0762,
+            0.0762
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.45,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0203,
+          "startMax": 0.0356,
+          "endMin": 0.127,
+          "endMax": 0.1778,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.6549,
+            0.6235,
+            0.6039
+          ],
+          "startMax": [
+            0.5059,
+            0.4627,
+            0.4392
+          ],
+          "endMin": [
+            0.5059,
+            0.4627,
+            0.4392
+          ],
+          "endMax": [
+            0.5059,
+            0.4627,
+            0.4392
+          ]
         }
       }
     ]

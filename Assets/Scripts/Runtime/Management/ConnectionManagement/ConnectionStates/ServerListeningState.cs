@@ -55,6 +55,19 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
                     characterState.AddWeapon("m60");
                     characterState.AddWeapon("m1911a1");
                     characterState.AddWeapon("f1");
+                    characterState.AddWeapon("ussocom");
+                    characterState.AddWeapon("m67");
+                    characterState.AddWeapon("microuzi");
+                    characterState.AddWeapon("oicw");
+                    characterState.AddWeapon("m3a1");
+                    characterState.AddWeapon("m84");
+                    characterState.AddWeapon("anm14");
+                    characterState.AddWeapon("l2a2");
+                    characterState.AddWeapon("m15");
+                    characterState.AddWeapon("mdn11");
+                    characterState.AddWeapon("smohg92");
+                    characterState.AddWeapon("mp5");
+                    characterState.AddWeapon("silver_talon");
                     characterState.SetCurrentWeaponName("knife");
                     Debug.Log($"[ServerListeningState] Set CharacterName='{payload.playerName}', SkinName='{payload.skinName}', Weapon='knife', Inventory=[knife, rpg7] for client {clientId}");
                 }
