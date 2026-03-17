@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace Tolik.RemakeSoF.Runtime.SoundManagement
 {
@@ -15,8 +16,59 @@ namespace Tolik.RemakeSoF.Runtime.SoundManagement
     {
         private readonly SoundRegistry m_Registry;
 
+        /// <summary>AudioMixerGroup fuer SFX-Routing (z.B. MasterMixer/SFX).</summary>
+        private AudioMixerGroup m_SfxGroup;
+
+        /// <summary>AudioMixerGroup fuer Music-Routing (z.B. MasterMixer/Music).</summary>
+        private AudioMixerGroup m_MusicGroup;
+
+        /// <summary>AudioMixerGroup fuer SFX (Effect-Sounds, Weapon-Sounds etc.).</summary>
+        public AudioMixerGroup SfxGroup => m_SfxGroup;
+
+        /// <summary>AudioMixerGroup fuer Music.</summary>
+        public AudioMixerGroup MusicGroup => m_MusicGroup;
+
+        /// <summary>
+        /// Setzt den AudioMixer und loest SFX/Music-Gruppen automatisch auf.
+        /// </summary>
+        public void SetMixer(UnityEngine.Audio.AudioMixer mixer)
+        {
+            if (mixer == null)
+            {
+                Debug.LogWarning("[SoundManager] No AudioMixer assigned.");
+                return;
+            }
+
+            AudioMixerGroup[] sfxGroups = mixer.FindMatchingGroups("SFX");
+            if (sfxGroups.Length > 0)
+            {
+                m_SfxGroup = sfxGroups[0];
+            }
+            else
+            {
+                Debug.LogWarning("[SoundManager] SFX group not found in mixer.");
+            }
+
+            AudioMixerGroup[] musicGroups = mixer.FindMatchingGroups("Music");
+            if (musicGroups.Length > 0)
+            {
+                m_MusicGroup = musicGroups[0];
+            }
+            else
+            {
+                Debug.LogWarning("[SoundManager] Music group not found in mixer.");
+            }
+        }
+
         /// <summary>Unterstuetzte Audio-Dateiformate.</summary>
-        private readonly string[] m_SupportedExtensions = { ".wav" };
+        private readonly string[] m_SupportedExtensions = { ".wav", ".mp3" };
+
+        /// <summary>Extension-Mapping fuer SoF2-Kompatibilitaet (.wav ↔ .mp3 Fallback).</summary>
+        private static readonly Dictionary<string, string> s_ExtensionFallbacks = new()
+        {
+            { ".wav", ".mp3" },
+            { ".mp3", ".wav" }
+        };
 
         /// <summary>
         /// Erstellt einen neuen SoundManager und scannt die Sound-Verzeichnisse.
@@ -36,25 +88,40 @@ namespace Tolik.RemakeSoF.Runtime.SoundManagement
         /// </summary>
         private void Initialize(string externalBasePath)
         {
-            // 1. StreamingAssets/sound/ (Build-Pfad)
-            string streamingPath = Path.Combine(Application.streamingAssetsPath, "sound");
-            if (Directory.Exists(streamingPath))
+            // 1. Assets/Art/sound/ (Editor & Build — primaerer Sound-Pfad)
+            string artSoundPath = Path.Combine(Application.dataPath, "Art", "sound");
+            if (Directory.Exists(artSoundPath))
             {
-                ScanSoundDirectory(streamingPath);
+                string artBasePath = Path.Combine(Application.dataPath, "Art");
+                ScanSoundDirectory(artBasePath, artSoundPath);
             }
 
-            // 2. Externer Pfad (Entwicklung: sof2_extract/base)
+            // 2. StreamingAssets/sound/ (Build-Pfad, Fallback)
+            string streamingSoundPath = Path.Combine(Application.streamingAssetsPath, "sound");
+            if (Directory.Exists(streamingSoundPath))
+            {
+                ScanSoundDirectory(Application.streamingAssetsPath, streamingSoundPath);
+            }
+
+            // 3. Externer Pfad (Entwicklung: sof2_extract/base)
+            // Externer Pfad ist bereits das base-Verzeichnis, sound/ liegt darunter
             if (!string.IsNullOrEmpty(externalBasePath) && Directory.Exists(externalBasePath))
             {
-                ScanSoundDirectory(externalBasePath);
+                string externalSoundPath = Path.Combine(externalBasePath, "sound");
+                if (Directory.Exists(externalSoundPath))
+                {
+                    ScanSoundDirectory(externalBasePath, externalSoundPath);
+                }
             }
         }
 
         /// <summary>
-        /// Scannt ein Verzeichnis rekursiv nach .wav-Dateien.
+        /// Scannt ein Verzeichnis rekursiv nach Audio-Dateien (.wav, .mp3).
         /// Keys werden als SoF2-relative Pfade gespeichert (z.B. "sound/weapons/frag_grenade/boom01.wav").
+        /// Zusaetzlich werden Alias-Keys fuer Extension-Fallback registriert (.wav ↔ .mp3).
+        /// keyBasePath bestimmt den Basis-Pfad fuer die Key-Berechnung, scanPath das Scan-Verzeichnis.
         /// </summary>
-        private void ScanSoundDirectory(string basePath)
+        private void ScanSoundDirectory(string keyBasePath, string scanPath)
         {
             List<string> allFiles = new();
 
@@ -62,7 +129,7 @@ namespace Tolik.RemakeSoF.Runtime.SoundManagement
             {
                 try
                 {
-                    string[] files = Directory.GetFiles(basePath, "*" + extension, SearchOption.AllDirectories);
+                    string[] files = Directory.GetFiles(scanPath, "*" + extension, SearchOption.AllDirectories);
                     allFiles.AddRange(files);
                 }
                 catch (Exception ex)
@@ -73,13 +140,26 @@ namespace Tolik.RemakeSoF.Runtime.SoundManagement
 
             foreach (string filePath in allFiles)
             {
-                string key = GetRelativePath(basePath, filePath).Replace('\\', '/');
+                string key = GetRelativePath(keyBasePath, filePath).Replace('\\', '/');
 
                 // Nur registrieren wenn noch nicht vorhanden (StreamingAssets hat Prioritaet)
                 if (!m_Registry.SoundCache.ContainsKey(key))
                 {
                     SoundData data = new(key, filePath, null);
                     m_Registry.RegisterSoundData(data);
+                }
+
+                // SoF2-Alias: .mp3-Datei auch unter .wav-Key registrieren (und umgekehrt)
+                // damit JSON-Referenzen mit .wav auf .mp3-Dateien matchen
+                string extension = Path.GetExtension(key).ToLowerInvariant();
+                if (s_ExtensionFallbacks.TryGetValue(extension, out string altExtension))
+                {
+                    string aliasKey = Path.ChangeExtension(key, altExtension);
+                    if (!m_Registry.SoundCache.ContainsKey(aliasKey))
+                    {
+                        SoundData aliasData = new(aliasKey, filePath, null);
+                        m_Registry.RegisterSoundData(aliasData);
+                    }
                 }
             }
         }

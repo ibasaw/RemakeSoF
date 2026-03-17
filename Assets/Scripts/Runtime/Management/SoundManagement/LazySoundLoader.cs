@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Tolik.RemakeSoF.Runtime.SoundManagement
 {
@@ -45,7 +46,7 @@ namespace Tolik.RemakeSoF.Runtime.SoundManagement
 
             if (!soundData.HasClip())
             {
-                AudioClip clip = LoadWavFromFile(soundData.FilePath, key);
+                AudioClip clip = LoadAudioFromFile(soundData.FilePath, key);
                 if (clip != null)
                 {
                     m_Registry.UpdateSoundData(soundData.Id, clip);
@@ -56,21 +57,49 @@ namespace Tolik.RemakeSoF.Runtime.SoundManagement
         }
 
         /// <summary>
-        /// Laedt eine .wav-Datei und erzeugt einen Unity AudioClip.
-        /// Unterstuetzt Standard-PCM-WAV (8/16/24/32 bit).
+        /// Laedt eine Audio-Datei (.wav oder .mp3) und erzeugt einen Unity AudioClip.
+        /// WAV: Custom PCM Decoder (8/16/24/32 bit).
+        /// MP3: Unity UnityWebRequestMultimedia.
         /// </summary>
-        private AudioClip LoadWavFromFile(string filePath, string clipName)
+        private AudioClip LoadAudioFromFile(string filePath, string clipName)
         {
             try
             {
+                string extension = Path.GetExtension(filePath).ToLowerInvariant();
+                if (extension == ".mp3")
+                {
+                    return LoadMp3FromFile(filePath);
+                }
+
                 byte[] fileData = File.ReadAllBytes(filePath);
                 return DecodeWav(fileData, clipName);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[LazySoundLoader] Error loading WAV from {filePath}: {ex.Message}");
+                Debug.LogError($"[LazySoundLoader] Error loading audio from {filePath}: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Laedt eine MP3-Datei ueber UnityWebRequestMultimedia (synchroner Aufruf via file://).
+        /// </summary>
+        private static AudioClip LoadMp3FromFile(string filePath)
+        {
+            string fileUri = "file:///" + filePath.Replace('\\', '/');
+            using UnityWebRequest request = UnityWebRequestMultimedia.GetAudioClip(fileUri, AudioType.MPEG);
+            UnityWebRequestAsyncOperation operation = request.SendWebRequest();
+
+            // Synchron warten (laeuft auf Main Thread, file:// blockiert nicht lange)
+            while (!operation.isDone) { }
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError($"[LazySoundLoader] MP3 load failed: {filePath} — {request.error}");
+                return null;
+            }
+
+            return DownloadHandlerAudioClip.GetContent(request);
         }
 
         /// <summary>

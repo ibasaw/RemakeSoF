@@ -595,6 +595,7 @@ MonoBehaviour:
   m_AuthenticationManager: {fileID: 1196544830}
   m_PlayerSkinManager: {fileID: 1490455696}
   m_ConsoleManager: {fileID: 1346477825}
+  m_MasterMixer: {fileID: 24100000, guid: 35b35eacbfe2fac489c15d963aba1963, type: 2}
   MinPlayers: 0
   MaxPlayers: 10
 --- !u!1 &1410529643

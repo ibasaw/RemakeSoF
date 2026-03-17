@@ -13,6 +13,7 @@ using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.ConsoleManagement;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
 using Tolik.RemakeSoF.Runtime.SoundManagement;
+using UnityEngine.Audio;
 
 namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 {
@@ -47,6 +48,10 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         [SerializeField]
         ConsoleManager m_ConsoleManager;
         public ConsoleManager ConsoleManager => m_ConsoleManager;
+
+        /// <summary>MasterMixer fuer Audio-Routing (SFX/Music-Gruppen werden automatisch aufgeloest).</summary>
+        [SerializeField]
+        UnityEngine.Audio.AudioMixer m_MasterMixer;
 
         [SerializeField]
         internal int MinPlayers = 1;
@@ -151,6 +156,7 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                         ServiceLocator.Register(effectDataLoader);
 
                         SoundManager soundManager = new();
+                        soundManager.SetMixer(m_MasterMixer);
                         ServiceLocator.Register(soundManager);
 
                         EffectFactory effectFactory = new();

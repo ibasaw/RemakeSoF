@@ -932,7 +932,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
 
         /// <summary>
         /// Spielt einen 3D-Sound an der angegebenen Position ab.
-        /// Waehlt zufaellig eine der Sound-Dateien aus und spielt sie per AudioSource.PlayClipAtPoint.
+        /// Waehlt zufaellig eine der Sound-Dateien aus und spielt sie ueber eine temporaere AudioSource.
+        /// Routet den Sound ueber die SFX AudioMixerGroup des SoundManagers.
         /// Optional verzoegert (SoF2 Sound delay).
         /// </summary>
         private static void PlayEffectSound(Vector3 position, EffectSegment segment)
@@ -940,12 +941,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             EffectSoundDefinition def = segment?.Sound;
             if (def?.Files == null || def.Files.Count == 0)
             {
+                Debug.LogWarning("[EffectFactory] PlayEffectSound: No sound files in segment.");
                 return;
             }
 
             SoundManager soundManager = ServiceLocator.Get<SoundManager>();
             if (soundManager == null)
             {
+                Debug.LogWarning("[EffectFactory] PlayEffectSound: SoundManager not found in ServiceLocator.");
                 return;
             }
 
@@ -954,24 +957,33 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             AudioClip clip = soundManager.GetClip(soundPath);
             if (clip == null)
             {
+                Debug.LogWarning($"[EffectFactory] PlayEffectSound: Clip null for '{soundPath}'. HasSound={soundManager.HasSound(soundPath)}");
                 return;
+            }
+
+            // Temporaeres GameObject mit AudioSource fuer 3D-Sound + Mixer-Routing
+            GameObject soundObj = new("EffectSound");
+            soundObj.transform.position = position;
+            AudioSource source = soundObj.AddComponent<AudioSource>();
+            source.clip = clip;
+            source.spatialBlend = 1f;
+            source.playOnAwake = false;
+
+            // SFX Mixer Group zuweisen (falls vorhanden)
+            if (soundManager.SfxGroup != null)
+            {
+                source.outputAudioMixerGroup = soundManager.SfxGroup;
             }
 
             if (def.Delay > 0f)
             {
-                // Verzoegerter Sound: temporaeres GameObject mit AudioSource
-                GameObject soundObj = new("EffectSound");
-                soundObj.transform.position = position;
-                AudioSource source = soundObj.AddComponent<AudioSource>();
-                source.clip = clip;
-                source.spatialBlend = 1f;
-                source.playOnAwake = false;
                 source.PlayDelayed(def.Delay);
                 Object.Destroy(soundObj, def.Delay + clip.length + 0.5f);
             }
             else
             {
-                AudioSource.PlayClipAtPoint(clip, position);
+                source.Play();
+                Object.Destroy(soundObj, clip.length + 0.5f);
             }
         }
 
