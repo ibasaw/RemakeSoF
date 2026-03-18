@@ -88,6 +88,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private ClientCharacterSkinHandler m_SkinHandler;
 
         /// <summary>
+        /// Footstep/Landing-Sound-Handler. Spielt surface-abhaengige Sounds ab.
+        /// </summary>
+        private ClientFootstepHandler m_FootstepHandler;
+
+        /// <summary>
         /// NetworkedCharacterState-Referenz fuer Waffen-Sync (OnWeaponChanged).
         /// </summary>
         [SerializeField]
@@ -826,6 +831,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // SoF2-Physik-Pipeline via Shared Simulation (Client-Side Prediction).
             RunPhysicsStep();
 
+            // FootstepHandler-State aktualisieren (fuer timer-basierte Footstep-Ausloesung)
+            if (m_FootstepHandler != null)
+            {
+                m_FootstepHandler.IsWalking = m_IsWalkingPressed;
+                m_FootstepHandler.FallHeight = m_Simulation.FullFallHeight;
+                m_FootstepHandler.IsGrounded = m_Simulation.IsGrounded;
+                Vector3 vel = m_Simulation.Velocity;
+                m_FootstepHandler.HorizontalSpeed = new Vector2(vel.x, vel.z).magnitude;
+            }
+
+            // Landing-Sound abspielen wenn Spieler gerade gelandet ist
+            CheckLandingSound();
+
             UpdateAnimationState();
         }
 
@@ -1112,6 +1130,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_RightFoot = FindDeepChild(visualInstance.transform, "rtarsal");
             m_VisualInstance = visualInstance.transform;
             m_HasBindPoseReference = false;
+
+            // FootstepHandler auf dem Animator-GO initialisieren (AnimationEvents feuern dort)
+            Animator visualAnimator = visualInstance.GetComponentInChildren<Animator>();
+            if (visualAnimator != null)
+            {
+                m_FootstepHandler = visualAnimator.gameObject.GetComponent<ClientFootstepHandler>();
+                if (m_FootstepHandler == null)
+                {
+                    m_FootstepHandler = visualAnimator.gameObject.AddComponent<ClientFootstepHandler>();
+                }
+                m_FootstepHandler.Initialize(transform);
+            }
 
             // SmoothedLegsForward initialisieren auf aktuelle Blickrichtung
             Vector3 initialForward = yaw.forward;
@@ -1946,6 +1976,48 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             // In NetworkVariable schreiben + lokal auf Animator anwenden
             m_NetworkedPlayerCharacter.WriteAnimationState(state);
+        }
+
+        // ===== Footstep / Landing Sounds =====
+
+        /// <summary>
+        /// AnimationEvent-Stub: Footstep — verhindert "no receiver" Warnungen
+        /// falls Events zum Root-GO propagieren. Tatsaechliche Logik in ClientFootstepHandler.
+        /// </summary>
+        private void OnFootstep(AnimationEvent animationEvent) { }
+
+        /// <summary>
+        /// AnimationEvent-Stub: Land — verhindert "no receiver" Warnungen
+        /// falls Events zum Root-GO propagieren. Tatsaechliche Logik in CheckLandingSound.
+        /// </summary>
+        private void OnLand(AnimationEvent animationEvent) { }
+
+        /// <summary>
+        /// Prueft ob der Spieler gerade gelandet ist und spielt den passenden Landing-Sound.
+        /// SoF2 unterscheidet: "land" (leicht), "land_pain" (mittel, Fallhoehe > 3m), "land_death" (toedlich, > 10m).
+        /// Nutzt FullFallHeight (wird vor Reset gespeichert, CurrentFallHeight ist bereits 0).
+        /// </summary>
+        private void CheckLandingSound()
+        {
+            if (!m_Simulation.JustLanded || m_FootstepHandler == null)
+            {
+                return;
+            }
+
+            float fallHeight = m_Simulation.FullFallHeight;
+
+            if (fallHeight > 10f)
+            {
+                m_FootstepHandler.PlayLanding("land_death");
+            }
+            else if (fallHeight > 3f)
+            {
+                m_FootstepHandler.PlayLanding("land_pain");
+            }
+            else
+            {
+                m_FootstepHandler.PlayLanding("land");
+            }
         }
 
         /// <summary>

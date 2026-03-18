@@ -7,6 +7,7 @@ using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
 using Tolik.RemakeSoF.Runtime.Game.Projectiles;
+using Tolik.RemakeSoF.Runtime.SoundManagement;
 using Tolik.RemakeSoF.Runtime.WeaponManagement;
 using Unity.Netcode;
 using UnityEngine;
@@ -669,12 +670,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             Vector3 aimRight = aimRotation * Vector3.right;
             Vector3 aimUp = aimRotation * Vector3.up;
 
-            // Muzzle-Effekte (Flash, Smoke, Shell) einmal pro Schuss an alle Clients
+            // Shellsound: Surface unter dem Schuetzen bestimmt Huelsen-Aufprall-Sound
+            string shellsoundPath = "";
+            SurfaceImpactDataLoader shellSurfaceLoader = ServiceLocator.Get<SurfaceImpactDataLoader>();
+            if (shellSurfaceLoader != null)
+            {
+                string shooterSurface = DetectSurfaceAtPosition(transform.position);
+                shellsoundPath = shellSurfaceLoader.GetShellsoundPath(shooterSurface, ammoType);
+            }
+
+            // Muzzle-Effekte (Flash, Smoke, Shell, Shellsound) einmal pro Schuss an alle Clients
             MuzzleEffectsClientRpc(
                 attackDef.MuzzleFlash ?? "",
                 attackDef.MuzzleSmoke ?? "",
                 attackDef.ShellCasingEject ?? "",
-                attackDef.EjectBone ?? ""
+                attackDef.EjectBone ?? "",
+                shellsoundPath
             );
 
             for (int i = 0; i < pelletCount; i++)
@@ -697,6 +708,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 Vector3 impactNormal = Vector3.zero;
                 string impactEffectId = "";
                 string debrisEffectId = "";
+                string impactSoundPath = "";
 
                 if (hitboxDist <= worldDist && didHit)
                 {
@@ -719,6 +731,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     {
                         impactEffectId = surfaceLoader.GetImpactEffectId(surfaceType, ammoType);
                         debrisEffectId = surfaceLoader.GetDebrisEffectId(surfaceType, ammoType);
+                        impactSoundPath = surfaceLoader.GetImpactSoundPath(surfaceType, ammoType);
                     }
                 }
                 else
@@ -748,7 +761,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
                 // Tracer + Impact pro Pellet an alle Clients senden
                 string tracerEffectId = attackDef.TracerEffect ?? "";
-                TracerClientRpc(eyePos, hitPoint, impactNormal, tracerEffectId, impactEffectId, debrisEffectId);
+                TracerClientRpc(eyePos, hitPoint, impactNormal, tracerEffectId, impactEffectId, debrisEffectId, impactSoundPath);
             }
 
             // Eigenen Collider wieder aktivieren
@@ -899,7 +912,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 attackDef.MuzzleFlash ?? "",
                 attackDef.MuzzleSmoke ?? "",
                 attackDef.ShellCasingEject ?? "",
-                attackDef.EjectBone ?? ""
+                attackDef.EjectBone ?? "",
+                ""
             );
 
             SpawnProjectile(eyePos, aimDirection, attackDef, projDef);
@@ -1141,7 +1155,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         [Rpc(SendTo.Everyone)]
         private void TracerClientRpc(Vector3 serverStart, Vector3 end, Vector3 hitNormal,
-            string tracerEffectId, string impactEffectId, string debrisEffectId)
+            string tracerEffectId, string impactEffectId, string debrisEffectId, string impactSoundPath)
         {
             // EjectBone der aktuellen Waffe als Tracer-Startpunkt suchen
             Vector3 tracerStart = serverStart;
@@ -1180,6 +1194,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     effectFactory?.SpawnDebris(end, impactRotation, debrisEffectId);
                 }
 
+                // Impact-Sound an der Einschlagstelle abspielen (z.B. blunt/melee Munitionstypen)
+                if (!string.IsNullOrEmpty(impactSoundPath))
+                {
+                    SoundManager soundManager = ServiceLocator.Get<SoundManager>();
+                    if (soundManager != null)
+                    {
+                        AudioClip impactClip = soundManager.GetNumberedClip(impactSoundPath);
+                        if (impactClip != null)
+                        {
+                            PlayImpactSoundAtPosition(impactClip, end, soundManager);
+                        }
+                    }
+                }
+
                 // Debug-HUD: Surface-Typ aus impactEffectId extrahieren (nur fuer lokalen Spieler)
                 if (IsOwner)
                 {
@@ -1200,6 +1228,48 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 Debug.DrawLine(tracerStart, end, Color.red, TRACER_DURATION);
                 CreateDebugTracerLine(tracerStart, end);
             }
+        }
+
+        /// <summary>
+        /// Spielt einen Impact-Sound als 3D-Sound an der angegebenen Position.
+        /// Fuer Munitionstypen mit dediziertem Impact-Sound (z.B. "blunt": Pistolenschlag).
+        /// Routet ueber die SFX MixerGroup des SoundManagers.
+        /// </summary>
+        private static void PlayImpactSoundAtPosition(AudioClip clip, Vector3 position, SoundManager soundManager)
+        {
+            GameObject soundObj = new("ImpactSoundFX");
+            soundObj.transform.position = position;
+            AudioSource source = soundObj.AddComponent<AudioSource>();
+            source.clip = clip;
+            source.spatialBlend = 1f;
+            source.playOnAwake = false;
+            source.maxDistance = 20f;
+            source.rolloffMode = AudioRolloffMode.Linear;
+
+            if (soundManager.SfxGroup != null)
+            {
+                source.outputAudioMixerGroup = soundManager.SfxGroup;
+            }
+
+            source.Play();
+            Destroy(soundObj, clip.length + 0.1f);
+        }
+
+        /// <summary>
+        /// Erkennt den Oberflaechen-Typ unter einer gegebenen Position per Raycast nach unten.
+        /// Gibt den SurfaceType-String zurueck oder "default" falls kein SurfaceTypeMarker gefunden.
+        /// </summary>
+        private static string DetectSurfaceAtPosition(Vector3 position)
+        {
+            if (Physics.Raycast(position, Vector3.down, out RaycastHit hit, 3f))
+            {
+                SurfaceTypeMarker marker = hit.collider.GetComponentInParent<SurfaceTypeMarker>();
+                if (marker != null)
+                {
+                    return marker.SurfaceType;
+                }
+            }
+            return "default";
         }
 
         /// <summary>
@@ -1231,7 +1301,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         [Rpc(SendTo.Everyone)]
         private void MuzzleEffectsClientRpc(string muzzleFlashId, string muzzleSmokeId,
-            string shellCasingId, string ejectBoneName)
+            string shellCasingId, string ejectBoneName, string shellsoundPath)
         {
             if (m_Animator == null)
             {
@@ -1285,6 +1355,36 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             if (!string.IsNullOrEmpty(shellCasingId))
             {
                 effectFactory.SpawnShellCasing(ejectBone.position, ejectBone.rotation, shellCasingId);
+            }
+
+            // Shellsound nahe Schuetze abspielen (Huelse trifft Boden)
+            if (!string.IsNullOrEmpty(shellsoundPath))
+            {
+                SoundManager soundManager = ServiceLocator.Get<SoundManager>();
+                if (soundManager != null)
+                {
+                    AudioClip shellClip = soundManager.GetNumberedClip(shellsoundPath);
+                    if (shellClip != null)
+                    {
+                        Vector3 shellPos = ejectBone.position;
+                        GameObject soundObj = new("ShellsoundFX");
+                        soundObj.transform.position = shellPos;
+                        AudioSource source = soundObj.AddComponent<AudioSource>();
+                        source.clip = shellClip;
+                        source.spatialBlend = 1f;
+                        source.playOnAwake = false;
+                        source.maxDistance = 20f;
+                        source.rolloffMode = AudioRolloffMode.Linear;
+
+                        if (soundManager.SfxGroup != null)
+                        {
+                            source.outputAudioMixerGroup = soundManager.SfxGroup;
+                        }
+
+                        source.Play();
+                        Destroy(soundObj, shellClip.length + 0.1f);
+                    }
+                }
             }
         }
 
@@ -1384,11 +1484,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Muzzle-Effekte fuer Hitscan-AltAttack (falls definiert)
             if (altAttackDef != null)
             {
+                string altShellsoundPath = "";
+                string altAmmoTypeForShell = weapon?.AltAttack?.Ammo?.Type ?? weapon?.Ammo?.Type ?? "";
+                if (!string.IsNullOrEmpty(altAmmoTypeForShell))
+                {
+                    string shooterSurface = DetectSurfaceAtPosition(transform.position);
+                    SurfaceImpactDataLoader shellLoader = ServiceLocator.Get<SurfaceImpactDataLoader>();
+                    if (shellLoader != null)
+                    {
+                        altShellsoundPath = shellLoader.GetShellsoundPath(shooterSurface, altAmmoTypeForShell);
+                    }
+                }
+
                 MuzzleEffectsClientRpc(
                     altAttackDef.MuzzleFlash ?? "",
                     altAttackDef.MuzzleSmoke ?? "",
                     altAttackDef.ShellCasingEject ?? "",
-                    altAttackDef.EjectBone ?? ""
+                    altAttackDef.EjectBone ?? "",
+                    altShellsoundPath
                 );
             }
 
@@ -1415,6 +1528,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 Vector3 impactNormal = Vector3.zero;
                 string impactEffectId = "";
                 string debrisEffectId = "";
+                string impactSoundPath = "";
 
                 if (hitboxDist <= worldDist && didHit)
                 {
@@ -1435,6 +1549,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     {
                         impactEffectId = surfaceLoader.GetImpactEffectId(surfaceType, altAmmoType);
                         debrisEffectId = surfaceLoader.GetDebrisEffectId(surfaceType, altAmmoType);
+                        impactSoundPath = surfaceLoader.GetImpactSoundPath(surfaceType, altAmmoType);
                     }
                 }
                 else
@@ -1463,7 +1578,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_ServerPlayerCharacter.SetPhysicsColliderEnabled(true);
 
                 string altTracerEffectId = altAttackDef.TracerEffect ?? "";
-                TracerClientRpc(eyePos, hitPoint, impactNormal, altTracerEffectId, impactEffectId, debrisEffectId);
+                TracerClientRpc(eyePos, hitPoint, impactNormal, altTracerEffectId, impactEffectId, debrisEffectId, impactSoundPath);
             }
 
             // KickAngles: Rueckstoss an Owner-Client senden (falls definiert)

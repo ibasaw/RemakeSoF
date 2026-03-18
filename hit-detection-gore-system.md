@@ -378,7 +378,7 @@ head_side_l, head_side_r
 - **High Death**: Tod + massives Gore + Kinderzonen fliegen mit
 
 ### 6.3 Waffen-Gore-Flag
-Aus `SoF2_Weapons.json`: `mp_gore: false/true` — kontrolliert ob die Waffe Gore auslöst.
+Aus `SoF2_Weapons_new.json`: `mp_gore: false/true` — kontrolliert ob die Waffe Gore auslöst.
 
 ---
 

@@ -193,6 +193,58 @@ namespace Tolik.RemakeSoF.Runtime.SoundManagement
         }
 
         /// <summary>
+        /// Gibt einen zufaelligen AudioClip fuer einen SoF2-Basispfad mit Nummern-Suffixen zurueck.
+        /// SoF2-Konvention: "sound/player/steps/concrete/concrete" → concrete0.wav, concrete1.wav, etc.
+        /// Probiert Suffixe 0-7 mit .wav und .mp3 und waehlt zufaellig einen der gefundenen Clips.
+        /// </summary>
+        public AudioClip GetNumberedClip(string basePath)
+        {
+            if (string.IsNullOrEmpty(basePath))
+            {
+                return null;
+            }
+
+            // Varianten sammeln (max 8 Nummern × 2 Extensions)
+            List<string> found = new();
+            for (int i = 0; i < 8; i++)
+            {
+                string wavKey = basePath + i + ".wav";
+                if (m_Registry.SoundCache.ContainsKey(wavKey))
+                {
+                    found.Add(wavKey);
+                    continue;
+                }
+
+                string mp3Key = basePath + i + ".mp3";
+                if (m_Registry.SoundCache.ContainsKey(mp3Key))
+                {
+                    found.Add(mp3Key);
+                }
+            }
+
+            if (found.Count == 0)
+            {
+                // Fallback: manche SoF2-Sounds haben keine Nummern-Suffixe (z.B. Landing-Sounds)
+                string wavDirect = basePath + ".wav";
+                if (m_Registry.SoundCache.ContainsKey(wavDirect))
+                {
+                    return GetClip(wavDirect);
+                }
+
+                string mp3Direct = basePath + ".mp3";
+                if (m_Registry.SoundCache.ContainsKey(mp3Direct))
+                {
+                    return GetClip(mp3Direct);
+                }
+
+                return null;
+            }
+
+            string chosen = found[UnityEngine.Random.Range(0, found.Count)];
+            return GetClip(chosen);
+        }
+
+        /// <summary>
         /// Loescht den Cache und alle geladenen AudioClips.
         /// </summary>
         public void ClearCache()
