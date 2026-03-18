@@ -4,7 +4,7 @@
     "displayName": "Knife",
     "category": 1,
     "animatorIndex": 0,
-    "menuImage": "hud/weapon_icons/knife_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/knife_icon",
     "worldModel": "models/weapons/knife/world/knifeworld",
     "viewModel": "models/weapons/knife/knife",
     "isMelee": true,
@@ -21,7 +21,7 @@
       "range": 60,
       "fireMode": "auto",
       "gore": false,
-      "volume": 0.1
+      "volume": 1
     },
     "altAttack": {
       "damage": 80,
@@ -32,7 +32,6 @@
         "speed": 1100,
         "detonation": "sticky",
         "model": "knife",
-        "objectType": "knife",
         "loopSound": "sound/weapons/knife/throw_loop"
       }
     },
@@ -93,7 +92,7 @@
     "displayName": "RPG-7",
     "category": 7,
     "animatorIndex": 1,
-    "menuImage": "hud/weapon_icons/rpg7_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/rpg7_icon",
     "worldModel": "models/weapons/rpg7/world/rpg7world",
     "viewModel": "models/weapons/rpg7/rpg7",
     "isMelee": false,
@@ -112,7 +111,12 @@
       "fireMode": "single",
       "gore": true,
       "volume": 1.0,
-      "kickAngles": [ 1, 5, -2, 1 ],
+      "kickAngles": [
+        1,
+        5,
+        -2,
+        1
+      ],
       "ejectBone": "ejection_rpg7",
       "muzzleFlash": "effects/muzzle_flashes/mflash_rpg7",
       "muzzleSmoke": "effects/muzzle_flashes/smoke_mm1",
@@ -129,7 +133,8 @@
     },
     "sounds": {
       "fire": "sound/weapons/rpg7/fire01",
-      "ready": "sound/weapons/rpg7/ready"
+      "ready": "sound/weapons/rpg7/ready",
+      "empty": "sound/weapons/rpg7/empty"
     },
     "animations": {
       "mp_idle": {
@@ -179,7 +184,7 @@
     "displayName": "M4",
     "category": 5,
     "animatorIndex": 2,
-    "menuImage": "hud/weapon_icons/m4_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/m4_icon",
     "worldModel": "models/weapons/m4/world/m4world",
     "viewModel": "models/weapons/m4/m4",
     "isMelee": false,
@@ -197,7 +202,12 @@
       "fireMode": "auto",
       "gore": true,
       "volume": 0.8,
-      "kickAngles": [ 1, 3, -2, 1 ],
+      "kickAngles": [
+        1,
+        3,
+        -2,
+        1
+      ],
       "inaccuracy": 0.12,
       "maxInaccuracy": 2.15,
       "muzzleFlash": "effects/muzzle_flashes/mflash_m4",
@@ -205,7 +215,11 @@
       "shellCasingEject": "effects/shell_brass",
       "ejectBone": "ejection_m4",
       "tracerEffect": "effects/tracerTest2",
-      "fireModes": [ "single", "burst", "auto" ]
+      "fireModes": [
+        "single",
+        "burst",
+        "auto"
+      ]
     },
     "altAttack": {
       "damage": 101,
@@ -213,7 +227,12 @@
       "knockback": 900,
       "gore": true,
       "volume": 0.8,
-      "kickAngles": [ 1, 6, -2, 1 ],
+      "kickAngles": [
+        1,
+        6,
+        -2,
+        1
+      ],
       "muzzleFlash": "effects/muzzle_flashes/mflash_mm1",
       "muzzleSmoke": "effects/muzzle_flashes/smoke_mm1",
       "projectile": {
@@ -244,7 +263,8 @@
       "clipOut": "sound/weapons/m4/clip_eject",
       "clipIn": "sound/weapons/m4/clip_insert",
       "boltPull": "sound/weapons/m4/bolt_pull",
-      "boltRelease": "sound/weapons/m4/bolt_release"
+      "boltRelease": "sound/weapons/m4/bolt_release",
+      "empty": "sound/weapons/m4/empty"
     },
     "animations": {
       "mp_idle": {
@@ -294,7 +314,7 @@
     "displayName": "AK-74",
     "category": 5,
     "animatorIndex": 3,
-    "menuImage": "hud/weapon_icons/ak74_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/ak74_icon",
     "worldModel": "models/weapons/ak74/world/ak74world",
     "viewModel": "models/weapons/ak74/ak74",
     "isMelee": false,
@@ -312,7 +332,12 @@
       "fireMode": "auto",
       "gore": true,
       "volume": 0.8,
-      "kickAngles": [ 1, 3, -2, 1 ],
+      "kickAngles": [
+        1,
+        3,
+        -2,
+        1
+      ],
       "inaccuracy": 0.18,
       "maxInaccuracy": 2.5,
       "muzzleFlash": "effects/muzzle_flashes/mflash_ak74",
@@ -320,7 +345,11 @@
       "shellCasingEject": "effects/shell_brass",
       "ejectBone": "ejection_ak74",
       "tracerEffect": "effects/tracerTest2",
-      "fireModes": [ "single", "burst", "auto" ]
+      "fireModes": [
+        "single",
+        "burst",
+        "auto"
+      ]
     },
     "altAttack": {
       "damage": 75,
@@ -343,7 +372,8 @@
       "clipOut": "sound/weapons/ak74/eject_clip",
       "clipIn": "sound/weapons/ak74/new_clip",
       "slideRelease": "sound/weapons/ak74/slide_release",
-      "slap": "sound/weapons/ak74/slap"
+      "slap": "sound/weapons/ak74/slap",
+      "empty": "sound/weapons/ak74/empty"
     },
     "animations": {
       "mp_idle": {
@@ -401,7 +431,7 @@
     "displayName": "MM-1",
     "category": 7,
     "animatorIndex": 4,
-    "menuImage": "hud/weapon_icons/mm1_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/mm1_icon",
     "worldModel": "models/weapons/mm1/world/mm1world",
     "viewModel": "models/weapons/mm1/mm1",
     "isMelee": false,
@@ -421,7 +451,12 @@
       "fireDelay": 350,
       "gore": true,
       "volume": 0.9,
-      "kickAngles": [ 1, 12, -2, 1 ],
+      "kickAngles": [
+        1,
+        12,
+        -2,
+        1
+      ],
       "ejectBone": "ejection_mm1",
       "muzzleFlash": "effects/muzzle_flashes/mflash_mm1",
       "muzzleSmoke": "effects/muzzle_flashes/smoke_mm1",
@@ -442,7 +477,8 @@
       "ready": "sound/weapons/mm1/ready",
       "drumOpen": "sound/weapons/mm1/open_chamber",
       "drumClose": "sound/weapons/mm1/close_chamber",
-      "reload": "sound/weapons/mm1/grenade_load"
+      "reload": "sound/weapons/mm1/grenade_load",
+      "empty": "sound/weapons/mm1/empty"
     },
     "animations": {
       "mp_idle": {
@@ -508,7 +544,7 @@
     "displayName": "M590",
     "category": 3,
     "animatorIndex": 5,
-    "menuImage": "hud/weapon_icons/m590_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/m590_icon",
     "worldModel": "models/weapons/m590/world/m590world",
     "viewModel": "models/weapons/m590/m590",
     "isMelee": false,
@@ -528,7 +564,12 @@
       "fireMode": "single",
       "gore": true,
       "volume": 0.8,
-      "kickAngles": [ 1, 8, -2, 1 ],
+      "kickAngles": [
+        1,
+        8,
+        -2,
+        1
+      ],
       "inaccuracy": 3.0,
       "maxInaccuracy": 3.0,
       "muzzleFlash": "effects/mflash_m590",
@@ -549,7 +590,8 @@
       "ready": "sound/weapons/m590/gun_flip",
       "pumpBack": "sound/weapons/m590/pump1",
       "pumpForward": "sound/weapons/m590/pump2",
-      "reload": "sound/weapons/m590/reload_shells"
+      "reload": "sound/weapons/m590/reload_shells",
+      "empty": "sound/weapons/m590/empty"
     },
     "animations": {
       "mp_idle": {
@@ -623,7 +665,7 @@
     "displayName": "USAS-12",
     "category": 3,
     "animatorIndex": 6,
-    "menuImage": "hud/weapon_icons/usas12_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/usas12_icon",
     "worldModel": "models/weapons/usas12/world/usas12world",
     "viewModel": "models/weapons/usas12/usas12",
     "isMelee": false,
@@ -644,14 +686,22 @@
       "fireDelay": 75,
       "gore": true,
       "volume": 0.8,
-      "kickAngles": [ 1, 9, -2, 1 ],
+      "kickAngles": [
+        1,
+        9,
+        -2,
+        1
+      ],
       "inaccuracy": 3.5,
       "maxInaccuracy": 3.5,
       "muzzleFlash": "effects/mflash_usas12",
       "muzzleSmoke": "effects/muzzle_flashes/smoke_usas12",
       "shellCasingEject": "effects/shell_shotgun",
       "ejectBone": "ejection_usas12",
-      "fireModes": [ "single", "auto" ]
+      "fireModes": [
+        "single",
+        "auto"
+      ]
     },
     "sounds": {
       "fire": [
@@ -661,7 +711,8 @@
       "ready": "sound/weapons/usas12/ready",
       "slideRelease": "sound/weapons/usas12/slide_release",
       "clipOut": "sound/weapons/usas12/snapout",
-      "clipIn": "sound/weapons/usas12/snapin"
+      "clipIn": "sound/weapons/usas12/snapin",
+      "empty": "sound/weapons/usas12/empty"
     },
     "animations": {
       "mp_idle": {
@@ -711,7 +762,7 @@
     "displayName": "MSG90A1",
     "category": 6,
     "animatorIndex": 7,
-    "menuImage": "hud/weapon_icons/msg90a1_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/msg90a1_icon",
     "worldModel": "models/weapons/msg90a1/world/msg90a1world",
     "viewModel": "models/weapons/msg90a1/msg90a1",
     "isMelee": false,
@@ -730,7 +781,12 @@
       "fireDelay": 100,
       "gore": true,
       "volume": 0.9,
-      "kickAngles": [ 1, 15, -2, 1 ],
+      "kickAngles": [
+        1,
+        15,
+        -2,
+        1
+      ],
       "inaccuracy": 1.0,
       "maxInaccuracy": 2.0,
       "armorPiercing": 0.25,
@@ -741,7 +797,11 @@
     },
     "altAttack": {
       "zoom": true,
-      "zoomFov": [ 20, 10, 5 ]
+      "zoomFov": [
+        20,
+        10,
+        5
+      ]
     },
     "sounds": {
       "fire": [
@@ -751,7 +811,8 @@
       "ready": "sound/weapons/sniper/ready",
       "zoomIn": "sound/weapons/sniper/scope_zoom",
       "zoomFinal": "sound/weapons/sniper/final_zoom",
-      "zoomFirst": "sound/weapons/sniper/first_zoom"
+      "zoomFirst": "sound/weapons/sniper/first_zoom",
+      "empty": "sound/weapons/sniper/empty"
     },
     "animations": {
       "mp_idle": {
@@ -817,7 +878,7 @@
     "displayName": "M60",
     "category": 7,
     "animatorIndex": 8,
-    "menuImage": "hud/weapon_icons/m60_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/m60_icon",
     "worldModel": "models/weapons/m60/world/m60world",
     "viewModel": "models/weapons/m60/m60",
     "isMelee": false,
@@ -835,7 +896,12 @@
       "fireMode": "auto",
       "gore": true,
       "volume": 0.9,
-      "kickAngles": [ 1, 3, -2, 1 ],
+      "kickAngles": [
+        1,
+        3,
+        -2,
+        1
+      ],
       "inaccuracy": 0.475,
       "maxInaccuracy": 3.0,
       "muzzleFlash": "effects/m60_mflash",
@@ -853,7 +919,8 @@
       "latchOpen": "sound/weapons/m60/latch_open",
       "ammoBelt": "sound/weapons/m60/ammo_belt",
       "latchClose": "sound/weapons/m60/latch_close",
-      "reloadFinal": "sound/weapons/m60/final"
+      "reloadFinal": "sound/weapons/m60/final",
+      "empty": "sound/weapons/m60/empty"
     },
     "animations": {
       "mp_idle": {
@@ -903,7 +970,7 @@
     "displayName": "M1911A1",
     "category": 2,
     "animatorIndex": 9,
-    "menuImage": "hud/weapon_icons/m1911a1_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/m1911a1_icon",
     "worldModel": "models/weapons/m1911a1/world/m1911a1world",
     "viewModel": "models/weapons/m1911a1/m1911a1",
     "isMelee": false,
@@ -921,7 +988,12 @@
       "fireMode": "auto",
       "gore": true,
       "volume": 0.75,
-      "kickAngles": [ 1, 5, -2, 1 ],
+      "kickAngles": [
+        1,
+        5,
+        -2,
+        1
+      ],
       "inaccuracy": 0.5,
       "maxInaccuracy": 2.5,
       "armorPiercing": 0.25,
@@ -949,7 +1021,8 @@
       "hammerBack": "sound/weapons/m1911a1/hammerback",
       "clipOut": "sound/weapons/m1911a1/clipout",
       "clipIn": "sound/weapons/m1911a1/clipin",
-      "slideRelease": "sound/weapons/m1911a1/slide"
+      "slideRelease": "sound/weapons/m1911a1/slide",
+      "empty": "sound/weapons/m1911a1/empty"
     },
     "animations": {
       "mp_idle": {
@@ -1007,7 +1080,7 @@
     "displayName": "F1 Grenade",
     "category": 8,
     "animatorIndex": 10,
-    "menuImage": "hud/weapon_icons/f1_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/f1_icon",
     "worldModel": "models/weapons/f1/world/f1world",
     "viewModel": "models/weapons/f1/f1",
     "isMelee": false,
@@ -1066,6 +1139,7 @@
       "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
       "pinPull": "sound/weapons/frag_grenade/pin_pull",
       "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "throw": "sound/weapons/frag_grenade/throw01",
       "toss": "sound/weapons/frag_grenade/throw_idle"
     },
     "animations": {
@@ -1116,7 +1190,7 @@
     "displayName": "US SOCOM",
     "category": 2,
     "animatorIndex": 11,
-    "menuImage": "hud/weapon_icons/ussocom_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/ussocom_icon",
     "worldModel": "models/weapons/ussocom/world/ussocomworld",
     "viewModel": "models/weapons/ussocom/ussocom",
     "isMelee": false,
@@ -1134,7 +1208,12 @@
       "fireMode": "single",
       "gore": true,
       "volume": 0.75,
-      "kickAngles": [ 1, 5, -2, 1 ],
+      "kickAngles": [
+        1,
+        5,
+        -2,
+        1
+      ],
       "inaccuracy": 0.25,
       "maxInaccuracy": 2.0,
       "muzzleFlash": "effects/muzzle_flashes/mflash_ussocom_final",
@@ -1169,7 +1248,8 @@
       "clipIn": "sound/weapons/ussocom/clipin",
       "slideRelease": "sound/weapons/ussocom/slide",
       "slideBack": "sound/weapons/ussocom/slideback",
-      "ready": "sound/weapons/ussocom/spin"
+      "ready": "sound/weapons/ussocom/spin",
+      "empty": "sound/weapons/ussocom/empty"
     },
     "animations": {
       "mp_idle": {
@@ -1227,7 +1307,7 @@
     "displayName": "M67 Grenade",
     "category": 8,
     "animatorIndex": 12,
-    "menuImage": "hud/weapon_icons/m67_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/m67_icon",
     "worldModel": "models/weapons/m67/world/m67world",
     "viewModel": "models/weapons/m67/m67",
     "isMelee": false,
@@ -1284,6 +1364,7 @@
       "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
       "pinPull": "sound/weapons/frag_grenade/pin_pull",
       "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "throw": "sound/weapons/frag_grenade/throw01",
       "toss": "sound/weapons/frag_grenade/throw_idle"
     },
     "animations": {
@@ -1334,7 +1415,7 @@
     "displayName": "Micro Uzi",
     "category": 4,
     "animatorIndex": 13,
-    "menuImage": "hud/weapon_icons/microuzi_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/microuzi_icon",
     "worldModel": "models/weapons/microuzi/world/microuziworld",
     "viewModel": "models/weapons/microuzi/microuzi",
     "isMelee": false,
@@ -1352,14 +1433,22 @@
       "fireMode": "auto",
       "gore": true,
       "volume": 0.75,
-      "kickAngles": [ 1, 2, -2, 1 ],
-      "inaccuracy": 0.50,
+      "kickAngles": [
+        1,
+        2,
+        -2,
+        1
+      ],
+      "inaccuracy": 0.5,
       "maxInaccuracy": 2.0,
       "muzzleFlash": "effects/muzzle_flashes/mflash_uzi",
       "muzzleSmoke": "effects/muzzle_flashes/smoke_uzi",
       "shellCasingEject": "effects/shell_brass_small",
       "ejectBone": "ejection_microuzi",
-      "fireModes": [ "burst", "auto" ]
+      "fireModes": [
+        "burst",
+        "auto"
+      ]
     },
     "sounds": {
       "fire": [
@@ -1370,7 +1459,8 @@
       "ready": "sound/weapons/micro_uzi/ready",
       "clipOut": "sound/weapons/micro_uzi/clipout",
       "clipIn": "sound/weapons/micro_uzi/clipin",
-      "bolt": "sound/weapons/micro_uzi/bolt"
+      "bolt": "sound/weapons/micro_uzi/bolt",
+      "empty": "sound/weapons/micro_uzi/empty"
     },
     "animations": {
       "mp_idle": {
@@ -1420,7 +1510,7 @@
     "displayName": "OICW",
     "category": 5,
     "animatorIndex": 14,
-    "menuImage": "hud/weapon_icons/oicw_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/oicw_icon",
     "worldModel": "models/weapons/oicw/world/oicwworld",
     "viewModel": "models/weapons/oicw/oicw",
     "isMelee": false,
@@ -1438,23 +1528,42 @@
       "fireMode": "auto",
       "gore": true,
       "volume": 0.75,
-      "kickAngles": [ 1, 3, -2, 1 ],
+      "kickAngles": [
+        1,
+        3,
+        -2,
+        1
+      ],
       "armorPiercing": 0.25,
       "muzzleFlash": "effects/muzzle_flashes/mflash_oicw",
       "muzzleSmoke": "effects/muzzle_flashes/smoke_oicw",
       "shellCasingEject": "effects/shell_brass",
       "ejectBone": "ejection_oicw",
       "tracerEffect": "effects/tracerTest2",
-      "fireModes": [ "single", "burst", "auto" ]
+      "fireModes": [
+        "single",
+        "burst",
+        "auto"
+      ]
     },
     "altAttack": {
       "damage": 100,
       "radius": 300,
       "gore": true,
       "volume": 0.9,
-      "kickAngles": [ 1, 6, -2, 1 ],
+      "kickAngles": [
+        1,
+        6,
+        -2,
+        1
+      ],
       "zoom": true,
-      "zoomFov": [ 80, 20, 10, 5 ],
+      "zoomFov": [
+        80,
+        20,
+        10,
+        5
+      ],
       "muzzleFlash": "effects/muzzle_flashes/mflash_mm1",
       "muzzleSmoke": "effects/muzzle_flashes/smoke_mm1",
       "projectile": {
@@ -1483,7 +1592,8 @@
       "clipOut": "sound/weapons/oicw/clipout",
       "clipIn": "sound/weapons/oicw/clipin",
       "bolt": "sound/weapons/oicw/bolt",
-      "boltForward": "sound/weapons/oicw/bolt_forward"
+      "boltForward": "sound/weapons/oicw/bolt_forward",
+      "empty": "sound/weapons/oicw/empty"
     },
     "animations": {
       "mp_idle": {
@@ -1533,7 +1643,7 @@
     "displayName": "M3A1",
     "category": 4,
     "animatorIndex": 15,
-    "menuImage": "hud/weapon_icons/m3a1_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/m3a1_icon",
     "worldModel": "models/weapons/m3a1/world/m3a1world",
     "viewModel": "models/weapons/m3a1/m3a1",
     "isMelee": false,
@@ -1551,7 +1661,12 @@
       "fireMode": "auto",
       "gore": true,
       "volume": 0.75,
-      "kickAngles": [ 1, 3, -2, 1 ],
+      "kickAngles": [
+        1,
+        3,
+        -2,
+        1
+      ],
       "inaccuracy": 0.35,
       "maxInaccuracy": 1.5,
       "armorPiercing": 0.25,
@@ -1572,7 +1687,8 @@
       "boltBack": "sound/weapons/m3a1/bolt_back",
       "boltForward": "sound/weapons/m3a1/bolt_forward",
       "coverDown": "sound/weapons/m3a1/cover_down",
-      "coverUp": "sound/weapons/m3a1/cover_up"
+      "coverUp": "sound/weapons/m3a1/cover_up",
+      "empty": "sound/weapons/m3a1/empty"
     },
     "animations": {
       "mp_idle": {
@@ -1622,7 +1738,7 @@
     "displayName": "M84 Flashbang",
     "category": 8,
     "animatorIndex": 16,
-    "menuImage": "hud/weapon_icons/m84_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/m84_icon",
     "worldModel": "models/weapons/m84/world/m84world",
     "viewModel": "models/weapons/m84/m84",
     "isMelee": false,
@@ -1679,6 +1795,7 @@
       "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
       "pinPull": "sound/weapons/frag_grenade/pin_pull",
       "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "throw": "sound/weapons/frag_grenade/throw01",
       "toss": "sound/weapons/frag_grenade/throw_idle"
     },
     "animations": {
@@ -1729,7 +1846,7 @@
     "displayName": "ANM14 Incendiary",
     "category": 8,
     "animatorIndex": 17,
-    "menuImage": "hud/weapon_icons/anm14_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/anm14_icon",
     "worldModel": "models/weapons/anm14/world/anm14world",
     "viewModel": "models/weapons/anm14/anm14",
     "isMelee": false,
@@ -1786,6 +1903,7 @@
       "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
       "pinPull": "sound/weapons/frag_grenade/pin_pull",
       "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "throw": "sound/weapons/frag_grenade/throw01",
       "toss": "sound/weapons/frag_grenade/throw_idle"
     },
     "animations": {
@@ -1836,7 +1954,7 @@
     "displayName": "L2A2 Grenade",
     "category": 8,
     "animatorIndex": 18,
-    "menuImage": "hud/weapon_icons/l2a2_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/l2a2_icon",
     "worldModel": "models/weapons/l2a2/world/l2a2world",
     "viewModel": "models/weapons/l2a2/l2a2",
     "isMelee": false,
@@ -1893,6 +2011,7 @@
       "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
       "pinPull": "sound/weapons/frag_grenade/pin_pull",
       "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "throw": "sound/weapons/frag_grenade/throw01",
       "toss": "sound/weapons/frag_grenade/throw_idle"
     },
     "animations": {
@@ -1943,7 +2062,7 @@
     "displayName": "M15 Phosphorus",
     "category": 8,
     "animatorIndex": 19,
-    "menuImage": "hud/weapon_icons/m15_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/m15_icon",
     "worldModel": "models/weapons/m15/world/m15world",
     "viewModel": "models/weapons/m15/m15",
     "isMelee": false,
@@ -2002,6 +2121,7 @@
       "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
       "pinPull": "sound/weapons/frag_grenade/pin_pull",
       "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "throw": "sound/weapons/frag_grenade/throw01",
       "toss": "sound/weapons/frag_grenade/throw_idle"
     },
     "animations": {
@@ -2052,7 +2172,7 @@
     "displayName": "MDN11 Grenade",
     "category": 8,
     "animatorIndex": 20,
-    "menuImage": "hud/weapon_icons/mdn11_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/mdn11_icon",
     "worldModel": "models/weapons/mdn11/world/mdn11world",
     "viewModel": "models/weapons/mdn11/mdn11",
     "isMelee": false,
@@ -2109,6 +2229,7 @@
       "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
       "pinPull": "sound/weapons/frag_grenade/pin_pull",
       "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "throw": "sound/weapons/frag_grenade/throw01",
       "toss": "sound/weapons/frag_grenade/throw_idle"
     },
     "animations": {
@@ -2159,7 +2280,7 @@
     "displayName": "SMOHG92 Grenade",
     "category": 8,
     "animatorIndex": 21,
-    "menuImage": "hud/weapon_icons/smohg92_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/smohg92_icon",
     "worldModel": "models/weapons/smohg92/world/smohg92world",
     "viewModel": "models/weapons/smohg92/smohg92",
     "isMelee": false,
@@ -2216,6 +2337,7 @@
       "pinRattle": "sound/weapons/frag_grenade/pin_rattle",
       "pinPull": "sound/weapons/frag_grenade/pin_pull",
       "handleRelease": "sound/weapons/frag_grenade/handle_release",
+      "throw": "sound/weapons/frag_grenade/throw01",
       "toss": "sound/weapons/frag_grenade/throw_idle"
     },
     "animations": {
@@ -2266,7 +2388,7 @@
     "displayName": "MP5",
     "category": 4,
     "animatorIndex": 22,
-    "menuImage": "hud/weapon_icons/mp5_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/mp5_icon",
     "worldModel": "models/weapons/mp5/world/mp5world",
     "viewModel": "models/weapons/mp5/mp5",
     "isMelee": false,
@@ -2284,14 +2406,23 @@
       "fireMode": "auto",
       "gore": true,
       "volume": 0.75,
-      "kickAngles": [ 1, 2.1, -2, 1 ],
-      "inaccuracy": 0.20,
+      "kickAngles": [
+        1,
+        2.1,
+        -2,
+        1
+      ],
+      "inaccuracy": 0.2,
       "maxInaccuracy": 1.7,
       "muzzleFlash": "effects/muzzle_flashes/mflash_silencer_mp5",
       "muzzleSmoke": "effects/muzzle_flashes/smoke_m4",
       "shellCasingEject": "effects/shell_brass_small",
       "ejectBone": "ejection_mp5",
-      "fireModes": [ "single", "burst", "auto" ]
+      "fireModes": [
+        "single",
+        "burst",
+        "auto"
+      ]
     },
     "sounds": {
       "fire": [
@@ -2300,7 +2431,8 @@
       "ready": "sound/weapons/mp5/pull_lever",
       "clipOut": "sound/weapons/mp5/clipout",
       "clipIn": "sound/weapons/mp5/clipin",
-      "bolt": "sound/weapons/mp5/pull_lever"
+      "bolt": "sound/weapons/mp5/pull_lever",
+      "empty": "sound/weapons/m4/empty"
     },
     "animations": {
       "mp_idle": {
@@ -2350,8 +2482,8 @@
     "displayName": "Silver Talon",
     "category": 2,
     "animatorIndex": 23,
-    "menuImage": "hud/weapon_icons/silver_talon_icon",
-    "menuImageDual": "hud/weapon_icons/silver_talon2_icon",
+    "menuImage": "gfx/menus/hud/weapon_icons/silver_talon_icon",
+    "menuImageDual": "gfx/menus/hud/weapon_icons/silver_talon2_icon",
     "worldModel": "models/weapons/silver_talon/world/silver_talonworld",
     "viewModel": "models/weapons/silver_talon/silver_talon",
     "isMelee": false,
@@ -2370,7 +2502,12 @@
       "fireMode": "single",
       "gore": true,
       "volume": 0.75,
-      "kickAngles": [ 1, 10, -2, 1 ],
+      "kickAngles": [
+        1,
+        10,
+        -2,
+        1
+      ],
       "inaccuracy": 0.5,
       "maxInaccuracy": 4.5,
       "armorPiercing": 0.25,
@@ -2399,7 +2536,8 @@
       "hammerBack": "sound/weapons/silver_talon/cock",
       "clipOut": "sound/weapons/silver_talon/pullout",
       "clipIn": "sound/weapons/silver_talon/putin",
-      "slideRelease": "sound/weapons/m1911a1/slide"
+      "slideRelease": "sound/weapons/m1911a1/slide",
+      "empty": "sound/weapons/m1911a1/empty"
     },
     "animations": {
       "mp_idle": {

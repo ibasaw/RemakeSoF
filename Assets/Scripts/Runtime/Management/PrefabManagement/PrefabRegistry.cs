@@ -41,7 +41,7 @@ namespace Tolik.RemakeSoF.Runtime.PrefabManagement
             // 1. Cache prüfen
             if (m_PrefabCache.TryGetValue(key, out var cached) && cached is PrefabData<T> castedData)
             {
-                Debug.Log($"[PrefabRegistry] Returning cached prefab: {key}");
+                //Debug.Log($"[PrefabRegistry] Returning cached prefab: {key}");
                 return castedData;
             }
 

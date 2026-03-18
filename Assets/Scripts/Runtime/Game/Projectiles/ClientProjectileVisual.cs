@@ -2,8 +2,10 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.EffectManagement;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
+using Tolik.RemakeSoF.Runtime.SoundManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 {
@@ -82,6 +84,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Instanziiertes Projektil-Model (geladen via PrefabManager).</summary>
         private GameObject m_ModelInstance;
 
+        /// <summary>Looping AudioSource fuer Flug-Sound (z.B. RPG Flyby, Granaten-Pfeifen).</summary>
+        private AudioSource m_LoopAudioSource;
+
         /// <summary>
         /// SoF2 Bounce-Stop-Threshold: 40 QU/s * 0.0254 = 1.016 m/s (g_missile.c:37/59).
         /// Granate stoppt auf horizontaler Flaeche (normal.y > 0.2) wenn Geschwindigkeit darunter.
@@ -116,7 +121,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             uint projectileId = 0,
             string effectId = "",
             string explosionEffectId = "",
-            string modelKey = "")
+            string modelKey = "",
+            string loopSoundPath = "")
         {
             m_ProjectileId = projectileId;
             m_EffectId = effectId;
@@ -143,6 +149,42 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
             // Visuelles Setup
             CreateVisuals();
+
+            // Looping Flug-Sound (RPG Flyby, Granaten-Pfeifen etc.)
+            StartLoopSound(loopSoundPath);
+        }
+
+        /// <summary>
+        /// Erstellt eine loopende AudioSource fuer den Flug-Sound des Projektils.
+        /// </summary>
+        private void StartLoopSound(string loopSoundPath)
+        {
+            if (string.IsNullOrEmpty(loopSoundPath))
+            {
+                return;
+            }
+
+            SoundManager soundManager = ServiceLocator.Get<SoundManager>();
+            if (soundManager == null)
+            {
+                return;
+            }
+
+            AudioClip clip = soundManager.GetClip(loopSoundPath);
+            if (clip == null)
+            {
+                return;
+            }
+
+            m_LoopAudioSource = gameObject.AddComponent<AudioSource>();
+            m_LoopAudioSource.clip = clip;
+            m_LoopAudioSource.loop = true;
+            m_LoopAudioSource.spatialBlend = 1f;
+            m_LoopAudioSource.minDistance = 2f;
+            m_LoopAudioSource.maxDistance = 50f;
+            m_LoopAudioSource.rolloffMode = AudioRolloffMode.Linear;
+            m_LoopAudioSource.outputAudioMixerGroup = soundManager.SfxGroup;
+            m_LoopAudioSource.Play();
         }
 
         /// <summary>
@@ -446,6 +488,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             }
 
             m_HasDetonated = true;
+            StopLoopSound();
 
             // Datengetriebene Explosion via EffectFactory (falls vorhanden)
             EffectFactory factory = ServiceLocator.Get<EffectFactory>();
@@ -469,6 +512,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         private void StickToSurface()
         {
             m_HasDetonated = true;
+            StopLoopSound();
 
             // In Lookup registrieren fuer servergesteuerte Cleanup-Logik
             if (m_ProjectileId != 0)
@@ -490,6 +534,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             }
 
             Destroy(gameObject, remainingLife);
+        }
+
+        /// <summary>
+        /// Stoppt den Flug-Loop-Sound, falls aktiv.
+        /// </summary>
+        private void StopLoopSound()
+        {
+            if (m_LoopAudioSource != null)
+            {
+                m_LoopAudioSource.Stop();
+                m_LoopAudioSource = null;
+            }
         }
 
 

@@ -167,6 +167,7 @@ namespace Tolik.RemakeSoF.Runtime.SoundManagement
         /// <summary>
         /// Gibt einen AudioClip nach SoF2-Pfad zurueck (z.B. "sound/weapons/frag_grenade/boom01.wav").
         /// Laedt den Clip lazy bei erstem Zugriff.
+        /// Unterstuetzt Keys mit und ohne Extension — probiert automatisch .wav und .mp3 Fallbacks.
         /// </summary>
         public AudioClip GetClip(string key)
         {
@@ -175,8 +176,30 @@ namespace Tolik.RemakeSoF.Runtime.SoundManagement
                 return null;
             }
 
+            // Direkter Lookup (Key mit Extension)
             SoundData data = m_Registry.GetSoundData(key);
-            return data?.Clip;
+            if (data != null)
+            {
+                return data.Clip;
+            }
+
+            // Fallback: Key ohne Extension → .wav und .mp3 probieren
+            if (!Path.HasExtension(key))
+            {
+                SoundData wavData = m_Registry.GetSoundData(key + ".wav");
+                if (wavData != null)
+                {
+                    return wavData.Clip;
+                }
+
+                SoundData mp3Data = m_Registry.GetSoundData(key + ".mp3");
+                if (mp3Data != null)
+                {
+                    return mp3Data.Clip;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

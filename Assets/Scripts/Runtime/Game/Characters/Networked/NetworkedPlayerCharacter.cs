@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Newtonsoft.Json.Linq;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
@@ -195,6 +196,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>Aktuelle AltAttack-FPS basierend auf aktueller Waffe (aus WeaponDataLoader).</summary>
         private int m_ServerAltAttackFps = 20;
+
+        /// <summary>Cooldown-Zeitstempel fuer Empty-Sound (verhindert Spam bei gehaltener Feuertaste).</summary>
+        private float m_ServerNextEmptySoundTime;
 
         // ===== Server-Side Weapon Swap Gating =====
 
@@ -593,7 +597,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Munition verbrauchen (Server-autoritativ)
             if (!m_CharacterState.TryConsumeAmmo())
             {
-                Debug.Log($"[NetworkedPlayerCharacter] Server: Attack blocked — no ammo for client {OwnerClientId}");
+                // Empty-Sound abspielen (Dry-Fire Click — SoF2: leeres Magazin beim Feuern)
+                if (Time.time >= m_ServerNextEmptySoundTime)
+                {
+                    WeaponDataLoader emptyLoader = ServiceLocator.Get<WeaponDataLoader>();
+                    WeaponDefinition emptyWeapon = emptyLoader?.GetById(m_CharacterState.CurrentWeaponName);
+                    string emptySoundPath = ResolveWeaponSoundPath(emptyWeapon, "empty");
+                    if (!string.IsNullOrEmpty(emptySoundPath))
+                    {
+                        WeaponEmptySoundClientRpc(emptySoundPath);
+                        m_ServerNextEmptySoundTime = Time.time + 0.4f;
+                    }
+                }
+
                 return;
             }
 
@@ -659,8 +675,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Pellet-Anzahl: Schrotflinten feuern mehrere Pellets pro Schuss (z.B. M590: 8)
             int pelletCount = attackDef.Pellets > 0 ? attackDef.Pellets : 1;
 
-            // SoF2 spread-Feld ist nur Fallback fuer inaccuracy wenn 0 (bg_weapons.c:278-281),
-            // wird NICHT separat addiert. Streuung basiert allein auf inaccuracy.
+            // SoF2 bg_weapons.c:278-281: spread ist Fallback fuer inaccuracy wenn 0,
+            // UND wird als zusaetzlicher Pellet-Spread-Radius bei Schrotflinten verwendet.
+            float pelletSpread = attackDef.Spread;
 
             // Munitionstyp fuer Impact-Effekt-Lookup
             string ammoType = weapon?.Ammo?.Type ?? "";
@@ -679,19 +696,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 shellsoundPath = shellSurfaceLoader.GetShellsoundPath(shooterSurface, ammoType);
             }
 
-            // Muzzle-Effekte (Flash, Smoke, Shell, Shellsound) einmal pro Schuss an alle Clients
+            // Fire-Sound aus Waffen-Definition aufloesen (SoF2: flashSound)
+            string fireSoundPath = ResolveWeaponSoundPath(weapon, "fire");
+
+            // Muzzle-Effekte (Flash, Smoke, Shell, Shellsound, Fire-Sound) einmal pro Schuss an alle Clients
             MuzzleEffectsClientRpc(
                 attackDef.MuzzleFlash ?? "",
                 attackDef.MuzzleSmoke ?? "",
                 attackDef.ShellCasingEject ?? "",
                 attackDef.EjectBone ?? "",
-                shellsoundPath
+                shellsoundPath,
+                fireSoundPath,
+                attackDef.Volume > 0f ? attackDef.Volume : 1f
             );
 
             for (int i = 0; i < pelletCount; i++)
             {
-                // SoF2-konforme Streuung: 0.05 * inaccuracy * gaussian auf right/up Vektoren
-                Vector3 aimDirection = ApplyInaccuracySoF2(aimForward, aimRight, aimUp, spread);
+                // SoF2-konforme Streuung: inaccuracy + pelletSpread (Schrotflinten-Kegel)
+                float totalSpread = spread + pelletSpread;
+                Vector3 aimDirection = ApplyInaccuracySoF2(aimForward, aimRight, aimUp, totalSpread);
 
                 // Server-seitiger Hitscan-Raycast auf Hitbox-Layer
                 bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask);
@@ -806,6 +829,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_ServerAttackFrames = attackAnim.Duration;
                 m_ServerAttackFps = attackAnim.Fps;
             }
+
+            // SoF2 fireDelay (Millisekunden): Minimale Zeit zwischen Schuessen.
+            // Wenn fireDelay laenger als die Animation dauert, wird es als Cooldown verwendet.
+            WeaponAttackDefinition attackDef = weapon.Attack;
+            if (attackDef != null && attackDef.FireDelay > 0 && m_ServerAttackFps > 0)
+            {
+                int fireDelayFrames = Mathf.CeilToInt((attackDef.FireDelay / 1000f) * m_ServerAttackFps);
+                m_ServerAttackFrames = Mathf.Max(m_ServerAttackFrames, fireDelayFrames);
+            }
         }
 
         /// <summary>
@@ -888,6 +920,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_ServerAttackFps = m_ServerGrenadeCookFps;
 
                 Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade cook started for client {OwnerClientId} — Timer={projDef.Timer:F2}s (isAlt={isAlt})");
+
+                // SoF2 Grenade-Sequenz: pinRattle + pinPull beim Cook-Start
+                string pinRattlePath = ResolveWeaponSoundPath(weapon, "pinRattle");
+                string pinPullPath = ResolveWeaponSoundPath(weapon, "pinPull");
+                GrenadeSoundClientRpc(pinRattlePath);
+                GrenadeSoundClientRpc(pinPullPath);
+
                 return;
             }
 
@@ -907,13 +946,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             Vector3 eyePos = m_ServerPlayerCharacter.GetEyePosition();
             Vector3 aimDirection = Quaternion.Euler(cmd.PitchAngle, cmd.YawAngle, 0f) * Vector3.forward;
 
+            // Fire-Sound aus Waffen-Definition (SoF2: flashSound)
+            string projFireSoundPath = ResolveWeaponSoundPath(weapon, isAlt ? "altFire" : "fire");
+
             // Muzzle-Effekte fuer Sofort-Projektile (RPG, MM1) — nicht fuer gekochte Granaten
             MuzzleEffectsClientRpc(
                 attackDef.MuzzleFlash ?? "",
                 attackDef.MuzzleSmoke ?? "",
                 attackDef.ShellCasingEject ?? "",
                 attackDef.EjectBone ?? "",
-                ""
+                "",
+                projFireSoundPath,
+                attackDef.Volume > 0f ? attackDef.Volume : 1f
             );
 
             SpawnProjectile(eyePos, aimDirection, attackDef, projDef);
@@ -970,7 +1014,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             string effectPath = projDef.Effect ?? "";
             string explosionEffectPath = projDef.ExplosionEffect ?? "";
             string modelKey = projDef.Model ?? "";
-            ProjectileSpawnClientRpc(spawnPosition, direction, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "impact", timer, projectileId, effectPath, explosionEffectPath, modelKey);
+            string loopSoundPath = projDef.LoopSound ?? "";
+            ProjectileSpawnClientRpc(spawnPosition, direction, projDef.Speed, projDef.Gravity, projDef.Bounce, projDef.Detonation ?? "impact", timer, projectileId, effectPath, explosionEffectPath, modelKey, loopSoundPath);
         }
 
         /// <summary>
@@ -1008,17 +1053,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_ServerGrenadePitchAngle = cmd.PitchAngle;
             m_ServerGrenadeYawAngle = cmd.YawAngle;
 
-            // SoF2 g_weapon.c:734-736: Timer abgelaufen → Zwangs-Detonation
-            // (projectileLifetime < 50ms → flags &= ~PROJECTILE_TIMED → explodiert sofort)
+            // SoF2 g_weapon.c:734-736: Timer abgelaufen → Explosion in der Hand
+            // Spieler MUSS manuell loslassen — kein Auto-Throw bei Timer-Ablauf.
             bool timerExpired = m_ServerGrenadeTimer <= GRENADE_MIN_TIMER;
 
             // Pruefe ob Button losgelassen wurde (SoF2: !(attackButtons & BUTTON_ATTACK))
-            // ODER Timer abgelaufen UND Animation fertig
             bool buttonHeld = m_ServerGrenadeIsAlt
                 ? cmd.HasButton(CommandButtons.AltAttack)
                 : cmd.HasButton(CommandButtons.Attack);
 
-            bool shouldThrow = (!buttonHeld && m_ServerGrenadeAnimComplete) || timerExpired;
+            bool shouldThrow = !buttonHeld && m_ServerGrenadeAnimComplete;
+
+            // Timer abgelaufen und Button noch gehalten → Granate explodiert in der Hand
+            if (timerExpired && buttonHeld)
+            {
+                shouldThrow = true;
+            }
+            // Timer abgelaufen und Button gerade losgelassen → sofortige Detonation
+            else if (timerExpired)
+            {
+                shouldThrow = true;
+            }
 
             if (!shouldThrow)
             {
@@ -1040,15 +1095,26 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
+            // SoF2 Grenade-Sequenz: handleRelease + throw/toss beim Wurf (nur wenn nicht in Hand explodiert)
+            if (!timerExpired)
+            {
+                string handleReleasePath = ResolveWeaponSoundPath(weapon, "handleRelease");
+                string throwSoundPath = ResolveWeaponSoundPath(weapon, m_ServerGrenadeIsAlt ? "toss" : "throw");
+                GrenadeSoundClientRpc(handleReleasePath);
+                GrenadeSoundClientRpc(throwSoundPath);
+            }
+
             // Spawn-Position und Richtung zum Zeitpunkt des Wurfs
             Vector3 eyePos = m_ServerPlayerCharacter.GetEyePosition();
             Vector3 aimDirection = Quaternion.Euler(m_ServerGrenadePitchAngle, m_ServerGrenadeYawAngle, 0f) * Vector3.forward;
 
-            // SoF2: Timer = verbleibender grenadeTimer (mindestens GRENADE_MIN_TIMER)
-            float remainingTimer = Mathf.Max(m_ServerGrenadeTimer, GRENADE_MIN_TIMER);
-
-            // SoF2 g_weapon.c:734: Wenn Timer < 50ms → nicht mehr PROJECTILE_TIMED → explodiert sofort
-            string detonation = timerExpired ? "impact" : projDef.Detonation;
+            // Timer abgelaufen → Granate explodiert sofort in der Hand (Timer=0, Speed=0, keine Gravitation)
+            // "timer" mit 0 Sekunden detoniert im ersten Frame; "impact" wuerde Raycast-Kollision brauchen
+            string detonation = timerExpired ? "timer" : projDef.Detonation;
+            float spawnSpeed = timerExpired ? 0f : projDef.Speed;
+            float spawnGravity = timerExpired ? 0f : projDef.Gravity;
+            float spawnBounce = timerExpired ? 0f : projDef.Bounce;
+            float remainingTimer = timerExpired ? 0f : Mathf.Max(m_ServerGrenadeTimer, GRENADE_MIN_TIMER);
 
             // Projektil spawnen mit verbleibendem Timer
             uint projectileId = m_NextProjectileId++;
@@ -1058,9 +1124,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             projectile.Initialize(
                 eyePos,
                 aimDirection,
-                projDef.Speed,
-                projDef.Gravity,
-                projDef.Bounce,
+                spawnSpeed,
+                spawnGravity,
+                spawnBounce,
                 detonation,
                 remainingTimer,
                 attackDef.Damage,
@@ -1075,23 +1141,34 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             string grenadeEffectPath = projDef.Effect ?? "";
             string grenadeExplosionEffectPath = projDef.ExplosionEffect ?? "";
             string grenadeModelKey = projDef.Model ?? "";
-            ProjectileSpawnClientRpc(eyePos, aimDirection, projDef.Speed, projDef.Gravity, projDef.Bounce, detonation ?? "timer", remainingTimer, projectileId, grenadeEffectPath, grenadeExplosionEffectPath, grenadeModelKey);
+            string grenadeLoopSoundPath = projDef.LoopSound ?? "";
+            ProjectileSpawnClientRpc(eyePos, aimDirection, spawnSpeed, spawnGravity, spawnBounce, detonation ?? "timer", remainingTimer, projectileId, grenadeEffectPath, grenadeExplosionEffectPath, grenadeModelKey, grenadeLoopSoundPath);
 
             // Throw-Follow-Through-Phase starten (mp_attackEnd = GRENADE_END)
-            if (weapon?.Animations != null && weapon.Animations.TryGetValue("mp_attackEnd", out WeaponAnimationEntry throwAnim))
+            // Bei In-Hand-Explosion: kuerzere Recovery, keine Wurf-Animation
+            if (!timerExpired)
             {
-                m_ServerGrenadeThrowFramesRemaining = throwAnim.Duration;
-                m_ServerGrenadeThrowFps = throwAnim.Fps;
+                if (weapon?.Animations != null && weapon.Animations.TryGetValue("mp_attackEnd", out WeaponAnimationEntry throwAnim))
+                {
+                    m_ServerGrenadeThrowFramesRemaining = throwAnim.Duration;
+                    m_ServerGrenadeThrowFps = throwAnim.Fps;
+                }
+                else
+                {
+                    m_ServerGrenadeThrowFramesRemaining = 18;
+                    m_ServerGrenadeThrowFps = 20;
+                }
             }
             else
             {
-                m_ServerGrenadeThrowFramesRemaining = 18;
+                // In-Hand-Explosion: minimale Recovery
+                m_ServerGrenadeThrowFramesRemaining = 5;
                 m_ServerGrenadeThrowFps = 20;
             }
 
             m_ServerGrenadeThrowFrameAccumulator = 0f;
 
-            Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade thrown for client {OwnerClientId} — RemainingTimer={remainingTimer:F2}s, TimerExpired={timerExpired}, ThrowFrames={m_ServerGrenadeThrowFramesRemaining}");
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade {(timerExpired ? "EXPLODED IN HAND" : "thrown")} for client {OwnerClientId} — RemainingTimer={remainingTimer:F2}s, TimerExpired={timerExpired}, ThrowFrames={m_ServerGrenadeThrowFramesRemaining}");
         }
 
         /// <summary>
@@ -1122,11 +1199,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Erstellt ein ClientProjectileVisual mit datengetriebenem Trail-Effekt auf allen Clients.
         /// </summary>
         [Rpc(SendTo.Everyone)]
-        private void ProjectileSpawnClientRpc(Vector3 spawnPosition, Vector3 direction, float speed, float gravity, float bounce, string detonation, float timer, uint projectileId, string effectId, string explosionEffectId, string modelKey)
+        private void ProjectileSpawnClientRpc(Vector3 spawnPosition, Vector3 direction, float speed, float gravity, float bounce, string detonation, float timer, uint projectileId, string effectId, string explosionEffectId, string modelKey, string loopSoundPath)
         {
             GameObject visualObj = new($"ProjectileVisual_{OwnerClientId}");
             ClientProjectileVisual visual = visualObj.AddComponent<ClientProjectileVisual>();
-            visual.Initialize(spawnPosition, direction, speed, gravity, bounce, detonation, timer, projectileId, effectId, explosionEffectId, modelKey);
+            visual.Initialize(spawnPosition, direction, speed, gravity, bounce, detonation, timer, projectileId, effectId, explosionEffectId, modelKey, loopSoundPath);
         }
 
         /// <summary>
@@ -1241,9 +1318,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             soundObj.transform.position = position;
             AudioSource source = soundObj.AddComponent<AudioSource>();
             source.clip = clip;
+            source.volume = 1f;
             source.spatialBlend = 1f;
             source.playOnAwake = false;
-            source.maxDistance = 20f;
+            source.minDistance = 3f;
+            source.maxDistance = 40f;
             source.rolloffMode = AudioRolloffMode.Linear;
 
             if (soundManager.SfxGroup != null)
@@ -1301,7 +1380,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         [Rpc(SendTo.Everyone)]
         private void MuzzleEffectsClientRpc(string muzzleFlashId, string muzzleSmokeId,
-            string shellCasingId, string ejectBoneName, string shellsoundPath)
+            string shellCasingId, string ejectBoneName, string shellsoundPath, string fireSoundPath, float soundVolume)
         {
             if (m_Animator == null)
             {
@@ -1314,6 +1393,39 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 ejectBone = FindDeepChild(m_Animator.transform, ejectBoneName);
             }
 
+            // Fire-Sound abspielen (SoF2: CG_FireWeapon → flashSound auf CHAN_WEAPON)
+            // Unabhaengig von ejectBone — altFire-Waffen (M4 M203, AK-74 Bayonet) haben oft keinen eigenen ejectBone.
+            if (!string.IsNullOrEmpty(fireSoundPath))
+            {
+                SoundManager fireSoundManager = ServiceLocator.Get<SoundManager>();
+                if (fireSoundManager != null)
+                {
+                    AudioClip fireClip = fireSoundManager.GetClip(fireSoundPath);
+                    if (fireClip != null)
+                    {
+                        Vector3 firePos = ejectBone != null ? ejectBone.position : transform.position;
+                        GameObject soundObj = new("WeaponFireFX");
+                        soundObj.transform.position = firePos;
+                        AudioSource source = soundObj.AddComponent<AudioSource>();
+                        source.clip = fireClip;
+                        source.spatialBlend = 1f;
+                        source.playOnAwake = false;
+                        source.maxDistance = 50f;
+                        source.rolloffMode = AudioRolloffMode.Linear;
+
+                        if (fireSoundManager.SfxGroup != null)
+                        {
+                            source.outputAudioMixerGroup = fireSoundManager.SfxGroup;
+                        }
+
+                        source.volume = Mathf.Clamp01(soundVolume);
+                        source.Play();
+                        Destroy(soundObj, fireClip.length + 0.1f);
+                    }
+                }
+            }
+
+            // Visuelle Effekte (Muzzle-Flash, Smoke, Shell) benoetigen einen ejectBone
             if (ejectBone == null)
             {
                 return;
@@ -1417,6 +1529,189 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
+        /// Löst einen Sound-Pfad aus der WeaponDefinition.Sounds-Map auf.
+        /// Behandelt sowohl einzelne Strings als auch JArray (mehrere Varianten → zufällige Auswahl).
+        /// SoF2-Referenz: CG_RegisterWeapon → flashSound[0..2], random Selection in CG_FireWeapon.
+        /// Fallback-Keys: "fire"→"swing" (Knife), "altFire"→"toss" (Knife-Throw).
+        /// </summary>
+        private static string ResolveWeaponSoundPath(WeaponDefinition weapon, string soundKey)
+        {
+            if (weapon?.Sounds == null)
+            {
+                return "";
+            }
+
+            // Primaerer Key
+            if (weapon.Sounds.ContainsKey(soundKey))
+            {
+                return ExtractSoundValue(weapon.Sounds[soundKey]);
+            }
+
+            // Fallback-Keys fuer Waffen mit abweichender Benennung (z.B. Knife: swing statt fire)
+            string fallbackKey = soundKey switch
+            {
+                "fire" => "swing",
+                "altFire" => "toss",
+                _ => null
+            };
+
+            if (fallbackKey != null && weapon.Sounds.ContainsKey(fallbackKey))
+            {
+                return ExtractSoundValue(weapon.Sounds[fallbackKey]);
+            }
+
+            return "";
+        }
+
+        /// <summary>
+        /// Extrahiert einen Sound-Pfad aus einem object-Wert (String oder JArray mit zufaelliger Auswahl).
+        /// </summary>
+        private static string ExtractSoundValue(object value)
+        {
+            if (value is string str)
+            {
+                return str;
+            }
+
+            if (value is JArray arr && arr.Count > 0)
+            {
+                int index = UnityEngine.Random.Range(0, arr.Count);
+                return arr[index].ToString();
+            }
+
+            return "";
+        }
+
+        /// <summary>
+        /// Server → Alle Clients: Spielt den Ready-Sound einer Waffe nach abgeschlossenem Waffenwechsel.
+        /// SoF2-Referenz: Weapon ready click/rack nach Raise-Animation.
+        /// </summary>
+        [Rpc(SendTo.Everyone)]
+        private void WeaponReadySoundClientRpc(string readySoundPath)
+        {
+            if (string.IsNullOrEmpty(readySoundPath))
+            {
+                return;
+            }
+
+            SoundManager soundManager = ServiceLocator.Get<SoundManager>();
+            if (soundManager == null)
+            {
+                return;
+            }
+
+            AudioClip readyClip = soundManager.GetClip(readySoundPath);
+            if (readyClip == null)
+            {
+                return;
+            }
+
+            Vector3 soundPos = transform.position;
+            GameObject soundObj = new("WeaponReadyFX");
+            soundObj.transform.position = soundPos;
+            AudioSource source = soundObj.AddComponent<AudioSource>();
+            source.clip = readyClip;
+            source.spatialBlend = 1f;
+            source.playOnAwake = false;
+            source.maxDistance = 30f;
+            source.rolloffMode = AudioRolloffMode.Linear;
+
+            if (soundManager.SfxGroup != null)
+            {
+                source.outputAudioMixerGroup = soundManager.SfxGroup;
+            }
+
+            source.Play();
+            Destroy(soundObj, readyClip.length + 0.1f);
+        }
+
+        /// <summary>
+        /// Server → Alle Clients: Spielt den Empty/Dry-Fire-Sound wenn Waffe leer ist.
+        /// SoF2-Referenz: Leeres Magazin-Klicken bei gehaltenem Feuer ohne Munition.
+        /// </summary>
+        [Rpc(SendTo.Everyone)]
+        private void WeaponEmptySoundClientRpc(string emptySoundPath)
+        {
+            if (string.IsNullOrEmpty(emptySoundPath))
+            {
+                return;
+            }
+
+            SoundManager soundManager = ServiceLocator.Get<SoundManager>();
+            if (soundManager == null)
+            {
+                return;
+            }
+
+            AudioClip emptyClip = soundManager.GetClip(emptySoundPath);
+            if (emptyClip == null)
+            {
+                return;
+            }
+
+            Vector3 soundPos = transform.position;
+            GameObject soundObj = new("WeaponEmptyFX");
+            soundObj.transform.position = soundPos;
+            AudioSource source = soundObj.AddComponent<AudioSource>();
+            source.clip = emptyClip;
+            source.spatialBlend = 1f;
+            source.playOnAwake = false;
+            source.maxDistance = 20f;
+            source.rolloffMode = AudioRolloffMode.Linear;
+
+            if (soundManager.SfxGroup != null)
+            {
+                source.outputAudioMixerGroup = soundManager.SfxGroup;
+            }
+
+            source.Play();
+            Destroy(soundObj, emptyClip.length + 0.1f);
+        }
+
+        /// <summary>
+        /// Server → Alle Clients: Spielt einen Granaten-Sound (pinPull, pinRattle, handleRelease, throw/toss) ab.
+        /// SoF2-Referenz: Grenade-Sequenz: pinPull → pinRattle → handleRelease → throw/toss.
+        /// </summary>
+        [Rpc(SendTo.Everyone)]
+        private void GrenadeSoundClientRpc(string soundPath)
+        {
+            if (string.IsNullOrEmpty(soundPath))
+            {
+                return;
+            }
+
+            SoundManager soundManager = ServiceLocator.Get<SoundManager>();
+            if (soundManager == null)
+            {
+                return;
+            }
+
+            AudioClip clip = soundManager.GetClip(soundPath);
+            if (clip == null)
+            {
+                return;
+            }
+
+            Vector3 soundPos = transform.position;
+            GameObject soundObj = new("GrenadeSoundFX");
+            soundObj.transform.position = soundPos;
+            AudioSource source = soundObj.AddComponent<AudioSource>();
+            source.clip = clip;
+            source.spatialBlend = 1f;
+            source.playOnAwake = false;
+            source.maxDistance = 30f;
+            source.rolloffMode = AudioRolloffMode.Linear;
+
+            if (soundManager.SfxGroup != null)
+            {
+                source.outputAudioMixerGroup = soundManager.SfxGroup;
+            }
+
+            source.Play();
+            Destroy(soundObj, clip.length + 0.1f);
+        }
+
+        /// <summary>
         /// Server → Owner-Client: Wendet SoF2 kickAngles als View-Punch an.
         /// KickAngles-Format: [minPitch, maxPitch, minYaw, maxYaw].
         /// Pitch-Kick bewegt die Kamera nach oben (Rueckstoss), Yaw-Kick seitlich.
@@ -1438,7 +1733,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Alt-Munition verbrauchen (Server-autoritativ)
             if (!m_CharacterState.TryConsumeAltAmmo())
             {
-                Debug.Log($"[NetworkedPlayerCharacter] Server: AltAttack blocked — no alt ammo for client {OwnerClientId}");
+                // Empty-Sound abspielen (Dry-Fire Click — SoF2: leeres Magazin beim AltFire)
+                if (Time.time >= m_ServerNextEmptySoundTime)
+                {
+                    WeaponDataLoader emptyLoader = ServiceLocator.Get<WeaponDataLoader>();
+                    WeaponDefinition emptyWeapon = emptyLoader?.GetById(m_CharacterState.CurrentWeaponName);
+                    string emptySoundPath = ResolveWeaponSoundPath(emptyWeapon, "empty");
+                    if (!string.IsNullOrEmpty(emptySoundPath))
+                    {
+                        WeaponEmptySoundClientRpc(emptySoundPath);
+                        m_ServerNextEmptySoundTime = Time.time + 0.4f;
+                    }
+                }
+
                 return;
             }
 
@@ -1496,12 +1803,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     }
                 }
 
+                string altFireSoundPath = ResolveWeaponSoundPath(weapon, "altFire");
+
                 MuzzleEffectsClientRpc(
                     altAttackDef.MuzzleFlash ?? "",
                     altAttackDef.MuzzleSmoke ?? "",
                     altAttackDef.ShellCasingEject ?? "",
                     altAttackDef.EjectBone ?? "",
-                    altShellsoundPath
+                    altShellsoundPath,
+                    altFireSoundPath,
+                    altAttackDef.Volume > 0f ? altAttackDef.Volume : 1f
                 );
             }
 
@@ -1625,6 +1936,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             {
                 m_ServerAltAttackFrames = 0;
                 m_ServerAltAttackFps = 20;
+            }
+
+            // SoF2 fireDelay fuer AltAttack (Millisekunden → Frames)
+            WeaponAttackDefinition altAttackDef = weapon.AltAttack;
+            if (altAttackDef != null && altAttackDef.FireDelay > 0 && m_ServerAltAttackFps > 0)
+            {
+                int altFireDelayFrames = Mathf.CeilToInt((altAttackDef.FireDelay / 1000f) * m_ServerAltAttackFps);
+                m_ServerAltAttackFrames = Mathf.Max(m_ServerAltAttackFrames, altFireDelayFrames);
             }
         }
 
@@ -1879,9 +2198,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 }
                 else if (m_ServerSwapPhase == WeaponSwapPhase.Raise)
                 {
-                    // Raise fertig: Swap abgeschlossen
+                    // Raise fertig: Swap abgeschlossen → Ready-Sound abspielen
                     m_ServerIsSwapping = false;
                     m_ServerSwapPhase = WeaponSwapPhase.None;
+
+                    // Ready-Sound aus Waffen-Definition (SoF2: weapon ready click/rack)
+                    WeaponDataLoader readyLoader = ServiceLocator.Get<WeaponDataLoader>();
+                    WeaponDefinition readyWeapon = readyLoader?.GetById(m_ServerSwapTargetWeapon ?? m_CharacterState.CurrentWeaponName);
+                    string readySoundPath = ResolveWeaponSoundPath(readyWeapon, "ready");
+                    if (!string.IsNullOrEmpty(readySoundPath))
+                    {
+                        WeaponReadySoundClientRpc(readySoundPath);
+                    }
+
                     m_ServerSwapTargetWeapon = null;
 
                     Debug.Log($"[NetworkedPlayerCharacter] Server: Weapon swap completed for client {OwnerClientId}");

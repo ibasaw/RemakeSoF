@@ -46,6 +46,7 @@ namespace Tolik.RemakeSoF.Runtime
         Label m_ReserveAmmoLabel;
         VisualElement m_AmmoRow;
         Label m_AmmoSeparatorLabel;
+        VisualElement m_WeaponIconImage;
 
         // Alt Ammo HUD Labels
         Label m_AltAmmoTypeLabel;
@@ -101,6 +102,7 @@ namespace Tolik.RemakeSoF.Runtime
             m_BhopLastChainLabel = root.Query<Label>("bhopLastChainLabel");
 
             // Weapon HUD
+            m_WeaponIconImage = root.Query<VisualElement>("weaponIconImage");
             m_WeaponNameLabel = root.Query<Label>("weaponNameLabel");
             m_FireModeLabel = root.Query<Label>("fireModeLabel");
             m_AmmoTypeLabel = root.Query<Label>("ammoTypeLabel");
@@ -221,8 +223,18 @@ namespace Tolik.RemakeSoF.Runtime
         /// Aktualisiert die Waffen-Anzeige (Name, Clip, Reserve).
         /// Bei infinite Ammo wird die Ammo-Row ausgeblendet.
         /// </summary>
-        internal void UpdateWeaponHud(string displayName, string ammoType, int clipAmmo, int reserveAmmo, bool hideAmmoRow, bool hasAltAmmo, string altAmmoType, int altClipAmmo, int altReserveAmmo)
+        internal void UpdateWeaponHud(Texture2D weaponIcon, string displayName, string ammoType, int clipAmmo, int reserveAmmo, bool hideAmmoRow, bool hasAltAmmo, string altAmmoType, int altClipAmmo, int altReserveAmmo)
         {
+            if (weaponIcon != null)
+            {
+                m_WeaponIconImage.style.backgroundImage = new StyleBackground(weaponIcon);
+                m_WeaponIconImage.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                m_WeaponIconImage.style.display = DisplayStyle.None;
+            }
+
             m_WeaponNameLabel.text = displayName.ToUpperInvariant();
 
             if (hideAmmoRow)

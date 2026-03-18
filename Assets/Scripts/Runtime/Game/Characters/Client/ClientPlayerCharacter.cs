@@ -302,6 +302,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Ob der Alt-Attack unendliche Munition verbraucht (z.B. Bayonet).</summary>
         private bool m_AltAttackInfiniteAmmo;
 
+        /// <summary>Ob der primaere Angriff ein Timer-Granaten-Cook ist (Button halten = kochen).</summary>
+        private bool m_IsAttackGrenadeCook;
+
+        /// <summary>Ob der Alt-Angriff ein Timer-Granaten-Cook ist (Button halten = kochen).</summary>
+        private bool m_IsAltAttackGrenadeCook;
+
         // ===== Weapon Swap State =====
 
         /// <summary>Ob der Character gerade die Waffe wechselt (Drop/Raise).</summary>
@@ -1338,6 +1344,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                         m_AttackFrameAccumulator = 0f;
                         m_AttackSequence++;
                     }
+                    else if (m_IsAttackGrenadeCook && m_PlayerActions.Attack.IsPressed())
+                    {
+                        // Granaten-Cook: Button weiterhin als gehalten melden solange physisch gedrueckt
+                        // Server-seitiger TickServerGrenadeCook prueft HasButton(Attack) fuer Wurf-/Explosions-Timing
+                    }
                     else
                     {
                         m_IsAttacking = false;
@@ -1359,8 +1370,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
                 if (m_AltAttackFramesRemaining <= 0)
                 {
-                    m_IsAltAttacking = false;
-                    m_AltAttackFrameAccumulator = 0f;
+                    if (m_IsAltAttackGrenadeCook && m_PlayerActions.SecondAttack.IsPressed())
+                    {
+                        // Granaten-Cook (Alt): Button weiterhin als gehalten melden
+                    }
+                    else
+                    {
+                        m_IsAltAttacking = false;
+                        m_AltAttackFrameAccumulator = 0f;
+                    }
                 }
             }
 
@@ -1430,19 +1448,34 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_AttackFrameAccumulator = 0f;
                 m_AttackSequence++;
             }
+            else if (canStartAttack && noActionRunning && !hasStartAmmo)
+            {
+                // Leer: Attack-Button fuer einen Frame senden → Server spielt Empty-Sound
+                m_IsAttacking = true;
+                m_AttackFramesRemaining = 1;
+                m_AttackFrameAccumulator = 0f;
+
+                // Auto-Reload direkt anstossen (startet nach dem 1-Frame Empty-Click)
+                if (m_AutoReload)
+                {
+                    TryStartReload();
+                }
+            }
 
             // AltAttack (Rechtsklick): SecondAttack Input
-            if (m_HasAltAttack && m_PlayerActions.SecondAttack.IsPressed() && noActionRunning && HasAltAmmo())
+            bool hasAltAmmo = HasAltAmmo();
+            if (m_HasAltAttack && m_PlayerActions.SecondAttack.IsPressed() && noActionRunning && hasAltAmmo)
             {
                 m_IsAltAttacking = true;
                 m_AltAttackFramesRemaining = m_AltAttackFrames;
                 m_AltAttackFrameAccumulator = 0f;
             }
-
-            // Auto-Reload: Wenn Maus gedrueckt, kein Angriff laeuft und Magazin leer
-            if (m_AutoReload && attackPressed && noActionRunning && !hasStartAmmo)
+            else if (m_HasAltAttack && m_PlayerActions.SecondAttack.IsPressed() && noActionRunning && !hasAltAmmo)
             {
-                TryStartReload();
+                // Leer: AltAttack-Button fuer einen Frame senden → Server spielt Empty-Sound
+                m_IsAltAttacking = true;
+                m_AltAttackFramesRemaining = 1;
+                m_AltAttackFrameAccumulator = 0f;
             }
         }
 
@@ -1710,6 +1743,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // AltAttack-Verfuegbarkeit pruefen
             m_HasAltAttack = weapon.AltAttack != null;
             m_AltAttackInfiniteAmmo = weapon.AltAttack != null && !string.IsNullOrEmpty(weapon.AltAttack.Melee);
+
+            // Timer-Granaten: Client muss Attack-Button-Flag halten solange physischer Button gedrueckt
+            m_IsAttackGrenadeCook = weapon.Attack?.Projectile?.Detonation == "timer";
+            m_IsAltAttackGrenadeCook = weapon.AltAttack?.Projectile?.Detonation == "timer";
 
             // Laufende Aktionen abbrechen bei Waffenwechsel
             m_IsReloading = false;

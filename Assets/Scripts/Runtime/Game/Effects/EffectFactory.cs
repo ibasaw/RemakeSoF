@@ -966,8 +966,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             soundObj.transform.position = position;
             AudioSource source = soundObj.AddComponent<AudioSource>();
             source.clip = clip;
+            source.volume = 1f;
             source.spatialBlend = 1f;
             source.playOnAwake = false;
+            source.minDistance = 3f;
+            source.maxDistance = 40f;
+            source.rolloffMode = AudioRolloffMode.Linear;
 
             // SFX Mixer Group zuweisen (falls vorhanden)
             if (soundManager.SfxGroup != null)

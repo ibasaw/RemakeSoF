@@ -5,6 +5,7 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+using Tolik.RemakeSoF.Runtime.TextureManagement;
 using Tolik.RemakeSoF.Runtime.WeaponManagement;
 
 namespace Tolik.RemakeSoF.Runtime
@@ -377,6 +378,7 @@ namespace Tolik.RemakeSoF.Runtime
             string altAmmoType = "";
             int altClipAmmo = 0;
             int altReserveAmmo = 0;
+            Texture2D weaponIcon = null;
 
             WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
             if (loader != null)
@@ -385,6 +387,16 @@ namespace Tolik.RemakeSoF.Runtime
                 if (weapon != null)
                 {
                     displayName = weapon.DisplayName ?? weaponName;
+
+                    if (!string.IsNullOrEmpty(weapon.MenuImage))
+                    {
+                        TextureManager textureManager = ServiceLocator.Get<TextureManager>();
+                        if (textureManager != null)
+                        {
+                            TextureData iconData = textureManager.GetTextureData(weapon.MenuImage);
+                            weaponIcon = iconData?.Texture;
+                        }
+                    }
                 }
 
                 if (weapon?.Ammo != null)
@@ -408,7 +420,7 @@ namespace Tolik.RemakeSoF.Runtime
                 }
             }
 
-            View.UpdateWeaponHud(displayName, ammoType, clipAmmo, reserveAmmo, hideAmmoRow, hasAltAmmo, altAmmoType, altClipAmmo, altReserveAmmo);
+            View.UpdateWeaponHud(weaponIcon, displayName, ammoType, clipAmmo, reserveAmmo, hideAmmoRow, hasAltAmmo, altAmmoType, altClipAmmo, altReserveAmmo);
 
             // FireMode-Anzeige aktualisieren (Waffe koennte andere verfuegbare Modi haben)
             if (m_PlayerCharacter != null)
