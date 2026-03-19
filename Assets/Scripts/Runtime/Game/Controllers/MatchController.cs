@@ -151,6 +151,11 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnMatchStarted()
         {
+            if (App.Model.PlayerCharacter != null)
+            {
+                App.Model.PlayerCharacter.SetInputsActive(true);
+            }
+
             Broadcast(new StartMatchEvent());
             Debug.Log("[MatchController] Match started, broadcasting StartMatchEvent.");
         }

@@ -750,11 +750,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>
         /// Input-Callback fuer NextWeapon (performed).
         /// Startet den Waffenwechsel-Prozess (Drop aktuelle Waffe, dann Raise neue Waffe).
-        /// Wie SoF2: Re-Switch waehrend laufendem Swap ist erlaubt (unterbricht und startet neuen Drop).
+        /// SoF2: Kein Re-Switch waehrend laufendem Swap (weaponTime blockiert).
         /// </summary>
         private void OnNextWeaponPerformed(InputAction.CallbackContext context)
         {
-            if (m_IsAttacking || m_IsAltAttacking || m_IsReloading)
+            if (m_IsAttacking || m_IsAltAttacking || m_IsReloading || m_IsSwapping)
             {
                 return;
             }
@@ -767,11 +767,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>
         /// Input-Callback fuer PreviousWeapon (performed).
         /// Startet den Waffenwechsel-Prozess (Drop aktuelle Waffe, dann Raise neue Waffe).
-        /// Wie SoF2: Re-Switch waehrend laufendem Swap ist erlaubt (unterbricht und startet neuen Drop).
+        /// SoF2: Kein Re-Switch waehrend laufendem Swap (weaponTime blockiert).
         /// </summary>
         private void OnPreviousWeaponPerformed(InputAction.CallbackContext context)
         {
-            if (m_IsAttacking || m_IsAltAttacking || m_IsReloading)
+            if (m_IsAttacking || m_IsAltAttacking || m_IsReloading || m_IsSwapping)
             {
                 return;
             }
@@ -1851,14 +1851,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>
         /// Startet die client-seitige Drop-Phase des Waffenwechsels.
         /// Liest die mp_drop Animationsdaten der aktuellen Waffe.
-        /// Bei erneutem Aufruf waehrend laufendem Drop: Drop laeuft weiter (nur Server-Target aendert sich).
-        /// Bei Aufruf waehrend Raise: neuer Drop wird gestartet (Re-Switch).
+        /// SoF2 pm_shared.c: weaponTime blockiert ALLE Aktionen waehrend Drop+Raise.
+        /// Kein Re-Switch moeglich bis Raise abgeschlossen ist.
         /// </summary>
         private void StartClientWeaponSwap()
         {
-            // Wenn bereits im Drop: nicht neu starten, Drop laeuft fuer alte Waffe weiter.
-            // Server cycled das Target, Client Drop-Timer bleibt.
-            if (m_IsSwapping && m_SwapPhase == WeaponSwapPhase.Drop)
+            // SoF2: Kein neuer Waffenwechsel waehrend laufendem Swap (Drop oder Raise).
+            // pm_shared.c: weaponTime > 0 blockiert PM_BeginWeaponChange komplett.
+            if (m_IsSwapping)
             {
                 return;
             }
@@ -1870,12 +1870,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
             if (loader != null)
             {
-                // Bei Raise-Phase Re-Switch: Drop-Daten der NEUEN Waffe (die jetzt sichtbar ist)
-                string currentVisual = m_SwapPhase == WeaponSwapPhase.Raise && !string.IsNullOrEmpty(m_PendingWeaponName)
-                    ? m_PendingWeaponName
-                    : m_CharacterState.CurrentWeaponName;
-
-                WeaponDefinition weapon = loader.GetById(currentVisual);
+                WeaponDefinition weapon = loader.GetById(m_CharacterState.CurrentWeaponName);
                 if (weapon?.Animations != null &&
                     weapon.Animations.TryGetValue("mp_drop", out WeaponAnimationEntry dropAnim))
                 {
@@ -1893,6 +1888,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_SwapRaiseFrames = 0;
             m_SwapRaiseFps = 10;
             m_SwapRaiseAnimName = null;
+            m_PendingWeaponName = null;
 
             // Animation auf Torso-Layer ab Frame 0 erzwingen
             int dropStateHash = NetworkedPlayerCharacter.GetDropStateHash(dropAnimName);
@@ -1900,7 +1896,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         }
 
         /// <summary>
-        /// Client: Zaehlt Swap-Frames herunter und wechselt die Phase (Drop → Raise → Done).
+        /// Client: Zaehlt Swap-Frames herunter und wechselt die Phase (Drop → Raise → Idle).
+        /// SoF2: Kein Re-Switch waehrend Swap — Drop und Raise laufen komplett durch.
         /// </summary>
         private void TickClientWeaponSwap()
         {

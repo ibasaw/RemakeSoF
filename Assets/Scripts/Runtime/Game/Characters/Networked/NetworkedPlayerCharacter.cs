@@ -320,8 +320,40 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_ServerPosition.Value = position;
             m_ServerRotation.Value = rotation;
 
+            m_ServerPlayerCharacter.ResetForRespawn();
             m_ServerPlayerCharacter.SetReady();
             Debug.Log($"[NetworkedPlayerCharacter] Server: Spieler gespawnt bei {position}");
+        }
+
+        /// <summary>
+        /// Server-seitiger Respawn auf den naechsten Spawn-Point.
+        /// Wird z. B. nach einem Map-Wechsel genutzt, um Spieler sicher auf die neue Map zu setzen.
+        /// </summary>
+        public void RespawnAtNextSpawnPoint()
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            if (ServerPlayerSpawnPoints.Instance == null)
+            {
+                Debug.LogWarning("[NetworkedPlayerCharacter] RespawnAtNextSpawnPoint: Keine ServerPlayerSpawnPoints vorhanden.");
+                return;
+            }
+
+            (Vector3 position, Quaternion rotation) = ServerPlayerSpawnPoints.Instance.ConsumeNextSpawnPoint();
+            transform.SetPositionAndRotation(position, rotation);
+
+            m_ServerPosition.Value = position;
+            m_ServerRotation.Value = rotation;
+
+            // Owner sofort hart korrigieren, damit keine alte Prediction-Position sichtbar bleibt.
+            CorrectionClientRpc(position, rotation);
+
+            m_ServerPlayerCharacter.ResetForRespawn();
+            m_ServerPlayerCharacter.SetReady();
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Spieler respawned bei {position}");
         }
 
         /// <summary>
@@ -2099,7 +2131,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <summary>
         /// Server: Startet den Waffenwechsel-Prozess (Drop alte Waffe, dann Raise neue Waffe).
         /// Wird von NetworkedCharacterState via OnWeaponSwapRequested aufgerufen.
-        /// Wie SoF2: Re-Switch waehrend laufendem Swap ist erlaubt (unterbricht und startet neuen Drop).
+        /// SoF2 pm_shared.c: weaponTime blockiert ALLE Aktionen waehrend Drop+Raise.
+        /// Kein Re-Switch waehrend laufendem Swap (weder Drop noch Raise).
         /// </summary>
         private void OnServerWeaponSwapRequested(string targetWeapon)
         {
@@ -2113,13 +2146,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
+            // SoF2: Kein neuer Waffenwechsel waehrend laufendem Swap (Drop oder Raise).
+            // pm_shared.c: weaponTime > 0 blockiert PM_BeginWeaponChange komplett.
+            if (m_ServerIsSwapping)
+            {
+                return;
+            }
+
             WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
             if (loader == null)
             {
                 return;
             }
 
-            // Raise-Daten der Zielwaffe lesen (immer aktualisieren bei neuem Target)
+            // Raise-Daten der Zielwaffe lesen
             int raiseFrames = 6;
             int raiseFps = 10;
             WeaponDefinition targetWeaponDef = loader.GetById(targetWeapon);
@@ -2130,22 +2170,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 raiseFps = raiseAnim.Fps;
             }
 
-            // Wenn bereits im Drop: nur Target + Raise-Daten aktualisieren, Drop-Timer laeuft weiter
-            if (m_ServerIsSwapping && m_ServerSwapPhase == WeaponSwapPhase.Drop)
-            {
-                m_ServerSwapTargetWeapon = targetWeapon;
-                m_ServerSwapRaiseFrames = raiseFrames;
-                m_ServerSwapRaiseFps = raiseFps;
-                Debug.Log($"[NetworkedPlayerCharacter] Server: Swap target updated during drop for client {OwnerClientId}: → {targetWeapon} (Raise {raiseFrames}f@{raiseFps}fps)");
-                return;
-            }
-
-            // Drop-Daten der aktuellen Waffe (oder sichtbaren Waffe bei Re-Switch waehrend Raise)
+            // Drop-Daten der aktuellen Waffe
             int dropFrames = 6;
             int dropFps = 10;
-            string dropSourceWeapon = m_ServerIsSwapping && m_ServerSwapPhase == WeaponSwapPhase.Raise
-                ? m_ServerSwapTargetWeapon
-                : m_CharacterState.CurrentWeaponName;
+            string dropSourceWeapon = m_CharacterState.CurrentWeaponName;
 
             WeaponDefinition currentWeapon = loader.GetById(dropSourceWeapon);
             if (currentWeapon?.Animations != null &&

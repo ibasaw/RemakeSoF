@@ -1,0 +1,102 @@
+[
+    {
+        "id": "maps/cem1",
+        "mapName": "Cemetery",
+        "countdownStartValue": 15,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/cem1",
+        "cameraLevelShotPosition": {
+            "x": -130,
+            "y": 20,
+            "z": -100
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": -184.93,
+                "y": 10,
+                "z": -113.96
+            },
+            {
+                "x": -184.17,
+                "y": 10,
+                "z": -113.96
+            },
+            {
+                "x": -183.41,
+                "y": 10,
+                "z": -113.96
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": -75.28,
+                "y": 10,
+                "z": -15
+            },
+            {
+                "x": -85.28,
+                "y": 10,
+                "z": -17
+            },
+            {
+                "x": -55.28,
+                "y": 10,
+                "z": -19
+            }
+        ]
+    },
+    {
+        "id":"maps/mp_hos1",
+        "mapName": "Hospital",
+        "countdownStartValue": 15,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hos1",
+        "cameraLevelShotPosition": {
+            "x": -130,
+            "y": 20,
+            "z": -100
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": -10,
+                "y": 10,
+                "z": 13
+            },
+            {
+                "x": 10,
+                "y": 10,
+                "z": 13
+            },
+            {
+                "x": -24,
+                "y": 10,
+                "z": 13
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": -20,
+                "y": 0,
+                "z": -20
+            },
+            {
+                "x": -22,
+                "y": 0,
+                "z": -20
+            },
+            {
+                "x": -24,
+                "y": 0,
+                "z": -20
+            }
+        ]
+    }
+]

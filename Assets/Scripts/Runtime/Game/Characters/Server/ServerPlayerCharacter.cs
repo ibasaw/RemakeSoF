@@ -109,6 +109,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
             m_IsReady = true;
         }
 
+        /// <summary>
+        /// Setzt serverseitige Bewegungswerte fuer einen sauberen Respawn zurueck.
+        /// Verhindert, dass alte Fall-/Sprung-Velocity in die neue Runde uebernommen wird.
+        /// </summary>
+        public void ResetForRespawn()
+        {
+            m_Simulation.SetState(Vector3.zero, true, false, false, 0f);
+        }
+
         public ServerMovementAck ProcessCommand(PlayerCommand cmd)
         {
             if (!m_IsReady)

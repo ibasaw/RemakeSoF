@@ -1,11 +1,14 @@
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.EffectManagement;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using Tolik.RemakeSoF.Runtime.SoundManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
+using Tolik.RemakeSoF.Runtime.WeaponManagement;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.Rendering;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 {
@@ -242,6 +245,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             // Ghoul2Meta-Texturen anwenden (mapped_texture_0..N)
             PrefabTextureApplier.ApplyTextures(m_ModelInstance);
 
+            // viewModel-Texturen anwenden (Base + Specular aus WeaponDefinition)
+            ApplyViewModelTextures(m_ModelInstance, m_ModelKey);
+
             // SoF2/Ghoul2 Model-Korrektur: Knife hat Blade entlang Y, andere Models brauchen Z-Rotation
             m_ModelInstance.transform.localRotation = m_ModelKey == "knife"
                 ? MODEL_ROTATION_KNIFE
@@ -256,8 +262,95 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             // Knife: ROLL-Rotation wird direkt auf dem Transform angewendet (nicht auf Bone),
             // passend zu SoF2 cg_ents.c CG_Missile(): lerpAngles[ROLL] += cg.time * 1.75
 
-            Debug.Log($"[ClientProjectileVisual] Projektil-Model '{m_ModelKey}' geladen.");
+            //Debug.Log($"[ClientProjectileVisual] Projektil-Model '{m_ModelKey}' geladen.");
             return true;
+        }
+
+        /// <summary>
+        /// Wendet viewModel-Texturen (Base + Specular) auf das Projektil-Model an.
+        /// Nutzt den viewModel-Pfad aus WeaponDefinition als Textur-Key.
+        /// SoF2 Shader-Konvention: viewModel = Base-Textur, viewModel_spec = Specular-Map.
+        /// </summary>
+        private static void ApplyViewModelTextures(GameObject instance, string modelKey)
+        {
+            TextureManager textureManager = ServiceLocator.Get<TextureManager>();
+            if (textureManager == null)
+            {
+                return;
+            }
+
+            WeaponDataLoader weaponLoader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition definition = weaponLoader?.GetById(modelKey);
+            if (definition == null || string.IsNullOrEmpty(definition.ViewModel))
+            {
+                return;
+            }
+
+            string viewModelPath = definition.ViewModel;
+
+            // Base-Textur laden (z.B. "models/weapons/knife/knife")
+            TextureData baseData = textureManager.GetTextureData(viewModelPath)
+                ?? textureManager.GetTextureDataByAlias(viewModelPath);
+            Texture2D baseTexture = baseData != null && baseData.HasTexture() ? baseData.Texture : null;
+
+            if (baseTexture == null)
+            {
+                return;
+            }
+
+            // Specular-Textur laden (z.B. "models/weapons/knife/knife_spec")
+            string specPath = viewModelPath + "_spec";
+            TextureData specData = textureManager.GetTextureData(specPath)
+                ?? textureManager.GetTextureDataByAlias(specPath);
+            Texture2D specTexture = specData != null && specData.HasTexture() ? specData.Texture : null;
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null)
+            {
+                return;
+            }
+
+            // Material erstellen: URP/Unlit mit Specular via Emission (identisch zu WeaponLoader)
+            Material material = new(shader) { name = viewModelPath };
+
+            if (material.HasProperty("_BaseMap"))
+            {
+                material.SetTexture("_BaseMap", baseTexture);
+            }
+            else
+            {
+                material.mainTexture = baseTexture;
+            }
+            material.SetColor("_BaseColor", Color.white);
+
+            if (material.HasProperty("_Smoothness"))
+            {
+                material.SetFloat("_Smoothness", 0f);
+            }
+
+            if (specTexture != null && material.HasProperty("_EmissionMap"))
+            {
+                material.SetTexture("_EmissionMap", specTexture);
+                material.SetColor("_EmissionColor", new Color(0.15f, 0.15f, 0.15f, 1f));
+                material.EnableKeyword("_EMISSION");
+                material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            }
+
+            // Backface-Culling OFF (SoF2: cull disable)
+            material.SetFloat("_Cull", (float)CullMode.Off);
+
+            // Auf alle Renderer anwenden
+            Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer renderer in renderers)
+            {
+                Material[] materials = renderer.sharedMaterials;
+                Material[] newMaterials = new Material[materials.Length];
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    newMaterials[i] = material;
+                }
+                renderer.materials = newMaterials;
+            }
         }
 
         /// <summary>

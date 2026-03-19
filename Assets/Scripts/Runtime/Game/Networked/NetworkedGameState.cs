@@ -2,10 +2,10 @@ using System;
 using Unity.Collections;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Management.MapManagement;
 using Unity.Netcode;
 using UnityEngine;
-using System.Collections;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Networked
 {
@@ -14,8 +14,34 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
     /// </summary>
     public class NetworkedGameState : NetworkBehaviour
     {
+        /// <summary>Singleton-Instanz fuer globalen Zugriff auf Spielkonfiguration.</summary>
+        public static NetworkedGameState Singleton { get; private set; }
+
+        /// <summary>Minimale Spieleranzahl um ein Match zu starten.</summary>
+        [SerializeField]
+        internal int MinPlayers = 1;
+
+        /// <summary>Maximale Spieleranzahl pro Match.</summary>
+        [SerializeField]
+        internal int MaxPlayers = 2;
+
         internal NetworkVariable<uint> matchCountdown = new();
         internal NetworkVariable<int> playersConnected = new();
+
+        /// <summary>
+        /// Countdown bis zum Map-Wechsel (in Sekunden), synchronisiert uebers Netzwerk.
+        /// 0 = kein Map-Wechsel aktiv.
+        /// </summary>
+        internal NetworkVariable<uint> mapSwitchCountdown = new();
+
+        /// <summary>
+        /// Name der naechsten Map fuer den Map-Wechsel-Countdown, synchronisiert uebers Netzwerk.
+        /// </summary>
+        internal NetworkVariable<FixedString128Bytes> nextMapName = new(
+            default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
 
         /// <summary>
         /// Der aktuell geladene Map-Name, synchronisiert über das Netzwerk.
@@ -27,9 +53,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             NetworkVariableWritePermission.Server
         );
 
-        bool m_MatchStarted;
-        bool m_MatchEnded;
-
         internal event Action OnMatchStarted;
         internal event Action OnMatchEnded;
 
@@ -38,10 +61,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         /// </summary>
         internal event Action<MapLoadPhase> OnMapLoadProgress;
 
-        const uint k_CountdownStartValue = 300;
-        const string k_DefaultMapName = "maps/cem1"; //TODO: Platzhalter, bis Map-Auswahl implementiert ist
+        /// <summary>
+        /// Event das vor einem Map-Wechsel gefeuert wird (fuer Loading-Screen mit LevelShot).
+        /// Uebergibt die MapDefinition der neuen Map.
+        /// </summary>
+        internal event Action<MapDefinition> OnMapChangeStarting;
 
-        Coroutine m_CountdownRoutine;
+        const string k_DefaultMapName = "maps/mp_hos1"; //TODO: Platzhalter, bis Map-Auswahl implementiert ist
+
+        RoundFlowStateMachine m_RoundFlowStateMachine;
 
         /// <summary>
         /// MapLoader wird auf Server UND Client verwendet.
@@ -52,20 +80,40 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
         ConnectionManager ConnectionManager => ApplicationEntryPoint.Singleton.ConnectionManager;
 
+        /// <summary>
+        /// Stellt sicher, dass eine RoundFlowStateMachine am selben GameObject vorhanden ist.
+        /// </summary>
+        void EnsureRoundFlowStateMachine()
+        {
+            if (m_RoundFlowStateMachine != null)
+            {
+                return;
+            }
+
+            m_RoundFlowStateMachine = GetComponent<RoundFlowStateMachine>();
+            if (m_RoundFlowStateMachine == null)
+            {
+                m_RoundFlowStateMachine = gameObject.AddComponent<RoundFlowStateMachine>();
+            }
+        }
+
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
 
+            Singleton = this;
+            EnsureRoundFlowStateMachine();
+
             m_MapLoader = new MapLoader();
-            m_MapLoader.OnProgress += phase => OnMapLoadProgress?.Invoke(phase);
+            m_MapLoader.OnProgress += OnMapLoaderProgress;
 
             if (IsServer)
             {
-                m_MatchEnded = false;
                 ConnectionManager.EventManager.AddListener<MinNumberPlayersConnectedEvent>(OnServerMinNumberPlayersConnected);
                 ConnectionManager.EventManager.AddListener<ClientConnectedEvent>(OnServerClientConnected);
                 ConnectionManager.EventManager.AddListener<ClientDisconnectedEvent>(OnServerClientDisconnected);
                 playersConnected.Value = NetworkManager.ConnectedClientsIds.Count;
+                m_RoundFlowStateMachine.Initialize(this);
                 currentMapName.Value = new FixedString128Bytes(k_DefaultMapName);
 
                 // Server lädt Map für SpawnPoints, Kollision, etc.
@@ -79,6 +127,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 string mapName = currentMapName.Value.ToString();
                 if (!string.IsNullOrEmpty(mapName))
                 {
+                    // OnValueChanged feuert nicht fuer den initialen Sync,
+                    // daher OnMapChangeStarting manuell ausloesen
+                    FireMapChangeStarting(mapName);
+
                     Debug.Log($"[NetworkedGameState] Client loading initial map: {mapName}");
                     _ = m_MapLoader.LoadMapAsync(mapName);
                 }
@@ -90,18 +142,35 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
         public override void OnNetworkDespawn()
         {
+            if (Singleton == this)
+            {
+                Singleton = null;
+            }
+
             currentMapName.OnValueChanged -= OnMapNameChanged;
+            if (m_MapLoader != null)
+            {
+                m_MapLoader.OnProgress -= OnMapLoaderProgress;
+            }
 
             if (IsServer)
             {
-                if (m_CountdownRoutine != null)
-                {
-                    StopCoroutine(m_CountdownRoutine);
-                    m_CountdownRoutine = null;
-                }
                 ConnectionManager.EventManager.RemoveListener<MinNumberPlayersConnectedEvent>(OnServerMinNumberPlayersConnected);
                 ConnectionManager.EventManager.RemoveListener<ClientConnectedEvent>(OnServerClientConnected);
                 ConnectionManager.EventManager.RemoveListener<ClientDisconnectedEvent>(OnServerClientDisconnected);
+            }
+        }
+
+        /// <summary>
+        /// Leitet MapLoader-Phasen an die UI weiter und delegiert serverseitig an die StateMachine.
+        /// </summary>
+        void OnMapLoaderProgress(MapLoadPhase phase)
+        {
+            OnMapLoadProgress?.Invoke(phase);
+
+            if (IsServer)
+            {
+                m_RoundFlowStateMachine.OnMapLoadPhase(phase);
             }
         }
 
@@ -119,7 +188,53 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             }
 
             Debug.Log($"[NetworkedGameState] Map changed: {previousValue} -> {mapName} (IsServer={IsServer})");
+
+            FireMapChangeStarting(mapName);
             _ = m_MapLoader.LoadMapAsync(mapName);
+        }
+
+        /// <summary>
+        /// Wird vom Client aufgerufen sobald der Loading-Screen weg ist
+        /// und der Spieler das Gameplay sieht.
+        /// </summary>
+        public void NotifyGameplayVisibleOnClient()
+        {
+            if (!IsClient || IsServer || !IsSpawned)
+            {
+                return;
+            }
+
+            NotifyGameplayVisibleServerRpc();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        void NotifyGameplayVisibleServerRpc(RpcParams rpcParams = default)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            ulong senderClientId = rpcParams.Receive.SenderClientId;
+            if (!NetworkManager.ConnectedClients.ContainsKey(senderClientId))
+            {
+                return;
+            }
+
+            m_RoundFlowStateMachine.OnClientReadyForRound(senderClientId);
+        }
+
+        /// <summary>
+        /// Feuert das OnMapChangeStarting-Event mit der MapDefinition der angegebenen Map.
+        /// </summary>
+        void FireMapChangeStarting(string mapName)
+        {
+            MapDataLoader mapDataLoader = ServiceLocator.Get<MapDataLoader>();
+            MapDefinition mapDef = mapDataLoader?.GetByMapId(mapName);
+            if (mapDef != null)
+            {
+                OnMapChangeStarting?.Invoke(mapDef);
+            }
         }
 
         /// <summary>
@@ -158,62 +273,42 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
         void OnServerMinNumberPlayersConnected(MinNumberPlayersConnectedEvent evt)
         {
-            if (m_MatchStarted)
-            {
-                throw new Exception("[Server] Match has already started and received an unexpected MinNumberPlayersConnectedEvent");
-            }
-            Debug.Log("[Server] Starting match!");
-            m_MatchStarted = true;
-            OnServerStartCountdown();
-            ClientStartMatchRpc();
-            OnMatchStarted?.Invoke();
+            m_RoundFlowStateMachine.OnMinPlayersReached();
         }
 
         void OnServerClientConnected(ClientConnectedEvent evt)
         {
-            playersConnected.Value = NetworkManager.ConnectedClientsIds.Count;
+            m_RoundFlowStateMachine.OnClientConnected();
         }
 
         void OnServerClientDisconnected(ClientDisconnectedEvent evt)
         {
-            playersConnected.Value = NetworkManager.ConnectedClientsIds.Count;
+            m_RoundFlowStateMachine.OnClientDisconnected();
         }
 
-        void OnServerStartCountdown()
+        /// <summary>
+        /// Broadcastet Match-Start ueber RPC an alle Clients und feuert das lokale Event.
+        /// Wird von RunningState aufgerufen.
+        /// </summary>
+        internal void BroadcastMatchStarted()
         {
-            matchCountdown.Value = k_CountdownStartValue;
-            m_CountdownRoutine = StartCoroutine(OnServerDoCountdown());
+            ClientStartMatchRpc();
+            OnMatchStarted?.Invoke();
+        }
+
+        /// <summary>
+        /// Broadcastet Match-Ende ueber RPC an alle Clients.
+        /// Wird von SwitchingMapState aufgerufen.
+        /// </summary>
+        internal void BroadcastMatchEnded()
+        {
+            ClientEndMatchRpc();
         }
 
         [Rpc(SendTo.ClientsAndHost)]
         void ClientStartMatchRpc()
         {
             OnMatchStarted?.Invoke();
-        }
-
-        IEnumerator OnServerDoCountdown()
-        {
-            while (matchCountdown.Value > 0
-                && !m_MatchEnded)
-            {
-                yield return CoroutinesHelper.OneSecond;
-                matchCountdown.Value--;
-                //Debug.Log($"[Server] Countdown: {matchCountdown.Value} seconds remaining");
-            }
-            OnServerCountdownExpired();
-        }
-
-        void OnServerCountdownExpired()
-        {
-            m_MatchEnded = true;
-            if (m_CountdownRoutine != null)
-            {
-                StopCoroutine(m_CountdownRoutine);
-                m_CountdownRoutine = null;
-            }
-
-            ClientEndMatchRpc();
-            //StartCoroutine(CoroutinesHelper.WaitAndDo(new WaitForSeconds(k_ShutdownDelayAfterCountdownEnd), () => ConnectionManager.RequestShutdown()));
         }
 
         [Rpc(SendTo.ClientsAndHost)]

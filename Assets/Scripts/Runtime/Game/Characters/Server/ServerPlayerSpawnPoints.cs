@@ -4,41 +4,41 @@ using UnityEngine;
 namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
 {
     /// <summary>
-    /// Verwaltet Player-Spawn-Points auf dem Server.
-    /// Wird automatisch vom MapLoader an das "PlayerSpawnPoints"-GameObject gehängt.
-    /// Liest alle Child-Transforms als verfügbare Spawn-Positionen.
+    /// Verwaltet team-basierte Player-Spawn-Points auf dem Server.
+    /// Wird vom MapLoader mit generierten Spawn-Positionen befuellt.
+    /// Spawn-Points werden nach Teams aufgeteilt (gegenueberliegende Kartenseiten).
     /// </summary>
     public class ServerPlayerSpawnPoints : MonoBehaviour
     {
-        /// <summary>
-        /// Singleton-Instanz für schnellen Zugriff vom Server.
-        /// </summary>
+        /// <summary>Singleton-Instanz fuer schnellen Zugriff vom Server.</summary>
         private static ServerPlayerSpawnPoints s_Instance;
 
-        /// <summary>
-        /// Verfügbare Spawn-Positionen (werden beim Konsumieren entfernt).
-        /// </summary>
-        private List<Transform> m_SpawnPoints = new();
+        /// <summary>Verfuegbare Spawn-Positionen pro Team (werden beim Konsumieren entfernt).</summary>
+        private readonly Dictionary<TeamId, List<Vector3>> m_AvailableSpawnPoints = new()
+        {
+            { TeamId.TeamOne, new() },
+            { TeamId.TeamTwo, new() }
+        };
 
-        /// <summary>
-        /// Alle Spawn-Positionen (unverändert, für Reset/Respawn).
-        /// </summary>
-        private List<Transform> m_AllSpawnPoints = new();
+        /// <summary>Alle Spawn-Positionen pro Team (unveraendert, fuer Round-Robin-Reset).</summary>
+        private readonly Dictionary<TeamId, List<Vector3>> m_AllSpawnPoints = new()
+        {
+            { TeamId.TeamOne, new() },
+            { TeamId.TeamTwo, new() }
+        };
 
-        /// <summary>
-        /// Globale Singleton-Instanz.
-        /// </summary>
+        /// <summary>Globale Singleton-Instanz.</summary>
         public static ServerPlayerSpawnPoints Instance => s_Instance;
 
-        /// <summary>
-        /// Anzahl der aktuell verfügbaren Spawn-Points.
-        /// </summary>
-        public int AvailableCount => m_SpawnPoints.Count;
+        /// <summary>Anzahl der aktuell verfuegbaren Spawn-Points fuer ein Team.</summary>
+        public int GetAvailableCount(TeamId team) => m_AvailableSpawnPoints[team].Count;
+
+        /// <summary>Gesamtanzahl aller Spawn-Points (beide Teams).</summary>
+        public int TotalCount => m_AllSpawnPoints[TeamId.TeamOne].Count + m_AllSpawnPoints[TeamId.TeamTwo].Count;
 
         private void Awake()
         {
             s_Instance = this;
-            CollectSpawnPoints();
         }
 
         private void OnDestroy()
@@ -50,66 +50,102 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         }
 
         /// <summary>
-        /// Sammelt alle Child-Transforms als Spawn-Points.
+        /// Befuellt die Spawn-Points fuer beide Teams.
+        /// Wird vom MapLoader nach der Spawn-Point-Generierung aufgerufen.
         /// </summary>
-        private void CollectSpawnPoints()
+        /// <param name="teamOnePoints">Spawn-Positionen fuer Team 1.</param>
+        /// <param name="teamTwoPoints">Spawn-Positionen fuer Team 2.</param>
+        public void SetSpawnPoints(List<Vector3> teamOnePoints, List<Vector3> teamTwoPoints)
         {
-            m_SpawnPoints.Clear();
-            m_AllSpawnPoints.Clear();
+            m_AllSpawnPoints[TeamId.TeamOne] = new List<Vector3>(teamOnePoints);
+            m_AllSpawnPoints[TeamId.TeamTwo] = new List<Vector3>(teamTwoPoints);
 
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                Transform child = transform.GetChild(i);
-                m_SpawnPoints.Add(child);
-                m_AllSpawnPoints.Add(child);
-            }
+            m_AvailableSpawnPoints[TeamId.TeamOne] = new List<Vector3>(teamOnePoints);
+            m_AvailableSpawnPoints[TeamId.TeamTwo] = new List<Vector3>(teamTwoPoints);
 
-            Debug.Log($"[ServerPlayerSpawnPoints] {m_SpawnPoints.Count} Spawn-Points gesammelt");
+            Debug.Log($"[ServerPlayerSpawnPoints] Spawn-Points gesetzt: " +
+                      $"TeamOne={teamOnePoints.Count}, TeamTwo={teamTwoPoints.Count}");
         }
 
         /// <summary>
-        /// Gibt den nächsten verfügbaren Spawn-Point zurück und entfernt ihn aus der Liste.
-        /// Wenn keine mehr verfügbar sind, wird die Liste zurückgesetzt (Round-Robin).
+        /// Gibt den naechsten verfuegbaren Spawn-Point fuer das angegebene Team zurueck.
+        /// Wenn keine mehr verfuegbar sind, wird die Liste zurueckgesetzt (Round-Robin).
+        /// </summary>
+        /// <param name="team">Das Team fuer das ein Spawn-Point benoetigt wird.</param>
+        /// <returns>Position und Rotation des Spawn-Points.</returns>
+        public (Vector3 position, Quaternion rotation) ConsumeNextSpawnPoint(TeamId team)
+        {
+            List<Vector3> available = m_AvailableSpawnPoints[team];
+            List<Vector3> all = m_AllSpawnPoints[team];
+
+            if (available.Count == 0)
+            {
+                available.AddRange(all);
+
+                if (available.Count == 0)
+                {
+                    Debug.LogWarning($"[ServerPlayerSpawnPoints] Keine Spawn-Points fuer {team}! Fallback auf Origin.");
+                    return (Vector3.zero, Quaternion.identity);
+                }
+
+                Debug.Log($"[ServerPlayerSpawnPoints] Spawn-Points fuer {team} zurueckgesetzt (Round-Robin)");
+            }
+
+            int index = Random.Range(0, available.Count);
+            Vector3 position = available[index];
+            available.RemoveAt(index);
+
+            return (position, Quaternion.identity);
+        }
+
+        /// <summary>
+        /// Gibt den naechsten Spawn-Point zurueck und alterniert automatisch zwischen Teams.
+        /// Kompatibilitaets-Methode fuer Code der keine Team-Zuordnung kennt.
         /// </summary>
         /// <returns>Position und Rotation des Spawn-Points.</returns>
         public (Vector3 position, Quaternion rotation) ConsumeNextSpawnPoint()
         {
-            if (m_SpawnPoints.Count == 0)
-            {
-                // Round-Robin: Alle Spawn-Points wieder verfügbar machen
-                m_SpawnPoints.AddRange(m_AllSpawnPoints);
+            // Alterniert: Team mit mehr verfuegbaren Punkten bevorzugen
+            TeamId team = m_AvailableSpawnPoints[TeamId.TeamOne].Count >= m_AvailableSpawnPoints[TeamId.TeamTwo].Count
+                ? TeamId.TeamOne
+                : TeamId.TeamTwo;
 
-                if (m_SpawnPoints.Count == 0)
-                {
-                    Debug.LogWarning("[ServerPlayerSpawnPoints] Keine Spawn-Points vorhanden! Fallback auf Origin.");
-                    return (Vector3.zero, Quaternion.identity);
-                }
-
-                Debug.Log("[ServerPlayerSpawnPoints] Spawn-Points zurückgesetzt (Round-Robin)");
-            }
-
-            int lastIndex = m_SpawnPoints.Count - 1;
-            Transform spawnPoint = m_SpawnPoints[lastIndex];
-            m_SpawnPoints.RemoveAt(lastIndex);
-
-            return (spawnPoint.position, spawnPoint.rotation);
+            return ConsumeNextSpawnPoint(team);
         }
 
         /// <summary>
-        /// Gibt einen zufälligen Spawn-Point zurück ohne ihn zu konsumieren.
-        /// Nützlich für Respawn.
+        /// Gibt einen zufaelligen Spawn-Point fuer das angegebene Team zurueck ohne ihn zu konsumieren.
         /// </summary>
-        /// <returns>Position und Rotation eines zufälligen Spawn-Points.</returns>
-        public (Vector3 position, Quaternion rotation) GetRandomSpawnPoint()
+        /// <param name="team">Das Team.</param>
+        /// <returns>Position und Rotation eines zufaelligen Spawn-Points.</returns>
+        public (Vector3 position, Quaternion rotation) GetRandomSpawnPoint(TeamId team)
         {
-            if (m_AllSpawnPoints.Count == 0)
+            List<Vector3> all = m_AllSpawnPoints[team];
+
+            if (all.Count == 0)
             {
-                Debug.LogWarning("[ServerPlayerSpawnPoints] Keine Spawn-Points vorhanden! Fallback auf Origin.");
+                Debug.LogWarning($"[ServerPlayerSpawnPoints] Keine Spawn-Points fuer {team}! Fallback auf Origin.");
                 return (Vector3.zero, Quaternion.identity);
             }
 
-            Transform spawnPoint = m_AllSpawnPoints[Random.Range(0, m_AllSpawnPoints.Count)];
-            return (spawnPoint.position, spawnPoint.rotation);
+            Vector3 position = all[Random.Range(0, all.Count)];
+            return (position, Quaternion.identity);
+        }
+
+        /// <summary>
+        /// Gibt einen zufaelligen Spawn-Point zurueck (beliebiges Team) ohne ihn zu konsumieren.
+        /// </summary>
+        /// <returns>Position und Rotation eines zufaelligen Spawn-Points.</returns>
+        public (Vector3 position, Quaternion rotation) GetRandomSpawnPoint()
+        {
+            TeamId team = Random.Range(0, 2) == 0 ? TeamId.TeamOne : TeamId.TeamTwo;
+
+            if (m_AllSpawnPoints[team].Count == 0)
+            {
+                team = team == TeamId.TeamOne ? TeamId.TeamTwo : TeamId.TeamOne;
+            }
+
+            return GetRandomSpawnPoint(team);
         }
     }
 }

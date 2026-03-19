@@ -73,13 +73,13 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                     continue;
                 }
 
-                List<string> textureKeys = CollectTextureKeys(meta);
-                if (textureKeys.Count == 0)
+                List<(int slotIndex, string key)> textureSlots = CollectTextureKeys(meta);
+                if (textureSlots.Count == 0)
                 {
                     continue;
                 }
 
-                ApplyMaterials(renderer, textureKeys, meta, textureManager);
+                ApplyMaterials(renderer, textureSlots, meta, textureManager);
                 appliedCount++;
             }
 
@@ -88,10 +88,12 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
         /// <summary>
         /// Sammelt alle Textur-Keys (mapped_texture_0..N) aus den Ghoul2Meta-Properties.
+        /// Gibt Tuples (Original-Slot-Index, Textur-Key) zurück, damit cull_N und
+        /// is_transparent_N den korrekten Slot referenzieren — auch bei Lücken.
         /// </summary>
-        private List<string> CollectTextureKeys(Ghoul2Meta meta)
+        private List<(int slotIndex, string key)> CollectTextureKeys(Ghoul2Meta meta)
         {
-            List<string> keys = new();
+            List<(int slotIndex, string key)> keys = new();
 
             for (int i = 0; i < k_MaxTextureSlots; i++)
             {
@@ -104,7 +106,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 string value = meta.GetString(propertyName);
                 if (!string.IsNullOrEmpty(value))
                 {
-                    keys.Add(value);
+                    keys.Add((i, value));
                 }
             }
 
@@ -112,16 +114,17 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         }
 
         /// <summary>
-        /// Erzeugt und setzt Materialien auf dem Renderer basierend auf den Textur-Keys.
+        /// Erzeugt und setzt Materialien auf dem Renderer basierend auf den Textur-Slots.
         /// Wendet anschließend per-Slot Cull- und Transparenz-Properties an.
+        /// Nutzt den Original-Slot-Index für cull_N / is_transparent_N Zuordnung.
         /// </summary>
-        private void ApplyMaterials(Renderer renderer, List<string> textureKeys, Ghoul2Meta meta, TextureManager textureManager)
+        private void ApplyMaterials(Renderer renderer, List<(int slotIndex, string key)> textureSlots, Ghoul2Meta meta, TextureManager textureManager)
         {
-            Material[] materials = new Material[textureKeys.Count];
+            Material[] materials = new Material[textureSlots.Count];
 
-            for (int i = 0; i < textureKeys.Count; i++)
+            for (int i = 0; i < textureSlots.Count; i++)
             {
-                string key = textureKeys[i];
+                string key = textureSlots[i].key;
                 Material material = ResolveMaterial(key, textureManager);
 
                 if (material != null)
@@ -139,14 +142,16 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
             renderer.materials = materials;
 
-            // Per-Slot Cull und Transparenz anwenden (auf Material-Instanzen des Renderers)
+            // Per-Slot Cull und Transparenz anwenden (auf Material-Instanzen des Renderers).
             // renderer.materials gibt jedes Mal neue Kopien zurück — deshalb einmal holen,
             // modifizieren und wieder zuweisen.
+            // WICHTIG: Original-Slot-Index nutzen, nicht den komprimierten List-Index.
             Material[] assignedMaterials = renderer.materials;
             for (int i = 0; i < assignedMaterials.Length; i++)
             {
-                ApplyCullProperty(assignedMaterials[i], meta, i);
-                ApplyTransparencyProperty(assignedMaterials[i], meta, i);
+                int slotIndex = textureSlots[i].slotIndex;
+                ApplyCullProperty(assignedMaterials[i], meta, slotIndex);
+                ApplyTransparencyProperty(assignedMaterials[i], meta, slotIndex);
             }
             renderer.materials = assignedMaterials;
         }
@@ -188,6 +193,13 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         {
             string transparentKey = k_TransparentPrefix + index;
             if (!meta.HasProperty(transparentKey))
+            {
+                return;
+            }
+
+            // Wert prüfen: nur anwenden wenn nicht explizit "0" oder "false"
+            string transparentValue = meta.GetString(transparentKey);
+            if (transparentValue == "0" || string.Equals(transparentValue, "false", System.StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }

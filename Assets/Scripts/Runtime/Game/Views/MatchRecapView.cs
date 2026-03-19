@@ -2,10 +2,14 @@ using UnityEngine.UIElements;
 
 namespace Tolik.RemakeSoF.Runtime
 {
+    /// <summary>
+    /// Zeigt den Match-Recap-Screen an.
+    /// Zeigt "Game Over", die naechste Map und einen Countdown bis zum Map-Wechsel.
+    /// </summary>
     internal class MatchRecapView : View<GameApplication>
     {
-        Button m_ContinueButton;
         Label m_ResultLabel;
+        Label m_MapSwitchLabel;
         UIDocument m_UIDocument;
 
         void Awake()
@@ -15,28 +19,44 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnEnable()
         {
-            var root = m_UIDocument.rootVisualElement;
-            m_ContinueButton = root.Q<Button>("continueButton");
-            m_ContinueButton.RegisterCallback<ClickEvent>(OnClickContinue);
-
-            m_ResultLabel = root.Query<Label>("resultLabel");
+            VisualElement root = m_UIDocument.rootVisualElement;
+            m_ResultLabel = root.Q<Label>("resultLabel");
+            m_MapSwitchLabel = root.Q<Label>("mapSwitchLabel");
         }
 
-        void OnDisable()
-        {
-            m_ContinueButton.UnregisterCallback<ClickEvent>(OnClickContinue);
-        }
-
-        internal void OnClientEndMatch(EndMatchEvent evt)
+        /// <summary>
+        /// Zeigt den Recap-Screen mit "Game Over" an.
+        /// </summary>
+        internal void OnClientEndMatch()
         {
             gameObject.SetActive(true);
             m_ResultLabel.text = "Game Over!";
+            if (m_MapSwitchLabel != null)
+            {
+                m_MapSwitchLabel.text = "";
+            }
         }
 
-        void OnClickContinue(ClickEvent evt)
+        /// <summary>
+        /// Aktualisiert die Anzeige fuer den Map-Wechsel-Countdown.
+        /// </summary>
+        /// <param name="nextMapDisplayName">Anzeigename der naechsten Map.</param>
+        /// <param name="secondsRemaining">Verbleibende Sekunden bis zum Wechsel.</param>
+        internal void UpdateMapSwitchCountdown(string nextMapDisplayName, uint secondsRemaining)
         {
-            gameObject.SetActive(false);
-            Broadcast(new MatchEndAcknowledgedEvent());
+            if (m_MapSwitchLabel == null)
+            {
+                return;
+            }
+
+            if (secondsRemaining > 0)
+            {
+                m_MapSwitchLabel.text = $"Next map: {nextMapDisplayName} in {secondsRemaining}...";
+            }
+            else
+            {
+                m_MapSwitchLabel.text = $"Loading {nextMapDisplayName}...";
+            }
         }
     }
 }

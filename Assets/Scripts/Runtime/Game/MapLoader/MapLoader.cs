@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using Unity.Netcode;
@@ -12,16 +14,11 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
     /// <summary>
     /// Lädt Map-Prefabs über den PrefabManager und instanziiert sie in der aktiven Szene.
     /// Wird auf Server UND Clients verwendet.
-    /// Server: Richtet SpawnPoints ein.
+    /// Server: Richtet team-basierte SpawnPoints aus SoF2_Maps.json ein.
     /// Client: Zeigt Map-Visuals an.
     /// </summary>
     public class MapLoader
     {
-        /// <summary>
-        /// Name des GameObjects in der Map, das die Spawn-Points als Kinder enthält.
-        /// </summary>
-        private const string k_SpawnPointsObjectName = "PlayerSpawnPoints";
-
         /// <summary>
         /// Die aktuell geladene Map-Instanz.
         /// </summary>
@@ -119,20 +116,23 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             await Task.Yield();
 
             // Texturen auf Map-Elemente anwenden (nur Client, benötigt TextureManager)
-            m_TextureApplier.ApplyTextures(m_CurrentMapInstance);
+            if(!NetworkManager.Singleton.IsServer)
+                m_TextureApplier.ApplyTextures(m_CurrentMapInstance);
 
             OnProgress?.Invoke(MapLoadPhase.TexturesApplied);
             await Task.Yield();
 
             // Skybox aus skyParms-Daten erstellen (nur Client, benötigt TextureManager)
-            m_SkyboxApplier.ApplySkybox(m_CurrentMapInstance);
+            if(!NetworkManager.Singleton.IsServer)
+                m_SkyboxApplier.ApplySkybox(m_CurrentMapInstance);
 
             OnProgress?.Invoke(MapLoadPhase.SkyboxApplied);
             await Task.Yield();
 
-            // Server: SpawnPoints einrichten
-            SetupServerSpawnPoints();
+            // Server: Spawn-Points aus SoF2_Maps.json laden
+            SetupServerSpawnPoints(mapName);
 
+            OnProgress?.Invoke(MapLoadPhase.SpawnPointsReady);
             OnProgress?.Invoke(MapLoadPhase.Complete);
 
             Debug.Log($"[MapLoader] Map loaded and instantiated: {mapName} in scene: {activeScene.name} " +
@@ -143,30 +143,34 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         }
 
         /// <summary>
-        /// Sucht das "PlayerSpawnPoints"-GameObject in der Map und
-        /// hängt ServerPlayerSpawnPoints an (nur auf dem Server).
+        /// Laedt team-basierte Spawn-Points aus SoF2_Maps.json via MapDataLoader
+        /// und erstellt das ServerPlayerSpawnPoints-Component (nur auf dem Server).
         /// </summary>
-        private void SetupServerSpawnPoints()
+        /// <param name="mapName">Die Map-ID fuer das Lookup in SoF2_Maps.json.</param>
+        private void SetupServerSpawnPoints(string mapName)
         {
             if (!NetworkManager.Singleton.IsServer)
             {
                 return;
             }
 
-            Transform spawnPointsTransform = m_CurrentMapInstance.transform.Find(k_SpawnPointsObjectName);
-            if (spawnPointsTransform == null)
+            MapDataLoader mapDataLoader = ServiceLocator.Get<MapDataLoader>();
+            if (mapDataLoader == null)
             {
-                Debug.LogWarning($"[MapLoader] Kein '{k_SpawnPointsObjectName}'-GameObject in der Map gefunden!");
+                Debug.LogError("[MapLoader] MapDataLoader not available via ServiceLocator.");
                 return;
             }
 
-            // ServerPlayerSpawnPoints anhängen (falls nicht bereits vorhanden)
-            if (!spawnPointsTransform.TryGetComponent<ServerPlayerSpawnPoints>(out var existing))
-            {
-                spawnPointsTransform.gameObject.AddComponent<ServerPlayerSpawnPoints>();
-                Debug.Log($"[MapLoader] ServerPlayerSpawnPoints an '{k_SpawnPointsObjectName}' angehängt " +
-                          $"({spawnPointsTransform.childCount} Spawn-Points)");
-            }
+            (List<Vector3> teamOne, List<Vector3> teamTwo) = mapDataLoader.GetSpawnPoints(mapName);
+
+            GameObject spawnPointsGO = new("ServerSpawnPoints");
+            spawnPointsGO.transform.SetParent(m_CurrentMapInstance.transform);
+
+            ServerPlayerSpawnPoints spawnPoints = spawnPointsGO.AddComponent<ServerPlayerSpawnPoints>();
+            spawnPoints.SetSpawnPoints(teamOne, teamTwo);
+
+            Debug.Log($"[MapLoader] ServerPlayerSpawnPoints erstellt: " +
+                      $"TeamOne={teamOne.Count}, TeamTwo={teamTwo.Count}");
         }
 
         /// <summary>

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+using Tolik.RemakeSoF.Runtime.Game.Networked;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -77,7 +78,7 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
                 }
             }
 
-            if (!m_MinPlayerConnected && Manager.NetworkManager.ConnectedClientsIds.Count >= ApplicationEntryPoint.Singleton.MinPlayers)
+            if (!m_MinPlayerConnected && Manager.NetworkManager.ConnectedClientsIds.Count >= NetworkedGameState.Singleton.MinPlayers)
             {
                 m_MinPlayerConnected = true;
                 Manager.EventManager.Broadcast(new MinNumberPlayersConnectedEvent());
@@ -165,7 +166,7 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
         
         ConnectStatus GetConnectStatus(ConnectionPayload connectionPayload)
         {
-            if (Manager.NetworkManager.ConnectedClientsIds.Count >= ApplicationEntryPoint.Singleton.MaxPlayers)
+            if (Manager.NetworkManager.ConnectedClientsIds.Count >= NetworkedGameState.Singleton.MaxPlayers)
             {
                 return ConnectStatus.ServerFull;
             }

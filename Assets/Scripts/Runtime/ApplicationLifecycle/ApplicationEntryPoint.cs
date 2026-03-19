@@ -52,11 +52,6 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         /// <summary>MasterMixer fuer Audio-Routing (SFX/Music-Gruppen werden automatisch aufgeloest).</summary>
         [SerializeField]
         UnityEngine.Audio.AudioMixer m_MasterMixer;
-
-        [SerializeField]
-        internal int MinPlayers = 1;
-        [SerializeField]
-        internal int MaxPlayers = 2;
         ServerCommandListener m_ServerCommandListener;
 
         void Awake()
@@ -118,6 +113,10 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                     SurfaceImpactDataLoader serverSurfaceImpactLoader = new();
                     ServiceLocator.Register(serverSurfaceImpactLoader);
 
+                    // MapDataLoader fuer Map-Definitionen und Spawn-Points
+                    MapDataLoader serverMapDataLoader = new();
+                    ServiceLocator.Register(serverMapDataLoader);
+
                     // Start CLI command listener for server
                     m_ServerCommandListener = new ServerCommandListener();
                     ServiceLocator.Register(m_ServerCommandListener);
@@ -164,6 +163,9 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 
                         SurfaceImpactDataLoader surfaceImpactLoader = new();
                         ServiceLocator.Register(surfaceImpactLoader);
+
+                        MapDataLoader clientMapDataLoader = new();
+                        ServiceLocator.Register(clientMapDataLoader);
 
                         SceneManager.LoadScene("MetagameScene");
                         Debug.Log($"[ApplicationEntryPoint] InitializeNetworkLogic - Client instance started, loaded MetagameScene.");
