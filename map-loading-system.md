@@ -1,4 +1,4 @@
-# Map Loading System – Referenzdokumentation
+# Map Loading & Match Lifecycle – Referenzdokumentation
 
 ## Übersicht
 
@@ -170,8 +170,306 @@ public enum MapLoadPhase
 
 ## Abhängigkeiten
 
-- **ServiceLocator:** `PrefabManager`, `TextureManager`
+- **ServiceLocator:** `PrefabManager`, `TextureManager`, `MapDataLoader`
 - **TextureManager:** Scannt `Assets/Art/Textures` (System) + `persistentDataPath/CustomTextures` (Custom)
 - **TextureRegistry:** Cache-first, Lazy Loading via Custom Loaders
 - **Ghoul2Meta:** Dynamischer Property-Container auf jedem Map-Mesh
 - **FBXGhoul2PropsImporter:** Editor AssetPostprocessor, überträgt FBX Custom Props → Ghoul2Meta
+
+---
+
+## Loading-Screen UI (MapLoadingView / MapLoadingController)
+
+**Dateien:**
+- `Assets/Scripts/Runtime/Game/Views/MapLoadingView.cs`
+- `Assets/Scripts/Runtime/Game/Controllers/MapLoadingController.cs`
+- `Assets/UI/Game/MapLoadingView.uxml`
+
+### Funktionsweise
+
+Der Loading-Screen zeigt pro Map-Wechsel einen LevelShot-Hintergrund, Map-Namen, Status-Text und einen animierten Fortschrittsbalken.
+
+**Queue-basierte Animation:**
+
+MapLoadPhases werden intern nicht sofort angezeigt, sondern in eine `Queue<MapLoadPhase>` eingereiht. Der Balken animiert per `Mathf.MoveTowards` (Speed `0.55` Einheiten/s) zum Ziel des aktuellen Segments. Erst wenn ein Segment erreicht ist, wird die nächste Phase aus der Queue geholt. Das stellt sicher, dass jede Phase sichtbare Bildschirmzeit bekommt — auch wenn alle Phasen in < 1 Frame vom MapLoader gefeuert werden.
+
+**Mindestanzeigedauer:** `k_MinDisplayTime = 3f` Sekunden — der Screen bleibt mindestens so lange sichtbar, auch wenn das Laden schneller fertig ist.
+
+**OnReadyToHide-Event:** Wenn der Balken bei 100% ankommt UND die Mindestzeit erreicht ist, feuert `OnReadyToHide`. Der Controller reagiert darauf:
+
+1. `View.Hide()` — Loading-Screen weg
+2. `App.View.Match.Show()` — Match-HUD sichtbar
+3. `NetworkedGameState.NotifyGameplayVisibleOnClient()` — Client meldet dem Server "bin bereit"
+
+### LevelShot-Hintergrund
+
+`SetMapInfo(MapDefinition)` wird bei `OnMapChangeStarting` aufgerufen:
+
+1. `m_TitleLabel.text = "Loading {mapName}"`
+2. `TextureManager.GetTextureData(mapDef.levelShotBackgroundTexturePath)` → Texture auf `m_Background.style.backgroundImage`
+3. Fortschritt wird auf 0 zurückgesetzt, Queue geleert
+4. `m_ShowTimestamp = Time.time` für Mindestanzeigedauer
+
+### UXML
+
+```xml
+<ui:VisualElement name="mapLoading" style="flex-grow:1; height:100%; -unity-background-scale-mode:scale-and-crop;">
+```
+
+Vollbild-Hintergrund mit `scale-and-crop` für korrekte Skalierung.
+
+---
+
+## Match Recap UI (MatchRecapView / MatchRecapController)
+
+**Dateien:**
+- `Assets/Scripts/Runtime/Game/Views/MatchRecapView.cs`
+- `Assets/Scripts/Runtime/Game/Controllers/MatchRecapController.cs`
+- `Assets/UI/Game/MatchRecapView.uxml`
+
+### Funktionsweise
+
+Nach Ablauf des Match-Countdowns zeigt der Recap-Screen:
+
+1. **"Game Over!"** — sofort sichtbar
+2. **Map-Switch-Countdown:** "Next map: {mapName} in 5/4/3/2/1..." → "Loading {mapName}..."
+
+**Controller** abonniert `EndMatchEvent` (gebroadcastet vom `MatchController`), dann:
+
+- `mapSwitchCountdown.OnValueChanged` → aktualisiert Sekundenanzeige
+- `nextMapName.OnValueChanged` → holt Anzeigenamen via `MapDataLoader.GetByMapId()`
+
+### UXML
+
+```xml
+<ui:Label name="mapSwitchLabel" />
+```
+
+Ersetzte den vorherigen "Continue"-Button — Spieler steuern den Map-Wechsel nicht mehr manuell.
+
+---
+
+## RoundFlowStateMachine (Serverseitiger Match-Lifecycle)
+
+**Datei:** `Assets/Scripts/Runtime/Game/Networked/RoundFlowStateMachine.cs`
+
+Die `RoundFlowStateMachine` erbt von `StateMachine<RoundFlowState, RoundFlowStateMachine>` (Core CRTP-Pattern) und steuert den gesamten Match/Map-Lifecycle serverseitig.
+
+### State-Diagramm
+
+```
+                    MapLoadPhase.Started
+         ┌───────────────────────────────────┐
+         ▼                                   │
+   ┌──────────┐   MapLoadPhase.Complete  ┌───┴──────────┐
+   │ Loading  │ ──────────────────────→  │ WaitingFor   │
+   └──────────┘                          │   Ready      │
+                                         └──────┬───────┘
+                                                │ MinPlayers + alle Clients ready
+                                                ▼
+                                         ┌──────────────┐
+                                         │ StartingRound│
+                                         │  (3.1s Delay)│
+                                         └──────┬───────┘
+                                                │ Delay abgelaufen
+                                                ▼
+                                         ┌──────────────┐
+                                         │   Running    │
+                                         │  (Countdown) │
+                                         └──────┬───────┘
+                                                │ Countdown = 0
+                                                ▼
+                                         ┌──────────────┐
+                                         │ SwitchingMap │
+                                         │ (5s Countdown│
+                                         │  + Map laden)│
+                                         └──────────────┘
+```
+
+### States im Detail
+
+| State | Enter | Exit | Events | Transition |
+|---|---|---|---|---|
+| **LoadingState** | Cleared ready-set, `matchCountdown = 0` | — | `OnMapLoadPhase(Complete)` | → WaitingForReady |
+| **WaitingForReadyState** | `RespawnAllConnectedPlayers()`, Host auto-ready | — | `OnClientReadyForRound()`, `OnMinPlayersReached()`, `OnClientConnected()` | → StartingRound (wenn MinPlayers + alle ready) |
+| **StartingRoundState** | Startet 3.1s Delay-Coroutine | Stoppt Coroutine | `OnClientDisconnected()` | → Running oder zurück zu WaitingForReady |
+| **SwitchingMapState** | `BroadcastMatchEnded()`, 5s Countdown-Coroutine | Stoppt Coroutine | `OnMapLoadPhase(Started)` | → Loading |
+| **RunningState** | `BroadcastMatchStarted()`, Match-Countdown-Coroutine (aus MapDefinition.countdownStartValue, Default 300s) | Stoppt Coroutine | — | → SwitchingMap (Countdown = 0) |
+
+### Shared Data in StateMachine
+
+- `MinPlayersReached: bool` — wird bei Connect/Disconnect aktualisiert
+- `ClientsReadyForRound: HashSet<ulong>` — Client-IDs die "Gameplay sichtbar" gemeldet haben
+- `GameState: NetworkedGameState` — Referenz auf Netzwerk-Logik (NetworkVariables, RPCs)
+- `RoundStartDelaySeconds = 3.1f` — Pause zwischen "alle bereit" und Match-Start
+
+### Event-Delegation
+
+`NetworkedGameState` leitet Server-Events direkt an die StateMachine weiter:
+
+| NGS Event-Source | SM Methode | Beschreibung |
+|---|---|---|
+| `MapLoader.OnProgress` | `OnMapLoadPhase(phase)` | Map-Ladephasen |
+| `NotifyGameplayVisibleServerRpc` | `OnClientReadyForRound(clientId)` | Client meldet Loading-Screen weg |
+| `MinNumberPlayersConnectedEvent` | `OnMinPlayersReached()` | MinPlayers-Schwelle erreicht |
+| `ClientConnectedEvent` | `OnClientConnected()` | Spieler verbindet sich |
+| `ClientDisconnectedEvent` | `OnClientDisconnected()` | Spieler trennt sich |
+
+---
+
+## NetworkedGameState (Match-Netzwerk-Synchronisation)
+
+**Datei:** `Assets/Scripts/Runtime/Game/Networked/NetworkedGameState.cs`
+
+### NetworkVariables (Server → Client sync)
+
+| Variable | Typ | Beschreibung |
+|---|---|---|
+| `matchCountdown` | `NetworkVariable<uint>` | Verbleibende Match-Sekunden |
+| `playersConnected` | `NetworkVariable<int>` | Aktuelle Spieleranzahl |
+| `mapSwitchCountdown` | `NetworkVariable<uint>` | Sekunden bis Map-Wechsel (0 = inaktiv) |
+| `nextMapName` | `NetworkVariable<FixedString128Bytes>` | Nächste Map im Rotation |
+| `currentMapName` | `NetworkVariable<FixedString128Bytes>` | Aktuell geladene Map |
+
+### Events (lokal)
+
+| Event | Beschreibung | Ausgelöst von |
+|---|---|---|
+| `OnMatchStarted` | Match-Runde gestartet | `BroadcastMatchStarted()` via RunningState |
+| `OnMatchEnded` | Match-Runde beendet | `BroadcastMatchEnded()` via SwitchingMapState |
+| `OnMapLoadProgress` | MapLoadPhase für UI | `MapLoader.OnProgress` |
+| `OnMapChangeStarting` | Neue Map wird geladen (mit MapDefinition) | `currentMapName.OnValueChanged` |
+
+### RPCs
+
+| RPC | Richtung | Beschreibung |
+|---|---|---|
+| `NotifyGameplayVisibleServerRpc` | Client → Server | "Loading-Screen weg, bin bereit" |
+| `ClientStartMatchRpc` | Server → Clients | Match-Start broadcasten |
+| `ClientEndMatchRpc` | Server → Clients | Match-Ende broadcasten |
+
+### Server Lifecycle (OnNetworkSpawn)
+
+1. Registriert ConnectionManager-Events (MinPlayers, Connect, Disconnect)
+2. `m_RoundFlowStateMachine.Initialize(this)` — SM startet in LoadingState
+3. `currentMapName = k_DefaultMapName` → löst Map-Laden aus
+
+### Client Lifecycle (OnNetworkSpawn)
+
+1. Prüft ob `currentMapName` bereits gesetzt → manuell `FireMapChangeStarting()` (weil `OnValueChanged` nicht für initialen Sync feuert)
+2. `m_MapLoader.LoadMapAsync(mapName)` — Map für Visuals laden
+3. `currentMapName.OnValueChanged` → reagiert auf zukünftige Map-Wechsel
+
+---
+
+## Spieler-Respawn bei Map-Wechsel
+
+**Dateien:**
+- `Assets/Scripts/Runtime/Game/Characters/Networked/NetworkedPlayerCharacter.cs`
+- `Assets/Scripts/Runtime/Game/Characters/Server/ServerPlayerCharacter.cs`
+
+### RespawnAtNextSpawnPoint() (Server-only)
+
+1. `ServerPlayerSpawnPoints.Instance.ConsumeNextSpawnPoint()` → Position + Rotation
+2. `transform.SetPositionAndRotation(position, rotation)` — Teleport
+3. `m_ServerPosition.Value = position` — NetworkVariable sync
+4. `CorrectionClientRpc(position, rotation)` — Client hart korrigieren (keine alte Prediction sichtbar)
+5. `m_ServerPlayerCharacter.ResetForRespawn()` — Physik-State zurücksetzen
+6. `m_ServerPlayerCharacter.SetReady()` — Character wieder aktiv
+
+### ResetForRespawn()
+
+```csharp
+m_Simulation.SetState(Vector3.zero, true, false, false, 0f);
+```
+
+Setzt Velocity auf Zero, `isGrounded = true`, Jump/Crouch auf false, Timer auf 0 — verhindert dass Spieler mit alter Velocity weiterfliegen oder durch die Map fallen bevor Collider bereit sind.
+
+### Wann wird respawned?
+
+Der `WaitingForReadyState` ruft `RespawnAllConnectedPlayers()` in `Enter()` auf. Das passiert:
+- Beim ersten Map-Load (nach `MapLoadPhase.Complete`)
+- Bei jedem Map-Wechsel (nach neuem `MapLoadPhase.Complete`)
+
+---
+
+## Match-Timer Gating
+
+Der Match-Countdown startet **nicht** sofort wenn MinPlayers erreicht sind, sondern erst wenn **alle** Bedingungen erfüllt sind:
+
+1. **MinPlayers erreicht** — `MinPlayersReached = true`
+2. **Server-Map fertig** — `MapLoadPhase.Complete` empfangen → WaitingForReadyState aktiv
+3. **Alle Clients ready** — Jeder Client hat `NotifyGameplayVisibleOnClient()` gesendet (Loading-Screen weg)
+4. **Host-Mode** — Host-Client wird automatisch als ready registriert in `WaitingForReadyState.Enter()`
+5. **3.1s Verzögerung** — `StartingRoundState` wartet kurz, damit UI-Transitionen smooth sind
+
+Erst dann wechselt die SM in `RunningState` → `BroadcastMatchStarted()` → Countdown beginnt.
+
+### Bei Disconnect
+
+- **Während WaitingForReady/StartingRound:** SM bleibt/geht zurück zu `WaitingForReadyState`, abgetrennte Client-IDs werden aus `ClientsReadyForRound` entfernt
+- **Während Running:** Match läuft weiter (Countdown stoppt nicht)
+
+---
+
+## Map-Rotation
+
+Gesteuert durch `SwitchingMapState`:
+
+1. `MapDataLoader.GetNextMapId(currentMap)` → nächste Map in Rotation
+2. `nextMapName.Value = nextMap` → Clients sehen "Next map: X"
+3. `mapSwitchCountdown` zählt von 5 auf 0 (1x pro Sekunde)
+4. `currentMapName.Value = nextMap` → löst `OnMapNameChanged` aus
+5. `MapLoader.LoadMapAsync()` startet → `MapLoadPhase.Started` → SM geht in `LoadingState`
+6. Cycle beginnt von vorne
+
+### Map-Definitionen
+
+Aus `Assets/Resources/Data/SoF2_Maps.json`:
+
+```json
+{
+    "mapId": "maps/mp_hos1",
+    "mapName": "Hospital",
+    "countdownStartValue": 15,
+    "levelShotBackgroundTexturePath": "levelshots/mp_hos1"
+}
+```
+
+---
+
+## Controller-Architektur (MVC)
+
+| Controller | View | Verantwortung |
+|---|---|---|
+| `MapLoadingController` | `MapLoadingView` | Loading-Screen, Fortschrittsbalken, LevelShot |
+| `MatchRecapController` | `MatchRecapView` | Game Over + Map-Switch-Countdown |
+| `MatchController` | `MatchView` | Match-Timer, HUD, Input-Aktivierung |
+
+### Event-Flow (vereinfacht)
+
+```
+[Server] LoadMapAsync → MapLoadPhase.Complete
+           ↓
+    RoundFlowStateMachine: Loading → WaitingForReady
+           ↓                         (RespawnAllPlayers)
+    [Client] Loading-Screen animiert → OnReadyToHide
+           ↓
+    NotifyGameplayVisibleServerRpc
+           ↓
+    RoundFlowStateMachine: WaitingForReady → StartingRound → Running
+           ↓
+    BroadcastMatchStarted → ClientStartMatchRpc
+           ↓
+    MatchController.OnMatchStarted → SetInputsActive(true) + StartMatchEvent
+           ↓
+    ... Countdown läuft ...
+           ↓
+    RunningState → SwitchingMapState
+           ↓
+    BroadcastMatchEnded → ClientEndMatchRpc
+           ↓
+    MatchController.OnMatchEnded → EndMatchEvent → MatchRecapView
+           ↓
+    5s Map-Switch-Countdown → currentMapName gesetzt → Cycle neu
+```

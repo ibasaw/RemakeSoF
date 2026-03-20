@@ -111,6 +111,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>GrÃ¶sse des Prediction-Ringbuffers (Anzahl Commands).</summary>
         private const int k_PredictionBufferSize = 128;
 
+        /// <summary>
+        /// Minimale FullFallHeight fuer Landing-Sound (SoF2: PM_CrashLand delta kleiner 1 → kein Event).
+        /// SoF2 Berechnung: delta = vel² × 0.0001, delta kleiner 1 → |vel| kleiner 100 QU/s.
+        /// Fallhoehe: h = v²/(2g) = (100×0.0254)² / (2×20.32) = 6.25 QU = 0.159m.
+        /// </summary>
+        private const float k_MinFallHeightForLandingSound = 0.16f;
+
         // ===== Debug HUD Properties =====
 
         /// <summary>Ob der Spieler am Boden ist.</summary>
@@ -2039,6 +2046,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             float fallHeight = m_Simulation.FullFallHeight;
+
+            // SoF2 PM_CrashLand: delta = vel² × 0.0001; delta < 1 → kein Event.
+            // Entspricht Fallhoehe < ~0.16m (Stufen, kleine Unebenheiten → kein Sound).
+            if (fallHeight < k_MinFallHeightForLandingSound)
+            {
+                return;
+            }
 
             if (fallHeight > 10f)
             {

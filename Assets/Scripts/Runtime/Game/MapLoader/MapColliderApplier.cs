@@ -43,7 +43,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
         /// <summary>
         /// Erstellt Collider für alle Renderer mit MeshFilter in der Map-Instanz.
-        /// Transparente Surfaces (is_transparent_0..N) werden übersprungen.
+        /// SoF2: Alle Surfaces (inkl. transparente) erhalten Collider — nur Sky bekommt BoxCollider.
         /// </summary>
         /// <param name="mapInstance">Die instanziierte Map.</param>
         public void ApplyColliders(GameObject mapInstance)
@@ -75,17 +75,13 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         /// <summary>
         /// Erstellt einen Collider für den Renderer.
         /// Sky-Surfaces erhalten einen BoxCollider, alle anderen einen MeshCollider.
-        /// Transparente Surfaces (Ghoul2Meta is_transparent_0..N) werden übersprungen.
+        /// SoF2: Transparente Surfaces erhalten ebenfalls Collider (CONTENTS_SOLID gilt
+        /// unabhaengig von Transparenz — Glas, Gitter, Zaun etc. haben Kollision).
         /// </summary>
         /// <returns>True wenn ein Collider erstellt wurde.</returns>
         private bool ApplyCollider(Renderer renderer)
         {
             if (!renderer.TryGetComponent(out MeshFilter meshFilter))
-            {
-                return false;
-            }
-
-            if (IsTransparent(renderer))
             {
                 return false;
             }

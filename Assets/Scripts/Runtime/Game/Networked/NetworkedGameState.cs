@@ -29,6 +29,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         internal NetworkVariable<int> playersConnected = new();
 
         /// <summary>
+        /// Countdown vor Rundenbeginn (3, 2, 1, 0), synchronisiert uebers Netzwerk.
+        /// 0 = inaktiv oder "GO!". Clients zeigen den Wert als zentriertes Overlay.
+        /// </summary>
+        internal NetworkVariable<uint> roundStartCountdown = new();
+
+        /// <summary>
         /// Countdown bis zum Map-Wechsel (in Sekunden), synchronisiert uebers Netzwerk.
         /// 0 = kein Map-Wechsel aktiv.
         /// </summary>
@@ -55,6 +61,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
         internal event Action OnMatchStarted;
         internal event Action OnMatchEnded;
+
+        /// <summary>
+        /// Wird gefeuert wenn der Round-Start-Countdown beginnt (3, 2, 1).
+        /// Clients sollen Input deaktivieren und Countdown-UI anzeigen.
+        /// </summary>
+        internal event Action OnRoundStarting;
 
         /// <summary>
         /// Event das bei jeder Map-Ladephase gefeuert wird (für UI-Fortschrittsanzeige).
@@ -297,12 +309,28 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         }
 
         /// <summary>
+        /// Broadcastet den Round-Start-Countdown-Beginn an alle Clients.
+        /// Wird von StartingRoundState aufgerufen.
+        /// </summary>
+        internal void BroadcastRoundStarting()
+        {
+            ClientRoundStartingRpc();
+            OnRoundStarting?.Invoke();
+        }
+
+        /// <summary>
         /// Broadcastet Match-Ende ueber RPC an alle Clients.
         /// Wird von SwitchingMapState aufgerufen.
         /// </summary>
         internal void BroadcastMatchEnded()
         {
             ClientEndMatchRpc();
+        }
+
+        [Rpc(SendTo.ClientsAndHost)]
+        void ClientRoundStartingRpc()
+        {
+            OnRoundStarting?.Invoke();
         }
 
         [Rpc(SendTo.ClientsAndHost)]

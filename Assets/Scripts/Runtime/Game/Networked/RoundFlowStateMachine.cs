@@ -259,26 +259,31 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
     }
 
     /// <summary>
-    /// State: Alle bereit — kurzer Delay vor dem Match-Start.
+    /// State: Alle bereit — sichtbarer 3, 2, 1 Countdown vor dem Match-Start.
+    /// Broadcastet RoundStarting an Clients (Input deaktivieren, Countdown-UI zeigen).
     /// Bei Spieler-Disconnect unter MinPlayers zurueck zu WaitingForReady.
     /// </summary>
     internal sealed class RoundFlowStartingRoundState : RoundFlowState
     {
-        Coroutine m_DelayRoutine;
+        Coroutine m_CountdownRoutine;
 
         public override void Enter()
         {
             Debug.Log("[RoundFlow] Enter StartingRoundState");
-            m_DelayRoutine = Manager.StartCoroutine(DelayThenStart());
+            GameState.roundStartCountdown.Value = 3;
+            GameState.BroadcastRoundStarting();
+            m_CountdownRoutine = Manager.StartCoroutine(CountdownThenStart());
         }
 
         public override void Exit()
         {
-            if (m_DelayRoutine != null)
+            if (m_CountdownRoutine != null)
             {
-                Manager.StopCoroutine(m_DelayRoutine);
-                m_DelayRoutine = null;
+                Manager.StopCoroutine(m_CountdownRoutine);
+                m_CountdownRoutine = null;
             }
+
+            GameState.roundStartCountdown.Value = 0;
         }
 
         internal override void OnClientDisconnected()
@@ -289,17 +294,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             }
         }
 
-        IEnumerator DelayThenStart()
+        IEnumerator CountdownThenStart()
         {
-            yield return new WaitForSeconds(RoundFlowStateMachine.RoundStartDelaySeconds);
-            m_DelayRoutine = null;
-
-            if (!Manager.MinPlayersReached || !Manager.AreAllConnectedClientsReady())
+            // 3 -> 2 -> 1 -> GO (0)
+            while (GameState.roundStartCountdown.Value > 0)
             {
-                Manager.ChangeState(Manager.WaitingForReadyState);
-                yield break;
+                yield return CoroutinesHelper.OneSecond;
+
+                if (!Manager.MinPlayersReached || !Manager.AreAllConnectedClientsReady())
+                {
+                    Manager.ChangeState(Manager.WaitingForReadyState);
+                    yield break;
+                }
+
+                GameState.roundStartCountdown.Value--;
             }
 
+            m_CountdownRoutine = null;
             Manager.ChangeState(Manager.RunningState);
         }
     }

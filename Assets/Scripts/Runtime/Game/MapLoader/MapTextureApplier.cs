@@ -157,32 +157,48 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         }
 
         /// <summary>
-        /// Prüft cull_N Property und setzt Culling auf Off (beide Seiten) wenn "disabled", "off" oder "disable".
+        /// Prüft cull_N Property und setzt den Default auf Render Face Both,
+        /// wenn kein expliziter Cull-Wert vorhanden ist.
         /// </summary>
         private void ApplyCullProperty(Material material, Ghoul2Meta meta, int index)
         {
             string cullKey = k_CullPrefix + index;
             if (!meta.HasProperty(cullKey))
             {
+                SetRenderFaceBoth(material);
                 return;
             }
 
             string cullValue = meta.GetString(cullKey);
+            if (string.IsNullOrWhiteSpace(cullValue))
+            {
+                SetRenderFaceBoth(material);
+                return;
+            }
+
             if (cullValue.Contains("disabled", System.StringComparison.OrdinalIgnoreCase) ||
                 cullValue.Contains("off", System.StringComparison.OrdinalIgnoreCase) ||
                 cullValue.Contains("disable", System.StringComparison.OrdinalIgnoreCase))
             {
-                // URP Render Face = Both: _Cull auf 0 (Off) setzen
-                material.SetFloat("_Cull", 0f);
-
-                if (material.HasProperty("_CullMode"))
-                {
-                    material.SetFloat("_CullMode", 0f);
-                }
-
-                // Shader-Pass für Double-Sided erzwingen
-                material.doubleSidedGI = true;
+                SetRenderFaceBoth(material);
             }
+        }
+
+        /// <summary>
+        /// Erzwingt Render Face Both fuer URP-Materialien.
+        /// </summary>
+        private void SetRenderFaceBoth(Material material)
+        {
+            // URP Render Face = Both: _Cull auf 0 (Off) setzen
+            material.SetFloat("_Cull", 0f);
+
+            if (material.HasProperty("_CullMode"))
+            {
+                material.SetFloat("_CullMode", 0f);
+            }
+
+            // Shader-Pass fuer Double-Sided erzwingen
+            material.doubleSidedGI = true;
         }
 
         /// <summary>
@@ -233,12 +249,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             }
 
             // Render Face = Both für Transparenz (Rückseite sichtbar)
-            material.SetFloat("_Cull", 0f);
-            if (material.HasProperty("_CullMode"))
-            {
-                material.SetFloat("_CullMode", 0f);
-            }
-            material.doubleSidedGI = true;
+            SetRenderFaceBoth(material);
 
             // Alpha Clipping
             if (material.HasProperty("_AlphaClip"))

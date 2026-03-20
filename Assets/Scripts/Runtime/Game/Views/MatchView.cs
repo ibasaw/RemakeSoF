@@ -58,6 +58,9 @@ namespace Tolik.RemakeSoF.Runtime
         Label m_HealthLabel;
         Label m_LastSurfaceTypeLabel;
 
+        // Round Start Countdown
+        Label m_RoundStartLabel;
+
         /// <summary>
         /// Wird gefeuert sobald die MatchView aktiviert und alle UI-Elemente neu gebunden sind.
         /// Controller koennen hier ihren HUD-Refresh triggern.
@@ -120,6 +123,9 @@ namespace Tolik.RemakeSoF.Runtime
             // Health HUD
             m_HealthLabel = root.Query<Label>("healthLabel");
             m_LastSurfaceTypeLabel = root.Query<Label>("lastSurfaceTypeLabel");
+
+            // Round Start Countdown
+            m_RoundStartLabel = root.Query<Label>("roundStartLabel");
 
             OnViewEnabled?.Invoke();
         }
@@ -333,6 +339,32 @@ namespace Tolik.RemakeSoF.Runtime
 
             m_FireModeLabel.style.display = DisplayStyle.Flex;
             m_FireModeLabel.text = fireMode.ToUpperInvariant();
+        }
+
+        /// <summary>
+        /// Zeigt den Round-Start-Countdown (3, 2, 1) als zentriertes Overlay an.
+        /// </summary>
+        internal void ShowRoundStartCountdown(uint value)
+        {
+            m_RoundStartLabel.text = value > 0 ? value.ToString() : "";
+            m_RoundStartLabel.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// Zeigt "GO!" als zentriertes Overlay an.
+        /// </summary>
+        internal void ShowGoText()
+        {
+            m_RoundStartLabel.text = "GO!";
+            m_RoundStartLabel.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// Versteckt das Round-Start-Countdown-Overlay.
+        /// </summary>
+        internal void HideRoundStartCountdown()
+        {
+            m_RoundStartLabel.style.display = DisplayStyle.None;
         }
     }
 }

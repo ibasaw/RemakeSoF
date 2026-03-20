@@ -1,10 +1,12 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+using Tolik.RemakeSoF.Runtime.SoundManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
 using Tolik.RemakeSoF.Runtime.WeaponManagement;
 
@@ -55,12 +57,29 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         private readonly Dictionary<string, (int clip, int reserve)> m_ClientAmmoCache = new();
 
+        /// <summary>
+        /// SoF2-Soundpfad fuer den Countdown-Beep (3, 2, 1).
+        /// </summary>
+        private const string k_CountdownBeepSound = "sound/misc/c4/beep.mp3";
+
+        /// <summary>
+        /// SoF2-Soundpfad fuer das "GO!"-Signal.
+        /// </summary>
+        private const string k_GoSound = "sound/radio/male/move.mp3";
+
+        /// <summary>
+        /// Laufende Coroutine fuer das kurzfristige "GO!"-Overlay nach Countdown.
+        /// </summary>
+        private Coroutine m_GoTextCoroutine;
+
         void Awake()
         {
             App.Model.Countdown.OnValueChanged += OnCountdownChanged;
             App.Model.PlayersConnected.OnValueChanged += OnPlayersConnectedChanged;
             App.Model.NetworkedGameState.OnMatchStarted += OnMatchStarted;
             App.Model.NetworkedGameState.OnMatchEnded += OnMatchEnded;
+            App.Model.NetworkedGameState.OnRoundStarting += OnRoundStarting;
+            App.Model.NetworkedGameState.roundStartCountdown.OnValueChanged += OnRoundStartCountdownChanged;
             View.OnViewEnabled += OnMatchViewEnabled;
             Debug.Log("MatchController Awake: Listeners added to NetworkedGameState events.");
         }
@@ -79,6 +98,8 @@ namespace Tolik.RemakeSoF.Runtime
             App.Model.PlayersConnected.OnValueChanged -= OnPlayersConnectedChanged;
             App.Model.NetworkedGameState.OnMatchStarted -= OnMatchStarted;
             App.Model.NetworkedGameState.OnMatchEnded -= OnMatchEnded;
+            App.Model.NetworkedGameState.OnRoundStarting -= OnRoundStarting;
+            App.Model.NetworkedGameState.roundStartCountdown.OnValueChanged -= OnRoundStartCountdownChanged;
         }
 
         /// <summary>
@@ -149,8 +170,46 @@ namespace Tolik.RemakeSoF.Runtime
             Debug.Log("[MatchController] Match ended, broadcasting EndMatchEvent.");
         }
 
+        /// <summary>
+        /// Wird aufgerufen wenn der Server den Round-Start-Countdown beginnt.
+        /// Deaktiviert Spielerinput und zeigt den Countdown in der View.
+        /// </summary>
+        void OnRoundStarting()
+        {
+            if (App.Model.PlayerCharacter != null)
+            {
+                App.Model.PlayerCharacter.SetInputsActive(false);
+            }
+
+            uint countdownValue = App.Model.NetworkedGameState.roundStartCountdown.Value;
+            View.ShowRoundStartCountdown(countdownValue);
+            PlayUiSound(k_CountdownBeepSound);
+        }
+
+        /// <summary>
+        /// Aktualisiert das Countdown-Overlay bei jeder Aenderung der NetworkVariable.
+        /// </summary>
+        void OnRoundStartCountdownChanged(uint previousValue, uint newValue)
+        {
+            if (newValue > 0)
+            {
+                View.ShowRoundStartCountdown(newValue);
+                PlayUiSound(k_CountdownBeepSound);
+            }
+        }
+
         void OnMatchStarted()
         {
+            // "GO!" anzeigen, dann nach kurzer Verzoegerung ausblenden
+            View.ShowGoText();
+            PlayUiSound(k_GoSound);
+
+            if (m_GoTextCoroutine != null)
+            {
+                StopCoroutine(m_GoTextCoroutine);
+            }
+            m_GoTextCoroutine = StartCoroutine(HideGoTextAfterDelay());
+
             if (App.Model.PlayerCharacter != null)
             {
                 App.Model.PlayerCharacter.SetInputsActive(true);
@@ -158,6 +217,49 @@ namespace Tolik.RemakeSoF.Runtime
 
             Broadcast(new StartMatchEvent());
             Debug.Log("[MatchController] Match started, broadcasting StartMatchEvent.");
+        }
+
+        /// <summary>
+        /// Blendet den "GO!"-Text nach einer Sekunde aus.
+        /// </summary>
+        private IEnumerator HideGoTextAfterDelay()
+        {
+            yield return CoroutinesHelper.OneSecond;
+            View.HideRoundStartCountdown();
+            m_GoTextCoroutine = null;
+        }
+
+        /// <summary>
+        /// Spielt einen 2D-UI-Sound ueber den SFX-Mixer ab.
+        /// Erstellt ein temporaeres GameObject mit AudioSource, das nach Abspielen zerstoert wird.
+        /// </summary>
+        private void PlayUiSound(string soundKey)
+        {
+            SoundManager soundManager = ServiceLocator.Get<SoundManager>();
+            if (soundManager == null)
+            {
+                return;
+            }
+
+            AudioClip clip = soundManager.GetClip(soundKey);
+            if (clip == null)
+            {
+                return;
+            }
+
+            GameObject soundObj = new("UiSound");
+            AudioSource source = soundObj.AddComponent<AudioSource>();
+            source.clip = clip;
+            source.spatialBlend = 0f;
+            source.playOnAwake = false;
+
+            if (soundManager.SfxGroup != null)
+            {
+                source.outputAudioMixerGroup = soundManager.SfxGroup;
+            }
+
+            source.Play();
+            Destroy(soundObj, clip.length + 0.1f);
         }
 
         /// <summary>

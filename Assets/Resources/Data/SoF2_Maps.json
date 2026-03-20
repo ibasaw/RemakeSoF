@@ -52,7 +52,7 @@
     {
         "id":"maps/mp_hos1",
         "mapName": "Hospital",
-        "countdownStartValue": 15,
+        "countdownStartValue": 300,
         "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hos1",
         "cameraLevelShotPosition": {
             "x": -130,
