@@ -24,6 +24,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>SoF2-Unit → Unity-Meter (1 QU = 0.0254m).</summary>
         private const float SOF2_UNIT_SCALE = 0.0254f;
 
+        /// <summary>Gecachter Sprites/Default Shader fuer Fallback-Materialien.</summary>
+        private static Shader s_CachedSpritesShader;
+
+        /// <summary>Gecachter URP/Unlit Shader fuer Projektil-Models.</summary>
+        private static Shader s_CachedUrpUnlitShader;
+
         /// <summary>SoF2 Gravitation in Unity-Meter/s² (800 QU/s² × 0.0254 = 20.32).</summary>
         private const float SOF2_GRAVITY = 20.32f;
 
@@ -89,6 +95,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
         /// <summary>Looping AudioSource fuer Flug-Sound (z.B. RPG Flyby, Granaten-Pfeifen).</summary>
         private AudioSource m_LoopAudioSource;
+
+        /// <summary>Referenz auf dynamisch erstelltes Fallback-Sphere-Material fuer Cleanup.</summary>
+        private Material m_FallbackSphereMaterial;
 
         /// <summary>
         /// SoF2 Bounce-Stop-Threshold: 40 QU/s * 0.0254 = 1.016 m/s (g_missile.c:37/59).
@@ -304,7 +313,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 ?? textureManager.GetTextureDataByAlias(specPath);
             Texture2D specTexture = specData != null && specData.HasTexture() ? specData.Texture : null;
 
-            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (s_CachedUrpUnlitShader == null)
+            {
+                s_CachedUrpUnlitShader = Shader.Find("Universal Render Pipeline/Unlit");
+            }
+            Shader shader = s_CachedUrpUnlitShader;
             if (shader == null)
             {
                 return;
@@ -343,6 +356,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
             foreach (Renderer renderer in renderers)
             {
+                // Alte Instanz-Materialien freigeben bevor neue zugewiesen werden
+                Material[] oldMats = renderer.materials;
+                foreach (Material oldMat in oldMats)
+                {
+                    if (oldMat != null)
+                    {
+                        Destroy(oldMat);
+                    }
+                }
+
                 Material[] materials = renderer.sharedMaterials;
                 Material[] newMaterials = new Material[materials.Length];
                 for (int i = 0; i < materials.Length; i++)
@@ -396,11 +419,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             Renderer renderer = sphere.GetComponent<Renderer>();
             if (renderer != null)
             {
-                Material mat = new(Shader.Find("Sprites/Default"));
+                if (s_CachedSpritesShader == null)
+                {
+                    s_CachedSpritesShader = Shader.Find("Sprites/Default");
+                }
+                Material mat = new(s_CachedSpritesShader);
                 mat.color = m_Detonation == "timer" ? new Color(0.2f, 0.8f, 0.2f)
                     : m_Detonation == "sticky" ? new Color(0.85f, 0.85f, 0.9f)
                     : new Color(1f, 0.5f, 0f);
                 renderer.material = mat;
+                m_FallbackSphereMaterial = mat;
             }
         }
 
@@ -440,7 +468,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             m_Trail.time = TRAIL_TIME;
             m_Trail.startWidth = TRAIL_START_WIDTH;
             m_Trail.endWidth = TRAIL_END_WIDTH;
-            m_Trail.material = new Material(Shader.Find("Sprites/Default"));
+            if (s_CachedSpritesShader == null)
+            {
+                s_CachedSpritesShader = Shader.Find("Sprites/Default");
+            }
+            Material fallbackTrailMat = new(s_CachedSpritesShader);
+            m_Trail.material = fallbackTrailMat;
 
             Gradient gradient = new();
             Color trailStart = m_Detonation == "timer" ? Color.green
@@ -637,6 +670,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             if (m_LoopAudioSource != null)
             {
                 m_LoopAudioSource.Stop();
+                Destroy(m_LoopAudioSource);
                 m_LoopAudioSource = null;
             }
         }

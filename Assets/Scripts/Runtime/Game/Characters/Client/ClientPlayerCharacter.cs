@@ -14,19 +14,22 @@ using Tolik.RemakeSoF.Runtime.WeaponManagement;
     * Client-Side Prediction: Physik wird lokal angewendet (responsiv),
     * dann an Server gesendet zur Validierung.
     * Auf Remote-Clients: nur BoxCollider fuer Kollision.
-    Ja, das ist jetzt sehr nah am Original:
-
-Physik auf Framerate â€” Q3/SoF2 lieÃŸ PM_Move pro Client-Frame laufen (nicht auf fixem Tick). 125fps = 125 Physik-Iterationen/s. Genau das hast du jetzt.
-PM_StepSlideMove â€” 4-Bump Collision mit ClipVelocity, Step-Up, Slide â€” direkt aus bg_pmove.c
-PM_Friction / PM_Accelerate â€” identische Formel: control * friction * dt, accel * dt * wishspeed
-PM_WalkMove / PM_AirMove â€” Trennung Boden/Luft mit unterschiedlichen Accel-Werten (6 vs 1)
-PM_CmdScale â€” Input-Normalisierung wie PM_CmdScale in Q3
-Sofortige Jump-Velocity â€” velocity.y = jumpVelocity (kein Force, kein AddForce)
-Manuelle Gravity â€” velocity.y -= gravity * dt statt Rigidbody
-CapsuleCast statt CharacterController â€” nÃ¤her an Q3's Trace-System als Unitys eingebaute Physik
-Die Werte (pm_maxspeed=28, pm_gravity=80, pm_friction=6, pm_accelerate=6, pm_airaccelerate=1, jumpvel=27) sind SoF2-Defaults. Einziger Unterschied zu purem Q3: du hast zusÃ¤tzliche Slope-Friction und die SoF2-spezifischen Step-Up Limits (pm_maxstep=1.8, pm_maxbarrier=3.2), was korrekt ist â€” SoF2 hat das gegenÃ¼ber Q3 erweitert.
-Was fehlt fÃ¼r 100% AuthentizitÃ¤t wÃ¤re Strafe-Jumping / Air-Control (Q3 pm_airaccelerate erlaubt Speed-Gain durch Richtungswechsel in der Luft). Das funktioniert bei dir automatisch, weil PM_AirMove mit pm_airaccelerate=1 und der Q3-Accelerate-Formel arbeitet â€” die erlaubt den klassischen Speed-Gain Bug by design.
-*/
+    *
+    * Physik auf Framerate: Q3/SoF2 liess PM_Move pro Client-Frame laufen (nicht auf fixem Tick).
+    * PM_StepSlideMove: 4-Bump Collision mit ClipVelocity, Step-Up, Slide (aus bg_pmove.c).
+    * PM_Friction / PM_Accelerate: identische Formel (control * friction * dt, accel * dt * wishspeed).
+    * PM_WalkMove / PM_AirMove: Trennung Boden/Luft mit unterschiedlichen Accel-Werten (6 vs 1).
+    * PM_CmdScale: Input-Normalisierung wie PM_CmdScale in Q3.
+    * Sofortige Jump-Velocity: velocity.y = jumpVelocity (kein Force, kein AddForce).
+    * Manuelle Gravity: velocity.y -= gravity * dt statt Rigidbody.
+    * BoxCast (AABB) statt CharacterController: naeher an Q3 Trace-System als Unitys eingebaute Physik.
+    * Werte in Quake-Units (pm_maxspeed=28, pm_gravity=80, pm_friction=6, pm_accelerate=6,
+    *   pm_airaccelerate=1, jumpvel=27) sind SoF2-Defaults, im Code auf Meter konvertiert (* 0.0254).
+    * SoF2-spezifische Erweiterungen gegenueber Q3: Slope-Friction, Step-Up Limits
+    *   (pm_maxstep=1.8, pm_maxbarrier=3.2).
+    * Strafe-Jumping / Air-Control funktioniert automatisch durch PM_AirMove mit
+    *   pm_airaccelerate=1 und der Q3-Accelerate-Formel (Speed-Gain by design).
+    */
 
 namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 {
@@ -91,6 +94,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// Footstep/Landing-Sound-Handler. Spielt surface-abhaengige Sounds ab.
         /// </summary>
         private ClientFootstepHandler m_FootstepHandler;
+
+        /// <summary>
+        /// Gecachte WeaponDataLoader-Referenz (ServiceLocator-Lookup vermeiden in Hot-Paths).
+        /// </summary>
+        private WeaponDataLoader m_WeaponDataLoader;
 
         /// <summary>
         /// NetworkedCharacterState-Referenz fuer Waffen-Sync (OnWeaponChanged).
@@ -687,6 +695,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private void OnNetworkSpawn()
         {
             // Waffen-Event fuer Owner UND Remote abonnieren (beide muessen Waffen laden/anzeigen)
+            m_WeaponDataLoader = ServiceLocator.Get<WeaponDataLoader>();
+
             if (m_CharacterState != null)
             {
                 m_CharacterState.OnWeaponChanged += OnWeaponChanged;
@@ -1360,6 +1370,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     {
                         m_IsAttacking = false;
                         m_AttackFrameAccumulator = 0f;
+
+                        // Auto-Reload nach letztem Schuss wenn Magazin leer
+                        if (m_AutoReload && !hasAmmo)
+                        {
+                            TryStartReload();
+                        }
                     }
                 }
             }
@@ -1498,8 +1514,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return true;
             }
 
-            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
-            WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+            WeaponDefinition weapon = m_WeaponDataLoader?.GetById(m_CharacterState.CurrentWeaponName);
 
             if (weapon?.AltAttack == null)
             {
@@ -1538,8 +1553,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             // Pruefe ob Clip voll oder Reserve leer (client-seitige Prediction)
-            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
-            WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+            WeaponDefinition weapon = m_WeaponDataLoader?.GetById(m_CharacterState.CurrentWeaponName);
             if (weapon?.Ammo == null)
             {
                 return;
@@ -1656,10 +1670,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_PendingWeaponName = weaponName;
 
                 // Raise-Daten der neuen Waffe lesen
-                WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
-                if (loader != null)
+                if (m_WeaponDataLoader != null)
                 {
-                    WeaponDefinition weapon = loader.GetById(weaponName);
+                    WeaponDefinition weapon = m_WeaponDataLoader.GetById(weaponName);
                     if (weapon?.Animations != null &&
                         weapon.Animations.TryGetValue("mp_raise", out WeaponAnimationEntry raiseAnim))
                     {
@@ -1874,10 +1887,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             int dropFps = 10;
             string dropAnimName = "TORSO_DROP";
 
-            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
-            if (loader != null)
+            if (m_WeaponDataLoader != null)
             {
-                WeaponDefinition weapon = loader.GetById(m_CharacterState.CurrentWeaponName);
+                WeaponDefinition weapon = m_WeaponDataLoader.GetById(m_CharacterState.CurrentWeaponName);
                 if (weapon?.Animations != null &&
                     weapon.Animations.TryGetValue("mp_drop", out WeaponAnimationEntry dropAnim))
                 {
@@ -2294,6 +2306,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             Cursor.lockState = active ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !active;
+        }
+
+        /// <summary>
+        /// Setzt die Client-Simulation komplett zurück (Velocity, GroundState, etc.).
+        /// Wird vom Server via CorrectionClientRpc aufgerufen, um nach Respawn/Teleport
+        /// alte Fall-Velocity zu verwerfen.
+        /// </summary>
+        public void ResetSimulationForRespawn()
+        {
+            m_Simulation.SetState(Vector3.zero, true, false, false, 0f);
         }
 
         /// <summary>

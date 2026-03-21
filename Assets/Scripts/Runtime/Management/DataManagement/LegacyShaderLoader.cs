@@ -31,6 +31,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             m_LegacyShaderEntriesByModel.Clear();
 
             string fullPath = Path.Combine(Application.dataPath, "Resources", resourcePath);
+            
             if (!Directory.Exists(fullPath))
             {
                 Debug.LogWarning($"[LegacyShaderLoader] Shader directory not found at: {fullPath}");

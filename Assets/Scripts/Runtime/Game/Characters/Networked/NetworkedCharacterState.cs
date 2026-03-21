@@ -269,7 +269,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_AltReserveAmmo.OnValueChanged += OnAltReserveAmmoValueChanged;
             m_WeaponInventory.OnListChanged += OnWeaponInventoryListChanged;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] OnNetworkSpawn | Name={CharacterName} | Health={Health} | Skin={CurrentSkinName} | Weapon={CurrentWeaponName}");
+#endif
 
             // Initiale Events feuern, falls bereits Werte gesetzt sind
             // (z.B. bei Late-Join, wenn Server die Werte vor unserem Spawn gesetzt hat)
@@ -421,7 +423,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
 
             m_CurrentSkinName.Value = new FixedString128Bytes(skinName);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Server set skin for client {OwnerClientId} to: {skinName}");
+#endif
         }
 
         /// <summary>
@@ -431,7 +435,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public void RequestSkinChangeServerRpc(FixedString128Bytes skinName)
         {
             m_CurrentSkinName.Value = skinName;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Server applied skin change for client {OwnerClientId}: {skinName}");
+#endif
         }
 
         /// <summary>
@@ -454,13 +460,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         private void OnCharacterNameValueChanged(FixedString64Bytes oldValue, FixedString64Bytes newValue)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Name changed: {oldValue} → {newValue}");
+#endif
             OnCharacterNameChanged?.Invoke(newValue.ToString());
         }
 
         private void OnHealthValueChanged(int oldValue, int newValue)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Health changed: {oldValue} → {newValue}");
+#endif
             OnHealthChanged?.Invoke(newValue);
         }
 
@@ -468,25 +478,33 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             if (!newValue)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log("[NetworkedCharacterState] Character died");
+#endif
                 OnCharacterDied?.Invoke();
             }
             else
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log("[NetworkedCharacterState] Character respawned");
+#endif
                 OnCharacterRespawned?.Invoke();
             }
         }
 
         private void OnSkinNameValueChanged(FixedString128Bytes oldValue, FixedString128Bytes newValue)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Skin changed: {oldValue} → {newValue}");
+#endif
             OnSkinChanged?.Invoke(newValue.ToString());
         }
 
         private void OnWeaponNameValueChanged(FixedString64Bytes oldValue, FixedString64Bytes newValue)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Weapon changed: {oldValue} → {newValue}");
+#endif
 
             // Server: Aktuelle Ammo der alten Waffe cachen, neue Waffe laden/initialisieren
             if (IsServer)
@@ -571,7 +589,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_ReserveAmmo.Value = cached.reserve;
                 m_AltClipAmmo.Value = cached.altClip;
                 m_AltReserveAmmo.Value = cached.altReserve;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"[NetworkedCharacterState] Ammo restored from cache for '{weaponName}': Clip={cached.clip}, Reserve={cached.reserve}, AltClip={cached.altClip}, AltReserve={cached.altReserve}");
+#endif
                 return;
             }
 
@@ -607,7 +627,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_AltReserveAmmo.Value = 0;
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Ammo initialized for '{weaponName}': Clip={weapon.Ammo.StartClip}, Reserve={weapon.Ammo.StartReserve}, Infinite={weapon.Ammo.Infinite}, AltClip={m_AltClipAmmo.Value}, AltReserve={m_AltReserveAmmo.Value}");
+#endif
         }
 
         /// <summary>
@@ -770,7 +792,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_AltClipAmmo.Value += transfer;
             m_AltReserveAmmo.Value -= transfer;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Alt-Reload complete for '{CurrentWeaponName}': AltClip={m_AltClipAmmo.Value}, AltReserve={m_AltReserveAmmo.Value}");
+#endif
         }
 
         /// <summary>
@@ -825,7 +849,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_CurrentClipAmmo.Value += transfer;
             m_ReserveAmmo.Value -= transfer;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Reload complete for '{CurrentWeaponName}': Clip={m_CurrentClipAmmo.Value}, Reserve={m_ReserveAmmo.Value}");
+#endif
         }
 
         /// <summary>
@@ -869,7 +895,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
 
             m_CurrentWeaponName.Value = new FixedString64Bytes(weaponName);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Server set weapon for client {OwnerClientId} to: {weaponName}");
+#endif
         }
 
         /// <summary>
@@ -881,7 +909,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             string target = weaponName.ToString();
             OnWeaponSwapRequested?.Invoke(target);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Server weapon swap requested for client {OwnerClientId}: {target}");
+#endif
         }
 
         // ===== Weapon Inventory =====
@@ -908,7 +938,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
 
             m_WeaponInventory.Add(fixedName);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Server added weapon '{weaponName}' for client {OwnerClientId}. Inventory count: {m_WeaponInventory.Count}");
+#endif
         }
 
         /// <summary>
@@ -993,7 +1025,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             m_PendingSwapTarget = nextWeapon;
             OnWeaponSwapRequested?.Invoke(nextWeapon);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Server weapon swap requested for client {OwnerClientId}: {baseWeapon} → {nextWeapon}");
+#endif
         }
     }
 }

@@ -336,5 +336,174 @@
         }
       }
     ]
+  },
+  {
+    "id": "effects/impact_rock_belt",
+    "displayName": "Impact Rock Belt",
+    "segments": [
+      {
+        "type": "tail",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "spawnFlags": [
+          "absoluteAccel"
+        ],
+        "trail": {
+          "countMin": 2,
+          "countMax": 4,
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.3,
+          "velocityMin": [
+            -0.508,
+            -0.508,
+            -0.508
+          ],
+          "velocityMax": [
+            0.508,
+            0.508,
+            0.508
+          ],
+          "endWidth": 0.0254,
+          "lengthMax": 0.508
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_rock",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.0,
+          "cullrange": 10.16,
+          "gravityModifier": 0.1942,
+          "velocityMin": [
+            -1.143,
+            -1.143,
+            5.08
+          ],
+          "velocityMax": [
+            1.143,
+            1.143,
+            7.62
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.3,
+          "endMax": 0.5,
+          "parm": 1.0
+        },
+        "size": {
+          "startMin": 0.0152,
+          "startMax": 0.0762,
+          "endMin": 0.0203,
+          "endMax": 0.0254,
+          "parm": 7.0
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke2",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "evenDistribution"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 2.0,
+          "lifetimeMax": 2.5,
+          "rotationMin": 5.0,
+          "rotationMax": 7.0,
+          "rotationSpeedMin": 40.0,
+          "rotationSpeedMax": 100.0,
+          "velocityMin": [
+            0.0,
+            0.0508,
+            0.0762
+          ],
+          "velocityMax": [
+            0.0,
+            0.1016,
+            0.1778
+          ]
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.5,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.3922,
+            0.3922,
+            0.3922
+          ],
+          "startMax": [
+            0.3804,
+            0.3804,
+            0.3804
+          ],
+          "endMin": [
+            0.1451,
+            0.1451,
+            0.1451
+          ],
+          "endMax": [
+            0.1608,
+            0.1608,
+            0.1608
+          ],
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0762,
+          "startMax": 0.1016,
+          "endMin": 0.3048,
+          "endMax": 0.4572,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "decal",
+        "texture": "gfx/decals/impact/sand",
+        "decal": {
+          "sizeMin": 0.0762,
+          "sizeMax": 0.127,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/concrete/concrete0.wav",
+            "sound/player/bullet_impacts/concrete/concrete1.wav"
+          ],
+          "delay": 0.0,
+          "cullrange": 7.62
+        }
+      }
+    ]
   }
 ]

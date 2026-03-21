@@ -38,6 +38,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private SurfaceImpactDataLoader m_SurfaceLoader;
         private AudioMixerGroup m_SfxGroup;
 
+        /// <summary>Zuletzt getroffener Collider fuer Surface-Cache.</summary>
+        private Collider m_LastSurfaceCollider;
+
+        /// <summary>Gecachter SurfaceTypeMarker des letzten Colliders.</summary>
+        private SurfaceTypeMarker m_LastSurfaceMarker;
+
         /// <summary>Timer fuer code-basierte Footstep-Ausloesung.</summary>
         private float m_FootstepTimer;
 
@@ -189,10 +195,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (Physics.Raycast(origin + Vector3.up * 0.1f, Vector3.down,
                 out RaycastHit hit, SURFACE_RAYCAST_DIST, m_GroundLayerMask))
             {
-                SurfaceTypeMarker marker = hit.collider.GetComponentInParent<SurfaceTypeMarker>();
-                if (marker != null)
+                if (hit.collider != m_LastSurfaceCollider)
                 {
-                    return marker.SurfaceType;
+                    m_LastSurfaceCollider = hit.collider;
+                    m_LastSurfaceMarker = hit.collider.GetComponentInParent<SurfaceTypeMarker>();
+                }
+
+                if (m_LastSurfaceMarker != null)
+                {
+                    return m_LastSurfaceMarker.SurfaceType;
                 }
             }
 

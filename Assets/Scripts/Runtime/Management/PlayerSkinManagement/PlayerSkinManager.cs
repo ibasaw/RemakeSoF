@@ -43,6 +43,20 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 
         void OnDestroy()
         {
+            // Aktuellen State sauber beenden
+            if (m_CurrentState != null)
+            {
+                m_CurrentState.Exit();
+                m_CurrentState = null;
+            }
+
+            // EventManager aufraeumen
+            EventManager.Clear();
+
+            // Asset-Referenz freigeben
+            m_CurrentPlayerPrefabAsset = null;
+            m_CurrentSkinName = null;
+
             Debug.Log("[PlayerSkinManager] Destroyed");
         }
 

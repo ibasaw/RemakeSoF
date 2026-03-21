@@ -339,7 +339,7 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// SoF2 parm: Prozent der Lebensdauer bei dem der Uebergang beginnt (0-100).
         /// </summary>
         [JsonProperty("parm")]
-        public int Parm;
+        public float Parm;
 
         /// <summary>
         /// Verlaufskurve: "linear", "nonlinear", "linear nonlinear".
@@ -416,7 +416,7 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// Nur relevant bei Curve = "clamp".
         /// </summary>
         [JsonProperty("parm")]
-        public int Parm;
+        public float Parm;
 
         /// <summary>
         /// Verlaufskurve: "linear", "nonlinear", "clamp".

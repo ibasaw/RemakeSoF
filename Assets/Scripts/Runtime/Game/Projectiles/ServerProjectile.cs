@@ -361,7 +361,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             // Event fuer Visual-RPC
             OnDetonated?.Invoke(explosionPoint);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[ServerProjectile] Detonated at {explosionPoint} | Radius={radiusMeters:F1}m | Targets={damagePerTarget.Count}");
+#endif
 
             // Zerstoeren
             Destroy(gameObject);
@@ -391,7 +393,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             Rigidbody rb = gameObject.AddComponent<Rigidbody>();
             rb.isKinematic = true;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[ServerProjectile] Sticky stuck at {point} — awaiting pickup by client {m_OwnerClientId}");
+#endif
         }
 
         /// <summary>
@@ -415,7 +419,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             int newHealth = Mathf.Max(0, targetState.Health - m_Damage);
             targetState.SetHealth(newHealth);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[ServerProjectile] Sticky direct hit {targetState.CharacterName} | Damage={m_Damage} | Health={newHealth}");
+#endif
         }
 
         /// <summary>
@@ -444,7 +450,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
             targetState.AddReserveAmmoForWeapon(m_WeaponName, 1);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[ServerProjectile] Sticky picked up by client {m_OwnerClientId} — weapon={m_WeaponName}, id={m_ProjectileId}");
+#endif
 
             OnPickedUp?.Invoke(m_ProjectileId);
             Destroy(gameObject);

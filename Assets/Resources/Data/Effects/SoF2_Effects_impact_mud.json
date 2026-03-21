@@ -424,5 +424,165 @@
         }
       }
     ]
+  },
+  {
+    "id": "effects/impact_mud_belt",
+    "displayName": "Impact Mud Belt",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_blob",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "absoluteAccel",
+          "orgOnSphere"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 2,
+          "countMax": 4,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 0.7,
+          "cullrange": 10.16,
+          "gravityModifier": 0.1942,
+          "velocityMin": [
+            -1.27,
+            -1.27,
+            4.572
+          ],
+          "velocityMax": [
+            1.27,
+            1.27,
+            5.588
+          ],
+          "radius": 0.0508
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.6,
+          "endMax": 0.8,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.5373,
+            0.4196,
+            0.3725
+          ],
+          "startMax": [
+            0.3922,
+            0.2627,
+            0.2157
+          ],
+          "endMin": [
+            0.5373,
+            0.4196,
+            0.3725
+          ],
+          "endMax": [
+            0.3922,
+            0.2627,
+            0.2157
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.1016,
+          "endMin": 0.0127,
+          "endMax": 0.0203
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_blob",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 1.3,
+          "lifetimeMax": 1.3,
+          "cullrange": 10.16,
+          "rotationMin": 20.0,
+          "rotationMax": 40.0,
+          "rotationSpeedMin": 1000.0,
+          "rotationSpeedMax": 1600.0,
+          "gravityModifier": 0.1618,
+          "velocityMin": [
+            -0.0254,
+            -0.0254,
+            5.715
+          ],
+          "velocityMax": [
+            0.0254,
+            0.0508,
+            6.985
+          ]
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 1.0,
+          "endMin": 0.6,
+          "endMax": 0.8
+        },
+        "color": {
+          "startMin": [
+            0.5373,
+            0.4196,
+            0.3725
+          ],
+          "startMax": [
+            0.4078,
+            0.2627,
+            0.2
+          ],
+          "endMin": [
+            0.5373,
+            0.4196,
+            0.3725
+          ],
+          "endMax": [
+            0.4078,
+            0.2627,
+            0.2
+          ]
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.1016,
+          "endMin": 0.0127,
+          "endMax": 0.0254
+        }
+      },
+      {
+        "type": "decal",
+        "texture": "gfx/decals/impact/dirt",
+        "decal": {
+          "sizeMin": 0.1524,
+          "sizeMax": 0.2032,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "cullrange": 10.16,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/ice/ice0.wav",
+            "sound/player/bullet_impacts/ice/ice1.wav"
+          ],
+          "delay": 0.0,
+          "cullrange": 5.08
+        }
+      }
+    ]
   }
 ]

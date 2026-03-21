@@ -21,10 +21,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
         /// <summary>Safety-Timeout: maximale Lebensdauer bevor auto-destroy.</summary>
         private const float MAX_LIFETIME = 3f;
 
+        /// <summary>Gecachter Sprites/Default Shader fuer Fallback-Trail.</summary>
+        private static Shader s_CachedSpritesShader;
+
         private Vector3 m_Target;
         private float m_Speed;
         private float m_Lifetime;
         private bool m_Arrived;
+        private TrailRenderer m_Trail;
 
         /// <summary>
         /// Erstellt und initialisiert einen TracerVisual anhand der EffectDefinition.
@@ -71,6 +75,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
 
             // TrailRenderer konfigurieren (datengetrieben oder Fallback)
             TrailRenderer trail = tracerObj.AddComponent<TrailRenderer>();
+            tracer.m_Trail = trail;
 
             if (tailSegment != null && factory != null)
             {
@@ -93,7 +98,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 trail.time = 0.08f;
                 trail.startWidth = 0.02f;
                 trail.endWidth = 0.005f;
-                trail.material = new Material(Shader.Find("Sprites/Default"));
+                if (s_CachedSpritesShader == null)
+                {
+                    s_CachedSpritesShader = Shader.Find("Sprites/Default");
+                }
+                Material fallbackMat = new(s_CachedSpritesShader);
+                trail.material = fallbackMat;
 
                 Gradient gradient = new();
                 gradient.SetKeys(
@@ -156,8 +166,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 m_Arrived = true;
 
                 // Trail-Fadeout abwarten, dann zerstoeren
-                TrailRenderer trail = GetComponent<TrailRenderer>();
-                float fadeTime = trail != null ? trail.time : FALLBACK_LIFETIME;
+                float fadeTime = m_Trail != null ? m_Trail.time : FALLBACK_LIFETIME;
                 Destroy(gameObject, fadeTime);
             }
             else
@@ -165,6 +174,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 // Weiterfliegen
                 Vector3 direction = (m_Target - currentPos).normalized;
                 transform.position = currentPos + direction * step;
+            }
+        }
+
+        /// <summary>
+        /// Gibt dynamisch erstelltes TrailRenderer-Material frei.
+        /// </summary>
+        private void OnDestroy()
+        {
+            if (m_Trail != null && m_Trail.material != null)
+            {
+                Destroy(m_Trail.material);
             }
         }
     }

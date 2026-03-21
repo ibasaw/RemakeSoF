@@ -414,5 +414,1137 @@
         }
       }
     ]
+  },
+  {
+    "id": "effects/impact_flesh2",
+    "displayName": "Impact Flesh 2",
+    "segments": [
+      {
+        "type": "particle",
+        "name": "bloodcloud",
+        "texture": "gfx/misc/gb_smoke3",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 1.2,
+          "lifetimeMax": 1.5,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "velocityMin": [
+            -0.127,
+            -0.127,
+            -0.127
+          ],
+          "velocityMax": [
+            0.127,
+            0.127,
+            0.127
+          ]
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.5,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 75.0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.6824,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.6824,
+            0.0,
+            0.0
+          ],
+          "endMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "endMax": [
+            0.3922,
+            0.0,
+            0.0
+          ],
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0762,
+          "endMin": 0.254,
+          "endMax": 0.3556,
+          "parm": 20.0,
+          "curve": "clamp"
+        }
+      },
+      {
+        "type": "particle",
+        "name": "center",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 9,
+          "countMax": 9,
+          "lifetimeMin": 0.2,
+          "lifetimeMax": 0.25,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -140.0,
+          "rotationSpeedMax": 140.0,
+          "velocityMin": [
+            -0.127,
+            -0.127,
+            0.0
+          ],
+          "velocityMax": [
+            0.127,
+            0.127,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0
+        },
+        "color": {
+          "startMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.502,
+            0.0,
+            0.0
+          ]
+        },
+        "size": {
+          "endMin": 0.0762,
+          "endMax": 0.1016,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "particle",
+        "name": "bloodcloud2",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.0,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "velocityMin": [
+            -0.254,
+            -0.254,
+            0.0
+          ],
+          "velocityMax": [
+            0.254,
+            0.254,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 75.0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.6824,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.6824,
+            0.0,
+            0.0
+          ],
+          "endMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "endMax": [
+            0.3922,
+            0.0,
+            0.0
+          ],
+          "curve": "linear"
+        },
+        "size": {
+          "endMin": 0.2032,
+          "endMax": 0.254,
+          "parm": 20.0,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/gore/body_impact0.wav",
+            "sound/player/bullet_impacts/gore/body_impact1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_flesh_12g",
+    "displayName": "Impact Flesh 12G",
+    "segments": [
+      {
+        "type": "particle",
+        "name": "bloodcloud",
+        "texture": "gfx/misc/gb_smoke3",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.2,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "velocityMin": [
+            -0.127,
+            -0.127,
+            -0.127
+          ],
+          "velocityMax": [
+            0.127,
+            0.127,
+            0.127
+          ]
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.5,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 75.0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.6824,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.6824,
+            0.0,
+            0.0
+          ],
+          "endMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "endMax": [
+            0.3922,
+            0.0,
+            0.0
+          ],
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0762,
+          "endMin": 0.1778,
+          "endMax": 0.254,
+          "parm": 20.0,
+          "curve": "clamp"
+        }
+      },
+      {
+        "type": "particle",
+        "name": "center",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 3,
+          "countMax": 4,
+          "lifetimeMin": 0.2,
+          "lifetimeMax": 0.25,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -140.0,
+          "rotationSpeedMax": 140.0,
+          "velocityMin": [
+            -0.127,
+            -0.127,
+            0.0
+          ],
+          "velocityMax": [
+            0.127,
+            0.127,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0
+        },
+        "color": {
+          "startMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.502,
+            0.0,
+            0.0
+          ]
+        },
+        "size": {
+          "endMin": 0.0762,
+          "endMax": 0.1016,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "particle",
+        "name": "blood_particles",
+        "texture": "gfx/misc/jk_drop",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "orgOnSphere",
+          "axisFromSphere"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 6,
+          "countMax": 8,
+          "lifetimeMin": 0.8,
+          "lifetimeMax": 1.2,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "gravityModifier": 0.0162,
+          "velocityMin": [
+            0.0,
+            0.0,
+            1.27
+          ],
+          "velocityMax": [
+            0.0,
+            0.0,
+            2.54
+          ],
+          "radius": 0.254
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 0.9,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 70.0,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.8235,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.5765,
+            0.0,
+            0.0
+          ]
+        },
+        "size": {
+          "startMin": 0.0076,
+          "startMax": 0.0254
+        }
+      },
+      {
+        "type": "particle",
+        "name": "bloodcloud2",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 0.7,
+          "lifetimeMax": 0.8,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "velocityMin": [
+            -0.254,
+            -0.254,
+            0.0
+          ],
+          "velocityMax": [
+            0.254,
+            0.254,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 75.0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.6824,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.6824,
+            0.0,
+            0.0
+          ],
+          "endMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "endMax": [
+            0.3922,
+            0.0,
+            0.0
+          ],
+          "curve": "linear"
+        },
+        "size": {
+          "endMin": 0.1778,
+          "endMax": 0.2032,
+          "parm": 20.0,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/gore/body_impact0.wav",
+            "sound/player/bullet_impacts/gore/body_impact1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_flesh_old",
+    "displayName": "Impact Flesh Old",
+    "segments": [
+      {
+        "type": "particle",
+        "name": "bloodcloud",
+        "texture": "gfx/misc/gb_smoke3",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 1.2,
+          "lifetimeMax": 1.5,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "velocityMin": [
+            -0.127,
+            -0.127,
+            -0.127
+          ],
+          "velocityMax": [
+            0.127,
+            0.127,
+            0.127
+          ]
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.8,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 75.0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "endMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "endMax": [
+            0.3922,
+            0.0,
+            0.0
+          ],
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0762,
+          "endMin": 0.254,
+          "endMax": 0.3556,
+          "parm": 5.0,
+          "curve": "clamp"
+        }
+      },
+      {
+        "type": "particle",
+        "name": "center",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 9,
+          "countMax": 9,
+          "lifetimeMin": 0.2,
+          "lifetimeMax": 0.25,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -140.0,
+          "rotationSpeedMax": 140.0,
+          "velocityMin": [
+            -0.127,
+            -0.127,
+            0.0
+          ],
+          "velocityMax": [
+            0.127,
+            0.127,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0
+        },
+        "color": {
+          "startMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.502,
+            0.0,
+            0.0
+          ]
+        },
+        "size": {
+          "endMin": 0.0762,
+          "endMax": 0.1016,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "particle",
+        "name": "blood_particles",
+        "texture": "gfx/misc/jk_drop",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "orgOnSphere",
+          "axisFromSphere"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 10,
+          "countMax": 15,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.5,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "gravityModifier": 0.0162,
+          "velocityMin": [
+            0.0,
+            0.0,
+            1.27
+          ],
+          "velocityMax": [
+            0.0,
+            0.0,
+            2.54
+          ],
+          "radius": 0.254
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 0.9,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 70.0,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.8235,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.5765,
+            0.0,
+            0.0
+          ]
+        },
+        "size": {
+          "startMin": 0.0076,
+          "startMax": 0.0254
+        }
+      },
+      {
+        "type": "particle",
+        "name": "bloodcloud2",
+        "texture": "gfx/misc/jk_dirt_grey",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.0,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "velocityMin": [
+            -0.254,
+            -0.254,
+            0.0
+          ],
+          "velocityMax": [
+            0.254,
+            0.254,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 75.0,
+          "curve": "linear"
+        },
+        "color": {
+          "startMin": [
+            0.6824,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.6824,
+            0.0,
+            0.0
+          ],
+          "endMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "endMax": [
+            0.3922,
+            0.0,
+            0.0
+          ],
+          "curve": "linear"
+        },
+        "size": {
+          "endMin": 0.2032,
+          "endMax": 0.254,
+          "parm": 20.0,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/gore/body_impact0.wav",
+            "sound/player/bullet_impacts/gore/body_impact1.wav"
+          ],
+          "delay": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_player",
+    "displayName": "Impact Player",
+    "segments": [
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/gore/body_impact0.wav",
+            "sound/player/bullet_impacts/gore/body_impact1.wav"
+          ],
+          "delay": 0.0
+        }
+      },
+      {
+        "type": "particle",
+        "name": "Copy of Unnamed Particle 0",
+        "texture": "gfx/misc/jk_drop",
+        "flags": [
+          "usePhysics",
+          "impactFx",
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.5,
+          "rotationMin": -180.0,
+          "rotationMax": 180.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "gravityModifier": 0.0032,
+          "velocityMin": [
+            -1.27,
+            -1.27,
+            6.35
+          ],
+          "velocityMax": [
+            1.27,
+            1.27,
+            7.62
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 75.0
+        },
+        "color": {
+          "startMin": [
+            0.1961,
+            0.0628,
+            0.0628
+          ],
+          "startMax": [
+            0.2902,
+            0.0902,
+            0.0902
+          ]
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0508,
+          "endMin": 1.27,
+          "endMax": 1.524
+        },
+        "impactFx": [
+          "blood_splat_mp_small"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "effects/impact_player_mp",
+    "displayName": "Impact Player MP",
+    "segments": [
+      {
+        "type": "particle",
+        "name": "bits",
+        "texture": "models/characters/gore/mist",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 5,
+          "countMax": 5,
+          "lifetimeMin": 0.15,
+          "lifetimeMax": 0.45,
+          "rotationMin": -180.0,
+          "rotationMax": 180.0,
+          "velocityMin": [
+            -0.0508,
+            -0.0508,
+            0.381
+          ],
+          "velocityMax": [
+            0.0508,
+            0.0508,
+            0.381
+          ],
+          "originMin": [
+            -0.0508,
+            -0.0508,
+            0.0508
+          ],
+          "originMax": [
+            0.0508,
+            0.0508,
+            0.254
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 50.0,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.3569,
+            0.0196,
+            0.0196
+          ],
+          "startMax": [
+            0.502,
+            0.0157,
+            0.0157
+          ],
+          "endMin": [
+            0.2902,
+            0.0902,
+            0.0902
+          ],
+          "endMax": [
+            0.502,
+            0.0,
+            0.0
+          ]
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 0.381,
+          "endMax": 0.508,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "particle",
+        "name": "mist",
+        "texture": "gfx/misc/jk_smoke4",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 0,
+          "countMax": 1,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.0,
+          "rotationMin": -180.0,
+          "rotationMax": 180.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "gravityModifier": 0.0032,
+          "velocityMin": [
+            -0.2032,
+            -0.2032,
+            0.127
+          ],
+          "velocityMax": [
+            0.2032,
+            0.2032,
+            0.254
+          ]
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.3,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 20.0,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.4157,
+            0.0235,
+            0.0235
+          ],
+          "startMax": [
+            0.4824,
+            0.0235,
+            0.0235
+          ],
+          "endMin": [
+            0.2902,
+            0.0902,
+            0.0902
+          ],
+          "endMax": [
+            0.502,
+            0.0196,
+            0.0196
+          ]
+        },
+        "size": {
+          "endMin": 0.3048,
+          "endMax": 0.3556,
+          "parm": 30.0,
+          "curve": "linear clamp"
+        }
+      },
+      {
+        "type": "sound",
+        "name": "HitSound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/gore/body_impact0.wav",
+            "sound/player/bullet_impacts/gore/body_impact1.wav"
+          ],
+          "delay": 0.0
+        }
+      },
+      {
+        "type": "particle",
+        "name": "chunklets",
+        "texture": "gfx/misc/bp_gib_organs02",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 1.0,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -300.0,
+          "rotationSpeedMax": 100.0,
+          "gravityModifier": 0.0324,
+          "velocityMin": [
+            -1.016,
+            -1.016,
+            0.508
+          ],
+          "velocityMax": [
+            1.016,
+            1.016,
+            1.27
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 40.0,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.3412,
+            0.3412,
+            0.3412
+          ],
+          "startMax": [
+            0.6784,
+            0.3137,
+            0.3137
+          ]
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0381
+        }
+      },
+      {
+        "type": "particle",
+        "name": "Newchunklets",
+        "texture": "models/characters/gore/jd_gib_chunklet",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 1.0,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -300.0,
+          "rotationSpeedMax": 100.0,
+          "gravityModifier": 0.0324,
+          "velocityMin": [
+            -1.016,
+            -1.016,
+            0.508
+          ],
+          "velocityMax": [
+            1.016,
+            1.016,
+            1.27
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 40.0,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "startMax": [
+            0.6784,
+            0.6784,
+            0.6784
+          ]
+        },
+        "size": {
+          "startMin": 0.0178,
+          "startMax": 0.033
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.45,
+          "lifetimeMax": 0.75,
+          "velocityMin": [
+            0.0,
+            0.0,
+            0.127
+          ],
+          "velocityMax": [
+            0.0,
+            0.0,
+            0.254
+          ]
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 40.0,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.502,
+            0.0,
+            0.0
+          ]
+        },
+        "size": {
+          "startMin": 0.1016,
+          "startMax": 0.1524,
+          "endMin": 0.127,
+          "endMax": 0.1524,
+          "curve": "linear"
+        }
+      }
+    ]
   }
 ]

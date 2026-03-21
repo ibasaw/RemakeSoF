@@ -84,5 +84,77 @@
         }
       }
     ]
+  },
+  {
+    "id": "effects/impact_default2",
+    "displayName": "Impact Default 2",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/gb_softfill",
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.4,
+          "velocityMin": [
+            0.0,
+            0.0,
+            0.508
+          ],
+          "velocityMax": [
+            0.0,
+            0.0,
+            0.762
+          ]
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "curve": "linear"
+        },
+        "color": {
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0254,
+          "endMin": 0.254,
+          "endMax": 0.381,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/default/default0.wav",
+            "sound/player/bullet_impacts/default/default1.wav"
+          ],
+          "delay": 0.0,
+          "cullrange": 5.08
+        }
+      },
+      {
+        "type": "decal",
+        "texture": "gfx/misc/gb_scorch",
+        "decal": {
+          "sizeMin": 0.0254,
+          "sizeMax": 0.0508,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "alphaMin": 0.2,
+          "alphaMax": 0.3,
+          "lifetime": 30
+        }
+      }
+    ]
   }
 ]

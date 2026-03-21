@@ -41,6 +41,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         [SerializeField]
         private Material m_ColliderMaterial;
 
+        /// <summary>Dynamisch erstelltes Material fuer Ground-Check-Visualisierung.</summary>
+        private Material m_VisualGroundCheckMaterial;
+
         /// <summary>Basis-Hoehe fuer Standing (vor Crouch-Skalierung).</summary>
         private float m_BaseCapsuleHeight;
 
@@ -292,6 +295,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         private void OnDestroy()
         {
+            if (m_ColliderMaterial != null)
+            {
+                Destroy(m_ColliderMaterial);
+                m_ColliderMaterial = null;
+            }
+
+            if (m_VisualGroundCheckMaterial != null)
+            {
+                Destroy(m_VisualGroundCheckMaterial);
+                m_VisualGroundCheckMaterial = null;
+            }
+
             if (m_VisualColliderObject != null)
             {
                 Destroy(m_VisualColliderObject);
@@ -409,6 +424,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             Material groundCheckMat = new(Shader.Find("Unlit/Color"));
             groundCheckMat.color = new Color(1f, 1f, 0f, 0.5f);
             m_VisualGroundCheckRenderer.material = groundCheckMat;
+            m_VisualGroundCheckMaterial = groundCheckMat;
             m_VisualGroundCheckRenderer.sortingOrder = 999;
         }
 

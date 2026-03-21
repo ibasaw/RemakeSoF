@@ -214,6 +214,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         public override void Enter()
         {
             Debug.Log("[RoundFlow] Enter WaitingForReadyState");
+
             Manager.RespawnAllConnectedPlayers();
 
             // Host-Mode: Server-Client hat kein Loading-Overlay, gilt sofort als bereit.
@@ -270,6 +271,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         public override void Enter()
         {
             Debug.Log("[RoundFlow] Enter StartingRoundState");
+
             GameState.roundStartCountdown.Value = 3;
             GameState.BroadcastRoundStarting();
             m_CountdownRoutine = Manager.StartCoroutine(CountdownThenStart());

@@ -191,6 +191,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
             Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
             foreach (Renderer renderer in renderers)
             {
+                // Alte Instanz-Materialien freigeben bevor neue zugewiesen werden
+                Material[] oldMats = renderer.materials;
+                foreach (Material oldMat in oldMats)
+                {
+                    if (oldMat != null)
+                    {
+                        Object.Destroy(oldMat);
+                    }
+                }
+
                 Material[] materials = renderer.sharedMaterials;
                 Material[] newMaterials = new Material[materials.Length];
                 for (int i = 0; i < materials.Length; i++)

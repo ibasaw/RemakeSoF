@@ -24,6 +24,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
     /// </summary>
     public class NetworkedPlayerCharacter : NetworkedCharacter, ICharacter
     {
+        // ===== Cached Shaders =====
+        private static Shader s_CachedSpritesShader;
+
         // ===== Server-Side Processing =====
 
         /// <summary>
@@ -291,7 +294,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Spawn-Point vom Server zuweisen — ggf. warten bis Map geladen ist
             if (ServerPlayerSpawnPoints.Instance == null)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log("[NetworkedPlayerCharacter] ServerPlayerSpawnPoints noch nicht verfügbar — warte auf Map-Laden.");
+#endif
                 StartCoroutine(WaitForMapAndPosition());
                 return;
             }
@@ -322,7 +327,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             m_ServerPlayerCharacter.ResetForRespawn();
             m_ServerPlayerCharacter.SetReady();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedPlayerCharacter] Server: Spieler gespawnt bei {position}");
+#endif
         }
 
         /// <summary>
@@ -353,7 +360,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             m_ServerPlayerCharacter.ResetForRespawn();
             m_ServerPlayerCharacter.SetReady();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedPlayerCharacter] Server: Spieler respawned bei {position}");
+#endif
         }
 
         /// <summary>
@@ -370,7 +379,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Animator-Referenz nach Visual-Instanziierung setzen
             SubscribeToVisualInstantiated();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log("[NetworkedPlayerCharacter] Owner: Client-Side Prediction aktiv");
+#endif
         }
 
         /// <summary>
@@ -383,7 +394,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Animator-Referenz nach Visual-Instanziierung setzen
             SubscribeToVisualInstantiated();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedPlayerCharacter] Remote: Client {OwnerClientId} - Interpolation aktiv");
+#endif
         }
 
         public override void OnNetworkDespawn()
@@ -590,12 +603,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <summary>
         /// Server → Owner-Client: Hard-Correction (Respawn, Teleport, Anti-Cheat).
         /// Überschreibt Client-Position ohne Reconciliation.
+        /// Resettet auch die Client-Simulation (Velocity, Grounded-State), damit keine
+        /// alte Fall-Velocity den Spieler nach dem Teleport wegschleudert.
         /// </summary>
         [Rpc(SendTo.Owner)]
         private void CorrectionClientRpc(Vector3 correctPosition, Quaternion correctRotation)
         {
             // Owner-Client: Server hat die Position korrigiert → Prediction überschreiben
             transform.SetPositionAndRotation(correctPosition, correctRotation);
+
+            // Client-Simulation resetten: alte Velocity/State verwerfen
+            ClientPlayerCharacter client = GetComponent<ClientPlayerCharacter>();
+            client?.ResetSimulationForRespawn();
+
             Debug.LogWarning($"[NetworkedPlayerCharacter] Owner: Position vom Server korrigiert auf {correctPosition}");
         }
 
@@ -769,6 +789,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 {
                     // Hitbox naeher: Spieler getroffen
                     hitPoint = hit.point;
+                    impactNormal = hit.normal;
+
+                    // Flesh-Impact-Effekt via Surface-System (SoF2: flesh surface type)
+                    SurfaceImpactDataLoader surfaceLoader = ServiceLocator.Get<SurfaceImpactDataLoader>();
+                    if (surfaceLoader != null)
+                    {
+                        impactEffectId = surfaceLoader.GetImpactEffectId("flesh", ammoType);
+                        impactSoundPath = surfaceLoader.GetImpactSoundPath("flesh", ammoType);
+                    }
                 }
                 else if (didHitWorld)
                 {
@@ -809,7 +838,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                             int newHealth = Mathf.Max(0, targetState.Health - finalDamage);
                             targetState.SetHealth(newHealth);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                             Debug.Log($"[NetworkedPlayerCharacter] Server: HIT! Client {OwnerClientId} → {targetState.CharacterName} | Pellet={i + 1}/{pelletCount} | Region={hitbox.HitRegion} | Damage={finalDamage} (Base={attackDef.Damage} × {hitbox.DamageMultiplier:F2}) | Health={newHealth}");
+#endif
                         }
                     }
                 }
@@ -951,7 +982,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_ServerAttackFrameAccumulator = 0f;
                 m_ServerAttackFps = m_ServerGrenadeCookFps;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade cook started for client {OwnerClientId} — Timer={projDef.Timer:F2}s (isAlt={isAlt})");
+#endif
 
                 // SoF2 Grenade-Sequenz: pinRattle + pinPull beim Cook-Start
                 string pinRattlePath = ResolveWeaponSoundPath(weapon, "pinRattle");
@@ -1003,7 +1036,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 ApplyKickAnglesClientRpc(pitchKick, yawKick);
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedPlayerCharacter] Server: Projectile ({projDef.Detonation}) spawned for client {OwnerClientId} — Speed={projDef.Speed} Gravity={projDef.Gravity}");
+#endif
         }
 
         /// <summary>
@@ -1200,7 +1235,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             m_ServerGrenadeThrowFrameAccumulator = 0f;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade {(timerExpired ? "EXPLODED IN HAND" : "thrown")} for client {OwnerClientId} — RemainingTimer={remainingTimer:F2}s, TimerExpired={timerExpired}, ThrowFrames={m_ServerGrenadeThrowFramesRemaining}");
+#endif
         }
 
         /// <summary>
@@ -1222,7 +1259,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             if (m_ServerGrenadeThrowFramesRemaining <= 0 && m_CharacterState.CanReload())
             {
                 m_CharacterState.CompleteReload();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade auto-reload after throw for client {OwnerClientId}");
+#endif
             }
         }
 
@@ -1396,10 +1435,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             lr.SetPosition(1, end);
             lr.startWidth = 0.02f;
             lr.endWidth = 0.02f;
-            lr.material = new Material(Shader.Find("Sprites/Default"));
+            if (s_CachedSpritesShader == null)
+            {
+                s_CachedSpritesShader = Shader.Find("Sprites/Default");
+            }
+            Material tracerMat = new(s_CachedSpritesShader);
+            lr.material = tracerMat;
             lr.startColor = Color.red;
             lr.endColor = Color.red;
             lr.useWorldSpace = true;
+
+            // Material muss separat zerstoert werden, da Destroy(GameObject) es nicht freigibt.
+            Destroy(tracerMat, TRACER_DURATION);
             Destroy(lineObj, TRACER_DURATION);
         }
 
@@ -1805,7 +1852,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 if (m_CharacterState.CanAltReload())
                 {
                     m_CharacterState.CompleteAltReload();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                     Debug.Log($"[NetworkedPlayerCharacter] Server: Alt-ammo auto-reload after projectile for client {OwnerClientId}");
+#endif
                 }
 
                 return;
@@ -1913,7 +1962,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                             int newHealth = Mathf.Max(0, targetState.Health - finalDamage);
                             targetState.SetHealth(newHealth);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                             Debug.Log($"[NetworkedPlayerCharacter] Server: AltAttack HIT! Client {OwnerClientId} → {targetState.CharacterName} | Region={hitbox.HitRegion} | Damage={finalDamage} (Base={altAttackDef.Damage} × {hitbox.DamageMultiplier:F2}) | Health={newHealth}");
+#endif
                         }
                     }
                 }
@@ -1933,7 +1984,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 ApplyKickAnglesClientRpc(pitchKick, yawKick);
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedPlayerCharacter] Server: AltAttack aus Command #{cmd.SequenceNumber} für Client {OwnerClientId} — {m_ServerAltAttackFrames} Frames @ {m_ServerAltAttackFps}fps Cooldown");
+#endif
         }
 
         /// <summary>
@@ -2025,7 +2078,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             m_ServerReloadFrameAccumulator = 0f;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedPlayerCharacter] Server: Reload started for client {OwnerClientId} — Phase={m_ServerShellReloadPhase}, ShellsRemaining={m_ServerShellsRemaining}");
+#endif
         }
 
         /// <summary>
@@ -2192,7 +2247,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_ServerSwapRaiseFps = raiseFps;
             m_ServerSwapTargetWeapon = targetWeapon;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedPlayerCharacter] Server: Weapon swap started for client {OwnerClientId}: {dropSourceWeapon} → {targetWeapon} (Drop {dropFrames}f@{dropFps}fps, Raise {raiseFrames}f@{raiseFps}fps)");
+#endif
         }
 
         /// <summary>
@@ -2241,7 +2298,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
                     m_ServerSwapTargetWeapon = null;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                     Debug.Log($"[NetworkedPlayerCharacter] Server: Weapon swap completed for client {OwnerClientId}");
+#endif
                 }
             }
         }
@@ -2290,7 +2349,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 // Ohne dies wuerde die Jump-Animation die Visual-Position ueber die
                 // Physik-Capsule hinaus nach oben verschieben.
                 m_Animator.applyRootMotion = false;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"[NetworkedPlayerCharacter] Animator gefunden auf Visual für Character {CharacterId} (Root Motion deaktiviert)");
+#endif
             }
         }
 

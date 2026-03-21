@@ -21,6 +21,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
         private const string URP_PARTICLE_SHADER = "Universal Render Pipeline/Particles/Unlit";
         private const string BUILTIN_PARTICLE_SHADER = "Particles/Standard Unlit";
 
+        private static Shader s_CachedParticleShader;
+        private static Shader s_CachedFallbackShader;
+
         private readonly Dictionary<string, Material> m_MaterialCache = new(System.StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
@@ -413,7 +416,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
         /// Bei "nonlinear" wird eine Ease-In/Out-Kurve erzeugt.
         /// Bei "linear" (oder Default) wird linear interpoliert.
         /// </summary>
-        private AnimationCurve BuildSizeCurve(float endRatio, string curve, int parm)
+        private AnimationCurve BuildSizeCurve(float endRatio, string curve, float parm)
         {
             bool isClamp = !string.IsNullOrEmpty(curve) &&
                            curve.Contains("clamp", System.StringComparison.OrdinalIgnoreCase);
@@ -549,11 +552,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             TextureManager textureManager = ServiceLocator.Get<TextureManager>();
 
             // URP Particle Shader bevorzugen, Built-in als Fallback
-            Shader shader = Shader.Find(URP_PARTICLE_SHADER);
-            if (shader == null)
+            if (s_CachedParticleShader == null)
             {
-                shader = Shader.Find(BUILTIN_PARTICLE_SHADER);
+                s_CachedParticleShader = Shader.Find(URP_PARTICLE_SHADER);
+                if (s_CachedParticleShader == null)
+                {
+                    s_CachedParticleShader = Shader.Find(BUILTIN_PARTICLE_SHADER);
+                }
             }
+            Shader shader = s_CachedParticleShader;
             if (shader == null)
             {
                 Debug.LogWarning("[EffectFactory] No particle shader found, using fallback");
@@ -627,8 +634,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
         /// </summary>
         private Material GetFallbackMaterial()
         {
-            Shader fallback = Shader.Find("Sprites/Default");
-            Material mat = new(fallback) { name = "Effect_Fallback" };
+            if (s_CachedFallbackShader == null)
+            {
+                s_CachedFallbackShader = Shader.Find("Sprites/Default");
+            }
+            Material mat = new(s_CachedFallbackShader) { name = "Effect_Fallback" };
             mat.color = new Color(1f, 0.8f, 0.2f, 0.8f);
             return mat;
         }
@@ -831,7 +841,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 return cached;
             }
 
-            Shader shader = Shader.Find("Sprites/Default");
+            if (s_CachedFallbackShader == null)
+            {
+                s_CachedFallbackShader = Shader.Find("Sprites/Default");
+            }
+            Shader shader = s_CachedFallbackShader;
             Material material = new(shader) { name = $"Decal_{texturePath}" };
 
             TextureManager textureManager = ServiceLocator.Get<TextureManager>();

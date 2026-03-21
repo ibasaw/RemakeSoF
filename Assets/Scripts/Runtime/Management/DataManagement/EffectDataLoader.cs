@@ -89,5 +89,13 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         {
             return m_EffectsById.Values;
         }
+
+        /// <summary>
+        /// Leert den internen Cache. Wird von ServiceLocator.ClearAll() per Reflection aufgerufen.
+        /// </summary>
+        public void ClearCache()
+        {
+            m_EffectsById.Clear();
+        }
     }
 }

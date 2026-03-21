@@ -37,7 +37,8 @@ namespace Tolik.RemakeSoF.Editor
             var dir = new DirectoryInfo(sourceDirName);
             if (!dir.Exists)
             {
-                throw new DirectoryNotFoundException($"Source directory does not exist or could not be found: {sourceDirName}");
+                // Optional: Ordner existiert nicht, kein Fehler wenn lokal gebaut wird.
+                return;
             }
 
             // If the destination directory doesn't exist, create it.

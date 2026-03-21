@@ -574,5 +574,215 @@
         }
       }
     ]
+  },
+  {
+    "id": "effects/impact_wood2",
+    "displayName": "Impact Wood 2",
+    "segments": [
+      {
+        "type": "particle",
+        "texture": "gfx/misc/jk_bar",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 5,
+          "countMax": 6,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "cullrange": 5.08,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": 500.0,
+          "rotationSpeedMax": 1000.0,
+          "gravityModifier": 0.0971,
+          "velocityMin": [
+            -1.27,
+            -1.27,
+            1.524
+          ],
+          "velocityMax": [
+            1.27,
+            1.27,
+            2.032
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 60.0,
+          "curve": "nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.6667,
+            0.5412,
+            0.4
+          ],
+          "startMax": [
+            0.6667,
+            0.5412,
+            0.4
+          ],
+          "endMin": [
+            0.6667,
+            0.5412,
+            0.4
+          ],
+          "endMax": [
+            0.6667,
+            0.5412,
+            0.4
+          ]
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.019,
+          "endMin": 0.0254,
+          "endMax": 0.0381
+        }
+      },
+      {
+        "type": "emitter",
+        "model": "models/chunks/wood/wood_splinter3.md3",
+        "flags": [
+          "useModel"
+        ],
+        "emitter": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 10.0,
+          "cullrange": 5.08,
+          "sizeMin": 0.0127,
+          "sizeMax": 0.0254
+        }
+      },
+      {
+        "type": "emitter",
+        "model": "models/chunks/wood/wood_splinter4.md3",
+        "flags": [
+          "useModel"
+        ],
+        "emitter": {
+          "countMin": 0,
+          "countMax": 1,
+          "lifetimeMin": 10.0,
+          "cullrange": 5.08,
+          "sizeMin": 0.0127,
+          "sizeMax": 0.0254
+        }
+      },
+      {
+        "type": "emitter",
+        "model": "models/chunks/wood/wood_splinter5.md3",
+        "flags": [
+          "useModel"
+        ],
+        "emitter": {
+          "countMin": 0,
+          "countMax": 1,
+          "lifetimeMin": 10.0,
+          "cullrange": 5.08,
+          "sizeMin": 0.0127,
+          "sizeMax": 0.0254
+        }
+      },
+      {
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "burst": true,
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 1.0,
+          "lifetimeMax": 1.0,
+          "cullrange": 10.16,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "rotationSpeedMin": -100.0,
+          "rotationSpeedMax": 100.0,
+          "gravityModifier": 0.0026,
+          "velocityMin": [
+            -0.1016,
+            -0.1016,
+            0.2032
+          ],
+          "velocityMax": [
+            0.1016,
+            0.1016,
+            0.2032
+          ]
+        },
+        "alpha": {
+          "startMin": 0.6,
+          "startMax": 0.8,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 50.0,
+          "curve": "linear nonlinear"
+        },
+        "color": {
+          "startMin": [
+            0.5686,
+            0.502,
+            0.349
+          ],
+          "startMax": [
+            0.3882,
+            0.3176,
+            0.1882
+          ],
+          "endMin": [
+            0.7098,
+            0.6078,
+            0.4157
+          ],
+          "endMax": [
+            0.7098,
+            0.6078,
+            0.4157
+          ]
+        },
+        "size": {
+          "startMin": 0.0762,
+          "startMax": 0.0762,
+          "endMin": 0.254,
+          "endMax": 0.3048,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "decal",
+        "texture": "gfx/decals/impact/wood",
+        "decal": {
+          "sizeMin": 0.0559,
+          "sizeMax": 0.0762,
+          "rotationMin": -20.0,
+          "rotationMax": 20.0,
+          "lifetime": 30
+        }
+      },
+      {
+        "type": "sound",
+        "name": "Sound",
+        "sound": {
+          "files": [
+            "sound/player/bullet_impacts/wood/wood0.wav",
+            "sound/player/bullet_impacts/wood/wood1.wav"
+          ],
+          "delay": 0.0,
+          "cullrange": 5.08
+        }
+      }
+    ]
   }
 ]

@@ -2,7 +2,7 @@
     {
         "id": "maps/cem1",
         "mapName": "Cemetery",
-        "countdownStartValue": 15,
+        "countdownStartValue": 150,
         "levelShotBackgroundTexturePath": "gfx/menus/levelshots/cem1",
         "cameraLevelShotPosition": {
             "x": -130,

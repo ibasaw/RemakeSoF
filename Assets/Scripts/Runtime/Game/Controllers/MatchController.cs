@@ -24,7 +24,7 @@ namespace Tolik.RemakeSoF.Runtime
         /// <summary>
         /// Intervall in Sekunden zwischen Debug-HUD-Updates.
         /// </summary>
-        private const float k_DebugHudUpdateInterval = 0.05f;
+        private const float k_DebugHudUpdateInterval = 0.1f;
 
         /// <summary>
         /// Akkumulierte Zeit seit letztem FPS-Update.
@@ -40,6 +40,12 @@ namespace Tolik.RemakeSoF.Runtime
         /// Akkumulierte Zeit seit letztem Debug-HUD-Update.
         /// </summary>
         private float m_DebugHudTimer;
+
+        /// <summary>
+        /// Ob das Debug-HUD sichtbar ist. Im Inspector umschaltbar.
+        /// </summary>
+        [SerializeField]
+        private bool m_ShowDebugHud = false;
 
         /// <summary>
         /// Gecachte CharacterState-Referenz fuer Event-Subscriptions (Ammo/Weapon/Health HUD).
@@ -269,6 +275,9 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         private void OnMatchViewEnabled()
         {
+            // Debug-HUD Sichtbarkeit anhand des SerializeField-Flags setzen.
+            View.SetDebugHudVisible(m_ShowDebugHud);
+
             // Falls CharacterState noch nicht verfuegbar, jetzt versuchen.
             if (m_CharacterState == null && App.Model.PlayerCharacter != null)
             {
@@ -322,11 +331,14 @@ namespace Tolik.RemakeSoF.Runtime
                 m_FpsTimer = 0f;
             }
 
-            m_DebugHudTimer += Time.unscaledDeltaTime;
-            if (m_DebugHudTimer >= k_DebugHudUpdateInterval)
+            if (m_ShowDebugHud)
             {
-                m_DebugHudTimer = 0f;
-                UpdateDebugHud();
+                m_DebugHudTimer += Time.unscaledDeltaTime;
+                if (m_DebugHudTimer >= k_DebugHudUpdateInterval)
+                {
+                    m_DebugHudTimer = 0f;
+                    UpdateDebugHud();
+                }
             }
         }
 

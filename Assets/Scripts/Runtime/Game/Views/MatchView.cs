@@ -13,6 +13,9 @@ namespace Tolik.RemakeSoF.Runtime
         Label m_PlayersConnectedLabel;
         Label m_FpsLabel;
 
+        // Debug HUD Container
+        VisualElement m_DebugInfoBox;
+
         // Debug HUD Labels
         Label m_GroundedLabel;
         Label m_AttackingLabel;
@@ -80,6 +83,7 @@ namespace Tolik.RemakeSoF.Runtime
             m_FpsLabel = root.Query<Label>("fpsLabel");
 
             // Debug HUD
+            m_DebugInfoBox = root.Query<VisualElement>("DebugInfoBox");
             m_GroundedLabel = root.Query<Label>("groundedLabel");
             m_AttackingLabel = root.Query<Label>("attackingLabel");
             m_CrouchingLabel = root.Query<Label>("crouchingLabel");
@@ -143,6 +147,17 @@ namespace Tolik.RemakeSoF.Runtime
         internal void OnFpsChanged(float newValue)
         {
             m_FpsLabel.text = $"FPS: {newValue:F1}";
+        }
+
+        /// <summary>
+        /// Blendet den Debug-HUD-Container ein oder aus.
+        /// </summary>
+        internal void SetDebugHudVisible(bool visible)
+        {
+            if (m_DebugInfoBox != null)
+            {
+                m_DebugInfoBox.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            }
         }
 
         /// <summary>

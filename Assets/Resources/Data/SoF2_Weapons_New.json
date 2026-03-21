@@ -975,7 +975,7 @@
     "viewModel": "models/weapons/m1911a1/m1911a1",
     "isMelee": false,
     "ammo": {
-      "type": ".45 ACP",
+      "type": "0.45 ACP",
       "maxClip": 7,
       "extraClips": 4,
       "startClip": 7,
@@ -1195,7 +1195,7 @@
     "viewModel": "models/weapons/ussocom/ussocom",
     "isMelee": false,
     "ammo": {
-      "type": ".45 ACP",
+      "type": "0.45 ACP",
       "maxClip": 12,
       "extraClips": 3,
       "startClip": 12,
@@ -1648,7 +1648,7 @@
     "viewModel": "models/weapons/m3a1/m3a1",
     "isMelee": false,
     "ammo": {
-      "type": ".45 ACP",
+      "type": "0.45 ACP",
       "maxClip": 30,
       "extraClips": 3,
       "startClip": 30,
@@ -2489,7 +2489,7 @@
     "isMelee": false,
     "oneHanded": true,
     "ammo": {
-      "type": ".45 ACP",
+      "type": "0.45 ACP",
       "maxClip": 7,
       "extraClips": 4,
       "startClip": 7,

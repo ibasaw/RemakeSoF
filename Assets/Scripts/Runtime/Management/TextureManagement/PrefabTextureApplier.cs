@@ -98,6 +98,16 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 }
             }
 
+            // Alte Instanz-Materialien freigeben bevor neue zugewiesen werden
+            Material[] oldMaterials = renderer.materials;
+            foreach (Material oldMat in oldMaterials)
+            {
+                if (oldMat != null)
+                {
+                    Object.Destroy(oldMat);
+                }
+            }
+
             renderer.materials = materials;
 
             // Per-Slot Cull anwenden
