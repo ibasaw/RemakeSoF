@@ -94,7 +94,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>SoF2 Ground-Trace Distanz: 0.25 Quake-Units × 0.0254 = 0.00635m.
         /// Erhöht auf 0.04m weil Unity BoxCast auf Slopes bei kleineren Werten
         /// den Bodenkontakt verliert. CorrectGroundPosition gleicht das Schweben aus.</summary>
-        private const float GROUND_TRACE_DIST = 0.04f;//original: 0.00635f leider nur am sliden.
+        private const float GROUND_TRACE_DIST = 0.08f; //original: 0.00635f leider nur am sliden.
 
         // ===== Simulation State (Runtime, nicht serialisiert) =====
 
@@ -154,27 +154,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>SoF2 pml.previous_velocity — Velocity vor diesem Frame (für CrashLand).</summary>
         private Vector3 m_PreviousVelocity;
 
+        /// <summary>SoF2 pml.previous_origin — Position vor diesem Frame (für CrashLand Delta-Berechnung).</summary>
+        private Vector3 m_PreviousPosition;
+
         /// <summary>SoF2 PMF_CROUCH_JUMP — In der Luft geduckt (Crouch-High-Jump).</summary>
         private bool m_CrouchJumping;
-
-        /// <summary>
-        /// SoF2 Crouch-Jump Fuss-Anhebung: mins[2] aendert sich von -46 auf -24 = 22 QU.
-        /// 22 × 0.0254 = 0.5588m. In SoF2 bewegt sich der Origin NICHT — nur die Box
-        /// schrumpft von unten. In Unity: CapsuleCenter wird nach oben versetzt.
-        /// </summary>
-        private const float CROUCH_JUMP_FEET_RAISE = 0.5588f;
-
-        /// <summary>
-        /// SoF2 Crouch-Jump-Hoehe (geduckt): (24+18) QU = 42 QU × 0.0254 = 1.0668m.
-        /// mins=-24, maxs=18 relativ zum Origin.
-        /// </summary>
-        private const float CROUCH_JUMP_HEIGHT = 1.0668f;
-
-        /// <summary>
-        /// SoF2 Crouch-Jump-Hoehe (ungeduckt, seltener Fall): (24+43) QU = 67 QU × 0.0254 = 1.7018m.
-        /// mins=-24, maxs=43 relativ zum Origin.
-        /// </summary>
-        private const float CROUCH_JUMP_STAND_HEIGHT = 1.7018f;
 
         /// <summary>Scratch-Array für PM_SlideMove Clip-Planes (vermeidet Heap-Allokation).</summary>
         private readonly Vector3[] m_ClipPlanes = new Vector3[MAX_CLIP_PLANES];
@@ -339,8 +323,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             JumpTriggered = false;
             JustLanded = false;
 
-            // SoF2: save previous velocity for crash-landing detection
+            // SoF2: save previous velocity and origin for crash-landing detection
             m_PreviousVelocity = Velocity;
+            m_PreviousPosition = position;
 
             // SoF2: release jump debounce when button released (PMD_JUMP clear)
             if (!cmd.HasButton(CommandButtons.Jump))
@@ -559,6 +544,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// Setzt IsCrouching basierend auf Crouch-Button und Headroom-Trace.
         /// Aktualisiert CapsuleHeight und CapsuleCenter fuer Standing/Crouching.
         /// Wird VOR PM_GroundTrace aufgerufen (SoF2: PM_CheckDuck sets mins/maxs).
+        ///
+        /// WICHTIG: In SoF2 aendert PM_CheckDuck mins[2] NICHT basierend auf PMF_CROUCH_JUMP.
+        /// Es setzt IMMER mins[2] = MINS_Z = -46. Die Box-Unterseite bleibt konstant.
+        /// Der Crouch-Jump-Effekt (hoehere Stufen ueberspringen) wirkt NUR ueber den
+        /// Step-Bonus in PM_StepSlideMove, NICHT ueber eine dauerhaft angehobene Box.
         /// </summary>
         private void PM_CheckDuck(ref Vector3 position, PlayerCommand cmd)
         {
@@ -570,14 +560,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             else
             {
                 // Aufstehen: pruefen ob genug Platz (SoF2: trace mit standing maxs)
+                // SoF2: maxs[2] = DEFAULT_PLAYER_Z_MAX, trace, check !allsolid
+                // Keine Sonderbehandlung fuer PMF_CROUCH_JUMP — immer volle Stehbox testen.
                 if (IsCrouching)
                 {
-                    // SoF2: teste ob stehende Box an aktueller Position passt.
-                    // Bei Crouch-Jump: mins=-24 statt -46, daher anderer Center.
-                    float standHeight = m_CrouchJumping ? CROUCH_JUMP_STAND_HEIGHT : StandingHeight;
-                    float standBottom = m_CrouchJumping ? CROUCH_JUMP_FEET_RAISE : 0f;
-                    Vector3 standingHalf = new(CapsuleRadius, standHeight * 0.5f, CapsuleRadius);
-                    Vector3 standingCenter = position + new Vector3(0f, standBottom + standHeight * 0.5f, 0f);
+                    Vector3 standingHalf = new(CapsuleRadius, StandingHeight * 0.5f, CapsuleRadius);
+                    Vector3 standingCenter = position + new Vector3(0f, StandingHeight * 0.5f, 0f);
 
                     if (!Physics.CheckBox(standingCenter, standingHalf, Quaternion.identity, GroundMask, QueryTriggerInteraction.Ignore))
                     {
@@ -588,34 +576,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 }
             }
 
-            // === SoF2 PMF_CROUCH_JUMP + PMF_DUCKED → mins/maxs Berechnung ===
-            // SoF2: Origin bewegt sich NICHT. Nur mins[2]/maxs[2] aendern sich.
-            // m_CrouchJumping wurde von PM_CheckCrouchJump des VORHERIGEN Frames gesetzt.
-            //
-            // SoF2 Bounding-Box Zustaende (alle relativ zum Origin bei z=0):
-            //   Standing:     mins=-46, maxs=43  → Height=89  Center=(-46+43)/2 = -1.5 QU
-            //   Ducked:       mins=-46, maxs=18  → Height=64  Center=(-46+18)/2 = -14 QU
-            //   CrouchJump:   mins=-24, maxs=18  → Height=42  Center=(-24+18)/2 = -3 QU
-            //   CJ+Standing:  mins=-24, maxs=43  → Height=67  Center=(-24+43)/2 = 9.5 QU
-            //
-            // In Unity: position = Fuesse (SoF2 Origin - 46 QU). Box-Bottom muss
-            // um CROUCH_JUMP_FEET_RAISE (22 QU) ueber den Fuessen liegen wenn CJ aktiv.
-
-            float targetHeight;
-            float bottomOffset = 0f;
-
-            if (m_CrouchJumping)
-            {
-                bottomOffset = CROUCH_JUMP_FEET_RAISE;
-                targetHeight = IsCrouching ? CROUCH_JUMP_HEIGHT : CROUCH_JUMP_STAND_HEIGHT;
-            }
-            else
-            {
-                targetHeight = IsCrouching ? CrouchingHeight : StandingHeight;
-            }
+            // SoF2: mins[2] = MINS_Z (immer -46), maxs[2] je nach PMF_DUCKED.
+            // In Unity: position = Fuesse, Box-Bottom immer bei position.
+            // CapsuleCenter = (0, height/2, 0) — keine Anhebung, auch nicht bei CJ.
+            float targetHeight = IsCrouching ? CrouchingHeight : StandingHeight;
 
             CapsuleHeight = targetHeight;
-            CapsuleCenter = new Vector3(0f, bottomOffset + targetHeight * 0.5f, 0f);
+            CapsuleCenter = new Vector3(0f, targetHeight * 0.5f, 0f);
         }
 
         /// <summary>
@@ -703,29 +670,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             m_GroundPlane = true;
             m_Walking = true;
 
-            // Erste Landung: CrashLand-Lockout (SoF2: PMF_TIME_LAND)
+            // Erste Landung: CrashLand + Lockout (SoF2: PM_CrashLand → PMF_TIME_LAND)
             if (!IsGrounded)
             {
                 IsGrounded = true;
-                IsJumping = false;
 
-                // SoF2: previous_velocity[2] < -200 -> pm_time = 250
-                // SoF2 Threshold: -200 QU/s × 0.0254 = -5.08 m/s
-                // In SoF2 triggert JEDER normale Standsprung den 250ms-Lockout
-                // (Landung bei ~-260 QU/s < -200). Der alte Wert -6.86 war zu
-                // restriktiv und verhinderte den Lockout fast komplett, wodurch
-                // Spieler sofort wieder springen konnten (falsches Bhop-Feeling).
+                // SoF2: PM_CrashLand VOR IsJumping=false (CrashLand liest PMF_JUMPING).
+                // Berechnet Landing-Delta, schneidet horizontale Velocity bei Sprung-Landung
+                // (Anti-Strafe-Jump), setzt pm_time=750, nullt vertikale Velocity.
+                PM_CrashLand(position, hit.normal);
+
+                // SoF2: previous_velocity[2] < -200 → pm_time = 250 (PMF_TIME_LAND)
+                // Ueberschreibt CrashLand's 750ms Timer bei harter Landung.
                 if (m_PreviousVelocity.y < -5.08f)
                 {
                     JumpDebounce = JumpDebounceAfterMs;
                 }
-
-                // Vertikale Velocity nullen bei Landung.
-                // Unsere Trace-Distanz (0.08m) erkennt den Boden BEVOR SlideMove
-                // die Fall-Velocity per Collision clippt. Ohne dieses Nullen wuerde
-                // PM_WalkMove's Speed-Restore die Fall-Geschwindigkeit in eine
-                // Aufwaerts-Geschwindigkeit umwandeln und den Spieler bouncen lassen.
-                Velocity.y = 0f;
             }
 
             // Position auf Boden korrigieren (Einsinken verhindern)
@@ -1262,7 +1222,87 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 Velocity = endVelocity;
             }
 
+            // SoF2: don't change velocity if in a timer (pm_time > 0)
+            // Verhindert dass Kollisionen die Velocity waehrend des Landing-Lockouts
+            // veraendern. Friction/Accelerate (vor SlideMove) bleiben wirksam.
+            if (JumpDebounce > 0f)
+            {
+                Velocity = primalVelocity;
+            }
+
             return bumpcount != 0;
+        }
+
+        // ===================================================================
+        // SoF2 PM_CrashLand — Landing Impact (bg_pmove.c)
+        // ===================================================================
+
+        /// <summary>
+        /// SoF2 PM_CrashLand — exakter Port.
+        /// Berechnet Landing-Delta (Aufprall-Staerke) per quadratischer Formel
+        /// aus Fallhoehe, vorheriger Velocity und Gravitation.
+        /// Bei jumped und delta >= 17: horizontale Velocity ×0.25 + pm_time=750ms
+        /// (Anti-Strafe-Jump Mechanismus). Nullt vertikale Velocity.
+        /// Cleart PMF_JUMPING (IsJumping).
+        /// </summary>
+        private void PM_CrashLand(Vector3 position, Vector3 impactNormal)
+        {
+            // SoF2: jumped = (pm_flags & PMF_JUMPING) ? true : false
+            bool jumped = IsJumping;
+
+            // SoF2: pm_flags &= ~PMF_JUMPING
+            IsJumping = false;
+
+            // SoF2: calculate the exact velocity on landing via quadratic formula
+            // dist = origin[2] - previous_origin[2] (vertikale Positionsaenderung)
+            float dist = position.y - m_PreviousPosition.y;
+            float vel = m_PreviousVelocity.y;
+            float acc = -PmGravity;
+
+            float a = acc * 0.5f;
+            float b = vel;
+            float c = -dist;
+
+            float den = b * b - 4f * a * c;
+            if (den < 0f)
+            {
+                return;
+            }
+
+            float t = (-b - Mathf.Sqrt(den)) / (2f * a);
+            float impactVelocity = vel + t * acc;
+
+            // SoF2: delta = impactVelocity^2 * 0.000275 (velocity in QU/s)
+            float impactVelocityQU = impactVelocity / 0.0254f;
+            float delta = impactVelocityQU * impactVelocityQU * 0.000275f;
+
+            // SoF2: Scale delta based on impact normal (steep surfaces reduce delta)
+            float f = impactNormal.y;
+            if (f < 0.25f)
+            {
+                delta *= f;
+            }
+
+            // SoF2: velocity[2] = 0 — prevent bouncing
+            Velocity.y = 0f;
+
+            if (delta < 1f)
+            {
+                return;
+            }
+
+            // SoF2: Anti-Strafe-Jump — cut forward velocity when landing from a jump
+            // bg_pmove.c: minDeltaForSlowDown = 17
+            // Ein normaler Standsprung ergibt delta ≈ 20 (> 17).
+            // Horizontale Velocity wird auf 25% reduziert, pm_time=750ms.
+            // pm_time wird von PMF_TIME_LAND (250ms) in PM_GroundTrace ueberschrieben
+            // bei harten Landungen (previous_velocity[2] < -200).
+            if (jumped && delta >= 17f)
+            {
+                Velocity.x *= 0.25f;
+                Velocity.z *= 0.25f;
+                JumpDebounce = 0.75f;
+            }
         }
 
         // ===================================================================
@@ -1318,12 +1358,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             // SoF2: pm->maxs[2] -= stepsize — shrink box from top
             // In Unity: reduce CapsuleHeight temporarily, keep bottom at same position.
+            // UNITY-FIX: In SoF2 funktioniert selbst eine degenerierte Box (maxs < mins)
+            // weil BSP-Traces Brushes korrekt erkennen. Unity PhysX braucht eine Box mit
+            // sinnvoller Hoehe fuer zuverlaessige BoxCast-Kollisionserkennung.
+            // Minimum = 2×Radius stellt sicher, dass die Box nie duenner als breit ist.
             float originalHeight = CapsuleHeight;
             Vector3 originalCenter = CapsuleCenter;
+            float minStepBoxHeight = CapsuleRadius * 2f;
             float shortenedHeight = originalHeight - stepSize;
-            if (shortenedHeight < 0.1f)
+            if (shortenedHeight < minStepBoxHeight)
             {
-                shortenedHeight = 0.1f;
+                shortenedHeight = minStepBoxHeight;
             }
             CapsuleHeight = shortenedHeight;
             // Bottom stays at same position: center.y = bottomOffset + shortenedHeight * 0.5f
