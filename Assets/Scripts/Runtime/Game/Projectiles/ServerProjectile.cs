@@ -135,8 +135,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             // SoF2 G_RadiusDamage nutzt Entity-Origins, nicht per-Bone Hitboxen.
             // Explosions-Erkennung ueber Player-Physics-Collider (BoxCollider auf Player-Layer).
             m_ExplosionLayerMask = LayerMask.GetMask(PLAYER_LAYER_NAME);
-            // Welt-Kollision: Default Layer (alles was nicht Hitbox ist)
-            m_WorldLayerMask = ~m_HitboxLayerMask;
+            // Welt-Kollision: alles was nicht Hitbox oder BrushCollision ist
+            m_WorldLayerMask = ~(m_HitboxLayerMask | LayerMask.GetMask("BrushCollision"));
 
             // Rotation in Flugrichtung
             if (m_Velocity.sqrMagnitude > 0.001f)

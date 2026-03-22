@@ -77,6 +77,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             if (m_CurrentMapInstance != null)
             {
                 Debug.Log($"[MapLoader] Destroying previous map: {m_CurrentMapInstance.name}");
+                m_TextureApplier.ClearCache();
                 UnityEngine.Object.Destroy(m_CurrentMapInstance);
                 m_CurrentMapInstance = null;
                 m_LoadedMapName = null;

@@ -149,9 +149,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             m_Lifetime = 0f;
             m_HasDetonated = false;
 
-            // Welt-Kollision: alles ausser Hitbox-Layer (visuelle Kollision fuer Bounce/Impact)
+            // Welt-Kollision: alles ausser Hitbox-Layer und BrushCollision (visuelle Kollision fuer Bounce/Impact)
             int hitboxLayer = LayerMask.GetMask("Hitbox");
-            m_WorldLayerMask = ~hitboxLayer;
+            m_WorldLayerMask = ~(hitboxLayer | LayerMask.GetMask("BrushCollision"));
 
             // Rotation in Flugrichtung
             if (m_Velocity.sqrMagnitude > 0.001f)

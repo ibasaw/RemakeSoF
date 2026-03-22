@@ -1,4 +1,3 @@
-using System.Linq;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
 using UnityEngine;
 
@@ -10,11 +9,6 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
     /// </summary>
     public class MapColliderApplier
     {
-        /// <summary>
-        /// Prefix für is_transparent Properties in Ghoul2Meta.
-        /// </summary>
-        private const string k_TransparentPrefix = "is_transparent_";
-
         /// <summary>
         /// Prefix für surface_types_json Properties in Ghoul2Meta.
         /// </summary>
@@ -37,13 +31,32 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         private const int k_MaxSlots = 32;
 
         /// <summary>
-        /// Mindestdicke für Sky-BoxCollider um Physics-Tunneling zu verhindern.
+        /// Prefix fuer BSP-Brush-Volumes (COL_0, COL_1, ... COL_N).
+        /// Diese sind unsichtbare Kollisions-Volumes ohne Texturen.
+        /// </summary>
+        private const string k_BrushPrefix = "COL_*";
+
+        /// <summary>
+        /// Prefix fuer Clip-Volumes (COL_*0_clip, COL_*1_clip, ... COL_*N_clip).
+        /// Unsichtbare Kollisions-Volumes fuer Spielerbewegung.
+        /// </summary>
+        private const string k_ClipPrefix = "COL_*";
+        private const string k_ClipSuffix = "_clip";
+
+        /// <summary>
+        /// Layer-Name fuer Brush/Clip-Volumes. Wird von Hitscan-Raycasts ausgeschlossen,
+        /// damit nur visuelle Surfaces mit SurfaceTypeMarker getroffen werden.
+        /// </summary>
+        private const string k_BrushCollisionLayerName = "BrushCollision";
+
+        /// <summary>
+        /// Mindestdicke fuer Sky-BoxCollider um Physics-Tunneling zu verhindern.
         /// </summary>
         private const float k_MinSkyColliderThickness = 0.1f;
 
         /// <summary>
-        /// Erstellt Collider für alle Renderer mit MeshFilter in der Map-Instanz.
-        /// SoF2: Alle Surfaces (inkl. transparente) erhalten Collider — nur Sky bekommt BoxCollider.
+        /// Erstellt Collider fuer alle BSP-Brush-Volumes in der Map-Instanz.
+        /// Nur Brushes (*0..*N) erhalten MeshCollider — alle anderen Surfaces nur SurfaceTypeMarker.
         /// </summary>
         /// <param name="mapInstance">Die instanziierte Map.</param>
         public void ApplyColliders(GameObject mapInstance)
@@ -74,9 +87,9 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
         /// <summary>
         /// Erstellt einen Collider für den Renderer.
-        /// Sky-Surfaces erhalten einen BoxCollider, alle anderen einen MeshCollider.
-        /// SoF2: Transparente Surfaces erhalten ebenfalls Collider (CONTENTS_SOLID gilt
-        /// unabhaengig von Transparenz — Glas, Gitter, Zaun etc. haben Kollision).
+        /// BSP-Brush-Volumes erhalten MeshCollider als Kollisionsgeometrie.
+        /// Visuelle Surfaces erhalten ebenfalls MeshCollider + SurfaceTypeMarker
+        /// fuer Raycast-Hit-Detection mit korrektem Surface-Typ.
         /// </summary>
         /// <returns>True wenn ein Collider erstellt wurde.</returns>
         private bool ApplyCollider(Renderer renderer)
@@ -95,26 +108,144 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             GameObject go = renderer.gameObject;
             go.isStatic = true;
 
+            // BSP-Brush-Volumes (COL_*0..COL_*N): MeshCollider + ShadowsOnly, Materials leeren.
+            // BrushCollision-Layer: Hitscan-Raycasts ignorieren diesen Layer.
+            if (IsBrushVolume(go))
+            {
+                MeshCollider collider = go.AddComponent<MeshCollider>();
+                collider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
+                                        | MeshColliderCookingOptions.EnableMeshCleaning
+                                        | MeshColliderCookingOptions.WeldColocatedVertices;
+                collider.sharedMesh = mesh;
+
+                go.layer = LayerMask.NameToLayer(k_BrushCollisionLayerName);
+
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
+                renderer.sharedMaterials = System.Array.Empty<Material>();
+                return true;
+            }
+
+            // Clip-Volumes (COL_*0_clip..COL_*N_clip): MeshCollider, komplett unsichtbar.
+            // BrushCollision-Layer: Hitscan-Raycasts ignorieren diesen Layer.
+            if (IsClipVolume(go))
+            {
+                MeshCollider collider = go.AddComponent<MeshCollider>();
+                collider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
+                                        | MeshColliderCookingOptions.EnableMeshCleaning
+                                        | MeshColliderCookingOptions.WeldColocatedVertices;
+                collider.sharedMesh = mesh;
+
+                go.layer = LayerMask.NameToLayer(k_BrushCollisionLayerName);
+
+                renderer.enabled = false;
+                return true;
+            }
+
+            // Sky-Surfaces: BoxCollider als Boundary.
             if (IsSkyboxSurface(renderer))
             {
                 BoxCollider boxCollider = go.AddComponent<BoxCollider>();
                 EnforceSkyColliderThickness(boxCollider, mesh);
-            }
-            else
-            {
-                MeshCollider collider = go.AddComponent<MeshCollider>();
-                collider.sharedMesh = mesh;
+                ApplySurfaceTypeMarker(renderer);
+                return true;
             }
 
-            // SurfaceTypeMarker aus q3map_material Ghoul2Meta-Property setzen
+            // Alle anderen visuellen Surfaces: MeshCollider + SurfaceTypeMarker.
+            // Ermoeglicht Raycast-Hit-Detection mit korrektem Surface-Typ.
+            MeshCollider surfaceCollider = go.AddComponent<MeshCollider>();
+            surfaceCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
+                                           | MeshColliderCookingOptions.EnableMeshCleaning
+                                           | MeshColliderCookingOptions.WeldColocatedVertices;
+            surfaceCollider.sharedMesh = mesh;
+
             ApplySurfaceTypeMarker(renderer);
+            return true;
+        }
+
+        /// <summary>
+        /// Prueft ob das GameObject ein BSP-Brush-Volume ist (Name beginnt mit * gefolgt von Ziffern).
+        /// </summary>
+        private bool IsBrushVolume(GameObject go)
+        {
+            string name = go.name;
+            if (!name.StartsWith(k_BrushPrefix, System.StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            for (int i = k_BrushPrefix.Length; i < name.Length; i++)
+            {
+                if (!char.IsDigit(name[i]))
+                {
+                    return false;
+                }
+            }
+
+            return name.Length > k_BrushPrefix.Length;
+        }
+
+        /// <summary>
+        /// Prueft ob das GameObject ein Clip-Volume ist (Name: COL_*N_clip).
+        /// </summary>
+        private bool IsClipVolume(GameObject go)
+        {
+            string name = go.name;
+            if (!name.StartsWith(k_ClipPrefix, System.StringComparison.Ordinal) ||
+                !name.EndsWith(k_ClipSuffix, System.StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            // Mittelteil (zwischen Prefix und Suffix) muss nur Ziffern enthalten
+            int digitStart = k_ClipPrefix.Length;
+            int digitEnd = name.Length - k_ClipSuffix.Length;
+            if (digitEnd <= digitStart)
+            {
+                return false;
+            }
+
+            for (int i = digitStart; i < digitEnd; i++)
+            {
+                if (!char.IsDigit(name[i]))
+                {
+                    return false;
+                }
+            }
 
             return true;
         }
 
         /// <summary>
+        /// Prueft ob der Renderer ein Sky-Surface ist (surface_types_json_N enthaelt "sky").
+        /// </summary>
+        private bool IsSkyboxSurface(Renderer renderer)
+        {
+            if (!renderer.TryGetComponent(out Ghoul2Meta meta))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < k_MaxSlots; i++)
+            {
+                string propertyName = k_SurfaceTypesJsonPrefix + i;
+                if (!meta.HasProperty(propertyName))
+                {
+                    continue;
+                }
+
+                string jsonValue = meta.GetString(propertyName);
+                if (!string.IsNullOrEmpty(jsonValue) && jsonValue.Contains("sky", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Setzt den BoxCollider auf die Mesh-Bounds und erzwingt eine Mindestdicke
-        /// auf jeder zu dünnen Dimension für Sky-Surfaces.
+        /// auf jeder zu duennen Dimension fuer Sky-Surfaces.
         /// </summary>
         private void EnforceSkyColliderThickness(BoxCollider boxCollider, Mesh mesh)
         {
@@ -196,45 +327,6 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             return null;
         }
 
-        /// <summary>
-        /// Prüft ob der Renderer als transparent markiert ist (via Ghoul2Meta is_transparent_0..N).
-        /// </summary>
-        private bool IsTransparent(Renderer renderer)
-        {
-            if (!renderer.TryGetComponent(out Ghoul2Meta meta))
-            {
-                return false;
-            }
 
-            return meta.GetPropertyNames().Any(name => name.StartsWith(k_TransparentPrefix));
-        }
-
-        /// <summary>
-        /// Prüft ob der Renderer ein Sky-Surface ist (surface_types_json_N enthält "sky").
-        /// </summary>
-        private bool IsSkyboxSurface(Renderer renderer)
-        {
-            if (!renderer.TryGetComponent(out Ghoul2Meta meta))
-            {
-                return false;
-            }
-
-            for (int i = 0; i < k_MaxSlots; i++)
-            {
-                string propertyName = k_SurfaceTypesJsonPrefix + i;
-                if (!meta.HasProperty(propertyName))
-                {
-                    continue;
-                }
-
-                string jsonValue = meta.GetString(propertyName);
-                if (!string.IsNullOrEmpty(jsonValue) && jsonValue.Contains("sky", System.StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
     }
 }

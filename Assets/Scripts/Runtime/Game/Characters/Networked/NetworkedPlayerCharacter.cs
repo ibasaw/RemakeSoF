@@ -771,8 +771,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 // Server-seitiger Hitscan-Raycast auf Hitbox-Layer
                 bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask);
 
-                // Welt-Geometrie-Raycast fuer Impact-Effekte (alles ausser Hitboxes)
-                int worldLayerMask = ~hitboxLayerMask;
+                // Welt-Geometrie-Raycast fuer Impact-Effekte (alles ausser Hitboxes und BrushCollision)
+                int worldLayerMask = ~(hitboxLayerMask | LayerMask.GetMask("BrushCollision"));
                 bool didHitWorld = Physics.Raycast(eyePos, aimDirection, out RaycastHit worldHit, rangeMeters, worldLayerMask);
 
                 // Endpunkt: naechster Treffer (Hitbox oder Welt) oder Max-Range
@@ -1910,7 +1910,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask);
 
                 // Welt-Geometrie-Raycast fuer Impact-Effekte
-                int worldLayerMask = ~hitboxLayerMask;
+                int worldLayerMask = ~(hitboxLayerMask | LayerMask.GetMask("BrushCollision"));
                 bool didHitWorld = Physics.Raycast(eyePos, aimDirection, out RaycastHit worldHit, rangeMeters, worldLayerMask);
 
                 float hitboxDist = didHit ? hit.distance : float.MaxValue;

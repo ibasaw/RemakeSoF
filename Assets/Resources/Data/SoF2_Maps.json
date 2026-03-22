@@ -2,7 +2,7 @@
     {
         "id": "maps/cem1",
         "mapName": "Cemetery",
-        "countdownStartValue": 150,
+        "countdownStartValue": 300,
         "levelShotBackgroundTexturePath": "gfx/menus/levelshots/cem1",
         "cameraLevelShotPosition": {
             "x": -130,
@@ -50,10 +50,10 @@
         ]
     },
     {
-        "id":"maps/mp_hos1",
+        "id": "maps/mp_hos1",
         "mapName": "Hospital",
         "countdownStartValue": 300,
-        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hos1",
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_hos1",
         "cameraLevelShotPosition": {
             "x": -130,
             "y": 20,
@@ -66,9 +66,9 @@
         },
         "team1SpawnPoints": [
             {
-                "x": -10,
+                "x": -16,
                 "y": 10,
-                "z": 13
+                "z": 16
             },
             {
                 "x": 10,
@@ -96,6 +96,156 @@
                 "x": -24,
                 "y": 0,
                 "z": -20
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_col1",
+        "mapName": "Colombia",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_col1",
+        "cameraLevelShotPosition": {
+            "x": -130,
+            "y": 20,
+            "z": -100
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": -63.21,
+                "y": 98.71,
+                "z": -75.59
+            },
+            {
+                "x": -63.21,
+                "y": 98.71,
+                "z": -75.59
+            },
+            {
+                "x": -63.21,
+                "y": 98.71,
+                "z": -75.59
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": -63.21,
+                "y": 98.71,
+                "z": -75.59
+            },
+            {
+                "x": -63.21,
+                "y": 98.71,
+                "z": -75.59
+            },
+            {
+                "x": -63.21,
+                "y": 98.71,
+                "z": -75.59
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_kam2",
+        "mapName": "Kamtchatka",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_kam2",
+        "cameraLevelShotPosition": {
+            "x": -130,
+            "y": 20,
+            "z": -100
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 3,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 3,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 3,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 3,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 3,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 3,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_finca",
+        "mapName": "Finca",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_finca",
+        "cameraLevelShotPosition": {
+            "x": -130,
+            "y": 20,
+            "z": -100
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 128.3,
+                "y": 3,
+                "z": 117.08
+            },
+            {
+                "x": 128.3,
+                "y": 3,
+                "z": 117.08
+            },
+            {
+                "x": 128.3,
+                "y": 3,
+                "z": 117.08
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 128.3,
+                "y": 3,
+                "z": 117.08
+            },
+            {
+                "x": 128.3,
+                "y": 3,
+                "z": 117.08
+            },
+            {
+                "x": 128.3,
+                "y": 3,
+                "z": 117.08
             }
         ]
     }

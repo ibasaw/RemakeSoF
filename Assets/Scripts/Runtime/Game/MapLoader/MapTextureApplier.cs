@@ -23,10 +23,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         /// </summary>
         private const string k_ShaderName = "Universal Render Pipeline/Unlit";
 
-        /// <summary>
-        /// Prefix für Cull-Properties (cull_0..cull_N). Value "disabled" → kein Culling (beide Seiten).
-        /// </summary>
-        private const string k_CullPrefix = "cull_";
+
 
         /// <summary>
         /// Prefix für Transparenz-Properties (is_transparent_0..is_transparent_N).
@@ -37,6 +34,30 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         /// Prefix für Surface-Type-Properties (surface_types_json_0..surface_types_json_N).
         /// </summary>
         private const string k_SurfaceTypesJsonPrefix = "surface_types_json_";
+
+        /// <summary>
+        /// Cache fuer Material-Varianten. Key = Textur-Key + Varianten-Flags (transparent).
+        /// Alle Renderer mit gleicher Konfiguration teilen sich dasselbe Material.
+        /// </summary>
+        private readonly Dictionary<string, Material> m_MaterialCache = new();
+
+        /// <summary>
+        /// Gibt alle geklonten Material-Varianten frei und leert den Cache.
+        /// Wird beim Map-Wechsel aufgerufen.
+        /// </summary>
+        public void ClearCache()
+        {
+            foreach (KeyValuePair<string, Material> entry in m_MaterialCache)
+            {
+                // Nur Varianten-Klone zerstoeren, nicht die Basis-Materialien aus dem TextureManager
+                if (entry.Value != null)
+                {
+                    Object.Destroy(entry.Value);
+                }
+            }
+
+            m_MaterialCache.Clear();
+        }
 
         /// <summary>
         /// Wendet Texturen auf alle Ghoul2Meta-Objekte in der Map-Instanz an.
@@ -70,6 +91,13 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 if (IsSkyboxSurface(meta))
                 {
                     renderer.enabled = false;
+                    continue;
+                }
+
+                // BSP-Brush-Volumes (COL_*N): keine Texturen anwenden,
+                // werden vom MapColliderApplier als ShadowsOnly konfiguriert.
+                if (IsBrushVolume(renderer.gameObject) || IsClipVolume(renderer.gameObject))
+                {
                     continue;
                 }
 
@@ -124,64 +152,66 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
             for (int i = 0; i < textureSlots.Count; i++)
             {
+                int slotIndex = textureSlots[i].slotIndex;
                 string key = textureSlots[i].key;
-                Material material = ResolveMaterial(key, textureManager);
 
-                if (material != null)
+                bool isTransparent = HasTransparency(meta, slotIndex);
+                string variantKey = BuildVariantKey(key, isTransparent);
+
+                if (m_MaterialCache.TryGetValue(variantKey, out Material cached))
                 {
-                    materials[i] = material;
+                    materials[i] = cached;
+                    continue;
                 }
-                else
+
+                Material baseMaterial = ResolveMaterial(key, textureManager);
+                if (baseMaterial == null)
                 {
-                    // Bestehende Material beibehalten wenn keine Textur gefunden
                     Material[] existing = renderer.sharedMaterials;
                     materials[i] = i < existing.Length ? existing[i] : existing[0];
                     Debug.LogWarning($"[MapTextureApplier] No texture found for key '{key}' on '{renderer.gameObject.name}'.");
+                    continue;
                 }
+
+                // Bei Varianten mit Flags: Klon erzeugen, damit das Original
+                // im TextureManager/ResolveMaterial nicht mutiert wird.
+                Material material = isTransparent
+                    ? new Material(baseMaterial) { name = baseMaterial.name }
+                    : baseMaterial;
+
+                if (isTransparent)
+                {
+                    ApplyAlphaCutout(material);
+                }
+
+                m_MaterialCache[variantKey] = material;
+                materials[i] = material;
             }
 
-            renderer.materials = materials;
-
-            // Per-Slot Cull und Transparenz anwenden (auf Material-Instanzen des Renderers).
-            // renderer.materials gibt jedes Mal neue Kopien zurück — deshalb einmal holen,
-            // modifizieren und wieder zuweisen.
-            // WICHTIG: Original-Slot-Index nutzen, nicht den komprimierten List-Index.
-            Material[] assignedMaterials = renderer.materials;
-            for (int i = 0; i < assignedMaterials.Length; i++)
-            {
-                int slotIndex = textureSlots[i].slotIndex;
-                ApplyCullProperty(assignedMaterials[i], meta, slotIndex);
-                ApplyTransparencyProperty(assignedMaterials[i], meta, slotIndex);
-            }
-            renderer.materials = assignedMaterials;
+            renderer.sharedMaterials = materials;
         }
 
         /// <summary>
-        /// Prüft cull_N Property und setzt den Default auf Render Face Both,
-        /// wenn kein expliziter Cull-Wert vorhanden ist.
+        /// Erzeugt einen eindeutigen Cache-Key fuer eine Material-Variante.
         /// </summary>
-        private void ApplyCullProperty(Material material, Ghoul2Meta meta, int index)
+        private string BuildVariantKey(string textureKey, bool transparent)
         {
-            string cullKey = k_CullPrefix + index;
-            if (!meta.HasProperty(cullKey))
+            return transparent ? $"{textureKey}|t" : textureKey;
+        }
+
+        /// <summary>
+        /// Prueft ob der Slot als transparent markiert ist.
+        /// </summary>
+        private bool HasTransparency(Ghoul2Meta meta, int slotIndex)
+        {
+            string transparentKey = k_TransparentPrefix + slotIndex;
+            if (!meta.HasProperty(transparentKey))
             {
-                SetRenderFaceBoth(material);
-                return;
+                return false;
             }
 
-            string cullValue = meta.GetString(cullKey);
-            if (string.IsNullOrWhiteSpace(cullValue))
-            {
-                SetRenderFaceBoth(material);
-                return;
-            }
-
-            if (cullValue.Contains("disabled", System.StringComparison.OrdinalIgnoreCase) ||
-                cullValue.Contains("off", System.StringComparison.OrdinalIgnoreCase) ||
-                cullValue.Contains("disable", System.StringComparison.OrdinalIgnoreCase))
-            {
-                SetRenderFaceBoth(material);
-            }
+            string transparentValue = meta.GetString(transparentKey);
+            return transparentValue != "0" && !string.Equals(transparentValue, "false", System.StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -202,56 +232,30 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         }
 
         /// <summary>
-        /// Prüft is_transparent_N Property und setzt das Material auf Transparent-Rendering.
-        /// Synchronisiert alle URP Shader Keywords und Render States.
+        /// Wendet Alpha-Cutout-Rendering auf ein Material an.
         /// </summary>
-        private void ApplyTransparencyProperty(Material material, Ghoul2Meta meta, int index)
+        private void ApplyAlphaCutout(Material material)
         {
-            string transparentKey = k_TransparentPrefix + index;
-            if (!meta.HasProperty(transparentKey))
-            {
-                return;
-            }
-
-            // Wert prüfen: nur anwenden wenn nicht explizit "0" oder "false"
-            string transparentValue = meta.GetString(transparentKey);
-            if (transparentValue == "0" || string.Equals(transparentValue, "false", System.StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            // Surface Type: Transparent
             if (material.HasProperty("_Surface"))
             {
-                material.SetFloat("_Surface", 1f);
-            }
-
-            // Blend Mode: Alpha (SrcAlpha, OneMinusSrcAlpha)
-            if (material.HasProperty("_Blend"))
-            {
-                material.SetFloat("_Blend", 0f);
+                material.SetFloat("_Surface", 0f);
             }
 
             if (material.HasProperty("_SrcBlend"))
             {
-                material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.One);
             }
 
             if (material.HasProperty("_DstBlend"))
             {
-                material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.Zero);
             }
 
-            // ZWrite aus für Transparenz
             if (material.HasProperty("_ZWrite"))
             {
-                material.SetFloat("_ZWrite", 0f);
+                material.SetFloat("_ZWrite", 1f);
             }
 
-            // Render Face = Both für Transparenz (Rückseite sichtbar)
-            SetRenderFaceBoth(material);
-
-            // Alpha Clipping
             if (material.HasProperty("_AlphaClip"))
             {
                 material.SetFloat("_AlphaClip", 1f);
@@ -263,12 +267,11 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 material.SetFloat("_Cutoff", 0.5f);
             }
 
-            // URP Shader Keywords synchronisieren
-            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            material.DisableKeyword("_SURFACE_TYPE_OPAQUE");
+            material.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.EnableKeyword("_SURFACE_TYPE_OPAQUE");
 
-            material.SetOverrideTag("RenderType", "Transparent");
-            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            material.SetOverrideTag("RenderType", "TransparentCutout");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
         }
 
         /// <summary>
@@ -322,6 +325,9 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 material.SetFloat("_Smoothness", 0f);
             }
 
+            // SoF2/idTech3-Default: kein Backface-Culling (doppelseitig)
+            SetRenderFaceBoth(material);
+
             return material;
         }
 
@@ -346,6 +352,58 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Prueft ob das GameObject ein BSP-Brush-Volume ist (Name beginnt mit COL_ gefolgt von Ziffern).
+        /// </summary>
+        private bool IsBrushVolume(GameObject go)
+        {
+            string name = go.name;
+            if (!name.StartsWith("COL_", System.StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            for (int i = 4; i < name.Length; i++)
+            {
+                if (!char.IsDigit(name[i]))
+                {
+                    return false;
+                }
+            }
+
+            return name.Length > 4;
+        }
+
+        /// <summary>
+        /// Prueft ob das GameObject ein Clip-Volume ist (Name: COL_*N_clip).
+        /// </summary>
+        private bool IsClipVolume(GameObject go)
+        {
+            string name = go.name;
+            if (!name.StartsWith("COL_*", System.StringComparison.Ordinal) ||
+                !name.EndsWith("_clip", System.StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            int digitStart = 5; // "COL_*".Length
+            int digitEnd = name.Length - 5; // "_clip".Length
+            if (digitEnd <= digitStart)
+            {
+                return false;
+            }
+
+            for (int i = digitStart; i < digitEnd; i++)
+            {
+                if (!char.IsDigit(name[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

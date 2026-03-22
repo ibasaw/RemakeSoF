@@ -67,7 +67,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         {
             m_PlayerRoot = playerRoot;
             int hitboxLayer = LayerMask.GetMask("Hitbox");
-            m_GroundLayerMask = ~hitboxLayer;
+            m_GroundLayerMask = ~(hitboxLayer | LayerMask.GetMask("BrushCollision"));
         }
 
         /// <summary>

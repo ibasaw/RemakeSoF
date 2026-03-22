@@ -67,7 +67,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// </summary>
         private string GetSystemTexturesFullPath()
         {
-            return Path.Combine(Application.dataPath, "Art/Textures");
+            return Path.Combine(Application.dataPath, "Art", "Textures");
         }
 
         /// <summary>
