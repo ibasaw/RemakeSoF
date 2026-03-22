@@ -50,7 +50,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         /// Minimale URP-Intensitaet fuer das Directional Light damit auch bei schwachem
         /// Mondlicht (Nachtmaps) klare Schatten sichtbar bleiben.
         /// In SoF2 waren Mondschatten in die Lightmaps gebacken und daher immer klar sichtbar.
-        /// URP Realtime-Schatten brauchen eine Mindest-Lichtstaerke von ca. 1.0 fuer Sichtbarkeit.
+        /// URP Realtime-Schatten brauchen eine Mindest-Lichtstaerke von ca. 10.0 fuer Sichtbarkeit.
         /// </summary>
         private const float k_MinSunIntensity = 10.0f;
 
@@ -69,6 +69,44 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         /// Das zur Laufzeit erstellte Directional Light für die Sonne.
         /// </summary>
         private GameObject m_SunLightObject;
+
+        /// <summary>
+        /// Referenz auf das aktuelle Skybox-Material fuer sauberes Cleanup.
+        /// </summary>
+        private Material m_CurrentSkyboxMaterial;
+
+        /// <summary>
+        /// Raeumt alle Skybox-Ressourcen auf: Sun-Light, Skybox-Material und RenderSettings.
+        /// Muss vor dem Zerstoeren der Map aufgerufen werden.
+        /// </summary>
+        public void ClearSkybox()
+        {
+            if (m_SunLightObject != null)
+            {
+                RenderSettings.sun = null;
+                Object.Destroy(m_SunLightObject);
+                m_SunLightObject = null;
+            }
+
+            // Sicherheitsnetz: verwaiste SoF2_SunLight Objekte aus vorherigen Play-Sessions zerstoeren
+            foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
+            {
+                if (light != null && light.gameObject.name == "SoF2_SunLight")
+                {
+                    Object.Destroy(light.gameObject);
+                }
+            }
+
+            if (m_CurrentSkyboxMaterial != null)
+            {
+                RenderSettings.skybox = null;
+                Object.Destroy(m_CurrentSkyboxMaterial);
+                m_CurrentSkyboxMaterial = null;
+            }
+
+            RenderSettings.sun = null;
+            Debug.Log("[MapSkyboxApplier] Skybox resources cleared.");
+        }
 
         /// <summary>
         /// Sucht in der Map-Instanz nach einem Renderer mit sky_types_json_N,
@@ -246,6 +284,13 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 return;
             }
 
+            // Altes Skybox-Material zerstoeren falls vorhanden
+            if (m_CurrentSkyboxMaterial != null)
+            {
+                Object.Destroy(m_CurrentSkyboxMaterial);
+            }
+
+            m_CurrentSkyboxMaterial = skyboxMaterial;
             RenderSettings.skybox = skyboxMaterial;
             DynamicGI.UpdateEnvironment();
             Debug.Log($"[MapSkyboxApplier] Skybox created from '{basePath}' with {loadedFaces}/6 faces.");
@@ -336,7 +381,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 RenderSettings.sun = null;
                 Object.Destroy(m_SunLightObject);
             }
-            m_SunLightObject = new("SoF2_SunLight") { hideFlags = HideFlags.DontSave };
+            m_SunLightObject = new("SoF2_SunLight");
             Light sunLight = m_SunLightObject.AddComponent<Light>();
             sunLight.type = LightType.Directional;
             sunLight.color = sunColor;
@@ -350,9 +395,11 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
             // idTech3: degrees = Kompasswinkel (Gegenuhrzeigersinn von Osten, 0°=Ost)
             // Unity: Y-Rotation = Uhrzeigersinn von +Z (0°=Nord)
-            // Offset -90° weil idTech3 0°=Ost(+X) vs Unity 0°=Nord(+Z)
+            // Umrechnung Horizont-Position: unityYaw = 90 - degrees
+            // Da Unity Directional Light in Richtung transform.forward strahlt (nicht davon weg),
+            // brauchen wir keinen +180° Offset — die Elevation kippt das Licht nach unten.
             // Elevation: direkt als X-Rotation (positiv = nach unten gerichtet)
-            m_SunLightObject.transform.rotation = Quaternion.Euler(elevation, -degrees - 90f, 0f);
+            m_SunLightObject.transform.rotation = Quaternion.Euler(elevation, 90f - degrees, 0f);
 
             Debug.Log($"[MapSkyboxApplier] Sun light created: color={sunColor}, " +
                       $"intensity={sunLight.intensity:F2}, degrees={degrees}, elevation={elevation}, " +

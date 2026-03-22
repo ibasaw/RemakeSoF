@@ -83,6 +83,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             if (m_CurrentMapInstance != null)
             {
                 Debug.Log($"[MapLoader] Destroying previous map: {m_CurrentMapInstance.name}");
+                m_SkyboxApplier.ClearSkybox();
                 m_TextureApplier.ClearCache();
                 m_LightApplier.ClearLights();
                 UnityEngine.Object.Destroy(m_CurrentMapInstance);

@@ -177,6 +177,15 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             }
 
             m_CreatedLights.Clear();
+
+            // Sicherheitsnetz: verwaiste SoF2_Light_ Objekte aus vorherigen Play-Sessions zerstoeren
+            foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
+            {
+                if (light != null && light.gameObject.name.StartsWith("SoF2_Light_"))
+                {
+                    Object.Destroy(light.gameObject);
+                }
+            }
         }
 
         #region Target Lookup
@@ -274,10 +283,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             string target = meta.GetString("target");
 
             // Light-GameObject an der Position des Entities erstellen
-            GameObject lightGO = new($"SoF2_Light_{meta.gameObject.name}")
-            {
-                hideFlags = HideFlags.DontSave
-            };
+            GameObject lightGO = new($"SoF2_Light_{meta.gameObject.name}");
             lightGO.transform.position = meta.transform.position;
             lightGO.transform.SetParent(meta.transform.parent);
 

@@ -89,12 +89,13 @@ namespace Tolik.RemakeSoF.Runtime
             m_CharacterPreviewCamera.nearClipPlane = 0.1f;
             m_CharacterPreviewCamera.farClipPlane = 20f;
 
-            var light = new GameObject("PreviewLight").AddComponent<Light>();
-            light.transform.SetParent(m_CharacterPreviewStage.transform, false);
-            light.type = LightType.Directional;
-            light.transform.rotation = Quaternion.Euler(40f, -30f, 0f);
-            light.intensity = 1.2f;
-            light.cullingMask = 1 << m_PreviewLayer;
+            // PreviewLight deaktiviert — kann globale Lichteinstellungen stoeren.
+            // var light = new GameObject("PreviewLight").AddComponent<Light>();
+            // light.transform.SetParent(m_CharacterPreviewStage.transform, false);
+            // light.type = LightType.Directional;
+            // light.transform.rotation = Quaternion.Euler(40f, -30f, 0f);
+            // light.intensity = 1.2f;
+            // light.cullingMask = 1 << m_PreviewLayer;
             RefreshCharacterPreview();
         }
 
