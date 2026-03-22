@@ -61,11 +61,78 @@ Alle Properties werden vom `FBXGhoul2PropsImporter` (AssetPostprocessor) automat
 
 **Datei:** `Assets/Scripts/Runtime/Game/MapLoader/MapColliderApplier.cs`
 
-- Erstellt `MeshCollider` für alle Renderer mit `MeshFilter`
-- Markiert GameObjects als `isStatic = true`
-- **Transparente Surfaces werden übersprungen:** `is_transparent_N` Prefix-Check via LINQ `.Any()`
-- **Flache Meshes erhalten Collider** (kein Bounds-Threshold, da man in SoF2 darauf springen konnte)
-- Ruft `Physics.SyncTransforms()` nach dem Erstellen auf
+### Collider-Strategie (SoF2-authentisch)
+
+SoF2 (id Tech 3) trennt Kollision in zwei Kategorien:
+- **Clip Brushes** (`CONTENTS_PLAYERCLIP`): Nur Spielerbewegung, von Traces (Raycasts) ignoriert
+- **Visuelle Surfaces**: Haben Surface Flags (`SURF_METAL` etc.), werden von Traces getroffen
+
+Die Unity-Implementierung bildet das 1:1 ab:
+
+| Geometry-Typ | Collider | Layer | Sichtbarkeit | SurfaceTypeMarker |
+|---|---|---|---|---|
+| **Brush Volumes** (`COL_*0..N`) | MeshCollider | `BrushCollision` | ShadowsOnly, Materials leer | Nein |
+| **Clip Volumes** (`COL_*N_clip`) | MeshCollider | `BrushCollision` | Renderer disabled | Nein |
+| **Sky Surfaces** (`surface_types_json` = "sky") | BoxCollider (min 0.1m dick) | Default | Je nach MapTextureApplier | Ja |
+| **Visuelle Surfaces** (alle anderen) | MeshCollider | Default | Normal | Ja |
+
+### Layer-Architektur
+
+```
+Layer 9: "BrushCollision"
+  ├─ Brush Volumes (COL_*0..N)     — Spielerbewegung: ✅  Hitscan: ❌
+  └─ Clip Volumes (COL_*N_clip)    — Spielerbewegung: ✅  Hitscan: ❌
+
+Layer 0: "Default"
+  ├─ Visuelle Surfaces              — Spielerbewegung: ✅  Hitscan: ✅
+  └─ Sky Surfaces (BoxCollider)     — Spielerbewegung: ✅  Hitscan: ✅
+```
+
+**Warum zwei Layer?**
+- Brush/Clip-Volumes haben **keine** Textur-Info → kein `q3map_material` → kein `SurfaceTypeMarker`
+- Visuelle Surfaces haben `q3map_material` in Ghoul2Meta → `SurfaceTypeMarker` mit korrektem Typ
+- Hitscan-Raycasts brauchen den Surface-Typ für Impact-Effekte/Sounds
+- Spielerbewegung (`Physics.BoxCast`) nutzt alle Layer → Brush-Volumes blockieren weiterhin
+
+### Raycast LayerMask-Konfiguration
+
+Alle Hitscan-/Impact-Raycasts schließen `BrushCollision` aus:
+
+```csharp
+// Hitscan (NetworkedPlayerCharacter.cs)
+int worldLayerMask = ~(hitboxLayerMask | LayerMask.GetMask("BrushCollision"));
+
+// Projektile (ServerProjectile.cs, ClientProjectileVisual.cs)
+m_WorldLayerMask = ~(m_HitboxLayerMask | LayerMask.GetMask("BrushCollision"));
+
+// Footsteps (ClientFootstepHandler.cs)
+m_GroundLayerMask = ~(hitboxLayer | LayerMask.GetMask("BrushCollision"));
+```
+
+### SurfaceTypeMarker-Zuweisung
+
+1. `q3map_material_0..N` aus Ghoul2Meta lesen (pro Material-Slot)
+2. Fallback: `q3map_material` ohne Suffix
+3. Wert zu lowercase konvertieren (z.B. "Concrete" → "concrete")
+4. `SurfaceTypeMarker` auf das Surface-GameObject setzen
+
+### MeshCollider Cooking Options
+
+Alle MeshCollider (Brush, Clip, Surface) nutzen optimierte Cooking-Flags:
+- `CookForFasterSimulation` — Optimiert BVH für schnellere Raycasts
+- `EnableMeshCleaning` — Entfernt degenerierte Dreiecke
+- `WeldColocatedVertices` — Verschmilzt überlappende Vertices
+
+### SoF2-Äquivalenz
+
+| SoF2 (id Tech 3) | Unity Implementierung |
+|---|---|
+| `CONTENTS_PLAYERCLIP` (Clip Brush) | `BrushCollision` Layer |
+| `CONTENTS_SOLID` (Structural Brush) | `BrushCollision` Layer (Bewegung) + Default Layer (Surfaces) |
+| `MASK_SHOT` ignoriert Clip Brushes | `~BrushCollision` in Raycast-LayerMask |
+| `MASK_PLAYERSOLID` inkludiert Clip Brushes | `Physics.BoxCast` ohne Layer-Ausschluss |
+| `SURF_METAL` / `SURF_CONCRETE` etc. | `SurfaceTypeMarker.SurfaceType` (aus `q3map_material`) |
+| `trap_Trace` → Surface Flags → Impact-Effekt | `Physics.Raycast` → `SurfaceTypeMarker` → `SurfaceImpactDataLoader` |
 
 ---
 
@@ -76,8 +143,9 @@ Alle Properties werden vom `FBXGhoul2PropsImporter` (AssetPostprocessor) automat
 ### Textur-Auflösung
 1. `mapped_texture_N` Keys aus Ghoul2Meta sammeln
 2. Für jeden Key: `TextureManager.GetTextureData(key)` → falls null → `GetTextureDataByAlias(key)`
-3. Material erstellen mit `Universal Render Pipeline/Unlit` Shader
+3. Material erstellen mit `SoF2/MapSurface` Shader (Unlit-Basis + anteilige Lambert-Beleuchtung)
 4. Texture auf `_BaseMap` Property setzen
+5. `_LightBlend = 0.25` (25% Realtime-Licht auf Unlit-Basis)
 
 ### Per-Slot Properties
 - **Cull:** `cull_N` = `"disabled"/"off"/"disable"` → `material._Cull = 0` (Both)
@@ -132,7 +200,7 @@ Assets/Art/Textures/textures/skies/cemetary_lf.jpg  → Key: "textures/skies/cem
    - `intensity` → `300 × 0.01 = 3.0` (Unity URP Skala)
    - `degrees` → Kompassrichtung (Gegenuhrzeigersinn von Osten in idTech3)
    - `elevation` → Höhenwinkel über Horizont (0-90°)
-2. **Unity Rotation:** `Quaternion.Euler(elevation, -degrees, 0)` — degrees wird negiert wegen CW/CCW Unterschied
+2. **Unity Rotation:** `Quaternion.Euler(elevation, -degrees - 90, 0)` — degrees wird negiert wegen CW/CCW Unterschied, zusätzlich -90° weil idTech3 0°=Osten (+X), Unity Y=0°=Norden (+Z)
 3. **Directional Light:** "SoF2_SunLight", Soft Shadows, `HideFlags.DontSave`
 4. **surfacelight_N** wird nur geloggt (relevant für Baked Lighting, nicht Runtime)
 
@@ -145,7 +213,7 @@ Assets/Art/Textures/textures/skies/cemetary_lf.jpg  → Key: "textures/skies/cem
 | Up-Achse           | Z-up                 | Y-up                     |
 | Händigkeit         | Rechtshändig          | Linkshändig              |
 | Skybox Top/Bottom  | Z-orientiert          | Y-orientiert → 90° CCW   |
-| Sun degrees        | Gegenuhrzeigersinn    | Uhrzeigersinn → negieren |
+| Sun degrees        | Gegenuhrzeigersinn ab Osten (+X) | Uhrzeigersinn ab Norden (+Z) → `-(degrees) - 90` |
 
 ---
 

@@ -16,7 +16,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
     {
         private readonly string m_CustomDirectory = "CustomTextures";
         private readonly string[] m_SupportedExtensions = { ".png", ".jpg", ".jpeg", ".tga", ".tif", ".tiff" };
-        private readonly string m_ShaderRenderName = "Universal Render Pipeline/Unlit";
+        private readonly string m_ShaderRenderName = "SoF2/MapSurface";
         private readonly TextureRegistry m_Registry;
         private readonly TextureConfiguration m_Configuration;
         public TextureConfiguration Configuration => m_Configuration;
@@ -252,6 +252,10 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             // Smoothness -> 0.0
             if (material.HasProperty("_Smoothness"))
                 material.SetFloat("_Smoothness", 0.0f);
+
+            // SoF2/MapSurface: Player-Models reagieren staerker auf Licht als Map-Surfaces
+            if (material.HasProperty("_LightBlend"))
+                material.SetFloat("_LightBlend", 0.4f);
 
             // Zwei-seitig rendern
             if (isTwoSided)

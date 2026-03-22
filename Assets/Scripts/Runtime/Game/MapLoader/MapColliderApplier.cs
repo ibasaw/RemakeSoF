@@ -44,6 +44,12 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         private const string k_ClipSuffix = "_clip";
 
         /// <summary>
+        /// Prefix fuer Transparenz-Properties (is_transparent_0..is_transparent_N).
+        /// Transparente Surfaces erhalten keinen Collider.
+        /// </summary>
+        private const string k_TransparentPrefix = "is_transparent_";
+
+        /// <summary>
         /// Layer-Name fuer Brush/Clip-Volumes. Wird von Hitscan-Raycasts ausgeschlossen,
         /// damit nur visuelle Surfaces mit SurfaceTypeMarker getroffen werden.
         /// </summary>
@@ -150,6 +156,13 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 return true;
             }
 
+            // Transparente Surfaces: kein Collider (z.B. Glas, Gitter, Rauch).
+            if (IsTransparentSurface(renderer))
+            {
+                ApplySurfaceTypeMarker(renderer);
+                return false;
+            }
+
             // Alle anderen visuellen Surfaces: MeshCollider + SurfaceTypeMarker.
             // Ermoeglicht Raycast-Hit-Detection mit korrektem Surface-Typ.
             MeshCollider surfaceCollider = go.AddComponent<MeshCollider>();
@@ -235,6 +248,34 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
                 string jsonValue = meta.GetString(propertyName);
                 if (!string.IsNullOrEmpty(jsonValue) && jsonValue.Contains("sky", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Prueft ob der Renderer eine transparente Surface ist (is_transparent_0..N).
+        /// Transparente Surfaces (Glas, Gitter, Rauch) erhalten keinen Collider.
+        /// </summary>
+        private bool IsTransparentSurface(Renderer renderer)
+        {
+            if (!renderer.TryGetComponent(out Ghoul2Meta meta))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < k_MaxSlots; i++)
+            {
+                string propertyName = k_TransparentPrefix + i;
+                if (!meta.HasProperty(propertyName))
+                {
+                    break;
+                }
+
+                if (meta.GetBool(propertyName))
                 {
                     return true;
                 }

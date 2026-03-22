@@ -1,5 +1,8 @@
 # Copilot Instructions for RemakeSoF
 
+## Background Information
+This file contains the coding standards, architectural principles, and design patterns for the RemakeSoF project. It serves as a guideline for all developers contributing to the codebase to ensure consistency, maintainability, and clarity across the project. The instructions cover decision-making principles, important coding rules, clean coding standards, project architecture, scene architecture, application lifecycle, and patterns & conventions. Adhering to these guidelines will help maintain a high quality codebase and facilitate collaboration among developers. You always use the latest version of Unity and C# features where appropriate.
+
 ## Decision-Making Principles
 - For background tasks or long decision tasks use Python and not PowerShell. PowerShell is only for short scripts and quick fixes, not for complex logic or data processing.
 - Always prefer clear, maintainable code over clever one-liners. Readability is more important than brevity.

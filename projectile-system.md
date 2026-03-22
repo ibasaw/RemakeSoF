@@ -70,9 +70,9 @@ bool noActionRunning = m_ServerAttackFramesRemaining <= 0
 ## Client Visual
 `ProjectileSpawnClientRpc(spawnPosition, direction, speed, gravity, bounce, detonation, timer, projectileId, effectId, explosionEffectId, modelKey)` is sent to all clients.
 Creates `ClientProjectileVisual` with:
-1. 3D model via PrefabManager (if `modelKey` is set — knife, f1)
+1. 3D model via PrefabManager (if `modelKey` is set — knife, f1), Material: `SoF2/MapSurface` (_LightBlend=0.5)
 2. Data-driven trail/particle effects via EffectFactory (if `effectId` is set)
-3. Fallback colored sphere + simple trail (if neither available)
+3. Fallback colored sphere + simple trail (if neither available, uses `Sprites/Default`)
 4. Knife-specific end-over-end rotation on `knifeworldbase` bone
 
 ### Explosion mit Debris

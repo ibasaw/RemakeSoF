@@ -273,28 +273,104 @@ RunPhysicsStep()
 
 ### LayerMask-Konfiguration
 
+#### Unity Layer Zuordnung
+
+```
+Layer 0:  Default          — Visuelle Map-Surfaces (MeshCollider + SurfaceTypeMarker)
+Layer 6:  Ground           — (optional)
+Layer 7:  Player           — Spieler-BoxCollider
+Layer 8:  Hitbox           — Per-Bone Hitbox-Collider (Trigger)
+Layer 9:  BrushCollision   — BSP Brush/Clip-Volumes (nur Spielerbewegung)
+```
+
+#### Spielerbewegung (BoxCast)
+
 ```
 GroundMask sollte enthalten:
-  ✅ Default (0)      — Welt-Geometrie
-  ✅ World             — Statische Welt
-  ✅ Player            — Andere Spieler (für Spieler-Spieler-Kollision)
+  ✅ Default (0)         — Visuelle Welt-Surfaces
+  ✅ BrushCollision (9)  — Brush/Clip-Volumes (Collision Geometry)
+  ✅ Player              — Andere Spieler (für Spieler-Spieler-Kollision)
   
 GroundMask sollte NICHT enthalten:
-  ❌ PlayerLocal       — Eigener Spieler (Self-Collision)
-  ❌ Trigger           — Trigger Volumes
-  ❌ Ignore Raycast    — UI/Debug-Objekte
+  ❌ Hitbox              — Hitbox-Trigger (nur für Waffen-Raycasts)
+  ❌ Ignore Raycast      — UI/Debug-Objekte
+```
+
+#### Hitscan / Projektil-Raycasts
+
+```
+WorldLayerMask:
+  ✅ Default (0)         — Visuelle Surfaces MIT SurfaceTypeMarker
+  
+  ❌ Hitbox              — Separater Raycast auf Hitbox-Layer
+  ❌ BrushCollision      — Brush-Volumes haben keinen SurfaceTypeMarker
+  ❌ Player              — Über Hitbox-System abgedeckt
+```
+
+```csharp
+// Hitscan-Raycast (alle Stellen):
+int worldLayerMask = ~(hitboxLayerMask | LayerMask.GetMask("BrushCollision"));
+```
+
+#### Footstep-Raycasts
+
+```
+GroundLayerMask:
+  ✅ Default (0)         — Visuelle Surfaces MIT SurfaceTypeMarker
+  
+  ❌ Hitbox              — Keine Fußschritte auf Hitboxen
+  ❌ BrushCollision      — Brush-Volumes haben keinen SurfaceTypeMarker
 ```
 
 ---
 
-## SoF2-Äquivalenz-Tabelle
+## Map-Collider-Architektur (BrushCollision Layer)
+
+### Problem & Lösung
+
+BSP-Maps haben zwei Arten von Geometrie:
+1. **Brush Volumes** (`COL_*0..N`, `COL_*N_clip`): Unsichtbare Kollisions-Geometry ohne Textur-Info
+2. **Visuelle Surfaces**: Sichtbare Faces mit `q3map_material` (Surface-Typ für Impact-Effekte)
+
+In SoF2 treffen `MASK_SHOT`-Traces die visuellen Surfaces und lesen deren Surface Flags.
+Clip Brushes werden von Schuss-Traces ignoriert.
+
+**Unity-Lösung:** Brush/Clip-Volumes auf `BrushCollision`-Layer (9), visuelle Surfaces auf Default (0).
+Hitscan-Raycasts excluden `BrushCollision` → treffen nur Surfaces mit `SurfaceTypeMarker`.
+Spielerbewegung (`Physics.BoxCast`) nutzt alle Layer → Brushes blockieren weiterhin.
+
+### Collider-Typen
+
+| Geometry | Collider | Layer | SurfaceTypeMarker | Hitscan | Bewegung |
+|---|---|---|---|---|---|
+| Brush Volumes (`COL_*N`) | MeshCollider | BrushCollision | Nein | Ignoriert | Blockiert |
+| Clip Volumes (`COL_*N_clip`) | MeshCollider | BrushCollision | Nein | Ignoriert | Blockiert |
+| Sky Surfaces | BoxCollider (min 0.1m) | Default | Ja | Getroffen | Blockiert |
+| Visuelle Surfaces | MeshCollider | Default | Ja | Getroffen | Blockiert |
+
+### SoF2-Äquivalenz
+
+| SoF2 (id Tech 3) | Unity |
+|---|---|
+| `CONTENTS_PLAYERCLIP` | BrushCollision Layer |
+| `MASK_SHOT` ignoriert Clip Brushes | `~BrushCollision` LayerMask |
+| `MASK_PLAYERSOLID` inkludiert alles | BoxCast ohne Layer-Ausschluss |
+| Surface Flags (`SURF_METAL`) | `SurfaceTypeMarker.SurfaceType` |
+| Trace → Surface Flag → Impact | Raycast → SurfaceTypeMarker → SurfaceImpactDataLoader |
+
+---
+
+## SoF2-Äquivalenz-Tabelle (Gesamt)
 
 | SoF2 Konzept | Unity Äquivalent | Status |
 |---------------|-------------------|--------|
 | `trap_Trace()` | `Physics.BoxCast()` | ✅ AABB-authentisch |
 | `MASK_PLAYERSOLID` | `GroundMask` (LayerMask) | ✅ Portiert |
+| `MASK_SHOT` (ohne Clip Brushes) | `~(Hitbox \| BrushCollision)` | ✅ Implementiert |
 | `CONTENTS_BODY` | Player-Layer | ✅ Implementiert |
-| `CONTENTS_SOLID` | Default/World-Layer | ✅ Implementiert |
+| `CONTENTS_SOLID` | Default-Layer (Surfaces) + BrushCollision (Brushes) | ✅ Implementiert |
+| `CONTENTS_PLAYERCLIP` | BrushCollision-Layer | ✅ Implementiert |
+| `SURF_METAL` / `SURF_CONCRETE` | `SurfaceTypeMarker` (aus `q3map_material`) | ✅ Implementiert |
 | `clientNum` Self-Exclusion | Collider disable/enable | ✅ Implementiert |
 | `pm->mins/maxs` (AABB) | BoxCollider + BoxCast (AABB) | ✅ Identisch mit Original |
 | `PM_SlideMove` 4-Bump | `PM_SlideMove` 4-Bump | ✅ 1:1 Port |

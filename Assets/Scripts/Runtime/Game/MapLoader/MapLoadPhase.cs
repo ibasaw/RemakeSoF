@@ -36,6 +36,11 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         SkyboxApplied,
 
         /// <summary>
+        /// Map-Lichter (Point/Spot) aus light-Entities erstellt (nur Client).
+        /// </summary>
+        LightsApplied,
+
+        /// <summary>
         /// Spawn-Points eingerichtet (nur Server).
         /// </summary>
         SpawnPointsReady,

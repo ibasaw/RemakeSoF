@@ -23,10 +23,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
         private const float k_WeaponZRotation = -90f;
 
         /// <summary>
-        /// URP Unlit Shader fuer Waffen — Textur wird 1:1 angezeigt.
-        /// Specular-Highlights via Emission-Kanal simuliert (SoF2: additive blendFunc).
+        /// SoF2/MapSurface Shader fuer Waffen — Unlit-Basis mit anteiliger Lambert-Beleuchtung.
+        /// Waffen nutzen einen hoeheren LightBlend als Map-Geometrie damit sie
+        /// deutlich auf Directional- und Point-Lights reagieren.
         /// </summary>
-        private const string k_WeaponShader = "Universal Render Pipeline/Unlit";
+        private const string k_WeaponShader = "SoF2/MapSurface";
+
+        /// <summary>
+        /// LightBlend fuer Waffen-Materialien.
+        /// Hoeher als Map-Geometrie (0.25) damit Waffen staerker auf Szenen-Licht reagieren.
+        /// 0.5 = 50% Unlit-Basis + 50% Lambert-Beleuchtung.
+        /// </summary>
+        private const float k_WeaponLightBlend = 0.5f;
 
         /// <summary>
         /// Suffix fuer Specular-Texturen (z.B. "models/weapons/knife/knife_spec").
@@ -212,15 +220,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
         }
 
         /// <summary>
-        /// Erstellt ein URP/Unlit Material fuer Waffen.
-        /// Base-Textur wird 1:1 angezeigt (keine Lichtberechnung).
-        /// Specular-Map wird als Emission addiert — simuliert SoF2's additive blendFunc GL_SRC_ALPHA GL_ONE.
+        /// Erstellt ein SoF2/MapSurface Material fuer Waffen.
+        /// Unlit-Basis mit anteiliger Lambert-Beleuchtung (LightBlend).
+        /// Waffen reagieren auf Directional- und Point-Lights der Szene.
         /// </summary>
         private static Material BuildWeaponMaterial(Shader shader, string name, Texture2D baseTexture, Texture2D specTexture)
         {
             Material material = new(shader) { name = name };
 
-            // Base-Textur: wird direkt angezeigt (Unlit = kein Licht, Textur 1:1)
+            // Base-Textur
             if (material.HasProperty("_BaseMap"))
             {
                 material.SetTexture("_BaseMap", baseTexture);
@@ -231,20 +239,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
             }
             material.SetColor("_BaseColor", Color.white);
 
-            if (material.HasProperty("_Smoothness"))
+            // LightBlend: Waffen staerker beleuchtet als Map-Geometrie
+            if (material.HasProperty("_LightBlend"))
             {
-                material.SetFloat("_Smoothness", 0f);
-            }
-
-            // Specular via Emission simulieren: SoF2 blendFunc GL_SRC_ALPHA GL_ONE = additiv
-            // Emission addiert die _spec Textur dezent auf die Base-Textur → metallischer Glanz
-            if (specTexture != null && material.HasProperty("_EmissionMap"))
-            {
-                material.SetTexture("_EmissionMap", specTexture);
-                // Dezente Intensitaet: 15% der Spec-Textur additiv → subtiler Highlight-Effekt
-                material.SetColor("_EmissionColor", new Color(0.15f, 0.15f, 0.15f, 1f));
-                material.EnableKeyword("_EMISSION");
-                material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+                material.SetFloat("_LightBlend", k_WeaponLightBlend);
             }
 
             // Backface-Culling OFF (SoF2: cull disable)

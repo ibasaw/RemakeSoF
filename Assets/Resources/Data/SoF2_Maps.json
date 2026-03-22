@@ -248,5 +248,3855 @@
                 "z": 117.08
             }
         ]
+    },
+    {
+        "id": "maps/mp_shop2",
+        "mapName": "Shop 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_shop2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_col2",
+        "mapName": "Colombia 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_col2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_hk1",
+        "mapName": "Hong Kong",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_hk1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_hk2",
+        "mapName": "Hong Kong 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_hk2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_hos2",
+        "mapName": "Hospital 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_hos2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_jor1",
+        "mapName": "Jordan",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_jor1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_kam1",
+        "mapName": "Kamtchatka 1",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_kam1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_kam3",
+        "mapName": "Kamtchatka 3",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_kam3",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_kam4",
+        "mapName": "Kamtchatka 4",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_kam4",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_kam5",
+        "mapName": "Kamtchatka 5",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_kam5",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_pra1",
+        "mapName": "Prague",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_pra1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_pra2",
+        "mapName": "Prague 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_pra2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_raven",
+        "mapName": "Raven",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_raven",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_shop",
+        "mapName": "Shop",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_shop",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_air1",
+        "mapName": "Airfield",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_air1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_barn",
+        "mapName": "Barn",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_barn",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/mp_biohazard1",
+        "mapName": "Biohazard",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/mp_biohazard1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/air1",
+        "mapName": "Airfield 1",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/air1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/air2",
+        "mapName": "Airfield 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/air2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/air3",
+        "mapName": "Airfield 3",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/air3",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/air4",
+        "mapName": "Airfield 4",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/air4",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/arm1",
+        "mapName": "Armory 1",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/arm1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/arm2",
+        "mapName": "Armory 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/arm2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/col1",
+        "mapName": "Colombia 1",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/col1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/col2",
+        "mapName": "Colombia 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/col2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/col3",
+        "mapName": "Colombia 3",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/col3",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/col6",
+        "mapName": "Colombia 6",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/col6",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/col7",
+        "mapName": "Colombia 7",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/col7",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/col8",
+        "mapName": "Colombia 8",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/col8",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/col9",
+        "mapName": "Colombia 9",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/col9",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/col10",
+        "mapName": "Colombia 10",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/col10",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/delfino2",
+        "mapName": "Delfino 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/delfino2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/finca1",
+        "mapName": "Finca 1",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/finca1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/finca2",
+        "mapName": "Finca 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/finca2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/finca3",
+        "mapName": "Finca 3",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/finca3",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": -9,
+                "y": 2,
+                "z": 0
+            },
+            {
+                "x": -9,
+                "y": 2,
+                "z": 0
+            },
+            {
+                "x": -9,
+                "y": 2,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": -9,
+                "y": 2,
+                "z": 0
+            },
+            {
+                "x": -9,
+                "y": 2,
+                "z": 0
+            },
+            {
+                "x": -9,
+                "y": 2,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/finca4",
+        "mapName": "Finca 4",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/finca4",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/hk1",
+        "mapName": "Hong Kong 1",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hk1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/hk3",
+        "mapName": "Hong Kong 3",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hk3",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/hk4",
+        "mapName": "Hong Kong 4",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hk4",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/hk5",
+        "mapName": "Hong Kong 5",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hk5",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/hk6",
+        "mapName": "Hong Kong 6",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hk6",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/hk7",
+        "mapName": "Hong Kong 7",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hk7",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/hos1",
+        "mapName": "Hospital 1",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hos1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/hos3",
+        "mapName": "Hospital 3",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hos3",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/hos4",
+        "mapName": "Hospital 4",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hos4",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/hydro",
+        "mapName": "Hydro",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/hydro",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/inf",
+        "mapName": "Infiltration",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/inf",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam1",
+        "mapName": "Kamtchatka 1",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam2",
+        "mapName": "Kamtchatka 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam3",
+        "mapName": "Kamtchatka 3",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam3",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam4",
+        "mapName": "Kamtchatka 4",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam4",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam5",
+        "mapName": "Kamtchatka 5",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam5",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam6",
+        "mapName": "Kamtchatka 6",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam6",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam7",
+        "mapName": "Kamtchatka 7",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam7",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam8",
+        "mapName": "Kamtchatka 8",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam8",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam9",
+        "mapName": "Kamtchatka 9",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam9",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam10",
+        "mapName": "Kamtchatka 10",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam10",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam11",
+        "mapName": "Kamtchatka 11",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam11",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/kam12",
+        "mapName": "Kamtchatka 12",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/kam12",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/liner1",
+        "mapName": "Liner 1",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/liner1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/liner2",
+        "mapName": "Liner 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/liner2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/liner3",
+        "mapName": "Liner 3",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/liner3",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/max_zena",
+        "mapName": "Max Zena",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/max_zena",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/pra1",
+        "mapName": "Prague 1",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/pra1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/pra2",
+        "mapName": "Prague 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/pra2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/pra3",
+        "mapName": "Prague 3",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/pra3",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/pra4",
+        "mapName": "Prague 4",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/pra4",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/pra5",
+        "mapName": "Prague 5",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/pra5",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/pra6",
+        "mapName": "Prague 6",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/pra6",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/shop1",
+        "mapName": "Shop 1",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/shop1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/shop2",
+        "mapName": "Shop 2",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/shop2",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/shop4",
+        "mapName": "Shop 4",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/shop4",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/shop5",
+        "mapName": "Shop 5",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/shop5",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/shop6",
+        "mapName": "Shop 6",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/shop6",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/shop7",
+        "mapName": "Shop 7",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/shop7",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/shop8",
+        "mapName": "Shop 8",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/shop8",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
+    },
+    {
+        "id": "maps/tut1",
+        "mapName": "Tutorial",
+        "countdownStartValue": 300,
+        "levelShotBackgroundTexturePath": "gfx/menus/levelshots/tut1",
+        "cameraLevelShotPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "cameraLevelShotRotation": {
+            "x": 30,
+            "y": 45,
+            "z": 0
+        },
+        "team1SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ],
+        "team2SpawnPoints": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        ]
     }
 ]

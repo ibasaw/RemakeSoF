@@ -1,0 +1,44 @@
+[
+    {
+        "gametype": "tdm",
+        "gametypeName": "Team Deathmatch",
+        "gametypeDescription": "Two teams fight to reach a kill limit. The team with the most kills wins.",
+        "gametypeImage": "TDM.png"
+    },
+    {
+        "gametype": "dm",
+        "gametypeName": "Deathmatch",
+        "gametypeDescription": "Free-for-all mode where players fight against each other. The player with the most kills wins.",
+        "gametypeImage": "DM.png"
+    },
+    {
+        "gametype": "ctf",
+        "gametypeName": "Capture The Flag",
+        "gametypeDescription": "Two teams fight to capture the enemy's flag and return it to their base. The team with the most captures wins.",
+        "gametypeImage": "CTF.png"
+    },
+    {
+        "gametype": "elimination",
+        "gametypeName": "Elimination",
+        "gametypeDescription": "Two teams fight to eliminate all members of the opposing team. The team that eliminates all opponents first wins.",
+        "gametypeImage": "ELIMINATION.png"
+    },
+    {
+        "gametype": "infiltration",
+        "gametypeName": "Infiltration",
+        "gametypeDescription": "One team defends a location while the other team tries to infiltrate and complete an objective. The attacking team wins by completing the objective, while the defending team wins by preventing it.",
+        "gametypeImage": "INFILTRATION.png"
+    },
+    {
+        "gametype": "demolition",
+        "gametypeName": "Demolition",
+        "gametypeDescription": "Two teams fight to plant and detonate a bomb at the enemy's base. The attacking team wins by successfully detonating the bomb, while the defending team wins by preventing it.",
+        "gametypeImage": "DEMOLITION.png"
+    },
+    {
+        "gametype":"hideandseek",
+        "gametypeName":"Hide and Seek",
+        "gametypeDescription":"One team hides while the other team seeks. The seeking team wins by finding and eliminating all hiding players, while the hiding team wins by avoiding detection until time runs out.",
+        "gametypeImage":"HIDEANDSEEK.png"
+    }
+]

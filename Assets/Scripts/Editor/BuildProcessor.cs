@@ -67,6 +67,8 @@ namespace Tolik.RemakeSoF.Editor
             string[] requiredShaderNames = new string[]
             {
                 "Universal Render Pipeline/Unlit",
+                "Universal Render Pipeline/Lit",
+                "SoF2/MapSurface",
                 "Universal Render Pipeline/Particles/Unlit",
                 "Particles/Standard Unlit",
                 "Sprites/Default",

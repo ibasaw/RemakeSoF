@@ -2,6 +2,7 @@ using System.Globalization;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 {
@@ -38,8 +39,10 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         private const string k_SkyboxShaderName = "Skybox/6 Sided";
 
         /// <summary>
-        /// Skalierungsfaktor für die Umrechnung von idTech3 sun intensity zu Unity Light intensity.
-        /// idTech3 nutzt Werte wie 300, Unity URP typisch 1-5.
+        /// Skalierungsfaktor fuer die Umrechnung von idTech3 sun intensity zu Unity Light intensity.
+        /// idTech3 nutzt Werte wie 300, Unity URP Directional typisch 0.5-3.0.
+        /// 300 * 0.01 = 3.0 → natuerliche Aussenbeleuchtung.
+        /// 63 * 0.01 = 0.63 → schwaches Mondlicht.
         /// </summary>
         private const float k_IntensityScale = 0.01f;
 
@@ -101,6 +104,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
             CreateSkybox(basePath, textureManager);
             CreateSunLight(skyMeta);
+            ApplyAmbientLighting(skyMeta);
         }
 
         #region Sky Meta Discovery
@@ -318,19 +322,12 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 return;
             }
 
-            // surfacelight als zusätzlichen Ambient-Hinweis lesen (optional, für Logging)
-            string surfaceLightRaw = GetFirstPropertyValue(meta, k_SurfaceLightPrefix);
-            if (!string.IsNullOrEmpty(surfaceLightRaw))
-            {
-                Debug.Log($"[MapSkyboxApplier] surfacelight value: {surfaceLightRaw} (informational, baked lighting)");
-            }
-
             // Altes Sun-Light entfernen falls vorhanden
             if (m_SunLightObject != null)
             {
+                RenderSettings.sun = null;
                 Object.Destroy(m_SunLightObject);
             }
-
             m_SunLightObject = new("SoF2_SunLight") { hideFlags = HideFlags.DontSave };
             Light sunLight = m_SunLightObject.AddComponent<Light>();
             sunLight.type = LightType.Directional;
@@ -338,14 +335,69 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             sunLight.intensity = intensity * k_IntensityScale;
             sunLight.shadows = LightShadows.Soft;
 
-            // idTech3: degrees = Kompasswinkel (Gegenuhrzeigersinn von Osten)
-            // Unity: Y-Rotation = Uhrzeigersinn von +Z
-            // Konvertierung: Unity Y = -(degrees) rotiert das Licht korrekt
+            // Explizit als Main Light fuer URP registrieren.
+            // Ohne das erkennt URP das dynamisch erstellte Light nicht zuverlaessig
+            // als Hauptlicht fuer den Shadow-Atlas (besonders nach Runtime-Aenderungen).
+            RenderSettings.sun = sunLight;
+
+            // idTech3: degrees = Kompasswinkel (Gegenuhrzeigersinn von Osten, 0°=Ost)
+            // Unity: Y-Rotation = Uhrzeigersinn von +Z (0°=Nord)
+            // Offset -90° weil idTech3 0°=Ost(+X) vs Unity 0°=Nord(+Z)
             // Elevation: direkt als X-Rotation (positiv = nach unten gerichtet)
-            m_SunLightObject.transform.rotation = Quaternion.Euler(elevation, -degrees, 0f);
+            m_SunLightObject.transform.rotation = Quaternion.Euler(elevation, -degrees - 90f, 0f);
 
             Debug.Log($"[MapSkyboxApplier] Sun light created: color={sunColor}, " +
-                      $"intensity={sunLight.intensity:F2}, degrees={degrees}, elevation={elevation}");
+                      $"intensity={sunLight.intensity:F2}, degrees={degrees}, elevation={elevation}, " +
+                      $"rotation={m_SunLightObject.transform.rotation.eulerAngles}");
+        }
+
+        /// <summary>
+        /// Setzt Unity Ambient-Beleuchtung basierend auf surfacelight_N und sun_N Werten.
+        /// surfacelight war in q3map2 die Lichtstaerke der Himmelsoberflaeche fuer gebackene Lightmaps.
+        /// Hier steuert es die Ambient-Intensitaet: niedrig (10) = dunkle Nacht, hoch (200+) = heller Tag.
+        /// Das Ambient wird auf Flat-Modus gesetzt damit die Skybox-Textur nicht die Beleuchtung uebersteuert.
+        /// Der SoF2/MapSurface Shader liest dieses Ambient ueber SampleSH() fuer minimale Fuellung dunkler Bereiche.
+        /// </summary>
+        private void ApplyAmbientLighting(Ghoul2Meta meta)
+        {
+            // Sun-Farbe als Ambient-Tonus nutzen (Fallback: weiss)
+            Color ambientTint = Color.white;
+            string sunRaw = GetFirstPropertyValue(meta, k_SunPrefix);
+            if (!string.IsNullOrEmpty(sunRaw) &&
+                TryParseSunParameters(sunRaw, out Color sunColor, out float _, out float _, out float _))
+            {
+                ambientTint = sunColor;
+            }
+
+            // surfacelight bestimmt die Ambient-Staerke
+            float surfaceLight = 0f;
+            string surfaceLightRaw = GetFirstPropertyValue(meta, k_SurfaceLightPrefix);
+            if (!string.IsNullOrEmpty(surfaceLightRaw))
+            {
+                string cleaned = surfaceLightRaw.Trim();
+                if (cleaned.StartsWith("["))
+                {
+                    cleaned = cleaned.TrimStart('[').TrimEnd(']');
+                }
+                cleaned = cleaned.Trim('"', '\'', ' ');
+                float.TryParse(cleaned, NumberStyles.Float, CultureInfo.InvariantCulture, out surfaceLight);
+            }
+
+            // surfacelight zu Ambient-Faktor: 10 (Nacht) → 0.05, 70 (Indoor) → 0.35, 200 (Tag) → 1.0
+            float ambientFactor = Mathf.Clamp01(surfaceLight / 200f);
+
+            // Flat-Modus: kontrollierte Ambient-Farbe statt automatischer Skybox-Berechnung
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(
+                ambientTint.r * ambientFactor * 0.5f,
+                ambientTint.g * ambientFactor * 0.5f,
+                ambientTint.b * ambientFactor * 0.5f,
+                1f
+            );
+            RenderSettings.ambientIntensity = 1f;
+
+            Debug.Log($"[MapSkyboxApplier] Ambient set: surfacelight={surfaceLight}, " +
+                      $"factor={ambientFactor:F3}, color={RenderSettings.ambientLight}");
         }
 
         /// <summary>

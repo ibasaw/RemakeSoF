@@ -48,6 +48,12 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         private readonly MapSkyboxApplier m_SkyboxApplier = new();
 
         /// <summary>
+        /// Interner Service für das Erstellen von Point-/Spot-Lights aus light-Entities.
+        /// Wird nur auf dem Client ausgeführt.
+        /// </summary>
+        private readonly MapLightApplier m_LightApplier = new();
+
+        /// <summary>
         /// Event das bei jeder Ladephase gefeuert wird.
         /// </summary>
         internal event Action<MapLoadPhase> OnProgress;
@@ -78,6 +84,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             {
                 Debug.Log($"[MapLoader] Destroying previous map: {m_CurrentMapInstance.name}");
                 m_TextureApplier.ClearCache();
+                m_LightApplier.ClearLights();
                 UnityEngine.Object.Destroy(m_CurrentMapInstance);
                 m_CurrentMapInstance = null;
                 m_LoadedMapName = null;
@@ -128,6 +135,15 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 m_SkyboxApplier.ApplySkybox(m_CurrentMapInstance);
 
             OnProgress?.Invoke(MapLoadPhase.SkyboxApplied);
+            await Task.Yield();
+
+            // Map-Lichter aus light-Entities erstellen und unsichtbare
+            // Entity-Renderer (light/info_notnull) verstecken (nur Client).
+            // Der SoF2/MapSurface Shader mischt Licht anteilig auf die Texturen.
+            if(!NetworkManager.Singleton.IsServer)
+                m_LightApplier.ApplyLights(m_CurrentMapInstance);
+
+            OnProgress?.Invoke(MapLoadPhase.LightsApplied);
             await Task.Yield();
 
             // Server: Spawn-Points aus SoF2_Maps.json laden

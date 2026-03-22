@@ -19,9 +19,11 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         private const string k_MappedTexturePrefix = "mapped_texture_";
 
         /// <summary>
-        /// URP Unlit Shader-Name für erzeugte Materialien.
+        /// Custom SoF2 Shader: Rendert Texturen als Unlit-Basis und mischt
+        /// anteilig Lambert-Beleuchtung dazu (steuerbar ueber _LightBlend).
+        /// Simuliert idTech3 gebackene Lightmaps + subtile Realtime-Beleuchtung.
         /// </summary>
-        private const string k_ShaderName = "Universal Render Pipeline/Unlit";
+        private const string k_ShaderName = "SoF2/MapSurface";
 
 
 
@@ -323,6 +325,13 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             if (material.HasProperty("_Smoothness"))
             {
                 material.SetFloat("_Smoothness", 0f);
+            }
+
+            // SoF2 Light-Blend: 25% Realtime-Licht auf Unlit-Basis.
+            // Kann spaeter per Spieleinstellung angepasst werden.
+            if (material.HasProperty("_LightBlend"))
+            {
+                material.SetFloat("_LightBlend", 0.25f);
             }
 
             // SoF2/idTech3-Default: kein Backface-Culling (doppelseitig)

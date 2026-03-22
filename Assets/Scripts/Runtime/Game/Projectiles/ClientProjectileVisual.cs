@@ -27,8 +27,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Gecachter Sprites/Default Shader fuer Fallback-Materialien.</summary>
         private static Shader s_CachedSpritesShader;
 
-        /// <summary>Gecachter URP/Unlit Shader fuer Projektil-Models.</summary>
-        private static Shader s_CachedUrpUnlitShader;
+        /// <summary>Gecachter SoF2/MapSurface Shader fuer Projektil-Models (Unlit-Basis + Lambert-Licht).</summary>
+        private static Shader s_CachedMapSurfaceShader;
+
+        /// <summary>
+        /// LightBlend fuer Projektil-Materialien (identisch zu WeaponLoader).
+        /// 0.5 = 50% Unlit-Basis + 50% Lambert-Beleuchtung.
+        /// </summary>
+        private const float PROJECTILE_LIGHT_BLEND = 0.5f;
 
         /// <summary>SoF2 Gravitation in Unity-Meter/s² (800 QU/s² × 0.0254 = 20.32).</summary>
         private const float SOF2_GRAVITY = 20.32f;
@@ -313,17 +319,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 ?? textureManager.GetTextureDataByAlias(specPath);
             Texture2D specTexture = specData != null && specData.HasTexture() ? specData.Texture : null;
 
-            if (s_CachedUrpUnlitShader == null)
+            if (s_CachedMapSurfaceShader == null)
             {
-                s_CachedUrpUnlitShader = Shader.Find("Universal Render Pipeline/Unlit");
+                s_CachedMapSurfaceShader = Shader.Find("SoF2/MapSurface");
             }
-            Shader shader = s_CachedUrpUnlitShader;
+            Shader shader = s_CachedMapSurfaceShader;
             if (shader == null)
             {
                 return;
             }
 
-            // Material erstellen: URP/Unlit mit Specular via Emission (identisch zu WeaponLoader)
+            // Material erstellen: SoF2/MapSurface mit anteiliger Lambert-Beleuchtung
             Material material = new(shader) { name = viewModelPath };
 
             if (material.HasProperty("_BaseMap"))
@@ -336,17 +342,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             }
             material.SetColor("_BaseColor", Color.white);
 
-            if (material.HasProperty("_Smoothness"))
+            // LightBlend: Projektile reagieren auf Szenen-Licht
+            if (material.HasProperty("_LightBlend"))
             {
-                material.SetFloat("_Smoothness", 0f);
-            }
-
-            if (specTexture != null && material.HasProperty("_EmissionMap"))
-            {
-                material.SetTexture("_EmissionMap", specTexture);
-                material.SetColor("_EmissionColor", new Color(0.15f, 0.15f, 0.15f, 1f));
-                material.EnableKeyword("_EMISSION");
-                material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+                material.SetFloat("_LightBlend", PROJECTILE_LIGHT_BLEND);
             }
 
             // Backface-Culling OFF (SoF2: cull disable)

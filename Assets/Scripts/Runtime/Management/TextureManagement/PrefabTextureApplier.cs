@@ -16,7 +16,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         private const int k_MaxTextureSlots = 32;
         private const string k_MappedTexturePrefix = "mapped_texture_";
         private const string k_CullPrefix = "cull_";
-        private const string k_ShaderName = "Universal Render Pipeline/Unlit";
+        private const string k_ShaderName = "SoF2/MapSurface";
 
         /// <summary>
         /// Wendet Texturen auf alle Renderer im GameObject-Baum an via Ghoul2Meta (mapped_texture_0..N).
@@ -166,6 +166,11 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             if (material.HasProperty("_Smoothness"))
             {
                 material.SetFloat("_Smoothness", 0f);
+            }
+
+            if (material.HasProperty("_LightBlend"))
+            {
+                material.SetFloat("_LightBlend", 0.35f);
             }
 
             return material;

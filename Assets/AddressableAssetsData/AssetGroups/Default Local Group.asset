@@ -205,11 +205,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 81d8e497c15c4f34d91c1c27d2d91c93
-    m_Address: maps/mp_col1
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 81f93f4c037716a4fafbc87e79994a1a
     m_Address: mm1
     m_ReadOnly: 0

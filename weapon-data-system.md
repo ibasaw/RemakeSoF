@@ -196,7 +196,16 @@ WeaponLoader.LoadAndAttachWeapon("m4")
   → Instantiate als Child von rhang_tag_bone
   → Scale-Kompensation: localScale = prefabScale / boneLossyScale
   → Z-Rotation: -90° (SoF2 Achsen-Korrektur)
+  → Material: SoF2/MapSurface Shader mit _LightBlend=0.5 (50% Lit)
 ```
+
+### Shader-Strategie
+| System | Shader | _LightBlend | Begründung |
+|--------|--------|-------------|------------|
+| Map-Geometrie (`MapTextureApplier`) | `SoF2/MapSurface` | 0.25 | Subtile Beleuchtung auf gebackener Basis |
+| Waffen (`WeaponLoader`) | `SoF2/MapSurface` | 0.50 | Stärkere Lichtreaktion für Handwaffen |
+| Projektile (`ClientProjectileVisual`) | `SoF2/MapSurface` | 0.50 | Identisch zu Waffen |
+| Hitbox-Debug (`ClientHitboxSystem`) | `URP/Unlit` | — | Braucht Alpha-Blend-Transparenz (kein MapSurface) |
 
 | Member | Beschreibung |
 |--------|-------------|
