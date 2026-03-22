@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0effbd82b1e58f34cab5605279b3e302
+    m_Address: maps/mp_finca
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0f67940ae0a19d243bde5abb10c9e400
     m_Address: models/characters/gore/bone_long/bone_long_mp.glm
     m_ReadOnly: 0
@@ -312,6 +317,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: db86cabdfd2d1f3469df9dcf905d6884
     m_Address: rpg7
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df23064154bfb854e962ee13b44329af
+    m_Address: maps/mp_col1
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

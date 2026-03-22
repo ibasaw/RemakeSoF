@@ -45,9 +45,30 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
         /// <summary>
         /// Prefix fuer Transparenz-Properties (is_transparent_0..is_transparent_N).
-        /// Transparente Surfaces erhalten keinen Collider.
+        /// Transparente Surfaces erhalten keinen Collider, ausser sie sind solid (worldspawn + textures/).
         /// </summary>
         private const string k_TransparentPrefix = "is_transparent_";
+
+        /// <summary>
+        /// Prefix fuer mapped_texture Properties (mapped_texture_0..N).
+        /// </summary>
+        private const string k_MappedTexturePrefix = "mapped_texture_";
+
+        /// <summary>
+        /// Texturpfad-Prefix fuer solide Map-Texturen (z.B. "textures/shop1/floor").
+        /// Transparente Surfaces mit diesem Prefix sind physisch solide (Glas, Gitter).
+        /// </summary>
+        private const string k_TexturesPathPrefix = "textures/";
+
+        /// <summary>
+        /// Classname-Property in Ghoul2Meta.
+        /// </summary>
+        private const string k_ClassnameProperty = "classname";
+
+        /// <summary>
+        /// Worldspawn-Entity classname. Surfaces ohne classname gelten ebenfalls als worldspawn.
+        /// </summary>
+        private const string k_WorldspawnClassname = "worldspawn";
 
         /// <summary>
         /// Layer-Name fuer Brush/Clip-Volumes. Wird von Hitscan-Raycasts ausgeschlossen,
@@ -156,11 +177,16 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 return true;
             }
 
-            // Transparente Surfaces: kein Collider (z.B. Glas, Gitter, Rauch).
+            // Transparente Surfaces: Worldspawn-Surfaces mit textures/-Texturen sind
+            // physisch solide (Glas, Gitter) und erhalten einen MeshCollider.
+            // Alle anderen transparenten Surfaces (Effekte, Rauch) erhalten keinen Collider.
             if (IsTransparentSurface(renderer))
             {
-                ApplySurfaceTypeMarker(renderer);
-                return false;
+                if (!IsSolidTransparentSurface(renderer))
+                {
+                    ApplySurfaceTypeMarker(renderer);
+                    return false;
+                }
             }
 
             // Alle anderen visuellen Surfaces: MeshCollider + SurfaceTypeMarker.
@@ -258,7 +284,6 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
         /// <summary>
         /// Prueft ob der Renderer eine transparente Surface ist (is_transparent_0..N).
-        /// Transparente Surfaces (Glas, Gitter, Rauch) erhalten keinen Collider.
         /// </summary>
         private bool IsTransparentSurface(Renderer renderer)
         {
@@ -276,6 +301,44 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 }
 
                 if (meta.GetBool(propertyName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Prueft ob eine transparente Surface physisch solide ist und einen Collider erhalten soll.
+        /// Bedingungen: classname ist worldspawn (oder leer) UND mindestens eine mapped_texture
+        /// beginnt mit "textures/" (echte Map-Textur, kein Effekt wie gfx/).
+        /// </summary>
+        private bool IsSolidTransparentSurface(Renderer renderer)
+        {
+            if (!renderer.TryGetComponent(out Ghoul2Meta meta))
+            {
+                return false;
+            }
+
+            string classname = meta.GetString(k_ClassnameProperty);
+            if (!string.IsNullOrEmpty(classname) &&
+                !classname.Equals(k_WorldspawnClassname, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < k_MaxSlots; i++)
+            {
+                string propertyName = k_MappedTexturePrefix + i;
+                if (!meta.HasProperty(propertyName))
+                {
+                    break;
+                }
+
+                string textureKey = meta.GetString(propertyName);
+                if (!string.IsNullOrEmpty(textureKey) &&
+                    textureKey.StartsWith(k_TexturesPathPrefix, System.StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }

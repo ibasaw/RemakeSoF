@@ -156,9 +156,9 @@ SoF2:
 Unity:
   - Sprung setzt IsDebounceActive = true
   - Cleared wenn !cmd.HasButton(Jump) (Button losgelassen)
-  - Harte Landung (m_PreviousVelocity.y < -6.86): JumpDebounce = 0.25s (250ms Lockout)
-    Threshold erhöht weil GROUND_TRACE_DIST (0.08m) Boden früher erkennt als SoF2 (0.006m).
-    Zusätzliche Gravity über die extra Distanz: v² = v0² + 2*g*d → ~1.8 m/s extra.
+  - Harte Landung (m_PreviousVelocity.y < -5.08): JumpDebounce = 0.25s (250ms Lockout)
+    Exakte SoF2-Konvertierung: -200 QU/s × 0.0254 = -5.08 m/s.
+    In SoF2 triggert jeder normale Standsprung den Lockout (~-260 QU/s < -200).
   - PM_CheckJump prüft: JumpDebounce > 0 → blockiert
 ```
 

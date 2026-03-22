@@ -92,9 +92,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         private const int MAX_CLIP_PLANES = 5;
 
         /// <summary>SoF2 Ground-Trace Distanz: 0.25 Quake-Units × 0.0254 = 0.00635m.
-        /// Erhöht auf 0.08m weil Unity BoxCast auf Slopes bei kleineren Werten
+        /// Erhöht auf 0.04m weil Unity BoxCast auf Slopes bei kleineren Werten
         /// den Bodenkontakt verliert. CorrectGroundPosition gleicht das Schweben aus.</summary>
-        private const float GROUND_TRACE_DIST = 0.08f;//original: 0.00635f
+        private const float GROUND_TRACE_DIST = 0.04f;//original: 0.00635f leider nur am sliden.
 
         // ===== Simulation State (Runtime, nicht serialisiert) =====
 
@@ -156,6 +156,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
         /// <summary>SoF2 PMF_CROUCH_JUMP — In der Luft geduckt (Crouch-High-Jump).</summary>
         private bool m_CrouchJumping;
+
+        /// <summary>
+        /// SoF2 Crouch-Jump Fuss-Anhebung: mins[2] aendert sich von -46 auf -24 = 22 QU.
+        /// 22 × 0.0254 = 0.5588m. In SoF2 bewegt sich der Origin NICHT — nur die Box
+        /// schrumpft von unten. In Unity: CapsuleCenter wird nach oben versetzt.
+        /// </summary>
+        private const float CROUCH_JUMP_FEET_RAISE = 0.5588f;
+
+        /// <summary>
+        /// SoF2 Crouch-Jump-Hoehe (geduckt): (24+18) QU = 42 QU × 0.0254 = 1.0668m.
+        /// mins=-24, maxs=18 relativ zum Origin.
+        /// </summary>
+        private const float CROUCH_JUMP_HEIGHT = 1.0668f;
+
+        /// <summary>
+        /// SoF2 Crouch-Jump-Hoehe (ungeduckt, seltener Fall): (24+43) QU = 67 QU × 0.0254 = 1.7018m.
+        /// mins=-24, maxs=43 relativ zum Origin.
+        /// </summary>
+        private const float CROUCH_JUMP_STAND_HEIGHT = 1.7018f;
 
         /// <summary>Scratch-Array für PM_SlideMove Clip-Planes (vermeidet Heap-Allokation).</summary>
         private readonly Vector3[] m_ClipPlanes = new Vector3[MAX_CLIP_PLANES];
@@ -228,8 +247,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Max erlaubte Boden-Zeit um die Chain nicht zu brechen (Sekunden).</summary>
         private const float BHOP_CHAIN_GROUND_TIMEOUT = 0.3f;
 
-        /// <summary>Minimale horizontale Speed damit ein Jump als Bhop zählt (m/s).</summary>
-        private const float BHOP_MIN_SPEED = 1.0f;
+        /// <summary>Minimale horizontale Speed damit ein Jump als Bhop zählt (m/s).
+        /// 2.0 m/s ≈ 79 QU/s — filtert langsame Bewegung und Restgeschwindigkeiten.</summary>
+        private const float BHOP_MIN_SPEED = 2.0f;
 
         /// <summary>Startposition (XZ) der aktuellen Bhop-Chain.</summary>
         private Vector3 m_BhopChainStartPosition;
@@ -273,6 +293,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>
         /// Setzt den Simulations-State extern (für Reconciliation).
         /// Client ruft dies auf wenn der Server eine Korrektur sendet.
+        /// Position bleibt bei den Fuessen — CapsuleCenter-Offset wird
+        /// automatisch durch PM_CheckDuck gesetzt (kein Teleport noetig).
         /// </summary>
         public void SetState(Vector3 velocity, bool isGrounded, bool isJumping, bool isCrouching,
                              float knockbackTime = 0f)
@@ -282,6 +304,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             IsJumping = isJumping;
             IsCrouching = isCrouching;
             KnockbackTime = knockbackTime;
+
+            // Crouch-Jump State ableiten: aktiv wenn in der Luft + springend + geduckt.
+            // PM_CheckDuck liest m_CrouchJumping und setzt CapsuleCenter entsprechend.
+            if (isGrounded || !isJumping)
+            {
+                m_CrouchJumping = false;
+            }
+            else
+            {
+                m_CrouchJumping = isCrouching;
+            }
         }
 
         // ===================================================================
@@ -539,9 +572,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 // Aufstehen: pruefen ob genug Platz (SoF2: trace mit standing maxs)
                 if (IsCrouching)
                 {
-                    // Teste ob stehende Hoehe an aktueller Position passt
-                    Vector3 standingHalf = new(CapsuleRadius, StandingHeight * 0.5f, CapsuleRadius);
-                    Vector3 standingCenter = position + new Vector3(0f, StandingHeight * 0.5f, 0f);
+                    // SoF2: teste ob stehende Box an aktueller Position passt.
+                    // Bei Crouch-Jump: mins=-24 statt -46, daher anderer Center.
+                    float standHeight = m_CrouchJumping ? CROUCH_JUMP_STAND_HEIGHT : StandingHeight;
+                    float standBottom = m_CrouchJumping ? CROUCH_JUMP_FEET_RAISE : 0f;
+                    Vector3 standingHalf = new(CapsuleRadius, standHeight * 0.5f, CapsuleRadius);
+                    Vector3 standingCenter = position + new Vector3(0f, standBottom + standHeight * 0.5f, 0f);
 
                     if (!Physics.CheckBox(standingCenter, standingHalf, Quaternion.identity, GroundMask, QueryTriggerInteraction.Ignore))
                     {
@@ -552,15 +588,34 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 }
             }
 
-            // Dimensionen setzen basierend auf Crouch-State
-            float targetHeight = IsCrouching ? CrouchingHeight : StandingHeight;
+            // === SoF2 PMF_CROUCH_JUMP + PMF_DUCKED → mins/maxs Berechnung ===
+            // SoF2: Origin bewegt sich NICHT. Nur mins[2]/maxs[2] aendern sich.
+            // m_CrouchJumping wurde von PM_CheckCrouchJump des VORHERIGEN Frames gesetzt.
+            //
+            // SoF2 Bounding-Box Zustaende (alle relativ zum Origin bei z=0):
+            //   Standing:     mins=-46, maxs=43  → Height=89  Center=(-46+43)/2 = -1.5 QU
+            //   Ducked:       mins=-46, maxs=18  → Height=64  Center=(-46+18)/2 = -14 QU
+            //   CrouchJump:   mins=-24, maxs=18  → Height=42  Center=(-24+18)/2 = -3 QU
+            //   CJ+Standing:  mins=-24, maxs=43  → Height=67  Center=(-24+43)/2 = 9.5 QU
+            //
+            // In Unity: position = Fuesse (SoF2 Origin - 46 QU). Box-Bottom muss
+            // um CROUCH_JUMP_FEET_RAISE (22 QU) ueber den Fuessen liegen wenn CJ aktiv.
 
-            // Nur aktualisieren wenn sich die Hoehe tatsaechlich geaendert hat
-            if (Mathf.Abs(CapsuleHeight - targetHeight) > 0.001f)
+            float targetHeight;
+            float bottomOffset = 0f;
+
+            if (m_CrouchJumping)
             {
-                CapsuleHeight = targetHeight;
-                CapsuleCenter = new Vector3(0f, targetHeight * 0.5f, 0f);
+                bottomOffset = CROUCH_JUMP_FEET_RAISE;
+                targetHeight = IsCrouching ? CROUCH_JUMP_HEIGHT : CROUCH_JUMP_STAND_HEIGHT;
             }
+            else
+            {
+                targetHeight = IsCrouching ? CrouchingHeight : StandingHeight;
+            }
+
+            CapsuleHeight = targetHeight;
+            CapsuleCenter = new Vector3(0f, bottomOffset + targetHeight * 0.5f, 0f);
         }
 
         /// <summary>
@@ -656,10 +711,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
                 // SoF2: previous_velocity[2] < -200 -> pm_time = 250
                 // SoF2 Threshold: -200 QU/s × 0.0254 = -5.08 m/s
-                // Unsere groessere Trace-Distanz (0.08m) erkennt den Boden frueher,
-                // daher ist die gemessene Fall-Velocity hoeher als in SoF2.
-                // Kompensation: v² = v0² + 2*g*d → ~1.8 m/s extra bei 0.074m Differenz.
-                if (m_PreviousVelocity.y < -6.86f)
+                // In SoF2 triggert JEDER normale Standsprung den 250ms-Lockout
+                // (Landung bei ~-260 QU/s < -200). Der alte Wert -6.86 war zu
+                // restriktiv und verhinderte den Lockout fast komplett, wodurch
+                // Spieler sofort wieder springen konnten (falsches Bhop-Feeling).
+                if (m_PreviousVelocity.y < -5.08f)
                 {
                     JumpDebounce = JumpDebounceAfterMs;
                 }
