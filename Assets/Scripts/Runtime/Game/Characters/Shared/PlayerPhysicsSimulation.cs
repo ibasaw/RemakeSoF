@@ -1270,16 +1270,31 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         // ===================================================================
 
         /// <summary>
-        /// SoF2 PM_StepSlideMove — exakter Port.
-        /// Versucht zuerst PM_SlideMove. Bei Kollision: Step-Up + SlideMove + Step-Down.
-        /// Vergleicht horizontal distance: nimmt die bessere der beiden Optionen.
+        /// SoF2 Crouch-Jump Bonus-Stepsize: (DEFAULT_VIEWHEIGHT - CROUCH_VIEWHEIGHT) = 29 QU × 0.0254.
+        /// bg_slidemove.c: stepsize += (DEFAULT_VIEWHEIGHT - CROUCH_VIEWHEIGHT);
+        /// </summary>
+        private const float CROUCH_JUMP_STEP_BONUS = 0.7366f;
+
+        /// <summary>
+        /// SoF2 PM_StepSlideMove — exakter Port aus bg_slidemove.c.
+        /// 1. SlideMove → bei keiner Kollision fertig.
+        /// 2. stepsize = STEPSIZE (+ Crouch-Jump Bonus).
+        /// 3. Save erste SlideMove-Position (save_o, save_v).
+        /// 4. Box von oben um stepsize kuerzen (maxs[2] -= stepsize).
+        /// 5. Origin um stepsize hochsetzen, SlideMove mit verkuerzter Box.
+        /// 6. Trace nach unten um stepsize (noch mit verkuerzter Box).
+        /// 7. Box wiederherstellen (maxs[2] += stepsize).
+        /// 8. Upward-Velocity-Check → revert wenn fliegend.
+        /// 9. allsolid/startsolid-Check → revert wenn stuck.
+        /// 10. ClipVelocity gegen Step-Down-Normale, "double check not stuck" → revert wenn stuck.
+        /// 11. Wenn !result → revert zu save_o/save_v.
         /// </summary>
         private void PM_StepSlideMove(ref Vector3 position, bool gravity)
         {
             Vector3 startO = position;
             Vector3 startV = Velocity;
 
-            // First try: regular slide
+            // SoF2: first try regular slide
             if (!PM_SlideMove(ref position, gravity))
             {
                 // No collision — got where we wanted
@@ -1287,79 +1302,126 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 return;
             }
 
-            // SoF2: trace down from start position to check for ground
-            Vector3 center = GetWorldCenterAtPosition(startO);
-            Vector3 halfExtents = BoxHalfExtents;
+            // SoF2: stepsize = STEPSIZE
+            float stepSize = PmStepSize;
 
-            bool hasGroundBelow = Physics.BoxCast(center, halfExtents,
-                Vector3.down, out RaycastHit downFromStart, Quaternion.identity, PmStepSize,
+            // SoF2: Add to the step size if we are crouched when jumping
+            // bg_slidemove.c: if (PMF_CROUCH_JUMP) stepsize += (DEFAULT_VIEWHEIGHT - CROUCH_VIEWHEIGHT)
+            if (m_CrouchJumping)
+            {
+                stepSize += CROUCH_JUMP_STEP_BONUS;
+            }
+
+            // SoF2: save_o, save_v — save first SlideMove result in case step-up fails
+            Vector3 saveO = position;
+            Vector3 saveV = Velocity;
+
+            // SoF2: pm->maxs[2] -= stepsize — shrink box from top
+            // In Unity: reduce CapsuleHeight temporarily, keep bottom at same position.
+            float originalHeight = CapsuleHeight;
+            Vector3 originalCenter = CapsuleCenter;
+            float shortenedHeight = originalHeight - stepSize;
+            if (shortenedHeight < 0.1f)
+            {
+                shortenedHeight = 0.1f;
+            }
+            CapsuleHeight = shortenedHeight;
+            // Bottom stays at same position: center.y = bottomOffset + shortenedHeight * 0.5f
+            // originalCenter.y = bottomOffset + originalHeight * 0.5f
+            // → bottomOffset = originalCenter.y - originalHeight * 0.5f
+            float bottomOffset = originalCenter.y - originalHeight * 0.5f;
+            CapsuleCenter = new Vector3(0f, bottomOffset + shortenedHeight * 0.5f, 0f);
+
+            // SoF2: reset to start position/velocity, move origin up by stepsize
+            position = startO;
+            Velocity = startV;
+            position.y += stepSize;
+
+            // SoF2: try the move with the altered (shortened) hit box
+            PM_SlideMove(ref position, gravity);
+
+            // SoF2: trace down from current position by stepsize (still with shortened box)
+            Vector3 downTarget = position;
+            downTarget.y -= stepSize;
+
+            Vector3 center = GetWorldCenterAtPosition(position);
+            Vector3 halfExtents = BoxHalfExtents;
+            Vector3 castDir = downTarget - position;
+            float castDist = Mathf.Abs(castDir.y);
+
+            bool stepDownHit = Physics.BoxCast(center, halfExtents,
+                Vector3.down, out RaycastHit stepDownTrace, Quaternion.identity, castDist + SKIN_WIDTH,
                 GroundMask, QueryTriggerInteraction.Ignore);
 
-            // SoF2: never step up when going up and (no ground or too steep)
-            if (Velocity.y > 0f && (!hasGroundBelow || downFromStart.normal.y < PmMaxSteepness))
+            // SoF2: pm->maxs[2] += stepsize — restore box to normal
+            CapsuleHeight = originalHeight;
+            CapsuleCenter = originalCenter;
+
+            // SoF2: No stepping up if you have upward velocity and (no ground or too steep)
+            // bg_slidemove.c: if (velocity[2] > 0 && (trace.fraction == 1.0 || DotProduct(normal, up) < 0.7))
+            if (Velocity.y > 0f && (!stepDownHit || stepDownTrace.normal.y < PmMaxSteepness))
             {
+                position = saveO;
+                Velocity = saveV;
                 ResolvePenetration(ref position);
                 return;
             }
 
-            // Save first SlideMove result
-            Vector3 downO = position;
-            Vector3 downV = Velocity;
+            bool result = true;
 
-            // Reset to start
-            position = startO;
-            Velocity = startV;
-
-            // Step up
-            center = GetWorldCenterAtPosition(position);
-
-            float stepSize = PmStepSize;
-            if (Physics.BoxCast(center, halfExtents,
-                    Vector3.up, out RaycastHit upTrace, Quaternion.identity, PmStepSize,
-                    GroundMask, QueryTriggerInteraction.Ignore))
+            if (stepDownHit)
             {
-                if (upTrace.distance < SKIN_WIDTH)
+                // SoF2: Check allsolid/startsolid (step-down landed in solid)
+                // Unity equivalent: CheckBox at the step-down position with FULL box
+                float fraction = Mathf.Clamp01(stepDownTrace.distance / castDist);
+                if (fraction <= 0f)
                 {
-                    // Can't step up at all — use first slide result
-                    position = downO;
-                    Velocity = downV;
-                    ResolvePenetration(ref position);
-                    return;
+                    // Started in solid — equivalent to trace.allsolid/startsolid
+                    result = false;
                 }
-                stepSize = Mathf.Max(upTrace.distance - SKIN_WIDTH, 0f);
-            }
+                else
+                {
+                    // SoF2: ClipVelocity against step-down ground normal
+                    // bg_slidemove.c: if (trace.fraction < 1.0) PM_ClipVelocity(...)
+                    PM_ClipVelocity(Velocity, stepDownTrace.normal, out Vector3 clippedV, OVERCLIP);
+                    Velocity = clippedV;
 
-            position.y += stepSize;
+                    // SoF2: VectorCopy(trace.endpos, origin) — move to step-down contact
+                    float dropDist = Mathf.Max(stepDownTrace.distance - SKIN_WIDTH, 0f);
+                    position += Vector3.down * dropDist;
 
-            // Try SlideMove from stepped-up position (with original velocity)
-            PM_SlideMove(ref position, gravity);
-
-            // Push down the final amount
-            center = GetWorldCenterAtPosition(position);
-
-            if (Physics.BoxCast(center, halfExtents,
-                    Vector3.down, out RaycastHit stepDownTrace, Quaternion.identity, stepSize + 0.01f,
-                    GroundMask, QueryTriggerInteraction.Ignore))
-            {
-                float dropDist = Mathf.Max(stepDownTrace.distance - SKIN_WIDTH, 0f);
-                position += Vector3.down * dropDist;
+                    // SoF2: "Now double check not stuck" — self-trace at final position with FULL box
+                    // bg_slidemove.c: pm->trace(&trace, origin, mins, maxs, origin, ...) → if allsolid/startsolid → fail
+                    Vector3 checkCenter = GetWorldCenterAtPosition(position);
+                    Vector3 fullHalfExtents = BoxHalfExtents;
+                    if (Physics.CheckBox(checkCenter, fullHalfExtents, Quaternion.identity,
+                            GroundMask, QueryTriggerInteraction.Ignore))
+                    {
+                        // Stuck in solid — revert
+                        result = false;
+                    }
+                }
             }
             else
             {
-                // Nothing below — drop full step (SoF2: trace.fraction == 1)
+                // SoF2: trace.fraction == 1.0 — nothing below, drop full step
                 position.y -= stepSize;
+
+                // Double-check not stuck after dropping
+                Vector3 checkCenter = GetWorldCenterAtPosition(position);
+                Vector3 fullHalfExtents = BoxHalfExtents;
+                if (Physics.CheckBox(checkCenter, fullHalfExtents, Quaternion.identity,
+                        GroundMask, QueryTriggerInteraction.Ignore))
+                {
+                    result = false;
+                }
             }
 
-            // SoF2: compare horizontal distance — use whichever moved farther
-            float downDist = (downO.x - startO.x) * (downO.x - startO.x)
-                           + (downO.z - startO.z) * (downO.z - startO.z);
-            float upDist = (position.x - startO.x) * (position.x - startO.x)
-                         + (position.z - startO.z) * (position.z - startO.z);
-
-            if (downDist > upDist)
+            // SoF2: if (!result) revert to save_o/save_v
+            if (!result)
             {
-                position = downO;
-                Velocity = downV;
+                position = saveO;
+                Velocity = saveV;
             }
 
             ResolvePenetration(ref position);
