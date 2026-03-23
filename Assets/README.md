@@ -1,15 +1,8 @@
-net-next bcrypt 
-token.jwt
-mongodb /driver /core
+TODO:
 
-CHECKLISTE:
+1. server authoritative basierte time implementieren eventuell ?! oder doch unity time bleiben?
 
-1. Map laden - check (in chunks)
-2. charaktere laden - check (in chunks)
-3. waffen laden - check (evtl. in chunks)
-4. animations laden - check (in chunks)
 
---
 
 TODO:
 

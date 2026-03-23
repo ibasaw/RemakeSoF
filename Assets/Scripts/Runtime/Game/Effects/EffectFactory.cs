@@ -20,9 +20,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
     {
         private const string URP_PARTICLE_SHADER = "Universal Render Pipeline/Particles/Unlit";
         private const string BUILTIN_PARTICLE_SHADER = "Particles/Standard Unlit";
+        private const string SOF2_TRAIL_SHADER = "SoF2/ProjectileTrail";
+        private const string SOF2_EFFECT_PARTICLE_SHADER = "SoF2/EffectParticle";
+        private const string SOF2_DECAL_SHADER = "SoF2/Decal";
+        private const string SOF2_DISTORTION_SHADER = "SoF2/Distortion";
 
         private static Shader s_CachedParticleShader;
-        private static Shader s_CachedFallbackShader;
+        private static Shader s_CachedTrailShader;
+        private static Shader s_CachedDecalShader;
+        private static Shader s_CachedDistortionShader;
 
         private readonly Dictionary<string, Material> m_MaterialCache = new(System.StringComparer.OrdinalIgnoreCase);
 
@@ -74,7 +80,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 return;
             }
 
-            trail.material = GetMaterial(segment.Texture);
+            trail.material = GetTrailMaterial(segment.Texture);
 
             EffectTrailDefinition def = segment.Trail;
             if (def != null)
@@ -219,16 +225,36 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 }
                 else
                 {
-                    // Standard burst: all particles spawn at once
-                    emission.rateOverTime = 0f;
-                    emission.rateOverDistance = 0f;
-                    short burstCount = (short)avgCount;
-                    emission.SetBursts(new ParticleSystem.Burst[] { new(0f, burstCount) });
+                    bool hasEvenDist = segment.SpawnFlags != null
+                        && segment.SpawnFlags.Contains("evenDistribution");
 
-                    // Start Delay fuer gestaffeltes Spawnen
-                    if (def.DelayMin > 0f || def.DelayMax > 0f)
+                    if (hasEvenDist && avgCount > 1 && delaySpan > 0.01f)
                     {
-                        main.startDelay = new ParticleSystem.MinMaxCurve(def.DelayMin, def.DelayMax);
+                        // evenDistribution: Partikel gleichmaessig ueber Delay-Range verteilen
+                        // statt alle gleichzeitig (z.B. konzentrische Wasserripples).
+                        emission.rateOverTime = 0f;
+                        emission.rateOverDistance = 0f;
+                        ParticleSystem.Burst[] bursts = new ParticleSystem.Burst[avgCount];
+                        float step = delaySpan / Mathf.Max(1, avgCount - 1);
+                        for (int i = 0; i < avgCount; i++)
+                        {
+                            bursts[i] = new ParticleSystem.Burst(def.DelayMin + i * step, 1);
+                        }
+                        emission.SetBursts(bursts);
+                    }
+                    else
+                    {
+                        // Standard burst: all particles spawn at once
+                        emission.rateOverTime = 0f;
+                        emission.rateOverDistance = 0f;
+                        short burstCount = (short)avgCount;
+                        emission.SetBursts(new ParticleSystem.Burst[] { new(0f, burstCount) });
+
+                        // Start Delay fuer gestaffeltes Spawnen
+                        if (def.DelayMin > 0f || def.DelayMax > 0f)
+                        {
+                            main.startDelay = new ParticleSystem.MinMaxCurve(def.DelayMin, def.DelayMax);
+                        }
                     }
                 }
             }
@@ -268,17 +294,29 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 vel.z = new ParticleSystem.MinMaxCurve(def.VelocityMin[2], def.VelocityMax[2]);
             }
 
-            // === Color over Lifetime (Alpha-Fade) ===
+            // === Color over Lifetime (Alpha-Fade + rgbComponentInterpolation) ===
             EffectAlphaDefinition alpha = segment.Alpha;
-            if (alpha != null)
+            bool hasRgbInterp = segment.SpawnFlags != null
+                && segment.SpawnFlags.Contains("rgbComponentInterpolation");
+
+            if (alpha != null || (hasRgbInterp && segment.Color != null))
             {
                 ParticleSystem.ColorOverLifetimeModule col = ps.colorOverLifetime;
                 col.enabled = true;
 
-                float fadeStart = alpha.Parm > 0 ? alpha.Parm / 100f : 0f;
-
-                Gradient gradient = BuildGradient(segment);
-                col.color = new ParticleSystem.MinMaxGradient(gradient);
+                if (hasRgbInterp && HasColorRange(segment.Color))
+                {
+                    // rgbComponentInterpolation: Per-Partikel Farbvariation zwischen Min/Max-Bereichen.
+                    // Unity waehlt pro Partikel einen zufaelligen Lerp-Faktor zwischen beiden Gradienten.
+                    Gradient gradientMin = BuildGradientFromRange(segment, false);
+                    Gradient gradientMax = BuildGradientFromRange(segment, true);
+                    col.color = new ParticleSystem.MinMaxGradient(gradientMin, gradientMax);
+                }
+                else
+                {
+                    Gradient gradient = BuildGradient(segment);
+                    col.color = new ParticleSystem.MinMaxGradient(gradient);
+                }
             }
 
             // === Collision (usePhysics / expensivePhysics) ===
@@ -454,16 +492,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             EffectColorDefinition colorDef = segment.Color;
             if (colorDef != null)
             {
-                if (colorDef.StartMin != null && colorDef.StartMin.Length >= 3)
+                if (colorDef.StartMin != null && colorDef.StartMin.Length >= 1)
                 {
-                    float[] c = colorDef.StartMin;
-                    startColor = new Color(c[0], c[1], c[2]);
+                    startColor = ColorFromArray(colorDef.StartMin);
                 }
 
-                if (colorDef.EndMin != null && colorDef.EndMin.Length >= 3)
+                if (colorDef.EndMin != null && colorDef.EndMin.Length >= 1)
                 {
-                    float[] c = colorDef.EndMin;
-                    endColor = new Color(c[0], c[1], c[2]);
+                    endColor = ColorFromArray(colorDef.EndMin);
                 }
                 else
                 {
@@ -528,6 +564,122 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
         }
 
         /// <summary>
+        /// Baut einen Gradient fuer eine Seite des Min/Max-Farbbereichs (fuer rgbComponentInterpolation).
+        /// useMax=false liefert StartMin/EndMin-Farben, useMax=true liefert StartMax/EndMax-Farben.
+        /// Unity interpoliert pro Partikel zufaellig zwischen den beiden resultierenden Gradienten.
+        /// </summary>
+        private Gradient BuildGradientFromRange(EffectSegment segment, bool useMax)
+        {
+            Gradient gradient = new();
+
+            Color startColor = Color.white;
+            Color endColor = Color.white;
+
+            EffectColorDefinition colorDef = segment.Color;
+            if (colorDef != null)
+            {
+                float[] startArr = useMax ? colorDef.StartMax : colorDef.StartMin;
+                float[] endArr = useMax ? colorDef.EndMax : colorDef.EndMin;
+
+                if (startArr != null && startArr.Length >= 1)
+                {
+                    startColor = ColorFromArray(startArr);
+                }
+
+                if (endArr != null && endArr.Length >= 1)
+                {
+                    endColor = ColorFromArray(endArr);
+                }
+                else
+                {
+                    endColor = startColor;
+                }
+            }
+
+            float startAlpha = 1f;
+            float endAlpha = 0f;
+            float fadeStart = 0f;
+
+            EffectAlphaDefinition alphaDef = segment.Alpha;
+            if (alphaDef != null)
+            {
+                startAlpha = useMax ? alphaDef.StartMax : alphaDef.StartMin;
+                endAlpha = useMax ? alphaDef.EndMax : alphaDef.EndMin;
+                fadeStart = alphaDef.Parm > 0 ? alphaDef.Parm / 100f : 0f;
+            }
+
+            float[] endCheck = useMax ? colorDef?.EndMax : colorDef?.EndMin;
+            GradientColorKey[] colorKeys = endCheck != null
+                ? new GradientColorKey[] { new(startColor, 0f), new(endColor, 1f) }
+                : new GradientColorKey[] { new(startColor, 0f), new(startColor, 1f) };
+
+            GradientAlphaKey[] alphaKeys = fadeStart > 0f
+                ? new GradientAlphaKey[] { new(startAlpha, 0f), new(startAlpha, fadeStart), new(endAlpha, 1f) }
+                : new GradientAlphaKey[] { new(startAlpha, 0f), new(endAlpha, 1f) };
+
+            gradient.SetKeys(colorKeys, alphaKeys);
+            return gradient;
+        }
+
+        /// <summary>
+        /// Erstellt eine Unity-Color aus einem float-Array (1 Element = Graustufe, 3 Elemente = RGB).
+        /// </summary>
+        private static Color ColorFromArray(float[] arr)
+        {
+            if (arr.Length == 1)
+            {
+                return new Color(arr[0], arr[0], arr[0]);
+            }
+
+            if (arr.Length == 2)
+            {
+                return new Color(arr[0], arr[1], 0f);
+            }
+
+            return new Color(arr[0], arr[1], arr[2]);
+        }
+
+        /// <summary>
+        /// Prueft ob eine ColorDefinition unterschiedliche Min/Max-Bereiche hat.
+        /// Gibt true zurueck wenn mindestens ein RGB-Kanal zwischen StartMin und StartMax variiert.
+        /// </summary>
+        private static bool HasColorRange(EffectColorDefinition colorDef)
+        {
+            if (colorDef == null)
+            {
+                return false;
+            }
+
+            if (colorDef.StartMin != null && colorDef.StartMax != null
+                && colorDef.StartMin.Length >= 1 && colorDef.StartMax.Length >= 1)
+            {
+                int channels = Mathf.Min(colorDef.StartMin.Length, colorDef.StartMax.Length);
+                for (int i = 0; i < channels; i++)
+                {
+                    if (Mathf.Abs(colorDef.StartMin[i] - colorDef.StartMax[i]) > 0.001f)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (colorDef.EndMin != null && colorDef.EndMax != null
+                && colorDef.EndMin.Length >= 1 && colorDef.EndMax.Length >= 1)
+            {
+                int channels = Mathf.Min(colorDef.EndMin.Length, colorDef.EndMax.Length);
+                for (int i = 0; i < channels; i++)
+                {
+                    if (Mathf.Abs(colorDef.EndMin[i] - colorDef.EndMax[i]) > 0.001f)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Loesche den Material-Cache (z.B. bei Scene-Wechsel).
         /// </summary>
         public void ClearCache()
@@ -544,20 +696,91 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
         }
 
         /// <summary>
+        /// Gibt eine gecachte Trail-Material-Instanz fuer den angegebenen Textur-Pfad zurueck.
+        /// Nutzt SoF2/ProjectileTrail Shader mit Soft-Edge und HDR-Core-Glow.
+        /// Fallback auf Standard-Partikel-Material wenn Trail-Shader nicht verfuegbar.
+        /// </summary>
+        public Material GetTrailMaterial(string texturePath)
+        {
+            if (string.IsNullOrEmpty(texturePath))
+            {
+                return GetFallbackMaterial();
+            }
+
+            string cacheKey = texturePath + "_trail";
+
+            if (m_MaterialCache.TryGetValue(cacheKey, out Material cached))
+            {
+                return cached;
+            }
+
+            Material material = BuildTrailMaterial(texturePath);
+            m_MaterialCache[cacheKey] = material;
+            return material;
+        }
+
+        /// <summary>
+        /// Baut ein Trail-Material mit SoF2/ProjectileTrail Shader.
+        /// Soft Edges, heller Kern, HDR-Emission fuer Bloom.
+        /// Fallback auf BuildMaterialFromTexture wenn Shader nicht verfuegbar.
+        /// </summary>
+        private Material BuildTrailMaterial(string texturePath)
+        {
+            if (s_CachedTrailShader == null)
+            {
+                s_CachedTrailShader = Shader.Find(SOF2_TRAIL_SHADER);
+            }
+
+            // Fallback: normales Partikel-Material wenn Trail-Shader fehlt
+            if (s_CachedTrailShader == null)
+            {
+                return BuildMaterialFromTexture(texturePath, false);
+            }
+
+            TextureManager textureManager = ServiceLocator.Get<TextureManager>();
+
+            Material material = new(s_CachedTrailShader) { name = $"Trail_{texturePath}" };
+
+            if (textureManager != null)
+            {
+                TextureData textureData = textureManager.GetTextureData(texturePath);
+                if (textureData != null && textureData.HasTexture())
+                {
+                    material.SetTexture("_BaseMap", textureData.Texture);
+                }
+            }
+
+            material.SetColor("_BaseColor", Color.white);
+            material.renderQueue = 3000;
+
+            // Additive Blending (Standard fuer Tracer / Flash Trails)
+            material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            material.SetFloat("_Cull", 0f);
+
+            return material;
+        }
+
+        /// <summary>
         /// Baut ein Material aus einer SoF2-Textur via TextureManager.
-        /// Nutzt URP Particles/Unlit Shader mit korrektem Blending (Alpha oder Additive).
+        /// Nutzt SoF2/EffectParticle Shader mit Soft Particles und HDR-Emission.
+        /// Fallback auf URP Particles/Unlit wenn Custom-Shader nicht verfuegbar.
         /// </summary>
         private Material BuildMaterialFromTexture(string texturePath, bool useAlphaBlend = false)
         {
             TextureManager textureManager = ServiceLocator.Get<TextureManager>();
 
-            // URP Particle Shader bevorzugen, Built-in als Fallback
+            // SoF2/EffectParticle bevorzugen, URP Particle als Fallback
             if (s_CachedParticleShader == null)
             {
-                s_CachedParticleShader = Shader.Find(URP_PARTICLE_SHADER);
+                s_CachedParticleShader = Shader.Find(SOF2_EFFECT_PARTICLE_SHADER);
                 if (s_CachedParticleShader == null)
                 {
-                    s_CachedParticleShader = Shader.Find(BUILTIN_PARTICLE_SHADER);
+                    s_CachedParticleShader = Shader.Find(URP_PARTICLE_SHADER);
+                    if (s_CachedParticleShader == null)
+                    {
+                        s_CachedParticleShader = Shader.Find(BUILTIN_PARTICLE_SHADER);
+                    }
                 }
             }
             Shader shader = s_CachedParticleShader;
@@ -626,21 +849,64 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 material.SetInt("_DstBlendAlpha", (int)UnityEngine.Rendering.BlendMode.One);
             }
 
+            // HDR Emission: hoeher fuer additive Effekte (Tracer, Flash), neutral fuer Alpha (Rauch)
+            if (material.HasProperty("_EmissionIntensity"))
+            {
+                material.SetFloat("_EmissionIntensity", useAlphaBlend ? 1.0f : 1.5f);
+            }
+
             return material;
         }
 
         /// <summary>
         /// Fallback-Material wenn Shader/Textur nicht verfuegbar.
+        /// Nutzt SoF2/EffectParticle als Fallback (korrekte URP-Transparenz).
         /// </summary>
         private Material GetFallbackMaterial()
         {
-            if (s_CachedFallbackShader == null)
-            {
-                s_CachedFallbackShader = Shader.Find("Sprites/Default");
-            }
-            Material mat = new(s_CachedFallbackShader) { name = "Effect_Fallback" };
-            mat.color = new Color(1f, 0.8f, 0.2f, 0.8f);
+            Shader fallback = Shader.Find(SOF2_EFFECT_PARTICLE_SHADER)
+                ?? Shader.Find(URP_PARTICLE_SHADER)
+                ?? Shader.Find(BUILTIN_PARTICLE_SHADER);
+            Material mat = new(fallback) { name = "Effect_Fallback" };
+            mat.SetColor("_BaseColor", new Color(1f, 0.8f, 0.2f, 0.8f));
+            mat.SetFloat("_Surface", 1f);
+            mat.SetFloat("_ZWrite", 0f);
+            mat.SetFloat("_Cull", 0f);
+            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            mat.renderQueue = 3000;
             return mat;
+        }
+
+        /// <summary>
+        /// Gibt ein gecachtes Distortion-Material fuer Heat-Haze-Effekte zurueck.
+        /// Nutzt SoF2/Distortion Shader (Scene-Color Sampling + UV-Verzerrung).
+        /// Wird von Explosion-Segmenten mit type="distortion" verwendet.
+        /// </summary>
+        public Material GetDistortionMaterial()
+        {
+            const string cacheKey = "_distortion_haze";
+
+            if (m_MaterialCache.TryGetValue(cacheKey, out Material cached))
+            {
+                return cached;
+            }
+
+            if (s_CachedDistortionShader == null)
+            {
+                s_CachedDistortionShader = Shader.Find(SOF2_DISTORTION_SHADER);
+            }
+
+            if (s_CachedDistortionShader == null)
+            {
+                Debug.LogWarning("[EffectFactory] SoF2/Distortion shader not found.");
+                return GetFallbackMaterial();
+            }
+
+            Material material = new(s_CachedDistortionShader) { name = "Distortion_HeatHaze" };
+            material.renderQueue = 3050;
+            m_MaterialCache[cacheKey] = material;
+            return material;
         }
 
         /// <summary>
@@ -729,6 +995,30 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 {
                     PlayEffectSound(position, segment);
                 }
+                else if (segment.Type == "distortion")
+                {
+                    // Heat-Haze Distortion: ParticleSystem mit SoF2/Distortion Shader
+                    GameObject distGo = new(segment.Name ?? "Distortion");
+                    distGo.transform.SetParent(explosionObj.transform, false);
+
+                    ParticleSystem distPs = distGo.AddComponent<ParticleSystem>();
+                    distPs.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    ConfigureParticleSystem(distPs, segment);
+
+                    ParticleSystemRenderer distRenderer = distPs.GetComponent<ParticleSystemRenderer>();
+                    if (distRenderer != null)
+                    {
+                        distRenderer.material = GetDistortionMaterial();
+                        distRenderer.renderMode = ParticleSystemRenderMode.Billboard;
+                    }
+
+                    distPs.Play();
+
+                    float distLife = segment.Particle != null
+                        ? segment.Particle.LifetimeMax + segment.Particle.DelayMax
+                        : 1.5f;
+                    maxLifetime = Mathf.Max(maxLifetime, distLife);
+                }
             }
 
             // Fallback-Licht wenn kein Light-Segment vorhanden
@@ -744,6 +1034,75 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             }
 
             Object.Destroy(explosionObj, maxLifetime + 1f);
+        }
+
+        /// <summary>
+        /// Spawnt einen datengetriebenen Distortion-Effekt (Heat-Haze) an der angegebenen Position.
+        /// Erstellt ein ParticleSystem mit SoF2/Distortion Shader fuer UV-Verzerrung.
+        /// Kann direkt aufgerufen werden (z.B. nach SpawnExplosion fuer zusaetzlichen Polish).
+        /// </summary>
+        public void SpawnDistortionEffect(Vector3 position, float size = 3f, float lifetime = 1.5f)
+        {
+            if (s_CachedDistortionShader == null)
+            {
+                s_CachedDistortionShader = Shader.Find(SOF2_DISTORTION_SHADER);
+            }
+            if (s_CachedDistortionShader == null)
+            {
+                return;
+            }
+
+            GameObject distObj = new("Distortion_HeatHaze");
+            distObj.transform.position = position;
+
+            ParticleSystem ps = distObj.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            ParticleSystem.MainModule main = ps.main;
+            main.loop = false;
+            main.startLifetime = lifetime;
+            main.startSize = size;
+            main.startSpeed = 0.3f;
+            main.maxParticles = 3;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.gravityModifier = -0.1f;
+
+            ParticleSystem.EmissionModule emission = ps.emission;
+            emission.enabled = true;
+            emission.rateOverTime = 0f;
+            emission.SetBursts(new ParticleSystem.Burst[] { new(0f, 2) });
+
+            ParticleSystem.ShapeModule shape = ps.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = size * 0.3f;
+
+            // Groesse waechst, dann schrumpft
+            ParticleSystem.SizeOverLifetimeModule sol = ps.sizeOverLifetime;
+            sol.enabled = true;
+            sol.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
+                new Keyframe(0f, 0.3f, 0f, 3f),
+                new Keyframe(0.3f, 1f, 0f, 0f),
+                new Keyframe(1f, 0.5f, -1f, 0f)));
+
+            // Alpha-Fade
+            ParticleSystem.ColorOverLifetimeModule col = ps.colorOverLifetime;
+            col.enabled = true;
+            Gradient gradient = new();
+            gradient.SetKeys(
+                new GradientColorKey[] { new(Color.white, 0f), new(Color.white, 1f) },
+                new GradientAlphaKey[] { new(0f, 0f), new(0.8f, 0.15f), new(0f, 1f) });
+            col.color = new ParticleSystem.MinMaxGradient(gradient);
+
+            ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
+            if (renderer != null)
+            {
+                renderer.material = GetDistortionMaterial();
+                renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            }
+
+            ps.Play();
+            Object.Destroy(distObj, lifetime + 0.5f);
         }
 
         /// <summary>
@@ -810,27 +1169,36 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 if (alpha < 1f)
                 {
                     mat = new Material(mat);
-                    Color matColor = mat.color;
+                    Color matColor = mat.HasProperty("_BaseColor")
+                        ? mat.GetColor("_BaseColor")
+                        : Color.white;
                     matColor.a = alpha;
-                    mat.color = matColor;
+                    mat.SetColor("_BaseColor", matColor);
                 }
                 renderer.material = mat;
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
             }
 
-            // Start-Verzoegerung: initial unsichtbar, dann einblenden
+            // Start-Verzoegerung: Renderer verstecken, DelayedActivation blendet spaeter ein
             if (delay > 0f)
             {
-                decalObj.SetActive(false);
-                decalObj.SetActive(true);
+                Renderer rend = decalObj.GetComponent<Renderer>();
+                if (rend != null)
+                {
+                    rend.enabled = false;
+                }
+                DelayedActivation activator = decalObj.AddComponent<DelayedActivation>();
+                activator.Initialize(delay);
             }
 
-            Object.Destroy(decalObj, lifetime);
+            Object.Destroy(decalObj, delay + lifetime);
         }
 
         /// <summary>
-        /// Erstellt ein Material mit Alpha-Blending fuer Decals (keine Additive-Blending).
+        /// Erstellt ein Material mit SoF2/Decal Shader fuer Scorch-Marks und Einschusslocher.
+        /// Alpha-Blending, Depth-Bias gegen Z-Fighting, kein Lighting.
+        /// Fallback auf SoF2/EffectParticle wenn Decal-Shader nicht verfuegbar.
         /// </summary>
         private Material GetDecalMaterial(string texturePath)
         {
@@ -841,11 +1209,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 return cached;
             }
 
-            if (s_CachedFallbackShader == null)
+            if (s_CachedDecalShader == null)
             {
-                s_CachedFallbackShader = Shader.Find("Sprites/Default");
+                s_CachedDecalShader = Shader.Find(SOF2_DECAL_SHADER);
             }
-            Shader shader = s_CachedFallbackShader;
+
+            Shader shader = s_CachedDecalShader;
+            if (shader == null)
+            {
+                Debug.LogWarning("[EffectFactory] SoF2/Decal shader not found, falling back to EffectParticle.");
+                shader = Shader.Find(SOF2_EFFECT_PARTICLE_SHADER)
+                    ?? Shader.Find(URP_PARTICLE_SHADER);
+            }
+
             Material material = new(shader) { name = $"Decal_{texturePath}" };
 
             TextureManager textureManager = ServiceLocator.Get<TextureManager>();
@@ -854,7 +1230,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 TextureData textureData = textureManager.GetTextureData(texturePath);
                 if (textureData != null && textureData.HasTexture())
                 {
-                    material.mainTexture = textureData.Texture;
+                    if (material.HasProperty("_BaseMap"))
+                    {
+                        material.SetTexture("_BaseMap", textureData.Texture);
+                    }
+                    else
+                    {
+                        material.mainTexture = textureData.Texture;
+                    }
                 }
                 else
                 {
@@ -896,12 +1279,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             float range = def?.Range ?? 12f;
             float intensity = def?.Intensity ?? 8f;
 
+            // Farbe aus JSON-Definition oder Fallback (warmes Orange)
+            Color lightColor;
+            if (def?.Color != null && def.Color.Length >= 3)
+            {
+                lightColor = new Color(def.Color[0], def.Color[1], def.Color[2]);
+            }
+            else
+            {
+                lightColor = new Color(1f, 0.6f, 0.1f);
+            }
+
             GameObject lightObj = new("ExplosionLight");
             lightObj.transform.SetParent(parent, false);
 
             Light flash = lightObj.AddComponent<Light>();
             flash.type = LightType.Point;
-            flash.color = new Color(1f, 0.6f, 0.1f);
+            flash.color = lightColor;
             flash.intensity = intensity;
             flash.range = range;
 

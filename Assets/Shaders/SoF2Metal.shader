@@ -1,10 +1,20 @@
-Shader "SoF2/MapSurface"
+Shader "SoF2/Metal"
 {
     Properties
     {
-        _BaseMap ("Base Texture", 2D) = "white" {}
+        _BaseMap ("Metal Texture", 2D) = "white" {}
         _BaseColor ("Base Color", Color) = (1, 1, 1, 1)
         _LightBlend ("Light Blend (0=Unlit, 1=Full Lit)", Range(0.0, 1.0)) = 0.7
+
+        [Header(Metallic Specular)]
+        _SpecularPower ("Specular Sharpness", Range(8.0, 512.0)) = 64.0
+        _SpecularIntensity ("Specular Intensity", Range(0.0, 5.0)) = 1.5
+        _Metallic ("Metallic Factor", Range(0.0, 1.0)) = 0.8
+
+        [Header(Environment Reflection)]
+        _FresnelPower ("Fresnel Power", Range(0.5, 10.0)) = 5.0
+        _ReflectionStrength ("Reflection Strength", Range(0.0, 1.0)) = 0.15
+
         _Cutoff ("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
         [Toggle(_ALPHATEST_ON)] _AlphaClip ("Alpha Clip", Float) = 0
         _Cull ("Cull Mode", Float) = 0
@@ -20,11 +30,16 @@ Shader "SoF2/MapSurface"
         }
 
         // =====================================================
-        // Forward Pass: Unlit-Basis + anteilige Lambert-Beleuchtung
+        // SoF2 Metal Pass: Lambert + Blinn-Phong Specular
+        //
+        // Metallische Oberflaechen reflektieren Licht schaerfer
+        // als Standard-Surfaces. Specular-Highlight + subtile
+        // Fresnel-Aufhellung am Rand simuliert Metall-Charakter.
+        // Basis-Beleuchtung identisch zu SoF2MapSurface.
         // =====================================================
         Pass
         {
-            Name "ForwardLit"
+            Name "MetalForward"
             Tags { "LightMode" = "UniversalForward" }
 
             Cull [_Cull]
@@ -59,7 +74,8 @@ Shader "SoF2/MapSurface"
                 float2 uv : TEXCOORD0;
                 float3 normalWS : TEXCOORD1;
                 float3 positionWS : TEXCOORD2;
-                float fogFactor : TEXCOORD3;
+                float3 viewDirWS : TEXCOORD3;
+                float fogFactor : TEXCOORD4;
             };
 
             TEXTURE2D(_BaseMap);
@@ -69,6 +85,11 @@ Shader "SoF2/MapSurface"
                 float4 _BaseMap_ST;
                 half4 _BaseColor;
                 half _LightBlend;
+                half _SpecularPower;
+                half _SpecularIntensity;
+                half _Metallic;
+                half _FresnelPower;
+                half _ReflectionStrength;
                 half _Cutoff;
             CBUFFER_END
 
@@ -82,73 +103,80 @@ Shader "SoF2/MapSurface"
                 output.positionWS = vertexInput.positionWS;
                 output.normalWS = normalInput.normalWS;
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
-                output.fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
+                output.viewDirWS = GetWorldSpaceNormalizeViewDir(vertexInput.positionWS);
+                output.fogFactor = ComputeFogFactor(output.positionCS.z);
                 return output;
             }
 
             half4 frag(Varyings input) : SV_Target
             {
-                // Basistextur (= gebackene SoF2-Beleuchtung enthalten)
                 half4 texColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
 
                 #ifdef _ALPHATEST_ON
                     clip(texColor.a - _Cutoff);
                 #endif
 
-                // Wenn kein Lichtanteil gewuenscht: pure Unlit
+                float3 normalWS = normalize(input.normalWS);
+                float3 viewDir = normalize(input.viewDirWS);
+
+                // Unlit fast-path
                 if (_LightBlend <= 0.001)
                 {
                     texColor.rgb = MixFog(texColor.rgb, input.fogFactor);
                     return texColor;
                 }
 
-                // Beleuchtung berechnen (Lambert)
-                float3 normalWS = normalize(input.normalWS);
-
-                // Main Light (Sonne)
+                // === Lambert + Blinn-Phong Specular ===
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 Light mainLight = GetMainLight(shadowCoord);
                 half NdotL = saturate(dot(normalWS, mainLight.direction));
-                half3 mainLighting = mainLight.color * NdotL * mainLight.distanceAttenuation * mainLight.shadowAttenuation;
+                half3 mainLighting = mainLight.color * NdotL
+                    * mainLight.distanceAttenuation * mainLight.shadowAttenuation;
 
-                // Additional Lights (Point/Spot aus MapLightApplier)
-                // Forward+: Cluster-basiert, kein Per-Object-Limit.
-                // Forward:  Klassische Schleife, max N Lichter pro Objekt.
+                // Specular: metallische Oberflaechen nutzen Texturfarbe als Specular-Color
+                half3 specColor = lerp(half3(0.04, 0.04, 0.04), texColor.rgb, _Metallic);
+                float3 halfDir = normalize(mainLight.direction + viewDir);
+                float NdotH = saturate(dot(normalWS, halfDir));
+                half3 specularLight = specColor * mainLight.color
+                    * pow(NdotH, _SpecularPower) * _SpecularIntensity
+                    * mainLight.distanceAttenuation * mainLight.shadowAttenuation;
+
                 half3 additionalLighting = half3(0, 0, 0);
+                half3 additionalSpec = half3(0, 0, 0);
                 #if defined(_ADDITIONAL_LIGHTS) || defined(_FORWARD_PLUS)
-                    // InputData fuer Forward+ Cluster-Lookup (normalizedScreenSpaceUV + positionWS)
                     InputData inputData = (InputData)0;
                     inputData.positionWS = input.positionWS;
                     inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
 
                     uint pixelLightCount = GetAdditionalLightsCount();
                     LIGHT_LOOP_BEGIN(pixelLightCount)
-                        Light additionalLight = GetAdditionalLight(lightIndex, input.positionWS);
-                        half addNdotL = saturate(dot(normalWS, additionalLight.direction));
-                        additionalLighting += additionalLight.color * addNdotL
-                            * additionalLight.distanceAttenuation * additionalLight.shadowAttenuation;
+                        Light addLight = GetAdditionalLight(lightIndex, input.positionWS);
+                        half addNdotL = saturate(dot(normalWS, addLight.direction));
+                        additionalLighting += addLight.color * addNdotL
+                            * addLight.distanceAttenuation * addLight.shadowAttenuation;
+
+                        float3 addHalf = normalize(addLight.direction + viewDir);
+                        float addNdotH = saturate(dot(normalWS, addHalf));
+                        additionalSpec += specColor * addLight.color
+                            * pow(addNdotH, _SpecularPower) * _SpecularIntensity * 0.5
+                            * addLight.distanceAttenuation * addLight.shadowAttenuation;
                     LIGHT_LOOP_END
-                #elif defined(_ADDITIONAL_LIGHTS_VERTEX)
-                    // Vertex-Lighting Fallback: weniger genau, aber funktioniert immer
-                    additionalLighting = half3(0.1, 0.1, 0.1);
                 #endif
 
-                // SH-Ambient: minimale Fuellung dunkler Bereiche
-                // (gesteuert ueber RenderSettings.ambientLight / surfacelight)
                 half3 ambient = SampleSH(normalWS);
-
-                // Gesamtes Licht: Ambient + Directional + Additional (Point/Spot)
-                // Clamp auf 5.0 verhindert Hotspots nahe der Lichtquelle:
-                // URP 1/d²-Falloff geht bei Abstand~0 gegen unendlich.
                 half3 totalLight = min(mainLighting + additionalLighting + ambient, 5.0);
 
-                // idTech3-Stil: Textur-Basis wird proportional zu _LightBlend abgedunkelt.
-                // Ohne Licht: texColor * (1 - _LightBlend) = 30% bei Blend=0.7 (deutlich dunkler).
-                // Mit Licht: texColor * (baseDarkening + _LightBlend * totalLight) → heller.
-                // Bei _LightBlend=0.7 werden Point/Spot-Lights zur primaeren Lichtquelle:
-                // Unbeleuchtete Bereiche sind dunkel, beleuchtete klar sichtbar.
+                // === Fresnel-Rim fuer Metall-Kanten ===
+                float NdotV = saturate(dot(normalWS, viewDir));
+                float fresnel = pow(1.0 - NdotV, _FresnelPower) * _ReflectionStrength;
+
+                // === Zusammenbauen ===
                 half baseDarkening = 1.0 - _LightBlend;
                 half3 finalColor = texColor.rgb * (baseDarkening + _LightBlend * totalLight);
+
+                // Specular + Fresnel-Rim hinzufuegen
+                finalColor += specularLight + additionalSpec;
+                finalColor += fresnel * specColor;
 
                 finalColor = MixFog(finalColor, input.fogFactor);
                 return half4(finalColor, texColor.a);
@@ -157,7 +185,7 @@ Shader "SoF2/MapSurface"
         }
 
         // =====================================================
-        // Shadow Caster Pass: Map-Geometry wirft Schatten
+        // Shadow Caster Pass
         // =====================================================
         Pass
         {
@@ -184,8 +212,15 @@ Shader "SoF2/MapSurface"
                 float4 _BaseMap_ST;
                 half4 _BaseColor;
                 half _LightBlend;
+                half _SpecularPower;
+                half _SpecularIntensity;
+                half _Metallic;
+                half _FresnelPower;
+                half _ReflectionStrength;
                 half _Cutoff;
             CBUFFER_END
+
+            float3 _LightDirection;
 
             struct ShadowAttributes
             {
@@ -199,8 +234,6 @@ Shader "SoF2/MapSurface"
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
             };
-
-            float3 _LightDirection;
 
             ShadowVaryings ShadowVert(ShadowAttributes input)
             {
@@ -229,7 +262,7 @@ Shader "SoF2/MapSurface"
         }
 
         // =====================================================
-        // Depth Only Pass: Fuer Depth-Prepass
+        // Depth Only Pass
         // =====================================================
         Pass
         {
@@ -254,6 +287,11 @@ Shader "SoF2/MapSurface"
                 float4 _BaseMap_ST;
                 half4 _BaseColor;
                 half _LightBlend;
+                half _SpecularPower;
+                half _SpecularIntensity;
+                half _Metallic;
+                half _FresnelPower;
+                half _ReflectionStrength;
                 half _Cutoff;
             CBUFFER_END
 
@@ -289,5 +327,5 @@ Shader "SoF2/MapSurface"
         }
     }
 
-    FallBack "Universal Render Pipeline/Unlit"
+    FallBack "SoF2/MapSurface"
 }

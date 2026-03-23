@@ -79,7 +79,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         /// </summary>
         internal event Action<MapDefinition> OnMapChangeStarting;
 
-        const string k_DefaultMapName = "maps/mp_finca"; //TODO: Platzhalter, bis Map-Auswahl implementiert ist
+        const string k_DefaultMapName = "maps/mp_kam3"; //TODO: Platzhalter, bis Map-Auswahl implementiert ist
 
         RoundFlowStateMachine m_RoundFlowStateMachine;
 

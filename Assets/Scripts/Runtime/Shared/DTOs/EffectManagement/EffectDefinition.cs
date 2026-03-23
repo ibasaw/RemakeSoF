@@ -519,6 +519,14 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// </summary>
         [JsonProperty("intensity")]
         public float Intensity;
+
+        /// <summary>
+        /// Licht-Farbe als RGB-Array [r, g, b] (0.0-1.0).
+        /// Fallback: warmes Orange (1.0, 0.6, 0.1) wenn nicht definiert.
+        /// Beispiel: Flashbang=[1,1,1], Phosphor=[0.3,1,0.2], Standard=[1,0.6,0.1].
+        /// </summary>
+        [JsonProperty("color")]
+        public float[] Color;
     }
 
     // ===== CameraShake =====

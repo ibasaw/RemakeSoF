@@ -41,18 +41,18 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         /// <summary>
         /// Skalierungsfaktor fuer die Umrechnung von idTech3 sun intensity zu Unity Light intensity.
         /// idTech3 nutzt Werte wie 300, Unity URP Directional typisch 0.5-3.0.
-        /// 300 * 0.01 = 3.0 → natuerliche Aussenbeleuchtung.
-        /// 63 * 0.01 = 0.63 → schwaches Mondlicht (wird auf k_MinSunIntensity angehoben).
+        /// 300 * 0.007 = 2.1 → natuerliche Aussenbeleuchtung (etwas gedaempft).
+        /// 63 * 0.007 = 0.44 → schwaches Mondlicht (wird auf k_MinSunIntensity angehoben).
         /// </summary>
-        private const float k_IntensityScale = 0.01f;
+        private const float k_IntensityScale = 0.002f;
 
         /// <summary>
         /// Minimale URP-Intensitaet fuer das Directional Light damit auch bei schwachem
-        /// Mondlicht (Nachtmaps) klare Schatten sichtbar bleiben.
-        /// In SoF2 waren Mondschatten in die Lightmaps gebacken und daher immer klar sichtbar.
-        /// URP Realtime-Schatten brauchen eine Mindest-Lichtstaerke von ca. 10.0 fuer Sichtbarkeit.
+        /// Mondlicht (Nachtmaps) Schatten sichtbar bleiben.
+        /// URP Realtime-Schatten sind ab ~0.5 Intensity sichtbar.
+        /// Niedrig gehalten damit Point/Spot-Lights nicht ueberstrahlt werden.
         /// </summary>
-        private const float k_MinSunIntensity = 10.0f;
+        private const float k_MinSunIntensity = 0.8f;
 
         /// <summary>
         /// Suffixe für die 6 Skybox-Faces (idTech3/SoF2-Konvention).

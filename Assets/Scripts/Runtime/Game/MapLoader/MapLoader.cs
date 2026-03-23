@@ -141,8 +141,14 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             // Map-Lichter aus light-Entities erstellen und unsichtbare
             // Entity-Renderer (light/info_notnull) verstecken (nur Client).
             // Der SoF2/MapSurface Shader mischt Licht anteilig auf die Texturen.
+            // Lichter starten deaktiviert — der ProximityCuller aktiviert nur nahe Lichter.
             if(!NetworkManager.Singleton.IsServer)
+            {
                 m_LightApplier.ApplyLights(m_CurrentMapInstance);
+
+                MapLightProximityCuller culler = m_CurrentMapInstance.AddComponent<MapLightProximityCuller>();
+                culler.Initialize(m_LightApplier);
+            }
 
             OnProgress?.Invoke(MapLoadPhase.LightsApplied);
             await Task.Yield();

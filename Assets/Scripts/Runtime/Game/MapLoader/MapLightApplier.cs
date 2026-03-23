@@ -26,12 +26,12 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
         /// <summary>
         /// Basis-Intensitaet fuer ein Default-Light (light=300) in URP.
-        /// Kalibriert fuer den SoF2/MapSurface Shader mit _LightBlend=0.25:
-        /// Die Texturen enthalten bereits gebackenes Licht aus q3map2.
-        /// Realtime-Licht ist nur ein subtiler Zusatz fuer Dynamik/Schatten.
-        /// light=300 → 2.0 Intensity: Bei ~1m → tex*1.25, bei ~2m → tex*0.88, bei ~4m → tex*0.78
+        /// Kalibriert fuer den SoF2/MapSurface Shader mit _LightBlend=0.7:
+        /// Point/Spot-Lights sind primaere Lichtquellen — unbeleuchtete
+        /// Bereiche werden auf 30% abgedunkelt, Lichter hellen klar auf.
+        /// light=300 → 8.0 Intensity.
         /// </summary>
-        private const float k_BaseIntensity = 5f;
+        private const float k_BaseIntensity = 8f;
 
         /// <summary>
         /// Range-Multiplikator fuer idTech3→Unity Falloff-Kompensation.
@@ -50,23 +50,55 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         private const float k_MaxRange = 50f;
 
         /// <summary>
+        /// Minimale Unity-Range in Metern.
+        /// Auch schwache Lichter sollten innerhalb von 2m sichtbar sein.
+        /// </summary>
+        private const float k_MinRange = 2f;
+
+        /// <summary>
         /// Standard Spot-Winkel in Grad.
         /// </summary>
-        private const float k_DefaultSpotAngle = 60f;
+        private const float k_DefaultSpotAngle = 50f;
 
         /// <summary>
-        /// Minimaler idTech3-Light-Wert. Lichter mit kleinerem Wert werden uebersprungen.
-        /// URP cullt automatisch per Frame die sichtbarsten ~256 Lichter,
-        /// daher muessen wir kein hartes Limit fuer die Erstellung setzen.
-        /// Aber sehr schwache Lichter (unter 150) haetten mit k_BaseIntensity=2
-        /// kaum sichtbaren Effekt und verschwenden nur Culling-Budget.
+        /// Minimaler effektiver Light-Wert (light × scale). Lichter darunter werden uebersprungen.
+        /// 0 = nichts ueberspringen, alle Lichter erstellen.
         /// </summary>
-        private const float k_MinLightValue = 150f;
+        private const float k_MinLightValue = 0f;
 
         /// <summary>
-        /// Liste der zur Laufzeit erstellten Light-GameObjects für Cleanup.
+        /// Aktivierungsradius fuer Proximity-Culling in Metern.
+        /// Lichter ausserhalb dieses Radius zur Kamera werden deaktiviert.
+        /// Forward+ hat kein Per-Object-Limit, aber hunderte aktive Lights
+        /// kosten trotzdem GPU-Performance (Cluster-Evaluierung).
+        /// 120m deckt typische SoF2-Map-Bereiche grosszuegig ab.
+        /// </summary>
+        private const float k_ProximityRadius = 120f;
+
+        /// <summary>
+        /// Quadrierter Aktivierungsradius (vermeidet Sqrt pro Licht pro Frame).
+        /// </summary>
+        private const float k_ProximityRadiusSqr = k_ProximityRadius * k_ProximityRadius;
+
+        /// <summary>
+        /// Gecachte Lichtdaten fuer Proximity-Culling.
+        /// Position wird beim Erstellen gespeichert (Map-Lichter bewegen sich nicht).
+        /// </summary>
+        private struct ProximityLightData
+        {
+            public Light LightComponent;
+            public Vector3 Position;
+        }
+
+        /// <summary>
+        /// Liste der zur Laufzeit erstellten Light-GameObjects fuer Cleanup.
         /// </summary>
         private readonly List<GameObject> m_CreatedLights = new();
+
+        /// <summary>
+        /// Alle erstellten Lichter mit Position fuer Proximity-Culling.
+        /// </summary>
+        private readonly List<ProximityLightData> m_ProximityData = new();
 
         /// <summary>
         /// Versteckt die Renderer aller light- und info_notnull-Entities,
@@ -139,9 +171,11 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                     renderer.enabled = false;
                 }
 
-                // Schwache Lichter ueberspringen — haetten kaum sichtbaren Effekt
+                // Schwache Lichter ueberspringen — haetten kaum sichtbaren Effekt.
+                // Beruecksichtigt scale-Multiplikator (z.B. light=8192, scale=0.008 → effektiv 65.5).
                 float lightValue = meta.GetFloat("light", k_IdTech3DefaultLight);
-                if (lightValue < k_MinLightValue)
+                float scale = meta.GetFloat("scale", 1f);
+                if (lightValue * scale < k_MinLightValue)
                 {
                     skippedWeak++;
                     continue;
@@ -152,14 +186,25 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 {
                     m_CreatedLights.Add(lightGO);
                     createdCount++;
+
+                    // Debug: Erste 10 Lichter loggen fuer Diagnose.
+                    if (createdCount <= 10)
+                    {
+                        Light dbgLight = lightGO.GetComponent<Light>();
+                        Debug.Log($"[MapLightApplier] Light #{createdCount}: '{meta.gameObject.name}' " +
+                                  $"light={lightValue} scale={scale} " +
+                                  $"range={dbgLight.range:F1}m intensity={dbgLight.intensity:F1} " +
+                                  $"color={dbgLight.color} type={dbgLight.type} " +
+                                  $"pos={lightGO.transform.position}");
+                    }
                 }
             }
 
             // info_notnull Renderer ebenfalls unsichtbar machen (sind nur Target-Marker)
             HideTargetRenderers(allMeta);
 
-            Debug.Log($"[MapLightApplier] {createdCount} Lichter erstellt, {skippedWeak} schwache uebersprungen, " +
-                      $"{targetLookup.Count} Targets gefunden.");
+            Debug.Log($"[MapLightApplier] {createdCount} Lichter erstellt (Forward+, Proximity-Culling aktiv), " +
+                      $"{skippedWeak} schwache uebersprungen, {targetLookup.Count} Targets gefunden.");
         }
 
         /// <summary>
@@ -177,6 +222,7 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             }
 
             m_CreatedLights.Clear();
+            m_ProximityData.Clear();
 
             // Sicherheitsnetz: verwaiste SoF2_Light_ Objekte aus vorherigen Play-Sessions zerstoeren
             foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
@@ -261,19 +307,29 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             // Alpha wird ignoriert – Unity Light.color nutzt kein Alpha für Helligkeit.
             Color lightColor = ParseColor(meta.GetString("_color"), Color.white);
 
-            // light = Lichtstaerke in idTech3-Einheiten (Default 300, typisch 100-4096)
-            // Wird sowohl fuer Range als auch Intensitaet verwendet.
-            float lightRange = meta.GetFloat("light", k_IdTech3DefaultLight);
+            // light = idTech3-Lichtradius in Quake-Units (Default 300, typisch 100-8192).
+            // Bestimmt die REICHWEITE des Lichts.
+            float lightValue = meta.GetFloat("light", k_IdTech3DefaultLight);
 
-            // Range: Quake-Units → Meter, mit Multiplikator fuer Falloff-Kompensation.
-            // idTech3 linear Falloff deckt mehr Flaeche ab als URP 1/d².
-            float unityRange = Mathf.Min(lightRange * k_LightRangeScale * k_RangeMultiplier, k_MaxRange);
+            // scale = Helligkeits-Multiplikator (idTech3: "scale" Key, Default 1.0).
+            // Reduziert nur die INTENSITAET, nicht die Reichweite.
+            // Beispiel: light=8192, scale=0.008 → grossflaechig (8192 Units) aber schwach (0.8%).
+            float scale = meta.GetFloat("scale", 1f);
+            float effectiveBrightness = lightValue * scale;
 
-            // Intensitaet: Quadratwurzel-Skalierung statt linear.
-            // Daempft Hotspots nahe der Lichtquelle (wo URP 1/d² extrem hell wird),
-            // behaelt aber relative Unterschiede zwischen schwachen und starken Lichtern bei.
-            // light=300 → 2.0, light=1000 → 3.65, light=4096 → 7.39
-            float intensity = k_BaseIntensity * Mathf.Sqrt(lightRange / k_IdTech3DefaultLight);
+            // Range: basiert auf dem rohen light-Wert (Reichweite in Quake-Units).
+            // Quake-Units → Meter, mit Multiplikator fuer Falloff-Kompensation.
+            float unityRange = Mathf.Clamp(
+                lightValue * k_LightRangeScale * k_RangeMultiplier,
+                k_MinRange,
+                k_MaxRange);
+
+            // Intensitaet: basiert auf effektiver Helligkeit (light × scale).
+            // Quadratwurzel-Skalierung daempft Hotspots nahe der Lichtquelle.
+            float intensity = k_BaseIntensity * Mathf.Sqrt(effectiveBrightness / k_IdTech3DefaultLight);
+
+            // Minimum-Intensitaet damit auch schwache Lichter sichtbar bleiben.
+            intensity = Mathf.Max(intensity, 1f);
 
             // light_type bestimmt Point oder Spot
             string lightTypeStr = meta.GetString("light_type", "Point");
@@ -293,6 +349,10 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             light.intensity = intensity;
             light.range = unityRange;
 
+            // Start aktiviert — Forward+ kann viele Lichter gleichzeitig verarbeiten.
+            // ProximityCuller deaktiviert entfernte Lichter fuer GPU-Performance.
+            light.enabled = true;
+
             // Keine Schatten für Map-Lichter – URP Shadow-Atlas kann nicht
             // hunderte Punctual-Light Shadow Maps verwalten. Nur das
             // Directional Sun Light (MapSkyboxApplier) wirft Schatten.
@@ -311,19 +371,118 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                         lightGO.transform.rotation = Quaternion.LookRotation(direction.normalized);
                     }
                 }
-                else if (!string.IsNullOrEmpty(target))
+                else
                 {
-                    Debug.LogWarning($"[MapLightApplier] Spot-Light '{meta.gameObject.name}' hat target='{target}', " +
-                                     $"aber kein passendes info_notnull mit targetname='{target}' gefunden.");
+                    // idTech3 "angle" Key: Yaw-Richtung der Entity.
+                    // Spezialwerte: -1 = straight up, -2 = straight down.
+                    // Fallback fuer Spot-Lights ohne Target-Entity.
+                    ApplyAngle(lightGO.transform, meta);
+
+                    if (!string.IsNullOrEmpty(target))
+                    {
+                        Debug.LogWarning($"[MapLightApplier] Spot-Light '{meta.gameObject.name}' hat target='{target}', " +
+                                         $"aber kein passendes info_notnull mit targetname='{target}' gefunden.");
+                    }
                 }
             }
+            else
+            {
+                // Point-Lights: "angle" kann trotzdem vorhanden sein (Entity-Ausrichtung).
+                // Hat keinen visuellen Effekt auf Point-Lights, aber korrekt setzen
+                // falls spaeter der Typ geaendert wird oder Cookies genutzt werden.
+                ApplyAngle(lightGO.transform, meta);
+            }
+
+            // Fuer Proximity-Culling registrieren
+            m_ProximityData.Add(new ProximityLightData
+            {
+                LightComponent = lightGO.GetComponent<Light>(),
+                Position = lightGO.transform.position
+            });
 
             return lightGO;
         }
 
         #endregion
 
+        #region Proximity Culling
+
+        /// <summary>
+        /// Aktiviert Lichter innerhalb des Proximity-Radius und deaktiviert entfernte.
+        /// Wird vom MapLightProximityCuller-MonoBehaviour aufgerufen.
+        /// </summary>
+        /// <param name="viewerPosition">Position des Betrachters (Kamera).</param>
+        /// <returns>Anzahl der aktuell aktiven Lichter.</returns>
+        public int UpdateProximity(Vector3 viewerPosition)
+        {
+            int activeCount = 0;
+
+            for (int i = 0; i < m_ProximityData.Count; i++)
+            {
+                ProximityLightData data = m_ProximityData[i];
+                if (data.LightComponent == null)
+                {
+                    continue;
+                }
+
+                float sqrDist = (data.Position - viewerPosition).sqrMagnitude;
+                bool shouldBeActive = sqrDist <= k_ProximityRadiusSqr;
+
+                if (data.LightComponent.enabled != shouldBeActive)
+                {
+                    data.LightComponent.enabled = shouldBeActive;
+                }
+
+                if (shouldBeActive)
+                {
+                    activeCount++;
+                }
+            }
+
+            return activeCount;
+        }
+
+        #endregion
+
         #region Parsing
+
+        /// <summary>
+        /// Wendet den idTech3 "angle" Key auf ein Transform an.
+        /// Spezialwerte: -1 = straight up (90° Pitch), -2 = straight down (-90° Pitch).
+        /// Sonst: Yaw-Rotation 0-360° (0=Nord/+Z, 90=Ost/+X, 180=Sued/-Z, 270=West/-X).
+        /// Ohne "angle" Key: keine Aenderung (Default forward = +Z).
+        /// </summary>
+        private void ApplyAngle(Transform transform, Ghoul2Meta meta)
+        {
+            string angleStr = meta.GetString("angle");
+            if (string.IsNullOrEmpty(angleStr))
+            {
+                return;
+            }
+
+            if (!float.TryParse(angleStr, NumberStyles.Float, CultureInfo.InvariantCulture, out float angle))
+            {
+                return;
+            }
+
+            // idTech3 Spezialwerte
+            if (Mathf.Approximately(angle, -1f))
+            {
+                // Straight up
+                transform.rotation = Quaternion.Euler(-90f, 0f, 0f);
+            }
+            else if (Mathf.Approximately(angle, -2f))
+            {
+                // Straight down
+                transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            }
+            else
+            {
+                // idTech3: angle = Yaw in Grad (0=Nord, 90=Ost, etc.)
+                // Unity: Y-Rotation entspricht Yaw
+                transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            }
+        }
 
         /// <summary>
         /// Parst eine idTech3/SoF2 Farbangabe.

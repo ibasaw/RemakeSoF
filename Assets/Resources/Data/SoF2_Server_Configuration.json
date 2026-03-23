@@ -1,0 +1,19 @@
+{
+    "maxPlayers": 16,
+    "mapName": "maps/mp_col1",
+    "serverName": "SoF2 Remake Server",
+    "serverDescription": "Ein SoF2 Remake Server. Viel Spaß beim Spielen!",
+    "motd": "Willkommen auf unserem SoF2 Remake Server! Viel Spaß beim Spielen und lasst es ordentlich krachen!",
+    "tickRate": 20,
+    "enableFriendlyFire": true,
+    "mapRotation": [
+        "maps/mp_col1",
+        "maps/mp_finca"
+    ],
+    "gameMode": "tdm",
+    "port": 7777,
+    "ip": "127.0.0.1",
+    "timeLimit": 300,
+    "scoreLimit": 50
+
+}

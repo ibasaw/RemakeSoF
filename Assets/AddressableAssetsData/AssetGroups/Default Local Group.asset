@@ -160,6 +160,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5a8a9bf3c47b9454b99578fc3fdf3f72
+    m_Address: maps/mp_kam3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5b0fc96c5b4e40848a7d8ef956674bb8
+    m_Address: maps/mp_kam2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 646fb1bededdb2749beeb6cbcac2fdc7
     m_Address: models/chunks/metal/metal_big
     m_ReadOnly: 0

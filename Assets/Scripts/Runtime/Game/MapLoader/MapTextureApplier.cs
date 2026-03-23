@@ -25,6 +25,44 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
         /// </summary>
         private const string k_ShaderName = "SoF2/MapSurface";
 
+        /// <summary>
+        /// SoF2 Water Shader: Transparenz, UV-Turbulenz, Wellen, Depth-Fade, Fresnel.
+        /// </summary>
+        private const string k_WaterShaderName = "SoF2/Water";
+
+        /// <summary>
+        /// SoF2 Glass Shader: Transparenz, Fresnel, Blinn-Phong Specular.
+        /// Fuer Glass, BPGlass, ShatterGlass Surfaces.
+        /// </summary>
+        private const string k_GlassShaderName = "SoF2/Glass";
+
+        /// <summary>
+        /// SoF2 Metal Shader: Metallisches Specular, Fresnel-Rim.
+        /// Fuer SolidMetal, HollowMetal, Armor Surfaces.
+        /// </summary>
+        private const string k_MetalShaderName = "SoF2/Metal";
+
+        /// <summary>
+        /// SoF2 Ice Shader: Halbtransparent, Sub-Surface Scattering, starkes Specular.
+        /// </summary>
+        private const string k_IceShaderName = "SoF2/Ice";
+
+        /// <summary>
+        /// SoF2 Polished Shader: Hartes Specular fuer polierte Steinoberflaechen.
+        /// Fuer Marble, Tiles Surfaces.
+        /// </summary>
+        private const string k_PolishedShaderName = "SoF2/Polished";
+
+        /// <summary>
+        /// Prefix fuer q3map_material Properties in Ghoul2Meta (q3map_material_0..N, pro Sub-Material-Slot).
+        /// </summary>
+        private const string k_Q3MapMaterialPrefix = "q3map_material_";
+
+        /// <summary>
+        /// Fallback q3map_material ohne Slot-Suffix.
+        /// </summary>
+        private const string k_Q3MapMaterialSingle = "q3map_material";
+
 
 
         /// <summary>
@@ -158,7 +196,12 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 string key = textureSlots[i].key;
 
                 bool isTransparent = HasTransparency(meta, slotIndex);
-                string variantKey = BuildVariantKey(key, isTransparent);
+                string surfaceShader = GetSurfaceShaderName(meta, slotIndex);
+                bool hasSurfaceShader = surfaceShader != null;
+
+                string variantKey = hasSurfaceShader
+                    ? (isTransparent ? $"{key}|s:{surfaceShader}|t" : $"{key}|s:{surfaceShader}")
+                    : BuildVariantKey(key, isTransparent);
 
                 if (m_MaterialCache.TryGetValue(variantKey, out Material cached))
                 {
@@ -166,7 +209,9 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                     continue;
                 }
 
-                Material baseMaterial = ResolveMaterial(key, textureManager);
+                Material baseMaterial = hasSurfaceShader
+                    ? ResolveSurfaceMaterial(key, surfaceShader, textureManager)
+                    : ResolveMaterial(key, textureManager);
                 if (baseMaterial == null)
                 {
                     Material[] existing = renderer.sharedMaterials;
@@ -177,8 +222,10 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
 
                 // Bei Varianten mit Flags: Klon erzeugen, damit das Original
                 // im TextureManager/ResolveMaterial nicht mutiert wird.
+                // Surface-Shader-Materialien (ResolveSurfaceMaterial) sind bereits frische Instanzen,
+                // muessen aber trotzdem geklont werden wenn sie im Cache landen und transparent sind.
                 Material material = isTransparent
-                    ? new Material(baseMaterial) { name = baseMaterial.name }
+                    ? (hasSurfaceShader ? baseMaterial : new Material(baseMaterial) { name = baseMaterial.name })
                     : baseMaterial;
 
                 if (isTransparent)
@@ -327,16 +374,170 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
                 material.SetFloat("_Smoothness", 0f);
             }
 
-            // SoF2 Light-Blend: 25% Realtime-Licht auf Unlit-Basis.
-            // Kann spaeter per Spieleinstellung angepasst werden.
+            // SoF2 Light-Blend: 70% Realtime-Licht — Point/Spot-Lights und Sonne/Mond
+            // sind die primaeren Lichtquellen. Ohne Licht: Flaechen auf 30% abgedunkelt.
             if (material.HasProperty("_LightBlend"))
             {
-                material.SetFloat("_LightBlend", 0.25f);
+                material.SetFloat("_LightBlend", 0.7f);
             }
 
             // SoF2/idTech3-Default: kein Backface-Culling (doppelseitig)
             SetRenderFaceBoth(material);
 
+            return material;
+        }
+
+        /// <summary>
+        /// Bestimmt den spezialisierten Shader-Namen fuer einen Surface-Slot anhand
+        /// des q3map_material-Werts. Gibt null zurueck wenn der Standard-Shader reicht.
+        ///
+        /// Mapping (PascalCase q3map_material → Shader):
+        ///   Water                        → SoF2/Water
+        ///   Glass, BPGlass, ShatterGlass  → SoF2/Glass
+        ///   SolidMetal, HollowMetal, Armor→ SoF2/Metal
+        ///   Ice                           → SoF2/Ice
+        ///   Marble, Tiles                 → SoF2/Polished
+        ///   Alles andere                  → null (SoF2/MapSurface)
+        /// </summary>
+        private string GetSurfaceShaderName(Ghoul2Meta meta, int slotIndex)
+        {
+            string materialValue = GetQ3MapMaterial(meta, slotIndex);
+            if (string.IsNullOrEmpty(materialValue))
+            {
+                // Fallback: surface_types_json_N durchsuchen
+                materialValue = GetSurfaceTypeFromJson(meta, slotIndex);
+            }
+
+            if (string.IsNullOrEmpty(materialValue))
+            {
+                return null;
+            }
+
+            return MapMaterialToShader(materialValue);
+        }
+
+        /// <summary>
+        /// Liest q3map_material_N oder q3map_material (Fallback) aus Ghoul2Meta.
+        /// </summary>
+        private string GetQ3MapMaterial(Ghoul2Meta meta, int slotIndex)
+        {
+            string slotKey = k_Q3MapMaterialPrefix + slotIndex;
+            if (meta.HasProperty(slotKey))
+            {
+                string value = meta.GetString(slotKey);
+                if (!string.IsNullOrEmpty(value))
+                {
+                    return value;
+                }
+            }
+
+            if (meta.HasProperty(k_Q3MapMaterialSingle))
+            {
+                string value = meta.GetString(k_Q3MapMaterialSingle);
+                if (!string.IsNullOrEmpty(value))
+                {
+                    return value;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Extrahiert den ersten bekannten Surface-Type aus surface_types_json_N.
+        /// Gibt den Type-String in Lowercase zurueck (z.B. "water", "glass").
+        /// </summary>
+        private string GetSurfaceTypeFromJson(Ghoul2Meta meta, int slotIndex)
+        {
+            string surfaceKey = k_SurfaceTypesJsonPrefix + slotIndex;
+            if (!meta.HasProperty(surfaceKey))
+            {
+                return null;
+            }
+
+            string jsonValue = meta.GetString(surfaceKey);
+            if (string.IsNullOrEmpty(jsonValue))
+            {
+                return null;
+            }
+
+            // Bekannte Surface-Types die spezielle Shader brauchen
+            string lower = jsonValue.ToLowerInvariant();
+            if (lower.Contains("water")) return "Water";
+            if (lower.Contains("glass") || lower.Contains("bpglass") || lower.Contains("shatterglass")) return "Glass";
+            if (lower.Contains("solidmetal") || lower.Contains("hollowmetal") || lower.Contains("armor")) return "SolidMetal";
+            if (lower.Contains("ice")) return "Ice";
+            if (lower.Contains("marble")) return "Marble";
+            if (lower.Contains("tiles")) return "Tiles";
+
+            return null;
+        }
+
+        /// <summary>
+        /// Mappt einen q3map_material-Wert auf den passenden Shader-Namen.
+        /// Gibt null zurueck wenn der Standard-Shader (MapSurface) verwendet werden soll.
+        /// </summary>
+        private string MapMaterialToShader(string materialValue)
+        {
+            // Case-insensitive Vergleich
+            string upper = materialValue.ToUpperInvariant();
+
+            switch (upper)
+            {
+                case "WATER":
+                    return k_WaterShaderName;
+
+                case "GLASS":
+                case "BPGLASS":
+                case "SHATTERGLASS":
+                    return k_GlassShaderName;
+
+                case "SOLIDMETAL":
+                case "HOLLOWMETAL":
+                case "ARMOR":
+                    return k_MetalShaderName;
+
+                case "ICE":
+                    return k_IceShaderName;
+
+                case "MARBLE":
+                case "TILES":
+                    return k_PolishedShaderName;
+
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// Loest einen Textur-Key zu einem Material mit spezialisiertem Shader auf.
+        /// Faellt auf ResolveMaterial (MapSurface) zurueck wenn der Shader nicht gefunden wird.
+        /// </summary>
+        private Material ResolveSurfaceMaterial(string key, string shaderName, TextureManager textureManager)
+        {
+            TextureData textureData = textureManager.GetTextureData(key)
+                ?? textureManager.GetTextureDataByAlias(key);
+
+            Shader shader = Shader.Find(shaderName);
+            if (shader == null)
+            {
+                Debug.LogWarning($"[MapTextureApplier] Shader '{shaderName}' not found, falling back to MapSurface.");
+                return ResolveMaterial(key, textureManager);
+            }
+
+            // Shader-Name als kurzes Prefix ("SoF2/Water" → "Water")
+            string prefix = shaderName.Contains("/")
+                ? shaderName.Substring(shaderName.LastIndexOf('/') + 1)
+                : shaderName;
+
+            Material material = new(shader) { name = $"{prefix}_{key}" };
+
+            if (textureData != null && textureData.HasTexture())
+            {
+                material.SetTexture("_BaseMap", textureData.Texture);
+            }
+
+            SetRenderFaceBoth(material);
             return material;
         }
 
