@@ -38,6 +38,10 @@
             <ui:Label text="" name="bhopChainLabel" style="font-size: 20px; color: rgb(200, 200, 200); -unity-text-align: middle-center; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8); margin-top: 2px;"/>
             <ui:Label text="" name="bhopLastChainLabel" style="font-size: 16px; color: rgb(150, 150, 150); -unity-text-align: middle-center; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8); margin-top: 4px;"/>
         </ui:VisualElement>
+        <ui:VisualElement name="HitConfirmContainer" style="position: absolute; top: 55%; left: 0; right: 0; align-items: center; justify-content: flex-start; display: none;">
+            <ui:Label text="" name="hitRegionLabel" style="font-size: 18px; color: rgb(255, 80, 80); -unity-font-style: bold; -unity-text-align: middle-center; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9); letter-spacing: 1px;"/>
+            <ui:Label text="" name="hitDamageLabel" style="font-size: 14px; color: rgb(255, 200, 200); -unity-text-align: middle-center; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9); margin-top: 2px;"/>
+        </ui:VisualElement>
         <ui:VisualElement name="WeaponHudContainer" style="position: absolute; bottom: 20px; right: 20px; align-items: flex-end; background-color: rgba(0, 0, 0, 0.6); padding-left: 14px; padding-right: 14px; padding-top: 8px; padding-bottom: 8px; border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;">
             <ui:VisualElement name="weaponIconImage" style="width: 64px; height: 32px; -unity-background-scale-mode: scale-to-fit; margin-bottom: 4px; align-self: flex-end;"/>
             <ui:Label text="KNIFE" name="weaponNameLabel" style="font-size: 16px; color: rgb(200, 200, 200); -unity-font-style: bold; -unity-text-align: middle-right; margin-bottom: 4px; letter-spacing: 2px;"/>

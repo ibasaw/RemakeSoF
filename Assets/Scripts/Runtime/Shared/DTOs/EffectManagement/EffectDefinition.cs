@@ -301,6 +301,12 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// </summary>
         [JsonProperty("burst")]
         public bool Burst;
+
+        /// <summary>
+        /// Maximale Distanz in Metern, ab der Partikel nicht gerendert werden (SoF2 cullrange × 0.0254).
+        /// </summary>
+        [JsonProperty("cullRange")]
+        public float CullRange;
     }
 
     // ===== Shared Sub-Definitions =====
@@ -340,6 +346,13 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// </summary>
         [JsonProperty("parm")]
         public float Parm;
+
+        /// <summary>
+        /// SoF2 parmMax: Obere Grenze fuer Parm-Randomisierung (0-100).
+        /// Jedes Partikel waehlt einen zufaelligen Wert zwischen Parm und ParmMax.
+        /// </summary>
+        [JsonProperty("parmMax")]
+        public float ParmMax;
 
         /// <summary>
         /// Verlaufskurve: "linear", "nonlinear", "linear nonlinear".
@@ -417,6 +430,13 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// </summary>
         [JsonProperty("parm")]
         public float Parm;
+
+        /// <summary>
+        /// SoF2 parmMax: Obere Grenze fuer Parm-Randomisierung (0-100).
+        /// Jedes Partikel waehlt einen zufaelligen Wert zwischen Parm und ParmMax.
+        /// </summary>
+        [JsonProperty("parmMax")]
+        public float ParmMax;
 
         /// <summary>
         /// Verlaufskurve: "linear", "nonlinear", "clamp".

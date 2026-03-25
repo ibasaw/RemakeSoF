@@ -50,11 +50,50 @@ ServerProjectile (MonoBehaviour, server-only)
 ## ServerProjectile Physics
 - Velocity in Unity m/s = speed_QU × SOF2_UNIT_SCALE (0.0254)
 - Gravity: `Physics.gravity × gravityScale × dt` added to velocity each frame
-- Collision: Raycast along movement vector each frame
+- Collision: RaycastAll along movement vector each frame (with owner filtering)
 - Bounce: `Vector3.Reflect(velocity, normal) × bounceCoeff`
-- Impact projectiles detonate on any world or hitbox collision
+- Impact projectiles detonate on any world or hitbox collision (excluding owner)
 - Timer projectiles bounce off world, countdown to detonation
 - MAX_LIFETIME = 15s safety cleanup
+
+### MISSILE_PRESTEP (RPG7 Self-Hit Prevention)
+RPG7-Projektile spawnen mit Forward-Offset um Selbsttreffer zu vermeiden:
+```csharp
+const float MISSILE_PRESTEP = 32f * 0.0254f;  // 32 QU = 0.8128m
+```
+- Spawn an `eyePos + aimDirection * MISSILE_PRESTEP` statt `eyePos`
+- Wall-Check: Raycast von `eyePos` → `spawnPos` auf worldLayerMask
+  - Wenn Wand dazwischen: Spawn trotzdem an `eyePos` (SoF2-Verhalten)
+- Quelle: SoF2 `g_weapon.c` MISSILE_PRESTEP
+
+### Owner-Filtering (Eigene Collider ignorieren)
+ServerProjectile speichert `m_OwnerRoot` (Transform des Besitzers):
+```csharp
+// In Initialize():
+m_OwnerRoot = ownerPlayerObject.transform;
+
+// In Move():
+RaycastHit[] worldHits = Physics.RaycastAll(..., m_WorldLayerMask);
+foreach (hit in worldHits)
+    if (!hit.transform.IsChildOf(m_OwnerRoot))  // Owner filtern
+        → Welt-Treffer
+
+RaycastHit[] hitboxHits = Physics.RaycastAll(..., m_HitboxLayerMask);
+foreach (hit in hitboxHits)
+    if (!hit.transform.IsChildOf(m_OwnerRoot))  // Owner filtern
+        → Hitbox-Treffer (nächster)
+```
+- `RaycastAll` statt `Raycast` um alle Treffer zu sammeln und Owner auszufiltern
+- `IsChildOf(m_OwnerRoot)` erkennt sowohl Hitbox-Trigger als auch Physics-Collider
+- Explosion (`Detonate()` via `OverlapSphere`) trifft Owner absichtlich (Self-Damage, Rocket-Jumping)
+
+### Layer-Masken
+```csharp
+m_HitboxLayerMask = LayerMask.GetMask("Hitbox");
+m_ExplosionLayerMask = LayerMask.GetMask("Player");
+m_WorldLayerMask = ~(m_HitboxLayerMask | LayerMask.GetMask("BrushCollision", "Player"));
+```
+- Player-Layer in worldLayerMask excludiert (Movement-BoxCollider soll nicht als Wand zählen)
 
 ## Action Gating
 Grenade cook/throw blocks all other actions:

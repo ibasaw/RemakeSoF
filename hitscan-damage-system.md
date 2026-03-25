@@ -194,12 +194,64 @@ Attack-Cooldown basiert auf `mp_attack` Animation:
 
 ## Self-Hit-Prevention
 
-Vor dem Raycast wird der eigene Collider deaktiviert:
+Vor dem Raycast werden die eigenen Collider (Physics + Hitboxes) deaktiviert:
 ```csharp
 m_ServerPlayerCharacter.SetPhysicsColliderEnabled(false);
+m_OwnHitboxSystem?.SetHitboxesEnabled(false);
 // ... Raycast-Loop ...
+m_OwnHitboxSystem?.SetHitboxesEnabled(true);
 m_ServerPlayerCharacter.SetPhysicsColliderEnabled(true);
 ```
+
+- `m_OwnHitboxSystem` wird in `OnServerSpawn()` via `GetComponent<ClientHitboxSystem>()` initialisiert
+- `SetHitboxesEnabled(bool)` toggled `m_HitboxObjects[i].SetActive(enabled)` für alle 17 Hitbox-GameObjects
+- Nur der Schütze selbst wird deaktiviert — gegnerische Collider bleiben aktiv
+
+---
+
+## Layer-Masken (Dual-Raycast-Architektur)
+
+### Hitbox-Raycast
+```csharp
+int hitboxLayerMask = LayerMask.GetMask("Hitbox");  // Layer 8
+Physics.Raycast(eyePos, aimDirection, ..., hitboxLayerMask, QueryTriggerInteraction.Collide);
+```
+- Nur Trigger-Collider auf Layer "Hitbox" (8)
+- `QueryTriggerInteraction.Collide` notwendig, da Hitboxes Trigger sind
+
+### Welt-Raycast
+```csharp
+int worldLayerMask = ~(hitboxLayerMask | LayerMask.GetMask("BrushCollision", "Player"));
+Physics.Raycast(eyePos, aimDirection, ..., worldLayerMask);
+```
+- **Excludiert**: Hitbox (8), BrushCollision (9), Player (7)
+- Player-Layer MUSS excludiert werden, sonst trifft der Raycast den Movement-BoxCollider
+  des Gegners anstatt die Hitbox-Trigger (Movement-Collider ist kein Trigger, liegt näher)
+
+### Layer-Zuordnung
+
+| Layer | Nr. | Collider-Typ | Raycast-Verwendung |
+|-------|-----|-------------|-------------------|
+| Default | 0 | Welt-Geometrie | worldLayerMask ✓ |
+| Player | 7 | Movement BoxCollider (non-Trigger) | **Excludiert** aus Hitscan |
+| Hitbox | 8 | Per-Bone BoxCollider (Trigger) | hitboxLayerMask ✓ |
+| BrushCollision | 9 | SoF2-Map-Brushes | **Excludiert** (separate Collision) |
+
+### Distanz-Vergleich
+```csharp
+if (hitboxDist <= worldDist && didHit) {
+    // Hitbox naeher: Spieler getroffen → Damage
+} else if (didHitWorld) {
+    // Welt naeher: Impact-Effekt
+}
+```
+
+### Bug-History (Layer-Mask)
+- **Problem**: `worldLayerMask = ~(Hitbox | BrushCollision)` schloss Player-Layer NICHT aus
+- **Symptom**: Movement-BoxCollider wurde vom Welt-Raycast getroffen, war oft näher als Hitbox-Trigger
+  → Schüsse „prallten ab" ohne Schaden
+- **Fix**: `"Player"` zu Exclusion-Maske hinzugefügt in ProcessAttack, ProcessAltAttack,
+  ServerProjectile und ClientProjectileVisual
 
 ---
 

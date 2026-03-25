@@ -7,12 +7,15 @@ using UnityEngine;
 namespace Tolik.RemakeSoF.Runtime.DataManagement
 {
     /// <summary>
-    /// Loads and caches gore area and gore piece definitions from SoF2_DATA.json.
+    /// Loads and caches gore area, gore piece and gore effect definitions from SoF2_DATA.json.
     /// </summary>
     public class GoreDataLoader
     {
+        private const string RESOURCE_PATH = "Data/SoF2_DATA";
+
         private readonly Dictionary<string, GoreArea> m_GoreAreasByLocation = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, GorePiece> m_GorePiecesByName = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, GoreEffectDefinition> m_GoreEffectsByName = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Initializes the loader and loads gore data from Resources/Data/SoF2_DATA.json.
@@ -51,6 +54,20 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         }
 
         /// <summary>
+        /// Returns the gore effect definition for a given effect name.
+        /// </summary>
+        public GoreEffectDefinition GetEffectByName(string effectName)
+        {
+            if (string.IsNullOrWhiteSpace(effectName))
+            {
+                return null;
+            }
+
+            m_GoreEffectsByName.TryGetValue(effectName, out GoreEffectDefinition effect);
+            return effect;
+        }
+
+        /// <summary>
         /// Returns all loaded gore areas.
         /// </summary>
         public List<GoreArea> GetAllAreas()
@@ -83,42 +100,45 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         {
             m_GoreAreasByLocation.Clear();
             m_GorePiecesByName.Clear();
+            m_GoreEffectsByName.Clear();
             Debug.Log("[GoreDataLoader] Cache cleared.");
         }
 
-        private void LoadFromResources(string fileNameWithoutExtension = "SoF2_DATA")
+        private void LoadFromResources()
         {
             m_GoreAreasByLocation.Clear();
             m_GorePiecesByName.Clear();
+            m_GoreEffectsByName.Clear();
 
-            string json = "";//TODO: auskommentiert erst mal //JsonDataReader.TryLoadJsonText(fileNameWithoutExtension);
-            if (string.IsNullOrEmpty(json))
+            TextAsset asset = Resources.Load<TextAsset>(RESOURCE_PATH);
+            if (asset == null)
             {
-                Debug.LogWarning($"[GoreDataLoader] JSON file not found: {fileNameWithoutExtension}");
+                Debug.LogWarning($"[GoreDataLoader] JSON file not found at Resources/{RESOURCE_PATH}");
                 return;
             }
 
             SoF2DataRoot dataRoot;
             try
             {
-                dataRoot = JsonConvert.DeserializeObject<SoF2DataRoot>(json);
+                dataRoot = JsonConvert.DeserializeObject<SoF2DataRoot>(asset.text);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[GoreDataLoader] Failed to parse {fileNameWithoutExtension}: {ex.Message}");
+                Debug.LogError($"[GoreDataLoader] Failed to parse {RESOURCE_PATH}: {ex.Message}");
                 return;
             }
 
             if (dataRoot?.Gore == null)
             {
-                Debug.LogWarning($"[GoreDataLoader] Gore section missing in {fileNameWithoutExtension}");
+                Debug.LogWarning($"[GoreDataLoader] Gore section missing in {RESOURCE_PATH}");
                 return;
             }
 
             LoadGorePieces(dataRoot.Gore.GorePieces);
+            LoadGoreEffects(dataRoot.Gore.GoreEffects);
             LoadGoreAreas(dataRoot.Gore.GoreAreas);
 
-            Debug.Log($"[GoreDataLoader] Loaded {m_GorePiecesByName.Count} gore pieces and {m_GoreAreasByLocation.Count} gore areas.");
+            Debug.Log($"[GoreDataLoader] Loaded {m_GorePiecesByName.Count} gore pieces, {m_GoreEffectsByName.Count} gore effects and {m_GoreAreasByLocation.Count} gore areas.");
         }
 
         private void LoadGorePieces(List<GorePiece> pieces)
@@ -142,6 +162,30 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                 }
 
                 m_GorePiecesByName[piece.name] = piece;
+            }
+        }
+
+        private void LoadGoreEffects(List<GoreEffectDefinition> effects)
+        {
+            if (effects == null)
+            {
+                return;
+            }
+
+            foreach (GoreEffectDefinition effect in effects)
+            {
+                if (effect == null || string.IsNullOrWhiteSpace(effect.Name))
+                {
+                    continue;
+                }
+
+                if (m_GoreEffectsByName.ContainsKey(effect.Name))
+                {
+                    Debug.LogWarning($"[GoreDataLoader] Duplicate gore effect name ignored: {effect.Name}");
+                    continue;
+                }
+
+                m_GoreEffectsByName[effect.Name] = effect;
             }
         }
 
@@ -179,6 +223,9 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         {
             [JsonProperty("gore_pieces")]
             public List<GorePiece> GorePieces { get; set; }
+
+            [JsonProperty("gore_effects")]
+            public List<GoreEffectDefinition> GoreEffects { get; set; }
 
             [JsonProperty("gore_areas")]
             public List<GoreArea> GoreAreas { get; set; }

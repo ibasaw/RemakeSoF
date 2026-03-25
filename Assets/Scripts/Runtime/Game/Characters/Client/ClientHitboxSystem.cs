@@ -144,6 +144,26 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_IsInitialized = false;
         }
 
+        /// <summary>
+        /// Aktiviert oder deaktiviert alle Hitbox-Collider.
+        /// Wird vom Server vor/nach Raycasts aufgerufen um Self-Hits zu vermeiden.
+        /// </summary>
+        public void SetHitboxesEnabled(bool enabled)
+        {
+            if (m_HitboxObjects == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < m_HitboxObjects.Length; i++)
+            {
+                if (m_HitboxObjects[i] != null)
+                {
+                    m_HitboxObjects[i].SetActive(enabled);
+                }
+            }
+        }
+
         private void OnDestroy()
         {
             ClearHitboxes();

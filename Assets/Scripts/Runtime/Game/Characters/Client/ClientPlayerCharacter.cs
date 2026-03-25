@@ -1182,8 +1182,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Remote-Modus: Bone-Referenzen + Collider, kein Kamera/Simulation Setup
             if (m_IsRemoteMode)
             {
-                // Collider auch fuer Remote initialisieren (Physics + Visual Debug)
-                if (m_ColliderSystem != null)
+                // Collider fuer Remote-Clients initialisieren (nicht auf Server — dort existiert bereits ServerPlayerCharacter.m_PhysicsCollider)
+                if (m_ColliderSystem != null && !m_NetworkedPlayerCharacter.IsServer)
                 {
                     Transform highestPointR = FindDeepChild(visualInstance.transform, "*head_t_0");
                     Transform craniumR = FindDeepChild(visualInstance.transform, "cranium");

@@ -96,6 +96,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Callback wenn Projektil detoniert (fuer Visual-RPC vom Spawner).</summary>
         public event System.Action<Vector3> OnDetonated;
 
+        /// <summary>Root-Transform des Owners (fuer Raycast-Filterung: eigene Collider ignorieren).</summary>
+        private Transform m_OwnerRoot;
+
         /// <summary>
         /// Initialisiert das Projektil mit Waffen-Daten.
         /// Wird vom Server nach Instantiate aufgerufen.
@@ -135,8 +138,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             // SoF2 G_RadiusDamage nutzt Entity-Origins, nicht per-Bone Hitboxen.
             // Explosions-Erkennung ueber Player-Physics-Collider (BoxCollider auf Player-Layer).
             m_ExplosionLayerMask = LayerMask.GetMask(PLAYER_LAYER_NAME);
-            // Welt-Kollision: alles was nicht Hitbox oder BrushCollision ist
-            m_WorldLayerMask = ~(m_HitboxLayerMask | LayerMask.GetMask("BrushCollision"));
+            // Welt-Kollision: alles was nicht Hitbox, BrushCollision oder Player-Movement-Collider ist
+            m_WorldLayerMask = ~(m_HitboxLayerMask | LayerMask.GetMask("BrushCollision", "Player"));
+
+            // Owner-Root finden fuer Raycast-Filterung (eigene Collider ignorieren)
+            foreach (Unity.Netcode.NetworkClient client in Unity.Netcode.NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (client.ClientId == ownerClientId && client.PlayerObject != null)
+                {
+                    m_OwnerRoot = client.PlayerObject.transform;
+                    break;
+                }
+            }
 
             // Rotation in Flugrichtung
             if (m_Velocity.sqrMagnitude > 0.001f)
@@ -210,7 +223,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             Vector3 direction = movement / distance;
 
             // Raycast fuer Welt-Kollision (Waende, Boden)
-            if (Physics.Raycast(transform.position, direction, out RaycastHit worldHit, distance, m_WorldLayerMask))
+            // RaycastAll + Filter: eigenen Owner-Collider ignorieren
+            RaycastHit[] worldHits = Physics.RaycastAll(transform.position, direction, distance, m_WorldLayerMask);
+            RaycastHit worldHit = default;
+            bool hasWorldHit = false;
+            float closestWorldDist = float.MaxValue;
+            foreach (RaycastHit wh in worldHits)
+            {
+                if (m_OwnerRoot != null && wh.collider.transform.IsChildOf(m_OwnerRoot))
+                {
+                    continue;
+                }
+                if (wh.distance < closestWorldDist)
+                {
+                    closestWorldDist = wh.distance;
+                    worldHit = wh;
+                    hasWorldHit = true;
+                }
+            }
+            if (hasWorldHit)
             {
                 transform.position = worldHit.point + worldHit.normal * 0.01f;
 
@@ -246,7 +277,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             }
 
             // Raycast fuer Hitbox-Kollision (Spieler direkt treffen)
-            if (Physics.Raycast(transform.position, direction, out RaycastHit hitboxHit, distance, m_HitboxLayerMask, QueryTriggerInteraction.Collide))
+            // RaycastAll + Filter: eigenen Owner ignorieren
+            RaycastHit[] hitboxHits = Physics.RaycastAll(transform.position, direction, distance, m_HitboxLayerMask, QueryTriggerInteraction.Collide);
+            RaycastHit hitboxHit = default;
+            bool hasHitboxHit = false;
+            float closestHitboxDist = float.MaxValue;
+            foreach (RaycastHit hh in hitboxHits)
+            {
+                if (m_OwnerRoot != null && hh.collider.transform.IsChildOf(m_OwnerRoot))
+                {
+                    continue;
+                }
+                if (hh.distance < closestHitboxDist)
+                {
+                    closestHitboxDist = hh.distance;
+                    hitboxHit = hh;
+                    hasHitboxHit = true;
+                }
+            }
+            if (hasHitboxHit)
             {
                 if (m_Detonation == "impact")
                 {

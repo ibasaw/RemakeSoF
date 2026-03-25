@@ -1,6 +1,8 @@
 using System;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
 
@@ -45,6 +47,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         private string m_LoadedSkinName;
 
+        /// <summary>
+        /// True wenn auf dem Dedicated Server (kein Host). Skeleton wird ohne Renderer geladen.
+        /// </summary>
+        private bool m_IsServerMode;
+
         private void Awake()
         {
             m_NetworkedCharacter.OnNetworkSpawnHook += OnNetworkSpawn;
@@ -65,8 +72,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         {
             if (m_NetworkedCharacter.IsServer && !m_NetworkedCharacter.IsHost)
             {
-                // Dedicated Server: keine Visuals nötig
-                enabled = false;
+                // Dedicated Server: Skeleton ohne Rendering laden fuer Hitbox-Collider
+                m_IsServerMode = true;
+                m_CharacterState.OnSkinChanged += OnSkinChanged;
+
+                string skinName = m_CharacterState.CurrentSkinName;
+                if (!string.IsNullOrEmpty(skinName))
+                {
+                    LoadServerSkeleton(skinName);
+                }
                 return;
             }
 
@@ -74,10 +88,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_CharacterState.OnSkinChanged += OnSkinChanged;
 
             // Initialen Skin laden, falls bereits ein Name vorhanden ist
-            string skinName = m_CharacterState.CurrentSkinName;
-            if (!string.IsNullOrEmpty(skinName))
+            string skinName2 = m_CharacterState.CurrentSkinName;
+            if (!string.IsNullOrEmpty(skinName2))
             {
-                LoadAndApplySkin(skinName);
+                LoadAndApplySkin(skinName2);
             }
         }
 
@@ -97,6 +111,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         {
             if (string.IsNullOrEmpty(skinName))
             {
+                return;
+            }
+
+            if (m_IsServerMode)
+            {
+                LoadServerSkeleton(skinName);
                 return;
             }
 
@@ -153,6 +173,99 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             Debug.Log($"[ClientCharacterSkinHandler] Networked Character State: Name {m_CharacterState.CharacterName}, Skin {m_CharacterState.CurrentSkinName}, Health {m_CharacterState.Health}");
 
             // Listener benachrichtigen (z.B. ClientPlayerCharacter für Kamera-Targets)
+            OnVisualInstantiated?.Invoke(m_CurrentVisualInstance);
+        }
+
+        /// <summary>
+        /// Laedt auf dem Dedicated Server nur das Skeleton (ohne Renderer) fuer Hitbox-Erstellung.
+        /// Nutzt SkinDefinitionLoader → modelName → PrefabManager direkt, ohne PlayerSkinManager.
+        /// </summary>
+        private void LoadServerSkeleton(string skinName)
+        {
+            if (skinName == m_LoadedSkinName)
+            {
+                return;
+            }
+
+            SkinDefinitionLoader skinLoader = ServiceLocator.Get<SkinDefinitionLoader>();
+            if (skinLoader == null)
+            {
+                Debug.LogError("[ClientCharacterSkinHandler] SkinDefinitionLoader nicht auf Server registriert — keine Hitboxen moeglich.");
+                return;
+            }
+
+            SkinDefinition skinDef = skinLoader.GetByName(skinName);
+            if (skinDef == null)
+            {
+                Debug.LogError($"[ClientCharacterSkinHandler] Skin-Definition nicht gefunden: {skinName}");
+                return;
+            }
+
+            string modelName = skinDef.GetModelName();
+            if (string.IsNullOrEmpty(modelName))
+            {
+                Debug.LogError($"[ClientCharacterSkinHandler] Kein Model-Name in Skin-Definition: {skinName}");
+                return;
+            }
+
+            PrefabManager prefabManager = ServiceLocator.Get<PrefabManager>();
+            if (prefabManager == null)
+            {
+                Debug.LogError("[ClientCharacterSkinHandler] PrefabManager nicht verfuegbar auf Server.");
+                return;
+            }
+
+            string prefabPath = $"characters/models/{modelName}";
+            GameObject prefabAsset = prefabManager.LoadPrefab<GameObject>(prefabPath);
+            if (prefabAsset == null)
+            {
+                Debug.LogError($"[ClientCharacterSkinHandler] Server-Skeleton-Prefab nicht gefunden: {prefabPath}");
+                return;
+            }
+
+            ClearCurrentVisual();
+
+            m_CurrentVisualInstance = UnityEngine.Object.Instantiate(prefabAsset, m_VisualRoot);
+            m_CurrentVisualInstance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+
+            // Alle visuellen Komponenten entfernen — Server braucht nur Bone-Hierarchie fuer Hitboxen
+            foreach (Renderer renderer in m_CurrentVisualInstance.GetComponentsInChildren<Renderer>(true))
+            {
+                UnityEngine.Object.Destroy(renderer);
+            }
+            foreach (ParticleSystem particleSystem in m_CurrentVisualInstance.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                UnityEngine.Object.Destroy(particleSystem);
+            }
+
+            // AnimatorController laden damit Server Bones korrekt animiert (Hitbox-Tracking)
+            string animationSetName = skinLoader.GetAnimationSetNameForModelName(modelName);
+            if (!string.IsNullOrEmpty(animationSetName))
+            {
+                string animatorPath = $"models/animator/game_{animationSetName}";
+                RuntimeAnimatorController baseController = prefabManager.LoadPrefab<RuntimeAnimatorController>(animatorPath);
+                if (baseController != null)
+                {
+                    Animator animator = m_CurrentVisualInstance.GetComponentInChildren<Animator>();
+                    if (animator == null)
+                    {
+                        animator = m_CurrentVisualInstance.AddComponent<Animator>();
+                    }
+                    AnimatorOverrideController overrideController = new();
+                    overrideController.runtimeAnimatorController = baseController;
+                    animator.runtimeAnimatorController = overrideController;
+                    Debug.Log($"[ClientCharacterSkinHandler] Server-AnimatorController geladen: {animatorPath}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[ClientCharacterSkinHandler] AnimatorController nicht gefunden: {animatorPath}");
+                }
+            }
+
+            m_LoadedSkinName = skinName;
+
+            Debug.Log($"[ClientCharacterSkinHandler] Server-Skeleton geladen fuer Hitboxen: {skinName} (Model={modelName})");
+
             OnVisualInstantiated?.Invoke(m_CurrentVisualInstance);
         }
 

@@ -6,6 +6,7 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
 using Tolik.RemakeSoF.Runtime.SoundManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
 using Tolik.RemakeSoF.Runtime.WeaponManagement;
@@ -78,6 +79,21 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         private Coroutine m_GoTextCoroutine;
 
+        /// <summary>
+        /// Gecachte NetworkedPlayerCharacter-Referenz fuer Hit-Confirm-Events.
+        /// </summary>
+        private NetworkedPlayerCharacter m_NetworkedPlayerCharacter;
+
+        /// <summary>
+        /// Laufende Coroutine fuer das kurzfristige Hit-Confirm-Overlay.
+        /// </summary>
+        private Coroutine m_HitConfirmCoroutine;
+
+        /// <summary>
+        /// Dauer in Sekunden, wie lange die Hit-Confirmation angezeigt wird.
+        /// </summary>
+        private const float k_HitConfirmDisplayDuration = 1.0f;
+
         void Awake()
         {
             App.Model.Countdown.OnValueChanged += OnCountdownChanged;
@@ -130,6 +146,13 @@ namespace Tolik.RemakeSoF.Runtime
             m_PlayerCharacter.OnWeaponSwapTargetChanged += OnWeaponSwapTargetChanged;
             m_PlayerCharacter.OnFireModeChanged += OnFireModeChanged;
 
+            // Hit-Confirmation vom NetworkedPlayerCharacter abonnieren
+            m_NetworkedPlayerCharacter = player.GetComponent<NetworkedPlayerCharacter>();
+            if (m_NetworkedPlayerCharacter != null)
+            {
+                m_NetworkedPlayerCharacter.OnHitConfirmed += OnHitConfirmed;
+            }
+
             // Sofort aus aktuellem State initialisieren (falls Werte schon da sind).
             TryInitializeHudFromCurrentState();
         }
@@ -155,6 +178,12 @@ namespace Tolik.RemakeSoF.Runtime
                 m_PlayerCharacter.OnWeaponSwapTargetChanged -= OnWeaponSwapTargetChanged;
                 m_PlayerCharacter.OnFireModeChanged -= OnFireModeChanged;
                 m_PlayerCharacter = null;
+            }
+
+            if (m_NetworkedPlayerCharacter != null)
+            {
+                m_NetworkedPlayerCharacter.OnHitConfirmed -= OnHitConfirmed;
+                m_NetworkedPlayerCharacter = null;
             }
 
             m_CharacterState = null;
@@ -583,6 +612,60 @@ namespace Tolik.RemakeSoF.Runtime
             }
 
             View.UpdateFireModeHud(fireMode, hasMultipleModes);
+        }
+
+        /// <summary>
+        /// Callback wenn der Server einen Treffer auf einen Gegner bestaetigt.
+        /// Zeigt die getroffene HitRegion und den Schaden kurzfristig als HUD-Overlay an.
+        /// </summary>
+        private void OnHitConfirmed(HitRegion hitRegion, int damage, bool isKill)
+        {
+            string regionName = FormatHitRegionName(hitRegion);
+            View.ShowHitConfirm(regionName, damage, isKill);
+
+            if (m_HitConfirmCoroutine != null)
+            {
+                StopCoroutine(m_HitConfirmCoroutine);
+            }
+            m_HitConfirmCoroutine = StartCoroutine(HideHitConfirmAfterDelay());
+        }
+
+        /// <summary>
+        /// Blendet die Hit-Confirmation nach einer kurzen Verzoegerung aus.
+        /// </summary>
+        private IEnumerator HideHitConfirmAfterDelay()
+        {
+            yield return new WaitForSeconds(k_HitConfirmDisplayDuration);
+            View.HideHitConfirm();
+            m_HitConfirmCoroutine = null;
+        }
+
+        /// <summary>
+        /// Wandelt die HitRegion-Enum in einen lesbaren Anzeigenamen um.
+        /// </summary>
+        private static string FormatHitRegionName(HitRegion region)
+        {
+            switch (region)
+            {
+                case HitRegion.Head: return "HEAD";
+                case HitRegion.Neck: return "NECK";
+                case HitRegion.Chest: return "CHEST";
+                case HitRegion.Gut: return "GUT";
+                case HitRegion.Groin: return "GROIN";
+                case HitRegion.LeftShoulder: return "L. SHOULDER";
+                case HitRegion.RightShoulder: return "R. SHOULDER";
+                case HitRegion.LeftArm: return "L. ARM";
+                case HitRegion.RightArm: return "R. ARM";
+                case HitRegion.LeftHand: return "L. HAND";
+                case HitRegion.RightHand: return "R. HAND";
+                case HitRegion.LeftThigh: return "L. THIGH";
+                case HitRegion.RightThigh: return "R. THIGH";
+                case HitRegion.LeftLeg: return "L. LEG";
+                case HitRegion.RightLeg: return "R. LEG";
+                case HitRegion.LeftFoot: return "L. FOOT";
+                case HitRegion.RightFoot: return "R. FOOT";
+                default: return region.ToString().ToUpperInvariant();
+            }
         }
     }
 }

@@ -701,15 +701,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return true;
             }
 
-            // Projektil ohne eigene Ammo (Knife-Throw): aus Weapon-Reserve verbrauchen
+            // Projektil ohne eigene Ammo (Knife-Throw): aus Clip verbrauchen
             if (weapon.AltAttack.Projectile != null)
             {
-                if (m_ReserveAmmo.Value <= 0)
+                if (m_CurrentClipAmmo.Value <= 0)
                 {
                     return false;
                 }
 
-                m_ReserveAmmo.Value--;
+                m_CurrentClipAmmo.Value--;
                 return true;
             }
 

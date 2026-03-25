@@ -64,6 +64,11 @@ namespace Tolik.RemakeSoF.Runtime
         // Round Start Countdown
         Label m_RoundStartLabel;
 
+        // Hit Confirmation HUD
+        VisualElement m_HitConfirmContainer;
+        Label m_HitRegionLabel;
+        Label m_HitDamageLabel;
+
         /// <summary>
         /// Wird gefeuert sobald die MatchView aktiviert und alle UI-Elemente neu gebunden sind.
         /// Controller koennen hier ihren HUD-Refresh triggern.
@@ -130,6 +135,11 @@ namespace Tolik.RemakeSoF.Runtime
 
             // Round Start Countdown
             m_RoundStartLabel = root.Query<Label>("roundStartLabel");
+
+            // Hit Confirmation HUD
+            m_HitConfirmContainer = root.Query<VisualElement>("HitConfirmContainer");
+            m_HitRegionLabel = root.Query<Label>("hitRegionLabel");
+            m_HitDamageLabel = root.Query<Label>("hitDamageLabel");
 
             OnViewEnabled?.Invoke();
         }
@@ -380,6 +390,35 @@ namespace Tolik.RemakeSoF.Runtime
         internal void HideRoundStartCountdown()
         {
             m_RoundStartLabel.style.display = DisplayStyle.None;
+        }
+
+        /// <summary>
+        /// Zeigt die getroffene HitRegion und den Schaden als zentriertes Overlay an.
+        /// Kill-Treffer werden in Gelb hervorgehoben.
+        /// </summary>
+        internal void ShowHitConfirm(string regionName, int damage, bool isKill)
+        {
+            if (m_HitConfirmContainer == null)
+            {
+                return;
+            }
+
+            Color regionColor = isKill ? new Color(1f, 0.85f, 0.2f) : new Color(1f, 0.31f, 0.31f);
+            m_HitRegionLabel.text = regionName;
+            m_HitRegionLabel.style.color = regionColor;
+            m_HitDamageLabel.text = isKill ? $"-{damage} KILL" : $"-{damage}";
+            m_HitConfirmContainer.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// Versteckt die Hit-Confirmation-Anzeige.
+        /// </summary>
+        internal void HideHitConfirm()
+        {
+            if (m_HitConfirmContainer != null)
+            {
+                m_HitConfirmContainer.style.display = DisplayStyle.None;
+            }
         }
     }
 }

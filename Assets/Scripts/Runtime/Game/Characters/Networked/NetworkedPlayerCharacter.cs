@@ -3,6 +3,7 @@ using System.Collections;
 using Newtonsoft.Json.Linq;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
+using Tolik.RemakeSoF.Runtime.GoreManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
@@ -42,6 +43,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         public event Action<ServerMovementAck> OnMovementAcknowledged;
 
+        /// <summary>
+        /// Event: Hit-Confirmation vom Server empfangen.
+        /// Wird nur auf dem Owner-Client gefeuert.
+        /// Parameter: HitRegion, Damage, IsKill.
+        /// </summary>
+        public event Action<HitRegion, int, bool> OnHitConfirmed;
+
         // ===== Animation Sync =====
 
         /// <summary>
@@ -50,6 +58,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         [SerializeField]
         private ClientCharacterSkinHandler m_SkinHandler;
+
+        /// <summary>
+        /// Eigene Hitbox-Referenz fuer Self-Hit-Vermeidung.
+        /// Server deaktiviert eigene Hitboxen vor Raycasts und aktiviert sie danach wieder.
+        /// </summary>
+        private ClientHitboxSystem m_OwnHitboxSystem;
 
         /// <summary>
         /// Animator-Parameter synchronisiert vom Owner an alle Clients.
@@ -288,6 +302,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Server-seitige Physik + BoxCollider initialisieren
             m_ServerPlayerCharacter.InitializeServer();
 
+            // Hitbox-System cachen fuer Self-Hit-Vermeidung bei Raycasts
+            m_OwnHitboxSystem = GetComponent<ClientHitboxSystem>();
+
+            // Animator-Referenz nach Visual-Instanziierung setzen (Server braucht Animator fuer Hitbox-Bone-Tracking)
+            SubscribeToVisualInstantiated();
+
             // Weapon-Swap-Event abonnieren (Server verarbeitet Swap-Timing)
             m_CharacterState.OnWeaponSwapRequested += OnServerWeaponSwapRequested;
 
@@ -418,10 +438,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
-            // Remote-Clients: Interpolation zur Server-Position + Animator treiben
-            if (!IsOwner && !IsServer)
+            // Remote-Clients + Dedicated Server: Interpolation zur Server-Position + Animator treiben
+            // Server treibt Animator fuer akkurate Bone-Positionen (Hitbox-Tracking wie SoF2 GHOUL2)
+            if (!IsOwner)
             {
-                InterpolateRemotePosition();
+                if (!IsServer)
+                {
+                    InterpolateRemotePosition();
+                }
                 ApplyAnimationToAnimator(m_AnimationState.Value);
             }
         }
@@ -601,6 +625,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
+        /// Server → Owner-Client: Hit-Confirmation mit getroffener Region, Damage und Kill-Flag.
+        /// Wird nur an den Schuetzen gesendet, damit dieser Hitmarker/HUD-Feedback anzeigen kann.
+        /// </summary>
+        [Rpc(SendTo.Owner)]
+        private void HitConfirmRpc(int hitRegionValue, int damage, bool isKill)
+        {
+            OnHitConfirmed?.Invoke((HitRegion)hitRegionValue, damage, isKill);
+        }
+
+        /// <summary>
         /// Server → Owner-Client: Hard-Correction (Respawn, Teleport, Anti-Cheat).
         /// Überschreibt Client-Position ohne Reconciliation.
         /// Resettet auch die Client-Simulation (Velocity, Grounded-State), damit keine
@@ -719,10 +753,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Reichweite: SoF2-Units → Unity-Meter (1 QU = 0.0254m)
             float rangeMeters = attackDef.Range * SOF2_UNIT_SCALE;
 
-            // Eigenen Collider deaktivieren fuer Self-Hit-Vermeidung
+            // Eigenen Collider + Hitboxen deaktivieren fuer Self-Hit-Vermeidung
             m_ServerPlayerCharacter.SetPhysicsColliderEnabled(false);
+            m_OwnHitboxSystem?.SetHitboxesEnabled(false);
 
             int hitboxLayerMask = LayerMask.GetMask(HITBOX_LAYER_NAME);
+            if (hitboxLayerMask == 0)
+            {
+                Debug.LogError($"[NetworkedPlayerCharacter] Layer '{HITBOX_LAYER_NAME}' nicht in Project Settings definiert! Hitbox-Raycasts treffen nichts.");
+            }
 
             // Pellet-Anzahl: Schrotflinten feuern mehrere Pellets pro Schuss (z.B. M590: 8)
             int pelletCount = attackDef.Pellets > 0 ? attackDef.Pellets : 1;
@@ -768,11 +807,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 float totalSpread = spread + pelletSpread;
                 Vector3 aimDirection = ApplyInaccuracySoF2(aimForward, aimRight, aimUp, totalSpread);
 
-                // Server-seitiger Hitscan-Raycast auf Hitbox-Layer
-                bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask);
+                // Server-seitiger Hitscan-Raycast auf Hitbox-Layer (QueryTriggerInteraction.Collide weil Hitboxes Trigger sind)
+                bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask, QueryTriggerInteraction.Collide);
 
-                // Welt-Geometrie-Raycast fuer Impact-Effekte (alles ausser Hitboxes und BrushCollision)
-                int worldLayerMask = ~(hitboxLayerMask | LayerMask.GetMask("BrushCollision"));
+                // Welt-Geometrie-Raycast fuer Impact-Effekte (alles ausser Hitboxes, BrushCollision und Player-Movement-Collider)
+                int worldLayerMask = ~(hitboxLayerMask | LayerMask.GetMask("BrushCollision", "Player"));
                 bool didHitWorld = Physics.Raycast(eyePos, aimDirection, out RaycastHit worldHit, rangeMeters, worldLayerMask);
 
                 // Endpunkt: naechster Treffer (Hitbox oder Welt) oder Max-Range
@@ -835,8 +874,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                         NetworkedCharacterState targetState = hit.collider.GetComponentInParent<NetworkedCharacterState>();
                         if (targetState != null && targetState != m_CharacterState)
                         {
-                            int newHealth = Mathf.Max(0, targetState.Health - finalDamage);
+                            int previousHealth = targetState.Health;
+                            int newHealth = Mathf.Max(0, previousHealth - finalDamage);
                             targetState.SetHealth(newHealth);
+
+                            // Hit-Confirmation an den Schuetzen senden (nur Owner)
+                            bool isKill = newHealth <= 0 && previousHealth > 0;
+                            HitConfirmRpc((int)hitbox.HitRegion, finalDamage, isKill);
+
+                            if (attackDef.Gore)
+                            {
+                                TryProcessGoreHit(targetState.gameObject, hitbox.HitRegion, aimDirection, hit.point, finalDamage, previousHealth, newHealth);
+                            }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                             Debug.Log($"[NetworkedPlayerCharacter] Server: HIT! Client {OwnerClientId} → {targetState.CharacterName} | Pellet={i + 1}/{pelletCount} | Region={hitbox.HitRegion} | Damage={finalDamage} (Base={attackDef.Damage} × {hitbox.DamageMultiplier:F2}) | Health={newHealth}");
@@ -850,8 +899,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 TracerClientRpc(eyePos, hitPoint, impactNormal, tracerEffectId, impactEffectId, debrisEffectId, impactSoundPath);
             }
 
-            // Eigenen Collider wieder aktivieren
+            // Eigenen Collider + Hitboxen wieder aktivieren
             m_ServerPlayerCharacter.SetPhysicsColliderEnabled(true);
+            m_OwnHitboxSystem?.SetHitboxesEnabled(true);
 
             // KickAngles: Rueckstoss an Owner-Client senden (SoF2 AddViewKick)
             // Format: [minPitch, maxPitch, minYaw, maxYaw]
@@ -1011,6 +1061,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             Vector3 eyePos = m_ServerPlayerCharacter.GetEyePosition();
             Vector3 aimDirection = Quaternion.Euler(cmd.PitchAngle, cmd.YawAngle, 0f) * Vector3.forward;
 
+            // SoF2 MISSILE_PRESTEP: Projektil wird 32 QU (0.8128m) vor dem Muzzle gespawnt,
+            // damit es nicht den eigenen Spieler-Collider trifft und sofort detoniert.
+            // Wall-Check: Falls eine Wand naeher als der Offset ist, dort spawnen.
+            const float MISSILE_PRESTEP = 32f * 0.0254f;
+            Vector3 spawnPos = eyePos;
+            int wallMask = LayerMask.GetMask("Default") | LayerMask.GetMask("BrushCollision");
+            if (Physics.Raycast(eyePos, aimDirection, out RaycastHit wallCheck, MISSILE_PRESTEP, wallMask))
+            {
+                spawnPos = wallCheck.point - aimDirection * 0.02f;
+            }
+            else
+            {
+                spawnPos = eyePos + aimDirection * MISSILE_PRESTEP;
+            }
+
             // Fire-Sound aus Waffen-Definition (SoF2: flashSound)
             string projFireSoundPath = ResolveWeaponSoundPath(weapon, isAlt ? "altFire" : "fire");
 
@@ -1025,7 +1090,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 attackDef.Volume > 0f ? attackDef.Volume : 1f
             );
 
-            SpawnProjectile(eyePos, aimDirection, attackDef, projDef);
+            SpawnProjectile(spawnPos, aimDirection, attackDef, projDef);
 
             // KickAngles: Rueckstoss an Owner-Client senden
             // SoF2 Skalierung: ×0.5 (kickPitch += value*500, extract /1000)
@@ -1905,12 +1970,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 float rangeMeters = altAttackDef.Range * SOF2_UNIT_SCALE;
 
                 m_ServerPlayerCharacter.SetPhysicsColliderEnabled(false);
+                m_OwnHitboxSystem?.SetHitboxesEnabled(false);
 
                 int hitboxLayerMask = LayerMask.GetMask(HITBOX_LAYER_NAME);
-                bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask);
+                if (hitboxLayerMask == 0)
+                {
+                    Debug.LogError($"[NetworkedPlayerCharacter] Layer '{HITBOX_LAYER_NAME}' nicht in Project Settings definiert! AltAttack-Hitbox-Raycasts treffen nichts.");
+                }
+                bool didHit = Physics.Raycast(eyePos, aimDirection, out RaycastHit hit, rangeMeters, hitboxLayerMask, QueryTriggerInteraction.Collide);
 
-                // Welt-Geometrie-Raycast fuer Impact-Effekte
-                int worldLayerMask = ~(hitboxLayerMask | LayerMask.GetMask("BrushCollision"));
+                // Welt-Geometrie-Raycast fuer Impact-Effekte (alles ausser Hitboxes, BrushCollision und Player-Movement-Collider)
+                int worldLayerMask = ~(hitboxLayerMask | LayerMask.GetMask("BrushCollision", "Player"));
                 bool didHitWorld = Physics.Raycast(eyePos, aimDirection, out RaycastHit worldHit, rangeMeters, worldLayerMask);
 
                 float hitboxDist = didHit ? hit.distance : float.MaxValue;
@@ -1959,8 +2029,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                         NetworkedCharacterState targetState = hit.collider.GetComponentInParent<NetworkedCharacterState>();
                         if (targetState != null && targetState != m_CharacterState)
                         {
-                            int newHealth = Mathf.Max(0, targetState.Health - finalDamage);
+                            int previousHealth = targetState.Health;
+                            int newHealth = Mathf.Max(0, previousHealth - finalDamage);
                             targetState.SetHealth(newHealth);
+
+                            // Hit-Confirmation an den Schuetzen senden (nur Owner)
+                            bool isKill = newHealth <= 0 && previousHealth > 0;
+                            HitConfirmRpc((int)hitbox.HitRegion, finalDamage, isKill);
+
+                            if (altAttackDef.Gore)
+                            {
+                                TryProcessGoreHit(targetState.gameObject, hitbox.HitRegion, aimDirection, hit.point, finalDamage, previousHealth, newHealth);
+                            }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                             Debug.Log($"[NetworkedPlayerCharacter] Server: AltAttack HIT! Client {OwnerClientId} → {targetState.CharacterName} | Region={hitbox.HitRegion} | Damage={finalDamage} (Base={altAttackDef.Damage} × {hitbox.DamageMultiplier:F2}) | Health={newHealth}");
@@ -1970,6 +2050,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 }
 
                 m_ServerPlayerCharacter.SetPhysicsColliderEnabled(true);
+                m_OwnHitboxSystem?.SetHitboxesEnabled(true);
 
                 string altTracerEffectId = altAttackDef.TracerEffect ?? "";
                 TracerClientRpc(eyePos, hitPoint, impactNormal, altTracerEffectId, impactEffectId, debrisEffectId, impactSoundPath);
@@ -2030,6 +2111,107 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 int altFireDelayFrames = Mathf.CeilToInt((altAttackDef.FireDelay / 1000f) * m_ServerAltAttackFps);
                 m_ServerAltAttackFrames = Mathf.Max(m_ServerAltAttackFrames, altFireDelayFrames);
             }
+        }
+
+        /// <summary>
+        /// Leitet einen server-seitigen Treffer in das Gore-System weiter.
+        /// Nutzt eine SoF2-nahe DamageLevel-Einordnung basierend auf verbleibender Health
+        /// und der Schwere des finalen Treffers.
+        /// </summary>
+        private void TryProcessGoreHit(
+            GameObject targetCharacterRoot,
+            HitRegion hitRegion,
+            Vector3 shotDirection,
+            Vector3 hitPoint,
+            int finalDamage,
+            int previousHealth,
+            int newHealth)
+        {
+            if (targetCharacterRoot == null || !IsServer)
+            {
+                return;
+            }
+
+            int damageLevel = ComputeSoF2DamageLevel(finalDamage, previousHealth, newHealth);
+
+            NetworkObject targetNetworkObject = targetCharacterRoot.GetComponent<NetworkObject>();
+            if (targetNetworkObject == null)
+            {
+                return;
+            }
+
+            ApplyGoreHitClientRpc(
+                targetNetworkObject,
+                (int)hitRegion,
+                damageLevel,
+                shotDirection,
+                hitPoint);
+        }
+
+        [ClientRpc]
+        private void ApplyGoreHitClientRpc(
+            NetworkObjectReference targetCharacterRef,
+            int hitRegionValue,
+            int damageLevel,
+            Vector3 hitDirection,
+            Vector3 hitPoint)
+        {
+            if (!targetCharacterRef.TryGet(out NetworkObject targetCharacterNetworkObject) || targetCharacterNetworkObject == null)
+            {
+                return;
+            }
+
+            GoreManager goreManager = ServiceLocator.Get<GoreManager>();
+            if (goreManager == null)
+            {
+                return;
+            }
+
+            GoreHitData hitData = new()
+            {
+                CharacterRoot = targetCharacterNetworkObject.gameObject,
+                HitRegion = (HitRegion)hitRegionValue,
+                DamageLevel = damageLevel,
+                HitDirection = hitDirection,
+                HitPoint = hitPoint,
+            };
+
+            goreManager.ProcessGoreHit(hitData);
+        }
+
+        /// <summary>
+        /// Approximiert die SoF2 DamageLevel-Skala (0..5) fuer das Gore-System.
+        /// 0-3: nicht-toedlich, 4-5: toedlich mit Dismemberment.
+        /// </summary>
+        private int ComputeSoF2DamageLevel(int finalDamage, int previousHealth, int newHealth)
+        {
+            if (newHealth <= 0)
+            {
+                // Hoher Overkill wird als High Death (5) behandelt.
+                if (finalDamage >= 75 || previousHealth <= 35)
+                {
+                    return 5;
+                }
+
+                return 4;
+            }
+
+            if (finalDamage >= 60)
+            {
+                return 3;
+            }
+
+            if (finalDamage >= 35)
+            {
+                return 2;
+            }
+
+            if (finalDamage >= 15)
+            {
+                return 1;
+            }
+
+            return 0;
         }
 
         /// <summary>
@@ -2349,8 +2531,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 // Ohne dies wuerde die Jump-Animation die Visual-Position ueber die
                 // Physik-Capsule hinaus nach oben verschieben.
                 m_Animator.applyRootMotion = false;
+
+                // Server: Kein Kamera-Culling — Animator muss ohne sichtbare Kamera evaluieren
+                if (IsServer)
+                {
+                    m_Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                Debug.Log($"[NetworkedPlayerCharacter] Animator gefunden auf Visual für Character {CharacterId} (Root Motion deaktiviert)");
+                Debug.Log($"[NetworkedPlayerCharacter] Animator gefunden auf Visual für Character {CharacterId} (Root Motion deaktiviert, Server={IsServer})");
 #endif
             }
         }

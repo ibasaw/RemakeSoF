@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.Core;
 using Tolik.RemakeSoF.Runtime.DataManagement;
+using Tolik.RemakeSoF.Runtime.GoreManagement;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 
         // Internal service - pure asset application
         private readonly PlayerSkinApplier m_Applier = new();
+        private readonly GoreApplier m_GoreApplier = new();
 
         // Current skin data
         private string m_CurrentSkinName;
@@ -126,6 +128,14 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             prefab = prefabAsset;
             m_Applier.ApplyAnimatorController(prefab, $"models/animator/loadout_{animationSetName}");
             m_Applier.ResetAllRenderersToActive(prefab);
+
+            // Gore-Piece-Prefabs in den PrefabManager-Cache laden (kein Instantiate).
+            // BoltOns werden erst bei Dismemberment live instanziiert (1:1 SoF2-Verhalten).
+            GoreDataLoader goreDataLoader = ServiceLocator.Get<GoreDataLoader>();
+            if (goreDataLoader != null)
+            {
+                m_GoreApplier.PreloadGorePieceCache(goreDataLoader);
+            }
 
             ServiceLocator.Get<TextureManager>().CreateMaterialsFromSkinDefinition(skinDefinition);
             m_Applier.DisableAndEnableSurfaces(prefab, skinDefinition);

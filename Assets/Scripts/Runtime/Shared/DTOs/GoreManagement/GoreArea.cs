@@ -102,6 +102,14 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
         public List<string> Surfaces_On = new();
 
         /// <summary>
+        /// Optional: Explicit list of surface names to include in the chunk.
+        /// When set, these surfaces are cloned into the flying chunk instead of matching by root name.
+        /// Used for multi-surface body parts (e.g. head) where a single root name cannot match all surfaces.
+        /// </summary>
+        [SerializeField]
+        public List<string> Surfaces = new();
+
+        /// <summary>
         /// Child surfaces to disable when the chunk is separated.
         /// </summary>
         [SerializeField]

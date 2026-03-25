@@ -12,6 +12,7 @@ using ConnectionEvent = Tolik.RemakeSoF.Runtime.ConnectionManagement.ConnectionE
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.ConsoleManagement;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
+using Tolik.RemakeSoF.Runtime.GoreManagement;
 using Tolik.RemakeSoF.Runtime.SoundManagement;
 using UnityEngine.Audio;
 
@@ -101,6 +102,10 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                     Application.targetFrameRate = commandLineArgumentsParser.TargetFramerate;
                     QualitySettings.vSyncCount = 0;
 
+                    // SkinDefinitionLoader fuer server-seitige Hitbox-Skeleton-Aufloesung (skinName → modelName)
+                    SkinDefinitionLoader serverSkinLoader = new();
+                    ServiceLocator.Register(serverSkinLoader);
+
                     // WeaponDataLoader fuer server-seitige Attack-Parameter
                     WeaponDataLoader serverWeaponLoader = new();
                     ServiceLocator.Register(serverWeaponLoader);
@@ -147,6 +152,9 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 
                         GoreDataLoader goreDataLoader = new();
                         ServiceLocator.Register(goreDataLoader);
+
+                        GoreManager goreManager = new();
+                        ServiceLocator.Register(goreManager);
 
                         WeaponDataLoader weaponDataLoader = new();
                         ServiceLocator.Register(weaponDataLoader);
