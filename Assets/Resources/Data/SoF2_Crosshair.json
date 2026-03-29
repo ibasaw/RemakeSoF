@@ -1,0 +1,62 @@
+[
+  {
+    "id": "ch1",
+    "displayName": "Default Cross",
+    "lineLength": 8,
+    "lineThickness": 2,
+    "gap": 4,
+    "centerDot": false,
+    "centerDotSize": 2,
+    "color": [255, 255, 255, 200],
+    "outlineThickness": 1,
+    "outlineColor": [0, 0, 0, 180]
+  },
+  {
+    "id": "ch2",
+    "displayName": "Small Cross",
+    "lineLength": 5,
+    "lineThickness": 2,
+    "gap": 3,
+    "centerDot": true,
+    "centerDotSize": 2,
+    "color": [255, 255, 255, 220],
+    "outlineThickness": 1,
+    "outlineColor": [0, 0, 0, 180]
+  },
+  {
+    "id": "ch3",
+    "displayName": "Large Cross",
+    "lineLength": 12,
+    "lineThickness": 2,
+    "gap": 6,
+    "centerDot": false,
+    "centerDotSize": 2,
+    "color": [255, 255, 255, 200],
+    "outlineThickness": 1,
+    "outlineColor": [0, 0, 0, 180]
+  },
+  {
+    "id": "ch4",
+    "displayName": "Dot",
+    "lineLength": 0,
+    "lineThickness": 0,
+    "gap": 0,
+    "centerDot": true,
+    "centerDotSize": 4,
+    "color": [255, 255, 255, 220],
+    "outlineThickness": 1,
+    "outlineColor": [0, 0, 0, 180]
+  },
+  {
+    "id": "ch5",
+    "displayName": "Thick Cross",
+    "lineLength": 8,
+    "lineThickness": 3,
+    "gap": 4,
+    "centerDot": true,
+    "centerDotSize": 3,
+    "color": [255, 255, 255, 200],
+    "outlineThickness": 1,
+    "outlineColor": [0, 0, 0, 160]
+  }
+]

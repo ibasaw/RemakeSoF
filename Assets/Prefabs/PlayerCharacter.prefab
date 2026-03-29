@@ -215,6 +215,7 @@ GameObject:
   - component: {fileID: 2500566048307127719}
   - component: {fileID: 475778164284564793}
   - component: {fileID: 486976665569401168}
+  - component: {fileID: 4440350648527113855}
   m_Layer: 7
   m_Name: FirstPersonCamera
   m_TagString: Untagged
@@ -328,6 +329,18 @@ MonoBehaviour:
     Time: 0
     Smoothing: 0
     IgnoreY: 0
+--- !u!114 &4440350648527113855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6323625218794969649}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82cd8da284916f747a99bcf3f9a10383, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Camera.FirstPersonCameraEffects
 --- !u!1 &8936796741541953394
 GameObject:
   m_ObjectHideFlags: 0
@@ -412,7 +425,7 @@ MonoBehaviour:
     m_InternalValue: 0
   m_ServerPlayerCharacter: {fileID: 5114413647346417949}
   m_SkinHandler: {fileID: 792202953519434536}
-  m_ShowDebugTracers: 0
+  m_ShowDebugTracers: 1
   m_CharacterState: {fileID: 2107942443278687898}
 --- !u!114 &2107942443278687898
 MonoBehaviour:
@@ -524,6 +537,7 @@ MonoBehaviour:
   m_CameraRoot: {fileID: 4225467907918778029}
   m_AimCameraController: {fileID: 1169665460083391825}
   m_CameraSwitcher: {fileID: 7263364175839438766}
+  m_FirstPersonEffects: {fileID: 4440350648527113855}
   m_SkinHandler: {fileID: 792202953519434536}
   m_CharacterState: {fileID: 2107942443278687898}
   m_Simulation:
@@ -666,5 +680,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdc4f9747a1ba75418e5fc7800e8d322, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientHitboxSystem
-  m_ShowVisualHitboxes: 0
+  m_ShowVisualHitboxes: 1
   m_VisualAlpha: 0.22

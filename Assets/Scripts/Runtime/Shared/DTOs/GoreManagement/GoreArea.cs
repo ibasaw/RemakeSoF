@@ -59,10 +59,17 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
         public GoreBoltOn BoltOn;
 
         /// <summary>
-        /// List of visual effects to spawn when this gore area is triggered.
+        /// List of visual effects to spawn when this gore area is triggered (dismemberment, DamageLevel 4-5).
         /// </summary>
         [SerializeField]
         public List<GoreEffect> FX = new();
+
+        /// <summary>
+        /// List of blood effects to spawn for non-lethal hits (DamageLevel 0-3).
+        /// Separate from FX to allow smaller blood splatter for bullet wounds vs. large arterial sprays for dismemberment.
+        /// </summary>
+        [SerializeField]
+        public List<GoreEffect> BloodFX = new();
     }
 
     /// <summary>

@@ -175,6 +175,9 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                         MapDataLoader clientMapDataLoader = new();
                         ServiceLocator.Register(clientMapDataLoader);
 
+                        CrosshairDataLoader crosshairDataLoader = new();
+                        ServiceLocator.Register(crosshairDataLoader);
+
                         SceneManager.LoadScene("MetagameScene");
                         Debug.Log($"[ApplicationEntryPoint] InitializeNetworkLogic - Client instance started, loaded MetagameScene.");
                         break;

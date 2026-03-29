@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using UnityEngine;
-
 namespace Tolik.RemakeSoF.Runtime.GoreManagement
 {
     /// <summary>
@@ -72,6 +72,16 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 ActivateSurfaces(allRenderers, area.Surfaces_On);
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            int surfOffCount = area.Surfaces_Off?.Count ?? 0;
+            int surfOnCount = area.Surfaces_On?.Count ?? 0;
+            int childCount = area.Children?.Count ?? 0;
+            int fxCount = area.FX?.Count ?? 0;
+            bool hasChunk = area.Chunk != null;
+            bool hasBoltOn = area.BoltOn != null;
+            Debug.Log($"[GoreApplier] ApplyGoreArea '{area.Location}': SurfOff={surfOffCount}, SurfOn={surfOnCount}, Children={childCount}, Chunk={hasChunk}, BoltOn={hasBoltOn}, FX={fxCount}, suppressSurfOn={suppressSurfacesOn}");
+#endif
+
             // 3. Kinder rekursiv verarbeiten
             if (area.Children != null && area.Children.Count > 0)
             {
@@ -115,7 +125,7 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
             bool suppressChunks = parentFlags != null && parentFlags.Contains("NoChildChunks");
             if (!suppressChunks && area.Chunk != null)
             {
-                SpawnChunk(modelRoot.gameObject, allRenderers, area.Chunk, hitDirection);
+                SpawnChunk(modelRoot.gameObject, allRenderers, area.Chunk, hitDirection, goreDataLoader, isRightSide);
             }
 
             // 5. BoltOn befestigen (sofern nicht vom Eltern unterdrueckt)
@@ -129,7 +139,14 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
             bool suppressFX = parentFlags != null && parentFlags.Contains("NoChildFX");
             if (!suppressFX && area.FX != null && area.FX.Count > 0)
             {
-                SpawnEffects(modelRoot.gameObject, area.FX);
+                SpawnEffects(modelRoot.gameObject, area.FX, hitDirection);
+            }
+
+            // 7. Blut-Pfuetze am Boden spawnen (bei jedem Gore-Event, nicht nur Hip)
+            // Groesse und Anzahl je nach Koerperteil, Position zufaellig im Radius.
+            if (!suppressFX)
+            {
+                SpawnBloodPool(modelRoot.gameObject, hitDirection, area.Location);
             }
         }
 
@@ -180,6 +197,20 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 foreach (GoreEffect fx in area.FX)
                 {
                     resolved.FX.Add(new GoreEffect
+                    {
+                        Name = fx.Name,
+                        Bolt = GorePlaceholderResolver.Resolve(fx.Bolt, isRightSide),
+                        File = fx.File
+                    });
+                }
+            }
+
+            if (area.BloodFX != null && area.BloodFX.Count > 0)
+            {
+                resolved.BloodFX = new List<GoreEffect>(area.BloodFX.Count);
+                foreach (GoreEffect fx in area.BloodFX)
+                {
+                    resolved.BloodFX.Add(new GoreEffect
                     {
                         Name = fx.Name,
                         Bolt = GorePlaceholderResolver.Resolve(fx.Bolt, isRightSide),
@@ -341,12 +372,19 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
         /// 1:1 SoF2-Ansatz: Der Chunk wird aus Kopien der Charakter-Renderer erstellt (nicht aus separaten Prefabs).
         /// GHOUL2 hat die Surfaces des Spielermodells dupliziert und als fliegendes Teil mit Physik versehen.
         /// </summary>
-        private void SpawnChunk(GameObject characterRoot, Renderer[] allRenderers, GoreChunk chunk, Vector3 hitDirection)
+        private void SpawnChunk(GameObject characterRoot, Renderer[] allRenderers, GoreChunk chunk, Vector3 hitDirection, GoreDataLoader goreDataLoader, bool isRightSide)
         {
             if (string.IsNullOrEmpty(chunk.root))
             {
+                Debug.LogWarning("[GoreApplier] SpawnChunk skipped: chunk.root is null/empty");
                 return;
             }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            int surfOnCount = chunk.Surfaces_On?.Count ?? 0;
+            int surfListCount = chunk.Surfaces?.Count ?? 0;
+            Debug.Log($"[GoreApplier] SpawnChunk: root='{chunk.root}', bone='{chunk.bone}', Surfaces_On={surfOnCount}, Surfaces={surfListCount}, Force={chunk.MinForce}-{chunk.MaxForce}");
+#endif
 
             // Finde den Bone-Transform fuer den Chunk-Ursprung
             Transform boneTransform = FindBoneTransform(characterRoot, chunk.root);
@@ -359,7 +397,14 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
 
                 if (boneTransform == null)
                 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    // Diagnose: alle Bone-Namen im Hierarchiebaum ausgeben
+                    System.Text.StringBuilder boneList = new();
+                    CollectBoneNames(characterRoot.transform, boneList, 0, 4);
+                    Debug.LogWarning($"[GoreApplier] Chunk bone not found: {chunk.root} / {chunk.bone}\nAvailable bones under '{characterRoot.name}':\n{boneList}");
+#else
                     Debug.LogWarning($"[GoreApplier] Chunk bone not found: {chunk.root} / {chunk.bone}");
+#endif
                     return;
                 }
             }
@@ -370,12 +415,14 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 ActivateSurfaces(allRenderers, chunk.Surfaces_On);
             }
 
-            // Chunk.Children_Off verarbeiten — bei hip-Abtrennung z.B. leg_upper
-            if (chunk.Children_Off != null && chunk.Children_Off.Count > 0)
+            // Chunk.Children_Off verarbeiten — referenziert Gore-Area-Namen (z.B. "leg_upper"),
+            // deren Surfaces_Off auf dem Hauptmodell deaktiviert werden muessen (damit z.B. bei Hip-Abtrennung
+            // auch das Bein verschwindet). Rekursiv fuer Kinderzonen (leg_lower, foot etc.).
+            if (chunk.Children_Off != null && chunk.Children_Off.Count > 0 && goreDataLoader != null)
             {
                 foreach (string childOff in chunk.Children_Off)
                 {
-                    DeactivateSurfaces(allRenderers, new List<string> { childOff });
+                    DeactivateChildAreaSurfaces(allRenderers, childOff, isRightSide, goreDataLoader);
                 }
             }
 
@@ -389,28 +436,95 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
             // Hier klonen wir die bereits deaktivierten Renderer (Surfaces_Off) des Hauptmodells.
             CloneChunkRenderers(allRenderers, chunk, chunkObj.transform);
 
-            // Rigidbody mit zufaelliger Force hinzufuegen
+            // Rigidbody fuer Physik-Simulation
             Rigidbody rb = chunkObj.AddComponent<Rigidbody>();
             rb.mass = 2f;
+            rb.linearDamping = 0.5f;
+            rb.angularDamping = 0.5f;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
-            float force = UnityEngine.Random.Range(chunk.MinForce, chunk.MaxForce);
-            Vector3 forceDirection = hitDirection.normalized;
-            if (forceDirection == Vector3.zero)
+            // SoF2 cg_gore.c CG_ProcessChunk:
+            // VectorMA(vec3_origin, irand(MinForce*2, MaxForce*2), Direction, trDelta)  → horizontal
+            // trDelta[2] = flrand(100, 150)                                             → vertikal override
+            // trType = TR_GRAVITY (Standard Q3-Gravitation 800 QU/s²)
+            // bounceFactor = 0.2f
+            // Force-Werte sind Geschwindigkeiten in QU/s, Faktor *2 aus Original.
+            float speed = UnityEngine.Random.Range(chunk.MinForce * 2, chunk.MaxForce * 2) * 0.0254f;
+            Vector3 horizontalDir = hitDirection.normalized;
+            if (horizontalDir == Vector3.zero)
             {
-                forceDirection = UnityEngine.Random.onUnitSphere;
+                horizontalDir = UnityEngine.Random.onUnitSphere;
             }
 
-            forceDirection += UnityEngine.Random.insideUnitSphere * 0.3f;
-            forceDirection.y = Mathf.Abs(forceDirection.y) + 0.2f;
-            rb.AddForce(forceDirection.normalized * force, ForceMode.Impulse);
+            // SoF2 overrides Z (vertical) to flrand(100,150) QU/s
+            float upwardSpeed = UnityEngine.Random.Range(100f, 150f) * 0.0254f;
+            Vector3 velocity = horizontalDir * speed;
+            velocity.y = upwardSpeed;
+            rb.linearVelocity = velocity;
 
-            rb.AddTorque(UnityEngine.Random.insideUnitSphere * force * 0.5f, ForceMode.Impulse);
+            // Rotation: leichte Yaw-Drehung wie SoF2 (crandom()*15 - 7 Grad/s)
+            rb.angularVelocity = new Vector3(0f, UnityEngine.Random.Range(-7f, 8f) * Mathf.Deg2Rad, 0f);
 
+            // Bounce-Material (SoF2 bounceFactor = 0.2)
             BoxCollider collider = chunkObj.AddComponent<BoxCollider>();
             collider.size = Vector3.one * 0.15f;
+            PhysicsMaterial chunkPhysMat = new()
+            {
+                bounciness = 0.2f,
+                dynamicFriction = 0.5f,
+                staticFriction = 0.5f,
+                bounceCombine = PhysicsMaterialCombine.Maximum
+            };
+            collider.material = chunkPhysMat;
 
             UnityEngine.Object.Destroy(chunkObj, CHUNK_LIFETIME);
+        }
+
+        /// <summary>
+        /// Deaktiviert alle Surfaces einer Gore-Area und deren Kinder rekursiv.
+        /// Wird fuer Chunk.Children_Off verwendet: z.B. bei Hip-Abtrennung wird die Gore-Area
+        /// "leg_upper" aufgeloest und deren Surfaces (leg_uppr_l, kneepad_l etc.) deaktiviert,
+        /// plus rekursiv leg_lower und foot.
+        /// </summary>
+        private void DeactivateChildAreaSurfaces(Renderer[] allRenderers, string areaLocation, bool isRightSide, GoreDataLoader goreDataLoader)
+        {
+            GoreArea childArea = goreDataLoader.GetAreaByLocation(areaLocation);
+            if (childArea == null)
+            {
+                // Fallback: als direkten Surface-Namen probieren
+                DeactivateSurfaces(allRenderers, new List<string> { GorePlaceholderResolver.Resolve(areaLocation, isRightSide) });
+                return;
+            }
+
+            // Surfaces_Off der Area aufloesen und deaktivieren
+            List<string> resolvedSurfaces = GorePlaceholderResolver.ResolveList(childArea.Surfaces_Off, isRightSide);
+            if (resolvedSurfaces != null && resolvedSurfaces.Count > 0)
+            {
+                DeactivateSurfaces(allRenderers, resolvedSurfaces);
+            }
+
+            // Rekursiv fuer Kinder (z.B. leg_upper → leg_lower → foot)
+            if (childArea.Children != null)
+            {
+                foreach (string grandChild in childArea.Children)
+                {
+                    string resolvedGrandChild = GorePlaceholderResolver.Resolve(grandChild, isRightSide);
+                    DeactivateChildAreaSurfaces(allRenderers, resolvedGrandChild, isRightSide, goreDataLoader);
+                    // Fallback: auch mit Original-Template-Namen probieren
+                    if (resolvedGrandChild != grandChild)
+                    {
+                        GoreArea fallbackArea = goreDataLoader.GetAreaByLocation(grandChild);
+                        if (fallbackArea != null)
+                        {
+                            List<string> fallbackSurfaces = GorePlaceholderResolver.ResolveList(fallbackArea.Surfaces_Off, isRightSide);
+                            if (fallbackSurfaces != null && fallbackSurfaces.Count > 0)
+                            {
+                                DeactivateSurfaces(allRenderers, fallbackSurfaces);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -424,6 +538,8 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
             // Wenn chunk.Surfaces gesetzt ist, nutze die explizite Surfaceliste fuer Multi-Surface-Chunks
             // (z.B. Kopf mit >12 Surfaces). Sonst Fallback auf chunk.root Matching.
             bool useSurfaceList = chunk.Surfaces != null && chunk.Surfaces.Count > 0;
+            int clonedCount = 0;
+            int deactivatedCount = 0;
 
             // Sammle alle deaktivierten Renderer die zum Chunk gehoeren
             // Diese wurden bereits durch DeactivateSurfaces(area.Surfaces_Off) deaktiviert
@@ -434,6 +550,8 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 {
                     continue;
                 }
+
+                deactivatedCount++;
 
                 // Pruefe ob dieser Renderer zu den Chunk-Surfaces gehoert
                 bool matches = false;
@@ -458,6 +576,8 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                     continue;
                 }
 
+                clonedCount++;
+
                 // MeshRenderer/SkinnedMeshRenderer klonen
                 if (renderer is MeshRenderer meshRenderer)
                 {
@@ -467,6 +587,29 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 {
                     CloneSkinnedMeshRenderer(skinnedRenderer, chunkParent);
                 }
+            }
+
+            if (clonedCount == 0)
+            {
+                string matchPattern = useSurfaceList
+                    ? string.Join(", ", chunk.Surfaces)
+                    : chunk.root;
+                Debug.LogWarning($"[GoreApplier] CloneChunkRenderers: 0 renderers cloned for chunk '{chunk.root}' (match={matchPattern}, deactivated={deactivatedCount}/{allRenderers.Length})");
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                // Debug: Zeige alle deaktivierten Renderer-Namen
+                foreach (Renderer r in allRenderers)
+                {
+                    if (!r.gameObject.activeSelf)
+                    {
+                        Debug.Log($"  [GoreApplier] Deactivated renderer: '{r.gameObject.name}' (expected match: '{matchPattern}')");
+                    }
+                }
+#endif
+            }
+            else
+            {
+                Debug.Log($"[GoreApplier] CloneChunkRenderers: {clonedCount} renderers cloned for chunk '{chunk.root}' (deactivated={deactivatedCount})");
             }
         }
 
@@ -526,8 +669,13 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
         {
             if (string.IsNullOrEmpty(boltOn.Name) || string.IsNullOrEmpty(boltOn.Bolt))
             {
+                Debug.LogWarning($"[GoreApplier] SpawnBoltOn skipped: Name='{boltOn.Name}', Bolt='{boltOn.Bolt}'");
                 return;
             }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[GoreApplier] SpawnBoltOn: Name='{boltOn.Name}', Bolt='{boltOn.Bolt}'");
+#endif
 
             // Finde den Bolt-Transform (z.B. *headg, *bicep_rg, *shldr_rg)
             Transform boltTransform = FindBoltTransform(characterRoot, boltOn.Bolt);
@@ -564,7 +712,15 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
 
             if (piecePrefab == null)
             {
-                return;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.LogWarning($"[GoreApplier] BoltOn prefab not found for key '{piece.modelName}' (piece: {boltOn.Name}). Spawning placeholder.");
+#endif
+                // Fallback: Placeholder-Primitiv bis die echten SoF2-Modelle importiert sind
+                GameObject placeholder = CreateBoltOnPlaceholder(boltOn.Name, boltTransform);
+                if (placeholder != null)
+                {
+                    return;
+                }
             }
 
             GameObject boltOnInstance = UnityEngine.Object.Instantiate(piecePrefab, boltTransform);
@@ -575,10 +731,152 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
         }
 
         /// <summary>
+        /// Erstellt ein Placeholder-Primitiv fuer ein BoltOn-Modell das noch nicht als Prefab existiert.
+        /// Verwendet unterschiedliche Formen und Farben je nach Gore-Piece-Typ.
+        /// </summary>
+        private static GameObject CreateBoltOnPlaceholder(string pieceName, Transform boltTransform)
+        {
+            PrimitiveType primitiveType = PrimitiveType.Sphere;
+            Color color = new(0.8f, 0.15f, 0.1f, 1f);
+            Vector3 scale = Vector3.one * 0.03f;
+
+            switch (pieceName)
+            {
+                case "brain":
+                    primitiveType = PrimitiveType.Sphere;
+                    color = new Color(0.85f, 0.55f, 0.55f, 1f);
+                    scale = Vector3.one * 0.06f;
+                    break;
+                case "bone_long":
+                    primitiveType = PrimitiveType.Cylinder;
+                    color = new Color(0.9f, 0.85f, 0.75f, 1f);
+                    scale = new Vector3(0.012f, 0.06f, 0.012f);
+                    break;
+                case "shoulder_bone":
+                    primitiveType = PrimitiveType.Capsule;
+                    color = new Color(0.9f, 0.85f, 0.75f, 1f);
+                    scale = new Vector3(0.015f, 0.04f, 0.015f);
+                    break;
+                case "bone_small":
+                    primitiveType = PrimitiveType.Cylinder;
+                    color = new Color(0.9f, 0.85f, 0.75f, 1f);
+                    scale = new Vector3(0.008f, 0.03f, 0.008f);
+                    break;
+            }
+
+            GameObject placeholder = GameObject.CreatePrimitive(primitiveType);
+            placeholder.name = $"GoreBoltOn_{pieceName}_placeholder";
+            placeholder.transform.SetParent(boltTransform, false);
+            placeholder.transform.localPosition = Vector3.zero;
+            placeholder.transform.localRotation = Quaternion.identity;
+            placeholder.transform.localScale = scale;
+
+            // Collider entfernen (rein visuell)
+            Collider col = placeholder.GetComponent<Collider>();
+            if (col != null)
+            {
+                UnityEngine.Object.Destroy(col);
+            }
+
+            // Material-Farbe setzen
+            Renderer renderer = placeholder.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.material.color = color;
+            }
+
+            return placeholder;
+        }
+
+        /// <summary>
+        /// Spawnt Blut-Pfuetzen (Decals) am Boden in der Naehe des Charakters.
+        /// Pfuetzengroesse und -anzahl haengen vom abgetrennten Koerperteil ab:
+        /// grosse Teile (Kopf, Bein) → groessere Pfuetze, kleine Teile (Hand, Fuss) → kleiner.
+        /// Position wird zufaellig in einem Radius um den Charakter verteilt.
+        /// </summary>
+        private void SpawnBloodPool(GameObject characterRoot, Vector3 hitDirection, string areaLocation)
+        {
+            EffectFactory effectFactory = ServiceLocator.Get<EffectFactory>();
+            if (effectFactory == null)
+            {
+                return;
+            }
+
+            // Pfuetzengroesse und Anzahl je nach Koerperteil
+            float poolScale;
+            int poolCount;
+            float spreadRadius;
+            switch (areaLocation)
+            {
+                case "head":
+                    poolScale = 2.5f;
+                    poolCount = 2;
+                    spreadRadius = 0.5f;
+                    break;
+                case "hip":
+                case "torso":
+                    poolScale = 3f;
+                    poolCount = 3;
+                    spreadRadius = 0.8f;
+                    break;
+                case "leg_upper":
+                case "arm_upper":
+                    poolScale = 2f;
+                    poolCount = 2;
+                    spreadRadius = 0.6f;
+                    break;
+                case "leg_lower":
+                case "arm_lower":
+                    poolScale = 1.5f;
+                    poolCount = 1;
+                    spreadRadius = 0.4f;
+                    break;
+                default:
+                    poolScale = 1f;
+                    poolCount = 1;
+                    spreadRadius = 0.3f;
+                    break;
+            }
+
+            string effectId = ResolveEffectId(new GoreEffect { Name = "blood_pool_mp", File = "blood_pool_mp.efx" });
+            if (string.IsNullOrEmpty(effectId))
+            {
+                return;
+            }
+
+            // Boden unter dem Charakter als Basis finden
+            Vector3 baseOrigin = characterRoot.transform.position + Vector3.up * 0.1f;
+            Vector3 baseFloor = characterRoot.transform.position;
+            int groundMask = ~LayerMask.GetMask("Hitbox", "Player", "BrushCollision");
+            if (Physics.Raycast(baseOrigin, Vector3.down, out RaycastHit baseHit, 2f, groundMask))
+            {
+                baseFloor = baseHit.point;
+            }
+
+            for (int i = 0; i < poolCount; i++)
+            {
+                // Zufaellige Position im Radius um den Charakter
+                Vector2 randomOffset = UnityEngine.Random.insideUnitCircle * spreadRadius;
+                Vector3 rayOrigin = baseFloor + new Vector3(randomOffset.x, 1.5f, randomOffset.y);
+                Vector3 spawnPos = baseFloor + new Vector3(randomOffset.x, 0f, randomOffset.y);
+
+                // Raycast fuer exakte Bodenhoehe am Offset-Punkt
+                if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit groundHit, 3f, groundMask))
+                {
+                    spawnPos = groundHit.point;
+                }
+
+                // Leichte Groessenvariation pro Pfuetze
+                float scaleVariation = poolScale * UnityEngine.Random.Range(0.8f, 1.2f);
+                effectFactory.SpawnImpactEffect(spawnPos, Vector3.up, effectId, scaleVariation);
+            }
+        }
+
+        /// <summary>
         /// Spielt Gore-Effekte an den definierten Bolt-Positionen ab.
         /// Nutzt den EffectFactory-Service fuer die Effekt-Instanziierung.
         /// </summary>
-        private void SpawnEffects(GameObject characterRoot, List<GoreEffect> effects)
+        private void SpawnEffects(GameObject characterRoot, List<GoreEffect> effects, Vector3 hitDirection)
         {
             EffectFactory effectFactory = ServiceLocator.Get<EffectFactory>();
 
@@ -589,9 +887,10 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                     continue;
                 }
 
-                // Bolt-Position finden
+                // Bolt-Position und Effekt-Richtung bestimmen
                 Vector3 effectPosition = characterRoot.transform.position;
-                Vector3 effectNormal = Vector3.up;
+                // Standard-Normal: invertierte Schussrichtung (weg vom Treffer)
+                Vector3 effectNormal = hitDirection != Vector3.zero ? -hitDirection.normalized : Vector3.up;
 
                 if (!string.IsNullOrEmpty(fx.Bolt))
                 {
@@ -599,7 +898,20 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                     if (boltTransform != null)
                     {
                         effectPosition = boltTransform.position;
-                        effectNormal = boltTransform.up;
+
+                        // SoF2 Arterial-Sprays: Blutstrahl schiesst entlang der Bone-Achse
+                        // aus dem Stumpf heraus (z.B. nach oben bei Hip-Abtrennung).
+                        // Bolt-Transform.up zeigt typischerweise entlang der Knochenachse
+                        // weg vom Koerper → ideale Spray-Richtung fuer Arterials.
+                        bool isArterial = fx.Name.Contains("arterial") || fx.Name.Contains("spurt");
+                        if (isArterial)
+                        {
+                            effectNormal = boltTransform.up;
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[GoreApplier] FX bolt NOT FOUND: '{fx.Bolt}' for effect '{fx.Name}' — effect will spawn at character root position.");
                     }
                 }
 
@@ -611,10 +923,13 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 if (effectFactory != null && !string.IsNullOrEmpty(effectId))
                 {
                     effectFactory.SpawnImpactEffect(effectPosition, effectNormal, effectId);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    Debug.Log($"[GoreApplier] FX spawned: '{fx.Name}' → effectId='{effectId}' at bolt='{fx.Bolt}' pos={effectPosition}");
+#endif
                 }
                 else
                 {
-                    Debug.LogWarning($"[GoreApplier] Could not spawn gore effect: {fx.Name} (effectId: {effectId})");
+                    Debug.LogWarning($"[GoreApplier] Could not spawn gore effect: {fx.Name} (resolvedId='{effectId}', factory={effectFactory != null})");
                 }
             }
         }
@@ -665,6 +980,9 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 return $"effects/{mpName}";
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[GoreApplier] ResolveEffectId: no match for fx.Name='{fx.Name}', fx.File='{fx.File}'. Tried: {string.Join(", ", candidates.Where(c => c != null))} + '{mpName}' + 'effects/{mpName}'. Falling back to '{fx.Name}'");
+#endif
             return fx.Name;
         }
 
@@ -750,6 +1068,26 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
 
         /// <summary>
         /// Loest den tatsaechlichen Visual-Model-Root des Charakters auf.
+        /// Sammelt rekursiv Bone-/Transform-Namen fuer Diagnose-Ausgabe.
+        /// </summary>
+        private void CollectBoneNames(Transform parent, System.Text.StringBuilder sb, int depth, int maxDepth)
+        {
+            if (depth > maxDepth)
+            {
+                return;
+            }
+
+            string indent = new(' ', depth * 2);
+            string normalized = NormalizeTransformName(parent.name);
+            sb.AppendLine($"{indent}{parent.name} (normalized: {normalized}, active: {parent.gameObject.activeSelf})");
+
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                CollectBoneNames(parent.GetChild(i), sb, depth + 1, maxDepth);
+            }
+        }
+
+        /// <summary>
         /// SoF2-Surfaces und *Bolts leben unter model_root_0 in der Hierarchie:
         /// PlayerCharacter → VisualRoot → skinClone → model_root_0.
         /// Faellt auf characterRoot zurueck falls model_root nicht gefunden wird.

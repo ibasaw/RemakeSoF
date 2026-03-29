@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 {
+    using Characters.Client;
     using Characters.Networked;
     using Characters.Server;
     using Characters.Shared;
@@ -21,10 +22,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>SoF2 Gravitation in Unity-Meter/s² (800 QU/s² × 0.0254 = 20.32).</summary>
         private const float SOF2_GRAVITY = 20.32f;
 
-        /// <summary>Physics Layer Name fuer Hitbox-Collider (Hitscan/Direkt-Treffer).</summary>
-        private const string HITBOX_LAYER_NAME = "Hitbox";
-
-        /// <summary>Physics Layer Name fuer Spieler-Collider (Explosions-Erkennung).</summary>
+        /// <summary>Physics Layer Name fuer Spieler-Collider (Direkt-Treffer + Explosions-Erkennung).</summary>
         private const string PLAYER_LAYER_NAME = "Player";
 
         /// <summary>Max Lebensdauer in Sekunden (Safety-Cleanup fuer verlorene Projektile).</summary>
@@ -84,13 +82,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Pickup-Radius in Unity-Metern fuer Sticky-Projektile.</summary>
         private const float PICKUP_RADIUS = 0.75f;
 
-        /// <summary>LayerMask fuer Hitbox-Raycasts (Direkt-Treffer per Bone).</summary>
+        /// <summary>LayerMask fuer Direkt-Treffer Raycasts (Player-Movement-BoxCollider).</summary>
+        private int m_PlayerLayerMask;
+
+        /// <summary>LayerMask fuer Bone-Trigger-BoxCollider auf Hitbox-Layer.</summary>
         private int m_HitboxLayerMask;
 
         /// <summary>LayerMask fuer Explosions-Erkennung (Player-Physics-Collider).</summary>
         private int m_ExplosionLayerMask;
 
-        /// <summary>LayerMask fuer Welt-Kollision (alles ausser Hitbox).</summary>
+        /// <summary>LayerMask fuer Welt-Kollision (alles ausser Player und BrushCollision).</summary>
         private int m_WorldLayerMask;
 
         /// <summary>Callback wenn Projektil detoniert (fuer Visual-RPC vom Spawner).</summary>
@@ -134,12 +135,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             m_HasDetonated = false;
             m_IsStuck = false;
 
-            m_HitboxLayerMask = LayerMask.GetMask(HITBOX_LAYER_NAME);
+            m_PlayerLayerMask = LayerMask.GetMask(PLAYER_LAYER_NAME);
+            m_HitboxLayerMask = LayerMask.GetMask("Hitbox");
             // SoF2 G_RadiusDamage nutzt Entity-Origins, nicht per-Bone Hitboxen.
             // Explosions-Erkennung ueber Player-Physics-Collider (BoxCollider auf Player-Layer).
-            m_ExplosionLayerMask = LayerMask.GetMask(PLAYER_LAYER_NAME);
-            // Welt-Kollision: alles was nicht Hitbox, BrushCollision oder Player-Movement-Collider ist
-            m_WorldLayerMask = ~(m_HitboxLayerMask | LayerMask.GetMask("BrushCollision", "Player"));
+            m_ExplosionLayerMask = m_PlayerLayerMask;
+            // Welt-Kollision: alles was nicht Hitbox, Player oder BrushCollision ist
+            m_WorldLayerMask = ~(m_HitboxLayerMask | m_PlayerLayerMask | LayerMask.GetMask("BrushCollision"));
 
             // Owner-Root finden fuer Raycast-Filterung (eigene Collider ignorieren)
             foreach (Unity.Netcode.NetworkClient client in Unity.Netcode.NetworkManager.Singleton.ConnectedClientsList)
@@ -276,7 +278,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 return;
             }
 
-            // Raycast fuer Hitbox-Kollision (Spieler direkt treffen)
+            // Raycast fuer Spieler-Kollision (Bone-Trigger-BoxCollider auf Hitbox-Layer)
             // RaycastAll + Filter: eigenen Owner ignorieren
             RaycastHit[] hitboxHits = Physics.RaycastAll(transform.position, direction, distance, m_HitboxLayerMask, QueryTriggerInteraction.Collide);
             RaycastHit hitboxHit = default;
@@ -305,7 +307,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
                 if (m_Detonation == "sticky")
                 {
-                    ApplyDirectDamage(hitboxHit);
+                    ApplyDirectDamage(hitboxHit, transform.position, direction);
                     StickToSurface(hitboxHit.point, hitboxHit.normal);
                     return;
                 }
@@ -449,11 +451,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
         /// <summary>
         /// Direkter Schaden bei Sticky-Treffer (kein Explosionsradius, kein Falloff).
+        /// Nutzt Bone-Point-Aufloesung fuer praezise HitRegion-Bestimmung.
         /// </summary>
-        private void ApplyDirectDamage(RaycastHit hit)
+        private void ApplyDirectDamage(RaycastHit hit, Vector3 rayOrigin, Vector3 rayDirection)
         {
-            HitboxCollider hitbox = hit.collider.GetComponent<HitboxCollider>();
-            if (hitbox == null)
+            HitboxCollider hitboxCollider = hit.collider.GetComponent<HitboxCollider>();
+            if (hitboxCollider == null)
             {
                 return;
             }
@@ -469,7 +472,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             targetState.SetHealth(newHealth);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log($"[ServerProjectile] Sticky direct hit {targetState.CharacterName} | Damage={m_Damage} | Health={newHealth}");
+            Debug.Log($"[ServerProjectile] Sticky direct hit {targetState.CharacterName} | Region={hitboxCollider.HitRegion} | Damage={m_Damage} | Health={newHealth}");
 #endif
         }
 

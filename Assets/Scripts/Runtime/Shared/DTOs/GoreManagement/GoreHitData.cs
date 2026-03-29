@@ -22,5 +22,11 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
 
         /// <summary>Weltposition des Treffers fuer Effekt-Spawning.</summary>
         public Vector3 HitPoint;
+
+        /// <summary>Waffen-ID des Angreifers fuer PGORE-Dispatch (z.B. "knife", "m4", "m590").</summary>
+        public string WeaponId;
+
+        /// <summary>Ob es sich um einen Alternativangriff handelt (z.B. Bayonett, Kolbenschlag, M203).</summary>
+        public bool IsAltAttack;
     }
 }

@@ -743,12 +743,116 @@
                 "File": "gore_mist_small.efx"
             },
             {
+                "Name": "gore_mist",
+                "File": "gore_mist.efx"
+            },
+            {
+                "Name": "gore_mist_small_vergara_head",
+                "File": "gore_mist_small_vergara_head.efx"
+            },
+            {
+                "Name": "gore_bit",
+                "File": "gore_bit.efx"
+            },
+            {
+                "Name": "gore_bloodygib",
+                "File": "gore_bloodygib.efx"
+            },
+            {
+                "Name": "gore_gib_body",
+                "File": "gore_gib_body.efx"
+            },
+            {
+                "Name": "gore_gib_small",
+                "File": "gore_gib_small.efx"
+            },
+            {
+                "Name": "gore_organ_splat",
+                "File": "gore_organ_splat.efx"
+            },
+            {
+                "Name": "gore_organ_splat_gib",
+                "File": "gore_organ_splat_gib.efx"
+            },
+            {
                 "Name": "blood_spurt_arterial",
                 "File": "blood_spurt_arterial_mp.efx"
             },
             {
                 "Name": "blood_spurt_arterial_small",
                 "File": "blood_spurt_arterial_small_mp.efx"
+            },
+            {
+                "Name": "blood_spurt_mp",
+                "File": "blood_spurt_mp.efx"
+            },
+            {
+                "Name": "blood_squirt_mp",
+                "File": "blood_squirt_mp.efx"
+            },
+            {
+                "Name": "blood_squirt_splat_mp",
+                "File": "blood_squirt_splat_mp.efx"
+            },
+            {
+                "Name": "mp_blood_squirt_small",
+                "File": "mp_blood_squirt_small.efx"
+            },
+            {
+                "Name": "blood_splat_mp",
+                "File": "blood_splat_mp.efx"
+            },
+            {
+                "Name": "blood_splat_mp_small",
+                "File": "blood_splat_mp_small.efx"
+            },
+            {
+                "Name": "blood_splat_smll_mp",
+                "File": "blood_splat_smll_mp.efx"
+            },
+            {
+                "Name": "blood_impact",
+                "File": "blood_impact.efx"
+            },
+            {
+                "Name": "blood_drip",
+                "File": "blood_drip.efx"
+            },
+            {
+                "Name": "blood_pool_mp",
+                "File": "blood_pool_mp.efx"
+            },
+            {
+                "Name": "blood_trail",
+                "File": "blood_trail.efx"
+            },
+            {
+                "Name": "blood_jugular_squirt",
+                "File": "blood_jugular_squirt.efx"
+            },
+            {
+                "Name": "arterial_squirt_long_mp",
+                "File": "arterial_squirt_long_mp.efx"
+            },
+            {
+                "Name": "arterial_squirt_med_mp",
+                "File": "arterial_squirt_med_mp.efx"
+            },
+            {
+                "Name": "arterial_squirt_small_mp",
+                "File": "arterial_squirt_small_mp.efx"
+            },
+            {
+                "Name": "gut_bleed",
+                "File": "gut_bleed.efx"
+            },
+            {
+                "Name": "head_pop_mp",
+                "File": "head_pop_mp.efx"
+            },
+            {
+                "Name": "head_pop_mp_temp",
+                "File": "head_pop_mp_temp.efx"
             }
         ],
         "gore_areas": [
@@ -780,6 +884,24 @@
                     },
                     {
                         "Name": "blood_spurt_arterial_small",
+                        "Bolt": "*hand_<PS>g"
+                    },
+                    {
+                        "Name": "arterial_squirt_small_mp",
+                        "Bolt": "*hand_<PS>g"
+                    },
+                    {
+                        "Name": "mp_blood_squirt_small",
+                        "Bolt": "*hand_<PS>g"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "blood_splat_smll_mp",
+                        "Bolt": "*hand_<PS>g"
+                    },
+                    {
+                        "Name": "mp_blood_squirt_small",
                         "Bolt": "*hand_<PS>g"
                     }
                 ]
@@ -821,6 +943,28 @@
                     },
                     {
                         "Name": "blood_spurt_arterial_small",
+                        "Bolt": "*hand_<PS>g"
+                    },
+                    {
+                        "Name": "arterial_squirt_small_mp",
+                        "Bolt": "*hand_<PS>g"
+                    },
+                    {
+                        "Name": "gore_bit",
+                        "Bolt": "*hand_<PS>g"
+                    },
+                    {
+                        "Name": "blood_drip",
+                        "Bolt": "*hand_<PS>g"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "blood_splat_mp_small",
+                        "Bolt": "*hand_<PS>g"
+                    },
+                    {
+                        "Name": "blood_squirt_mp",
                         "Bolt": "*hand_<PS>g"
                     }
                 ]
@@ -864,6 +1008,32 @@
                     {
                         "Name": "blood_spurt_arterial",
                         "Bolt": "*shldr_<PS>g"
+                    },
+                    {
+                        "Name": "arterial_squirt_med_mp",
+                        "Bolt": "*shldr_<PS>g"
+                    },
+                    {
+                        "Name": "flesh_chunks",
+                        "Bolt": "*shldr_<PS>g"
+                    },
+                    {
+                        "Name": "gore_gib_small",
+                        "Bolt": "*shldr_<PS>g"
+                    },
+                    {
+                        "Name": "gore_bloodygib",
+                        "Bolt": "*shldr_<PS>g"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "blood_splat_mp",
+                        "Bolt": "*shldr_<PS>g"
+                    },
+                    {
+                        "Name": "blood_spurt_mp",
+                        "Bolt": "*shldr_<PS>g"
                     }
                 ]
             },
@@ -880,7 +1050,37 @@
                 "Surfaces_On": [],
                 "FX": [
                     {
-                        "Name": "blood_mist_small",
+                        "Name": "gore_mist_small",
+                        "Bolt": "*uchest_<PS>"
+                    },
+                    {
+                        "Name": "gore_organ_splat",
+                        "Bolt": "*uchest_<PS>"
+                    },
+                    {
+                        "Name": "gore_organ_splat_gib",
+                        "Bolt": "*uchest_<PS>"
+                    },
+                    {
+                        "Name": "gut_bleed",
+                        "Bolt": "*uchest_<PS>"
+                    },
+                    {
+                        "Name": "blood_spurt_mp",
+                        "Bolt": "*uchest_<PS>"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*uchest_<PS>"
+                    },
+                    {
+                        "Name": "blood_spurt_mp",
+                        "Bolt": "*uchest_<PS>"
+                    },
+                    {
+                        "Name": "blood_impact",
                         "Bolt": "*uchest_<PS>"
                     }
                 ]
@@ -910,6 +1110,24 @@
                     },
                     {
                         "Name": "blood_spurt_arterial_small",
+                        "Bolt": "*foot_<PS>g"
+                    },
+                    {
+                        "Name": "mp_blood_squirt_small",
+                        "Bolt": "*foot_<PS>g"
+                    },
+                    {
+                        "Name": "blood_splat_smll_mp",
+                        "Bolt": "*foot_<PS>g"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "blood_splat_smll_mp",
+                        "Bolt": "*foot_<PS>g"
+                    },
+                    {
+                        "Name": "mp_blood_squirt_small",
                         "Bolt": "*foot_<PS>g"
                     }
                 ]
@@ -952,6 +1170,28 @@
                     {
                         "Name": "blood_spurt_arterial_small",
                         "Bolt": "*calf_<PS>"
+                    },
+                    {
+                        "Name": "arterial_squirt_small_mp",
+                        "Bolt": "*calf_<PS>"
+                    },
+                    {
+                        "Name": "gore_bit",
+                        "Bolt": "*calf_<PS>"
+                    },
+                    {
+                        "Name": "blood_trail",
+                        "Bolt": "*calf_<PS>"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "blood_splat_mp_small",
+                        "Bolt": "*calf_<PS>"
+                    },
+                    {
+                        "Name": "blood_squirt_mp",
+                        "Bolt": "*calf_<PS>"
                     }
                 ]
             },
@@ -990,12 +1230,42 @@
                     {
                         "Name": "blood_spurt_arterial",
                         "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "arterial_squirt_long_mp",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "flesh_chunks",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "gore_gib_small",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "gore_mist",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "blood_pool_mp",
+                        "Bolt": "*hip_<PS>g"
                     }
                 ],
                 "BoltOn": {
                     "Name": "bone_long",
                     "Bolt": "*hip_<PS>g"
-                }
+                },
+                "BloodFX": [
+                    {
+                        "Name": "blood_splat_mp",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "blood_spurt_mp",
+                        "Bolt": "*hip_<PS>g"
+                    }
+                ]
             },
             {
                 "Location": "hip",
@@ -1037,6 +1307,44 @@
                     {
                         "Name": "blood_spurt_arterial",
                         "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "arterial_squirt_long_mp",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "gore_organ_splat",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "flesh_chunks",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "gut_bleed",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "gore_gib_body",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "blood_trail",
+                        "Bolt": "*hip_<PS>g"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "blood_splat_mp",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "blood_spurt_mp",
+                        "Bolt": "*hip_<PS>g"
+                    },
+                    {
+                        "Name": "gut_bleed",
+                        "Bolt": "*hip_<PS>g"
                     }
                 ]
             },
@@ -1063,7 +1371,27 @@
                     "cap_head_bck_uppr_<PS>_off",
                     "cap_head_bck_lwr_<OS>_off"
                 ],
-                "Children": []
+                "Children": [],
+                "FX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_t"
+                    },
+                    {
+                        "Name": "blood_splat_mp_small",
+                        "Bolt": "*head_t"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_t"
+                    },
+                    {
+                        "Name": "blood_drip",
+                        "Bolt": "*head_t"
+                    }
+                ]
             },
             {
                 "Location": "head_back_upper",
@@ -1085,7 +1413,27 @@
                     "cap_head_bck_uppr_<OS>_off",
                     "cap_head_bck_lwr_<PS>_off"
                 ],
-                "Children": []
+                "Children": [],
+                "FX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_t"
+                    },
+                    {
+                        "Name": "blood_splat_mp_small",
+                        "Bolt": "*head_t"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_t"
+                    },
+                    {
+                        "Name": "blood_drip",
+                        "Bolt": "*head_t"
+                    }
+                ]
             },
             {
                 "Location": "head_front_lower",
@@ -1093,7 +1441,8 @@
                     "head_frnt_lwr_<PS>",
                     "fhead_frnt_lwr_<PS>",
                     "beardhead_frnt_lwr_<PS>_off",
-                    "helmet_chin_strap_off"
+                    "helmet_chin_strap_off",
+                    "mouth_<PS>"
                 ],
                 "Bolts_Off": [
                     "*head_t",
@@ -1104,7 +1453,27 @@
                     "cap_head_frnt_mid_<PS>_off",
                     "cap_torso_<PS>_off"
                 ],
-                "Children": []
+                "Children": [],
+                "FX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_f"
+                    },
+                    {
+                        "Name": "blood_splat_mp_small",
+                        "Bolt": "*head_f"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_f"
+                    },
+                    {
+                        "Name": "blood_drip",
+                        "Bolt": "*head_f"
+                    }
+                ]
             },
             {
                 "Location": "head_front_mid",
@@ -1116,7 +1485,8 @@
                     "beardhead_frnt_mid_<PS>_off",
                     "eyelash_<PS>",
                     "eyelasha_<PS>_off",
-                    "ear_r"
+                    "ear_r",
+                    "mouth_<PS>"
                 ],
                 "Bolts_Off": [
                     "*head_t",
@@ -1132,7 +1502,27 @@
                     "cap_head_side_<OS>_off",
                     "cap_head_side_<PS>_off"
                 ],
-                "Children": []
+                "Children": [],
+                "FX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_f"
+                    },
+                    {
+                        "Name": "blood_splat_mp_small",
+                        "Bolt": "*head_f"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_f"
+                    },
+                    {
+                        "Name": "blood_drip",
+                        "Bolt": "*head_f"
+                    }
+                ]
             },
             {
                 "Location": "head_front_upper",
@@ -1154,7 +1544,27 @@
                     "cap_head_frnt_uppr_<OS>_off",
                     "cap_head_side_<OS>_off"
                 ],
-                "Children": []
+                "Children": [],
+                "FX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_f"
+                    },
+                    {
+                        "Name": "blood_splat_mp_small",
+                        "Bolt": "*head_f"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_f"
+                    },
+                    {
+                        "Name": "blood_drip",
+                        "Bolt": "*head_f"
+                    }
+                ]
             },
             {
                 "Location": "head_side",
@@ -1180,7 +1590,27 @@
                     "cap_head_frnt_mid_<PS>_off",
                     "cap_head_frnt_mid_<OS>_off"
                 ],
-                "Children": []
+                "Children": [],
+                "FX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_t"
+                    },
+                    {
+                        "Name": "blood_splat_mp_small",
+                        "Bolt": "*head_t"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*head_t"
+                    },
+                    {
+                        "Name": "blood_drip",
+                        "Bolt": "*head_t"
+                    }
+                ]
             },
             {
                 "Location": "head_<PL>",
@@ -1210,7 +1640,31 @@
                 "BoltOn": {
                     "Name": "brain",
                     "Bolt": "*headg"
-                }
+                },
+                "FX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*headg"
+                    },
+                    {
+                        "Name": "blood_spurt_arterial_small",
+                        "Bolt": "*headg"
+                    },
+                    {
+                        "Name": "head_pop_mp_temp",
+                        "Bolt": "*headg"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*headg"
+                    },
+                    {
+                        "Name": "blood_splat_mp_small",
+                        "Bolt": "*headg"
+                    }
+                ]
             },
             {
                 "Location": "head_<OL>",
@@ -1236,6 +1690,30 @@
                     "head_front_mid",
                     "head_front_upper",
                     "head_side"
+                ],
+                "FX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*headg"
+                    },
+                    {
+                        "Name": "blood_spurt_arterial_small",
+                        "Bolt": "*headg"
+                    },
+                    {
+                        "Name": "head_pop_mp_temp",
+                        "Bolt": "*headg"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*headg"
+                    },
+                    {
+                        "Name": "blood_splat_mp_small",
+                        "Bolt": "*headg"
+                    }
                 ]
             },
             {
@@ -1260,14 +1738,34 @@
                     "MinForce": 60,
                     "MaxForce": 100,
                     "Surfaces": [
-                        "head_bck_lwr_r", "head_bck_uppr_r", "head_frnt_lwr_r",
-                        "head_frnt_mid_r", "head_frnt_uppr_r", "head_side_r",
-                        "fhead_frnt_lwr_r", "fhead_frnt_mid_r", "fhead_frnt_uppr_r", "fhead_side_r",
-                        "eyeball_r", "ear_r", "eyelash_r",
-                        "head_bck_lwr_l", "head_bck_uppr_l", "head_frnt_lwr_l",
-                        "head_frnt_mid_l", "head_frnt_uppr_l", "head_side_l",
-                        "fhead_frnt_lwr_l", "fhead_frnt_mid_l", "fhead_frnt_uppr_l", "fhead_side_l",
-                        "eyeball_l", "ear_l", "eyelash_l"
+                        "head_bck_lwr_r",
+                        "head_bck_uppr_r",
+                        "head_frnt_lwr_r",
+                        "head_frnt_mid_r",
+                        "head_frnt_uppr_r",
+                        "head_side_r",
+                        "fhead_frnt_lwr_r",
+                        "fhead_frnt_mid_r",
+                        "fhead_frnt_uppr_r",
+                        "fhead_side_r",
+                        "eyeball_r",
+                        "ear_r",
+                        "eyelash_r",
+                        "mouth_r",
+                        "head_bck_lwr_l",
+                        "head_bck_uppr_l",
+                        "head_frnt_lwr_l",
+                        "head_frnt_mid_l",
+                        "head_frnt_uppr_l",
+                        "head_side_l",
+                        "fhead_frnt_lwr_l",
+                        "fhead_frnt_mid_l",
+                        "fhead_frnt_uppr_l",
+                        "fhead_side_l",
+                        "eyeball_l",
+                        "ear_l",
+                        "eyelash_l",
+                        "mouth_l"
                     ]
                 },
                 "BoltOn": {
@@ -1285,6 +1783,40 @@
                     },
                     {
                         "Name": "flesh_chunks",
+                        "Bolt": "*neckg"
+                    },
+                    {
+                        "Name": "head_pop_mp",
+                        "Bolt": "*neckg"
+                    },
+                    {
+                        "Name": "gore_bloodygib",
+                        "Bolt": "*neckg"
+                    },
+                    {
+                        "Name": "blood_jugular_squirt",
+                        "Bolt": "*neckg"
+                    },
+                    {
+                        "Name": "blood_squirt_splat_mp",
+                        "Bolt": "*neckg"
+                    },
+                    {
+                        "Name": "gore_mist_small_vergara_head",
+                        "Bolt": "*neckg"
+                    }
+                ],
+                "BloodFX": [
+                    {
+                        "Name": "gore_mist_small",
+                        "Bolt": "*neckg"
+                    },
+                    {
+                        "Name": "blood_spurt_mp",
+                        "Bolt": "*neckg"
+                    },
+                    {
+                        "Name": "blood_splat_mp",
                         "Bolt": "*neckg"
                     }
                 ]

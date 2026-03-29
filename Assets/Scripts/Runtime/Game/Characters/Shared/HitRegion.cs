@@ -27,7 +27,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Linker Oberarm — lhumerus → lradius.</summary>
         LeftArm = 20,
 
-        /// <summary>Linke Hand — lradius → lhand.</summary>
+        /// <summary>Linke Hand — lhand_tag_bone.</summary>
         LeftHand = 24,
 
         /// <summary>Rechte Schulter — rclavical → rhumerus.</summary>
@@ -36,7 +36,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Rechter Oberarm — rhumerus → rradius.</summary>
         RightArm = 32,
 
-        /// <summary>Rechte Hand — rradius → rhand.</summary>
+        /// <summary>Rechte Hand — rhand_tag_bone.</summary>
         RightHand = 36,
 
         /// <summary>Bauch — upper_lumbar → lower_lumbar.</summary>
@@ -55,6 +55,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         LeftFoot = 56,
 
         /// <summary>Rechter Oberschenkel — rfemurYZ → rtibia.</summary>
-        RightThigh = 60
+        RightThigh = 60,
+
+        /// <summary>Linker Unterarm — lradius → lhand.</summary>
+        LeftForearm = 64,
+
+        /// <summary>Rechter Unterarm — rradius → rhand.</summary>
+        RightForearm = 68
     }
 }

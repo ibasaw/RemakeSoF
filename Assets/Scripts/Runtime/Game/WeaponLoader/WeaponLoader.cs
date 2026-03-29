@@ -47,6 +47,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
         private GameObject m_CurrentWeaponInstance;
 
         /// <summary>
+        /// Basis-LocalScale nach Bone-Kompensation (ohne Foreshorten).
+        /// </summary>
+        private Vector3 m_BaseLocalScale;
+
+        /// <summary>
         /// Name der aktuell geladenen Waffe.
         /// </summary>
         private string m_CurrentWeaponName;
@@ -65,6 +70,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
         /// Aktuell instanziiertes Waffen-GameObject (null wenn keine Waffe).
         /// </summary>
         public GameObject CurrentWeaponInstance => m_CurrentWeaponInstance;
+
+        /// <summary>
+        /// Wendet SoF2 Foreshorten-Skalierung auf die aktuelle Waffe an.
+        /// FP: foreshorten (z.B. 0.6 = 60%), TP: 1.0 (volle Groesse).
+        /// </summary>
+        public void ApplyForeshorten(float foreshorten)
+        {
+            if (m_CurrentWeaponInstance == null)
+            {
+                return;
+            }
+
+            if (foreshorten <= 0f)
+            {
+                foreshorten = 1f;
+            }
+
+            m_CurrentWeaponInstance.transform.localScale = m_BaseLocalScale * foreshorten;
+        }
 
         /// <summary>
         /// Setzt den Attachment-Bone (rhang_tag_bone) fuer die Waffen-Instanziierung.
@@ -142,6 +166,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
                 prefabScale.y / boneScale.y,
                 prefabScale.z / boneScale.z);
 
+            m_BaseLocalScale = weaponTransform.localScale;
             m_CurrentWeaponName = weaponKey;
 
             Debug.Log($"[WeaponLoader] Waffe '{weaponKey}' attached. worldScale={weaponTransform.lossyScale}");

@@ -6,6 +6,7 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+using Tolik.RemakeSoF.Runtime.CrosshairManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
 using Tolik.RemakeSoF.Runtime.SoundManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
@@ -306,6 +307,9 @@ namespace Tolik.RemakeSoF.Runtime
         {
             // Debug-HUD Sichtbarkeit anhand des SerializeField-Flags setzen.
             View.SetDebugHudVisible(m_ShowDebugHud);
+
+            // Crosshair aus Default-Definition aufbauen.
+            InitializeCrosshair();
 
             // Falls CharacterState noch nicht verfuegbar, jetzt versuchen.
             if (m_CharacterState == null && App.Model.PlayerCharacter != null)
@@ -656,6 +660,8 @@ namespace Tolik.RemakeSoF.Runtime
                 case HitRegion.RightShoulder: return "R. SHOULDER";
                 case HitRegion.LeftArm: return "L. ARM";
                 case HitRegion.RightArm: return "R. ARM";
+                case HitRegion.LeftForearm: return "L. FOREARM";
+                case HitRegion.RightForearm: return "R. FOREARM";
                 case HitRegion.LeftHand: return "L. HAND";
                 case HitRegion.RightHand: return "R. HAND";
                 case HitRegion.LeftThigh: return "L. THIGH";
@@ -666,6 +672,21 @@ namespace Tolik.RemakeSoF.Runtime
                 case HitRegion.RightFoot: return "R. FOOT";
                 default: return region.ToString().ToUpperInvariant();
             }
+        }
+
+        /// <summary>
+        /// Laedt das Default-Crosshair aus dem CrosshairDataLoader und baut es in der View auf.
+        /// </summary>
+        private void InitializeCrosshair()
+        {
+            CrosshairDataLoader crosshairLoader = ServiceLocator.Get<CrosshairDataLoader>();
+            if (crosshairLoader == null)
+            {
+                return;
+            }
+
+            CrosshairDefinition definition = crosshairLoader.GetDefault();
+            View.BuildCrosshair(definition);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using Tolik.RemakeSoF.Runtime.CrosshairManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -68,6 +69,16 @@ namespace Tolik.RemakeSoF.Runtime
         VisualElement m_HitConfirmContainer;
         Label m_HitRegionLabel;
         Label m_HitDamageLabel;
+
+        // Crosshair HUD
+        VisualElement m_CrosshairContainer;
+
+        /// <summary>
+        /// Vertikaler Offset des Crosshairs in Prozent der Bildschirmhoehe.
+        /// Positive Werte verschieben nach unten (Third-Person Parallax-Korrektur).
+        /// 0 = exakt Bildschirmmitte, passend zur Raycast-Richtung.
+        /// </summary>
+        private const float CROSSHAIR_VERTICAL_OFFSET_PERCENT = 3.5f;
 
         /// <summary>
         /// Wird gefeuert sobald die MatchView aktiviert und alle UI-Elemente neu gebunden sind.
@@ -140,6 +151,13 @@ namespace Tolik.RemakeSoF.Runtime
             m_HitConfirmContainer = root.Query<VisualElement>("HitConfirmContainer");
             m_HitRegionLabel = root.Query<Label>("hitRegionLabel");
             m_HitDamageLabel = root.Query<Label>("hitDamageLabel");
+
+            // Crosshair HUD
+            m_CrosshairContainer = root.Query<VisualElement>("CrosshairContainer");
+            if (m_CrosshairContainer != null)
+            {
+                m_CrosshairContainer.style.top = new StyleLength(new Length(50f + CROSSHAIR_VERTICAL_OFFSET_PERCENT, LengthUnit.Percent));
+            }
 
             OnViewEnabled?.Invoke();
         }
@@ -418,6 +436,134 @@ namespace Tolik.RemakeSoF.Runtime
             if (m_HitConfirmContainer != null)
             {
                 m_HitConfirmContainer.style.display = DisplayStyle.None;
+            }
+        }
+
+        /// <summary>
+        /// Baut das Crosshair dynamisch aus einer CrosshairDefinition zusammen.
+        /// Erzeugt Linien (Top/Bottom/Left/Right), optionalen CenterDot und Outlines als VisualElements.
+        /// </summary>
+        internal void BuildCrosshair(CrosshairDefinition definition)
+        {
+            if (m_CrosshairContainer == null)
+            {
+                return;
+            }
+
+            m_CrosshairContainer.Clear();
+
+            if (definition == null)
+            {
+                m_CrosshairContainer.style.display = DisplayStyle.None;
+                return;
+            }
+
+            m_CrosshairContainer.style.display = DisplayStyle.Flex;
+
+            Color lineColor = new(
+                definition.Color[0] / 255f,
+                definition.Color[1] / 255f,
+                definition.Color[2] / 255f,
+                definition.Color[3] / 255f
+            );
+
+            Color outlineColor = new(
+                definition.OutlineColor[0] / 255f,
+                definition.OutlineColor[1] / 255f,
+                definition.OutlineColor[2] / 255f,
+                definition.OutlineColor[3] / 255f
+            );
+
+            bool hasOutline = definition.OutlineThickness > 0;
+
+            // Crosshair-Linien erzeugen (Top, Bottom, Left, Right)
+            // Offsets sind Top-Left-Ecke relativ zum Container-Origin (= Bildschirmmitte).
+            if (definition.LineLength > 0 && definition.LineThickness > 0)
+            {
+                int halfThick = definition.LineThickness / 2;
+
+                // Top line: von -(gap+length) bis -gap, zentriert horizontal
+                BuildCrosshairLine(definition, lineColor, outlineColor, hasOutline, -halfThick, -(definition.Gap + definition.LineLength), definition.LineThickness, definition.LineLength);
+                // Bottom line: von +gap bis +(gap+length), zentriert horizontal
+                BuildCrosshairLine(definition, lineColor, outlineColor, hasOutline, -halfThick, definition.Gap, definition.LineThickness, definition.LineLength);
+                // Left line: von -(gap+length) bis -gap, zentriert vertikal
+                BuildCrosshairLine(definition, lineColor, outlineColor, hasOutline, -(definition.Gap + definition.LineLength), -halfThick, definition.LineLength, definition.LineThickness);
+                // Right line: von +gap bis +(gap+length), zentriert vertikal
+                BuildCrosshairLine(definition, lineColor, outlineColor, hasOutline, definition.Gap, -halfThick, definition.LineLength, definition.LineThickness);
+            }
+
+            // Center Dot
+            if (definition.CenterDot && definition.CenterDotSize > 0)
+            {
+                int dotSize = definition.CenterDotSize;
+                int halfDot = dotSize / 2;
+
+                if (hasOutline)
+                {
+                    int outlineDotSize = dotSize + definition.OutlineThickness * 2;
+                    VisualElement dotOutline = new();
+                    dotOutline.pickingMode = PickingMode.Ignore;
+                    dotOutline.style.position = Position.Absolute;
+                    dotOutline.style.left = -(outlineDotSize / 2);
+                    dotOutline.style.top = -(outlineDotSize / 2);
+                    dotOutline.style.width = outlineDotSize;
+                    dotOutline.style.height = outlineDotSize;
+                    dotOutline.style.backgroundColor = outlineColor;
+                    m_CrosshairContainer.Add(dotOutline);
+                }
+
+                VisualElement dot = new();
+                dot.pickingMode = PickingMode.Ignore;
+                dot.style.position = Position.Absolute;
+                dot.style.left = -halfDot;
+                dot.style.top = -halfDot;
+                dot.style.width = dotSize;
+                dot.style.height = dotSize;
+                dot.style.backgroundColor = lineColor;
+                m_CrosshairContainer.Add(dot);
+            }
+        }
+
+        /// <summary>
+        /// Erzeugt eine einzelne Crosshair-Linie mit optionaler Outline.
+        /// offsetX/offsetY sind die Top-Left-Ecke relativ zum Container-Origin (Bildschirmmitte).
+        /// </summary>
+        private void BuildCrosshairLine(CrosshairDefinition definition, Color lineColor, Color outlineColor, bool hasOutline, int offsetX, int offsetY, int width, int height)
+        {
+            if (hasOutline)
+            {
+                int outW = width + definition.OutlineThickness * 2;
+                int outH = height + definition.OutlineThickness * 2;
+                VisualElement outline = new();
+                outline.pickingMode = PickingMode.Ignore;
+                outline.style.position = Position.Absolute;
+                outline.style.left = offsetX - definition.OutlineThickness;
+                outline.style.top = offsetY - definition.OutlineThickness;
+                outline.style.width = outW;
+                outline.style.height = outH;
+                outline.style.backgroundColor = outlineColor;
+                m_CrosshairContainer.Add(outline);
+            }
+
+            VisualElement line = new();
+            line.pickingMode = PickingMode.Ignore;
+            line.style.position = Position.Absolute;
+            line.style.left = offsetX;
+            line.style.top = offsetY;
+            line.style.width = width;
+            line.style.height = height;
+            line.style.backgroundColor = lineColor;
+            m_CrosshairContainer.Add(line);
+        }
+
+        /// <summary>
+        /// Blendet das Crosshair ein oder aus.
+        /// </summary>
+        internal void SetCrosshairVisible(bool visible)
+        {
+            if (m_CrosshairContainer != null)
+            {
+                m_CrosshairContainer.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
             }
         }
     }

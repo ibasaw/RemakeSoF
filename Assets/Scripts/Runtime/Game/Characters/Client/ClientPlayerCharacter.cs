@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Camera;
@@ -82,6 +83,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         [SerializeField]
         private CameraSwitcher m_CameraSwitcher;
+
+        /// <summary>
+        /// FirstPersonCameraEffects auf der First-Person CinemachineCamera.
+        /// SoF2-style Bob, Landing-Deflection, Duck-Smoothing und Velocity-Offsets.
+        /// Wird nur fuer den Owner mit Physik-Daten versorgt.
+        /// </summary>
+        [SerializeField]
+        private FirstPersonCameraEffects m_FirstPersonEffects;
 
         /// <summary>
         /// SkinHandler-Referenz fuer das OnVisualInstantiated-Event.
@@ -438,6 +447,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         private string m_PendingWeaponName;
 
+        /// <summary>
+        /// SoF2 Foreshorten-Faktor der aktuellen Waffe (0.6 = 60% Groesse in FP).
+        /// </summary>
+        private float m_CurrentForeshorten = 1f;
+
         // ===== Bone / Visual References =====
 
         /// <summary>
@@ -513,6 +527,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// Wird in LateUpdate vertikal korrigiert.
         /// </summary>
         private Transform m_VisualInstance;
+
+        /// <summary>
+        /// Gecachte Renderer-Liste des Visual-Prefabs fuer FP-Body-Hiding.
+        /// Im First-Person-Modus werden alle Renderer auf ShadowsOnly gesetzt,
+        /// damit der eigene Koerper nicht sichtbar ist, aber Schatten wirft.
+        /// </summary>
+        private Renderer[] m_VisualRenderers;
 
         /// <summary>
         /// Gesmoothed Legs-Forward Vektor (Slerp-basiert, nie sprunghaft).
@@ -670,6 +691,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_SkinHandler.OnVisualInstantiated -= OnVisualInstantiated;
             }
 
+            // Kamera-Modus-Event abmelden
+            if (m_CameraSwitcher != null)
+            {
+                m_CameraSwitcher.OnCameraModeChanged -= OnCameraModeChanged;
+            }
+
             // Waffen-Event abmelden
             if (m_CharacterState != null)
             {
@@ -700,6 +727,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (m_CharacterState != null)
             {
                 m_CharacterState.OnWeaponChanged += OnWeaponChanged;
+
+                // Aktuellen State replaying fuer Late-Joiner: Falls NetworkedCharacterState.OnNetworkSpawn
+                // bereits vor diesem Subscribe gefeuert hat, ist das initiale OnWeaponChanged verloren.
+                // NotifyCurrentState sendet den aktuellen Waffennamen erneut → m_PendingWeaponName wird gesetzt
+                // und beim naechsten OnVisualInstantiated via TryLoadPendingWeapon konsumiert.
+                m_CharacterState.NotifyCurrentState();
             }
 
             if (!m_NetworkedPlayerCharacter.IsOwner)
@@ -742,6 +775,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_CameraRoot.SetActive(true);
             m_AimCameraController.enabled = true;
             m_CameraSwitcher.enabled = true;
+
+            // FP-Body-Hiding: auf Kamera-Modus-Wechsel reagieren
+            m_CameraSwitcher.OnCameraModeChanged += OnCameraModeChanged;
 
             // Auf Visual-Instanziierung lauschen (Yaw/Pitch/CameraTarget werden dort gefunden)
             if (m_SkinHandler != null)
@@ -862,6 +898,28 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_FootstepHandler.IsGrounded = m_Simulation.IsGrounded;
                 Vector3 vel = m_Simulation.Velocity;
                 m_FootstepHandler.HorizontalSpeed = new Vector2(vel.x, vel.z).magnitude;
+            }
+
+            // First-Person Kamera-Effekte aktualisieren (Bob, Landing, Duck)
+            if (m_FirstPersonEffects != null)
+            {
+                m_FirstPersonEffects.UpdatePhysicsData(
+                    m_Simulation.Velocity,
+                    m_Simulation.IsGrounded,
+                    m_Simulation.IsCrouching,
+                    m_Simulation.JustLanded,
+                    m_Simulation.FullFallHeight);
+
+                // Eye-Height-Offset jeden Frame neu berechnen, da der Pitch-Bone
+                // je nach Waffen-Animation auf unterschiedlicher Hoehe liegt.
+                // transform.position.y = Fuss-Hoehe (SoF2 Origin), Pitch-Bone variiert.
+                if (m_PitchTarget != null && m_ColliderSystem != null)
+                {
+                    float capsuleHeight = m_ColliderSystem.GetCurrentCapsuleHeight();
+                    float serverEyeHeight = capsuleHeight * (72f / 89f);
+                    float pitchBoneHeight = m_PitchTarget.position.y - transform.position.y;
+                    m_FirstPersonEffects.SetEyeHeightOffset(serverEyeHeight - pitchBoneHeight);
+                }
             }
 
             // Landing-Sound abspielen wenn Spieler gerade gelandet ist
@@ -1214,7 +1272,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             // === Ab hier nur Owner ===
 
-            Transform cameraTarget = FindDeepChild(visualInstance.transform, "CameraTarget");
             Transform highestPoint = FindDeepChild(visualInstance.transform, "*head_t_0");
             Transform cranium = FindDeepChild(visualInstance.transform, "cranium");
             Transform rightHandBolt = FindDeepChild(visualInstance.transform, "rhang_tag_bone");
@@ -1226,16 +1283,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_AimCameraController.SetTargets(yaw, pitch);
 
             // CameraSwitcher: Follow-Targets setzen
+            // Third-Person und First-Person folgen beide dem Pitch-Bone.
+            // Pitch wird von AimCameraController rotiert (Yaw+Pitch) —
+            // dadurch hat die FP-Kamera automatisch die korrekte Blickrichtung.
+            // CinemachineThirdPersonFollow (3P) offsettet dahinter,
+            // CinemachineHardLockToTarget (1P) setzt Position exakt auf den Bone.
             m_CameraSwitcher.SetAimCamFollowTarget(pitch);
-
-            if (cameraTarget != null)
-            {
-                m_CameraSwitcher.SetFirstPersonFollowTarget(cameraTarget);
-            }
-            else
-            {
-                Debug.LogWarning("[ClientPlayerCharacter] CameraTarget nicht im Visual gefunden, First-Person-Kamera hat kein Follow-Target.");
-            }
+            m_CameraSwitcher.SetFirstPersonFollowTarget(pitch);
 
             // Collider-System initialisieren: Capsule-Groesse aus Bones berechnen
             if (m_ColliderSystem != null)
@@ -1255,6 +1309,28 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     m_ColliderSystem.GetCurrentCapsuleRadius(),
                     m_ColliderSystem.GetCurrentCapsuleCenter()
                 );
+
+                // Kamera-Hoehe an Server-Eye-Position angleichen (SoF2 Ratio 72/89).
+                // Server berechnet eyePos = transform.position + (0, capsuleHeight*72/89, 0).
+                // FP-Kamera folgt dem Pitch-Bone — die Differenz zwischen Pitch-Bone
+                // und Server-Eye-Height wird als Offset an FirstPersonCameraEffects uebergeben.
+                {
+                    float capsuleHeight = m_ColliderSystem.GetCurrentCapsuleHeight();
+                    float serverEyeHeight = capsuleHeight * (72f / 89f);
+
+                    // Fuss-Position als Referenz (wie Server transform.position = Fuss)
+                    Transform foot = leftFoot != null ? leftFoot : rightFoot;
+                    float footY = foot != null ? foot.position.y : transform.position.y;
+                    float pitchBoneHeight = pitch.position.y - footY;
+                    float eyeHeightOffset = serverEyeHeight - pitchBoneHeight;
+
+                    Debug.Log($"[ClientPlayerCharacter] Eye-Alignment: ServerEye={serverEyeHeight:F3}, PitchBoneH={pitchBoneHeight:F3}, EyeOffset={eyeHeightOffset:F3}, CapsuleH={capsuleHeight:F3}");
+
+                    if (m_FirstPersonEffects != null)
+                    {
+                        m_FirstPersonEffects.SetEyeHeightOffset(eyeHeightOffset);
+                    }
+                }
             }
 
             // Hitboxen fuer Owner erstellen
@@ -1271,6 +1347,52 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_WeaponLoader.SetAttachmentBone(rightHandBolt);
                 TryLoadPendingWeapon();
             }
+
+            // Renderer cachen fuer FP-Body-Hiding (ShadowsOnly im First-Person-Modus)
+            m_VisualRenderers = visualInstance.GetComponentsInChildren<Renderer>(true);
+
+            // Initialen Kamera-Modus anwenden (falls bereits FP)
+            if (m_CameraSwitcher != null)
+            {
+                ApplyFirstPersonVisibility(m_CameraSwitcher.IsFirstPerson);
+            }
+        }
+
+        /// <summary>
+        /// Callback: Kamera-Modus wurde gewechselt (First Person / Third Person).
+        /// Setzt Renderer-ShadowCastingMode fuer den eigenen Koerper.
+        /// </summary>
+        private void OnCameraModeChanged(bool isFirstPerson)
+        {
+            ApplyFirstPersonVisibility(isFirstPerson);
+        }
+
+        /// <summary>
+        /// Setzt alle Renderer des eigenen Visuals auf ShadowsOnly (FP) oder On (TP).
+        /// ShadowsOnly: Mesh ist fuer die Kamera unsichtbar, wirft aber weiterhin Schatten.
+        /// Damit sieht man im First-Person-Modus nicht in den eigenen Koerper hinein.
+        /// </summary>
+        private void ApplyFirstPersonVisibility(bool isFirstPerson)
+        {
+            if (m_VisualRenderers == null)
+            {
+                return;
+            }
+
+            ShadowCastingMode mode = isFirstPerson
+                ? ShadowCastingMode.ShadowsOnly
+                : ShadowCastingMode.On;
+
+            for (int i = 0; i < m_VisualRenderers.Length; i++)
+            {
+                if (m_VisualRenderers[i] != null)
+                {
+                    m_VisualRenderers[i].shadowCastingMode = mode;
+                }
+            }
+
+            // SoF2 Foreshorten: Waffe in FP auf 60% skalieren, in TP auf 100%
+            m_WeaponLoader.ApplyForeshorten(isFirstPerson ? m_CurrentForeshorten : 1f);
         }
 
         /// <summary>
@@ -1694,6 +1816,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Normaler Waffenwechsel (z.B. beim Spawn oder Server-initiiert ohne Player-Input)
             m_PendingWeaponName = weaponName;
             TryLoadPendingWeapon();
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[ClientPlayerCharacter] OnWeaponChanged: '{weaponName}' | IsRemote={m_IsRemoteMode} | IsSwapping={m_IsSwapping}");
+#endif
         }
 
         /// <summary>
@@ -1779,6 +1905,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_AltAttackFramesRemaining = 0;
             m_AltAttackFrameAccumulator = 0f;
 
+            // SoF2 First-Person View-Offset fuer aktuelle Waffe setzen
+            if (m_FirstPersonEffects != null)
+            {
+                WeaponViewOffsetDefinition viewOffset = weapon.ViewOffset;
+                if (viewOffset != null)
+                {
+                    m_FirstPersonEffects.SetWeaponViewOffset(viewOffset.Forward, viewOffset.Right, viewOffset.Up);
+                }
+                else
+                {
+                    m_FirstPersonEffects.SetWeaponViewOffset(0f, 0f, 0f);
+                }
+            }
+
+            // SoF2 Foreshorten merken (wird nach Waffen-Laden angewendet)
+            m_CurrentForeshorten = weapon.Foreshorten;
+
             // Fire-Mode aus Waffen-Definition initialisieren
             m_AvailableFireModes = weapon.Attack?.FireModes;
             string defaultFireMode = weapon.Attack?.FireMode ?? "auto";
@@ -1825,6 +1968,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (m_WeaponLoader.LoadAndAttachWeapon(m_PendingWeaponName))
             {
                 m_PendingWeaponName = null;
+
+                // SoF2 Foreshorten im FP-Modus anwenden (0.6 = 60% Groesse)
+                bool fp = m_CameraSwitcher != null && m_CameraSwitcher.IsFirstPerson;
+                m_WeaponLoader.ApplyForeshorten(fp ? m_CurrentForeshorten : 1f);
             }
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
 using UnityEngine;
 
@@ -33,6 +34,9 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
         private const int DAMAGE_LEVEL_HIGH_DEATH = 5;
 
         private readonly GoreApplier m_Applier = new();
+
+        /// <summary>PGORE Wund-Decal-Applier fuer direkte Mesh-Projektion.</summary>
+        private readonly PGoreDecalApplier m_PGoreApplier = new();
 
         /// <summary>
         /// Tracking welche Gore-Areas pro Charakter bereits angewendet wurden.
@@ -66,20 +70,45 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 return;
             }
 
+            // Fuer zentrale Koerperregionen (Kopf, Hals, Brust, Bauch, Leiste):
+            // Seite anhand der Treffer-Position bestimmen statt hardcoded isRightSide.
+            // Nutzt Bone-Distanz-Vergleich (lfemurYZ vs rfemurYZ) statt lokaler X-Achse.
+            GoreHitRegionMapping.GoreAreaMapping effectiveMapping = mapping;
+            if (IsCenterBodyRegion(hitData.HitRegion) && hitData.CharacterRoot != null)
+            {
+                bool isRightSide = DetermineSideFromHitPosition(hitData);
+                effectiveMapping = new GoreHitRegionMapping.GoreAreaMapping(mapping.GoreAreaLocation, isRightSide);
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[GoreManager] GORE-HIT: HitRegion={hitData.HitRegion}, Area={effectiveMapping.GoreAreaLocation}, IsRightSide={effectiveMapping.IsRightSide}, DL={hitData.DamageLevel}, IsCenter={IsCenterBodyRegion(hitData.HitRegion)}");
+#endif
+
             // Low-Level Treffer: nur Blut-FX, kein Dismemberment
             if (hitData.DamageLevel < DAMAGE_LEVEL_DISMEMBER)
             {
-                ProcessBloodEffect(hitData, mapping, goreDataLoader);
+                ProcessBloodEffect(hitData, effectiveMapping, goreDataLoader);
                 return;
             }
 
             // Dismemberment-Level: Gore-Area vollstaendig anwenden
-            ProcessDismemberment(hitData, mapping, goreDataLoader);
+            // Hip/Groin: BEIDE Seiten abtrennen (hip_l + hip_r)
+            if (hitData.HitRegion == HitRegion.Groin)
+            {
+                ProcessDismemberment(hitData, new GoreHitRegionMapping.GoreAreaMapping("hip", true), goreDataLoader);
+                ProcessDismemberment(hitData, new GoreHitRegionMapping.GoreAreaMapping("hip", false), goreDataLoader);
+            }
+            else
+            {
+                ProcessDismemberment(hitData, effectiveMapping, goreDataLoader);
+            }
         }
 
         /// <summary>
         /// Verarbeitet einen Blut-Effekt ohne Dismemberment (DamageLevel 0-3).
-        /// Spielt nur FX an der Treffer-Position ab.
+        /// Spielt Blood-FX an den definierten Bolt-Positionen ab und projiziert PGORE-Wund-Decals.
+        /// Bolt-Positionen kommen aus den BloodFX-Definitionen (z.B. *neckg, *hip_rg),
+        /// NICHT aus hitData.HitPoint — damit erscheinen Effekte am Koerper statt auf der Hitbox-Oberflaeche.
         /// </summary>
         private void ProcessBloodEffect(GoreHitData hitData, GoreHitRegionMapping.GoreAreaMapping mapping, GoreDataLoader goreDataLoader)
         {
@@ -92,24 +121,208 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
 
             GoreArea resolvedArea = m_Applier.ResolveArea(area, mapping.IsRightSide);
 
-            // Nur FX abspielen, kein Surface-Wechsel
-            if (resolvedArea.FX != null && resolvedArea.FX.Count > 0)
+            // BloodFX bevorzugen (speziell fuer nicht-letale Treffer), Fallback auf FX
+            List<GoreEffect> bloodEffects = resolvedArea.BloodFX != null && resolvedArea.BloodFX.Count > 0
+                ? resolvedArea.BloodFX
+                : resolvedArea.FX;
+
+            if (bloodEffects != null && bloodEffects.Count > 0)
             {
                 Game.Effects.EffectFactory effectFactory = ServiceLocator.Get<Game.Effects.EffectFactory>();
                 if (effectFactory != null)
                 {
-                    foreach (GoreEffect fx in resolvedArea.FX)
+                    // Model-Root fuer Bolt-Suche finden
+                    Transform modelRoot = FindModelRoot(hitData.CharacterRoot);
+
+                    foreach (GoreEffect fx in bloodEffects)
                     {
                         if (string.IsNullOrEmpty(fx.Name))
                         {
                             continue;
                         }
 
-                        // Effekt an der Treffer-Position abspielen
-                        effectFactory.SpawnImpactEffect(hitData.HitPoint, hitData.HitDirection * -1f, fx.Name);
+                        // Effekt-Position: Bolt-Position bevorzugen, hitData.HitPoint als Fallback.
+                        // Bolt-Positionen platzieren Blut-Effekte korrekt am Koerper
+                        // statt auf der abstrakten Hitbox-Collider-Oberflaeche.
+                        Vector3 effectPosition = hitData.HitPoint;
+                        Vector3 effectNormal = hitData.HitDirection * -1f;
+
+                        if (!string.IsNullOrEmpty(fx.Bolt) && modelRoot != null)
+                        {
+                            Transform boltTransform = FindBoltTransform(modelRoot, fx.Bolt);
+                            if (boltTransform != null)
+                            {
+                                effectPosition = boltTransform.position;
+                            }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                            else
+                            {
+                                Debug.LogWarning($"[GoreManager] BloodFX bolt not found: '{fx.Bolt}' for effect '{fx.Name}'");
+                            }
+#endif
+                        }
+
+                        // Effekt-ID aufloesen (fx.Name → "effects/fx.Name" falls noetig)
+                        string effectId = ResolveBloodEffectId(fx.Name, effectFactory);
+                        effectFactory.SpawnImpactEffect(effectPosition, effectNormal, effectId);
                     }
                 }
             }
+
+            // PGORE Wund-Decals auf dem Charakter-Mesh projizieren
+            ApplyPGoreDecals(hitData);
+
+            // Blutfleck am Boden unter dem Trefferpunkt spawnen (SoF2: blood_splat_mp_small)
+            // Nur wenn ein Charakter-Root vorhanden ist (fuer Boden-Raycast)
+            SpawnFloorBloodSplat(hitData);
+        }
+
+        /// <summary>
+        /// Findet den model_root-Transform unter dem Character-Root-GameObject.
+        /// SoF2-Surfaces und *Bolts leben unter model_root in der Hierarchie:
+        /// PlayerCharacter → VisualRoot → skinClone → model_root_0.
+        /// </summary>
+        private static Transform FindModelRoot(GameObject characterRoot)
+        {
+            if (characterRoot == null)
+            {
+                return null;
+            }
+
+            Transform result = FindDeepChildStatic(characterRoot.transform, "model_root");
+            return result != null ? result : characterRoot.transform;
+        }
+
+        /// <summary>
+        /// Findet einen Bolt-Transform anhand eines SoF2-Bolt-Namens.
+        /// SoF2 Bolt-Namen beginnen mit '*' (z.B. "*neckg", "*hip_rg").
+        /// Entfernt '*'-Praefix und Unity-Suffix fuer die Suche.
+        /// </summary>
+        private static Transform FindBoltTransform(Transform root, string boltName)
+        {
+            if (string.IsNullOrEmpty(boltName))
+            {
+                return null;
+            }
+
+            string cleanName = boltName.TrimStart('*');
+            // Unity-Suffix (_0, _1 etc.) ebenfalls entfernen
+            cleanName = System.Text.RegularExpressions.Regex.Replace(cleanName, @"_\d+$", "");
+            return FindBoltTransformRecursive(root, cleanName);
+        }
+
+        /// <summary>
+        /// Rekursive Suche nach einem Bolt-Transform (case-insensitive, mit Name-Normalisierung).
+        /// </summary>
+        private static Transform FindBoltTransformRecursive(Transform parent, string normalizedName)
+        {
+            // Exakter Match
+            if (string.Equals(parent.name, normalizedName, StringComparison.OrdinalIgnoreCase))
+            {
+                return parent;
+            }
+
+            // Normalisierter Match: '*'-Praefix und '_N'-Suffix entfernen
+            string cleanParentName = parent.name.TrimStart('*');
+            cleanParentName = System.Text.RegularExpressions.Regex.Replace(cleanParentName, @"_\d+$", "");
+            if (string.Equals(cleanParentName, normalizedName, StringComparison.OrdinalIgnoreCase))
+            {
+                return parent;
+            }
+
+            int childCount = parent.childCount;
+            for (int i = 0; i < childCount; i++)
+            {
+                Transform result = FindBoltTransformRecursive(parent.GetChild(i), normalizedName);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Spawnt einen kleinen Blutfleck-Decal am Boden unterhalb des Trefferpunkts.
+        /// Nutzt Raycast nach unten um die exakte Bodenposition zu finden.
+        /// Fuer nicht-letale Treffer (DamageLevel 0-3) wo kein Dismemberment stattfindet.
+        /// </summary>
+        private void SpawnFloorBloodSplat(GoreHitData hitData)
+        {
+            Game.Effects.EffectFactory effectFactory = ServiceLocator.Get<Game.Effects.EffectFactory>();
+            if (effectFactory == null)
+            {
+                return;
+            }
+
+            // Raycast nach unten um Bodenposition zu finden
+            Vector3 origin = hitData.HitPoint;
+            int groundMask = ~LayerMask.GetMask("Hitbox", "Player", "BrushCollision");
+            Vector3 floorPos = origin;
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit groundHit, 3f, groundMask))
+            {
+                floorPos = groundHit.point;
+            }
+            else if (hitData.CharacterRoot != null)
+            {
+                floorPos = hitData.CharacterRoot.transform.position;
+            }
+
+            // Kleinen Blutfleck am Boden spawnen (blood_splat_mp_small fuer nicht-letale Treffer)
+            effectFactory.SpawnImpactEffect(floorPos, Vector3.up, "effects/blood_splat_mp_small");
+        }
+
+        /// <summary>
+        /// Erzeugt und projiziert PGORE-Wund-Decals auf das Charakter-Mesh.
+        /// Nutzt PGoreWeaponDispatch fuer waffenspezifische Decal-Auswahl (1:1 SoF2)
+        /// und PGoreDecalApplier fuer die Quad-basierte Mesh-Projektion.
+        /// </summary>
+        private void ApplyPGoreDecals(GoreHitData hitData)
+        {
+            if (string.IsNullOrEmpty(hitData.WeaponId) || hitData.CharacterRoot == null)
+            {
+                return;
+            }
+
+            List<PGoreData> goreEntries = PGoreWeaponDispatch.CreateGoreEntries(
+                hitData.WeaponId,
+                hitData.IsAltAttack,
+                hitData.HitPoint,
+                hitData.HitDirection);
+
+            if (goreEntries.Count > 0)
+            {
+                m_PGoreApplier.ApplyGoreDecals(goreEntries, hitData.CharacterRoot);
+            }
+        }
+
+        /// <summary>
+        /// Loest eine Blood-Effekt-ID auf. Probiert den Namen direkt und mit "effects/"-Praefix.
+        /// </summary>
+        private string ResolveBloodEffectId(string effectName, Game.Effects.EffectFactory effectFactory)
+        {
+            // Direkt probieren
+            if (effectFactory.GetDefinition(effectName) != null)
+            {
+                return effectName;
+            }
+
+            // Mit "effects/"-Praefix probieren
+            string prefixed = $"effects/{effectName}";
+            if (effectFactory.GetDefinition(prefixed) != null)
+            {
+                return prefixed;
+            }
+
+            // _mp-Variante probieren
+            string mpName = $"effects/{effectName}_mp";
+            if (effectFactory.GetDefinition(mpName) != null)
+            {
+                return mpName;
+            }
+
+            return effectName;
         }
 
         /// <summary>
@@ -159,10 +372,24 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 goreDataLoader,
                 mapping.IsRightSide);
 
+            // PGORE Wund-Decals auch bei Dismemberment anwenden (Todestreferwunde)
+            ApplyPGoreDecals(hitData);
+
             // Als abgetrennt markieren
             appliedSet.Add(trackingKey);
 
-            // Bei High Death auch alle Kinderzonen als abgetrennt markieren
+            // Hitboxen der abgetrennten Region deaktivieren
+            DisableHitboxesForArea(hitData.CharacterRoot, mapping.GoreAreaLocation, mapping.IsRightSide);
+
+            // Kinder-Hitboxen IMMER deaktivieren: wenn z.B. ein Bein abgetrennt wird,
+            // muss auch der Fuss-Hitbox ausgeschaltet werden (unabhaengig vom DamageLevel).
+            // Die visuelle Kinder-Dismemberment-Kaskade bleibt auf High Death beschraenkt.
+            if (area.Children != null)
+            {
+                DisableHitboxesForChildren(hitData.CharacterRoot, area.Children, mapping.IsRightSide, goreDataLoader);
+            }
+
+            // Bei High Death auch alle Kinderzonen als visuell abgetrennt markieren
             if (hitData.DamageLevel >= DAMAGE_LEVEL_HIGH_DEATH && area.Children != null)
             {
                 MarkChildrenAsApplied(area.Children, mapping.IsRightSide, appliedSet, goreDataLoader);
@@ -199,6 +426,56 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 if (childArea?.Children != null)
                 {
                     MarkChildrenAsApplied(childArea.Children, isRightSide, appliedSet, goreDataLoader);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Deaktiviert alle Hitboxen die zur angegebenen GoreArea-Location gehoeren.
+        /// Findet das ClientHitboxSystem am Charakter und deaktiviert passende HitRegions.
+        /// Fuer zentrale Areas (head, torso, hip) ignoriert GetHitRegionsForArea die Seite,
+        /// da diese nur einen Hitbox-Collider besitzen.
+        /// </summary>
+        private void DisableHitboxesForArea(GameObject characterRoot, string goreAreaLocation, bool isRightSide)
+        {
+            ClientHitboxSystem hitboxSystem = characterRoot.GetComponentInChildren<ClientHitboxSystem>();
+            if (hitboxSystem == null)
+            {
+                return;
+            }
+
+            List<HitRegion> regions = GoreHitRegionMapping.GetHitRegionsForArea(goreAreaLocation, isRightSide);
+
+            foreach (HitRegion region in regions)
+            {
+                hitboxSystem.DisableHitboxForRegion(region);
+            }
+        }
+
+        /// <summary>
+        /// Deaktiviert Hitboxen fuer alle Kinderzonen rekursiv (bei High Death Dismemberment).
+        /// </summary>
+        private void DisableHitboxesForChildren(GameObject characterRoot, List<string> children, bool isRightSide, GoreDataLoader goreDataLoader)
+        {
+            if (children == null)
+            {
+                return;
+            }
+
+            foreach (string child in children)
+            {
+                string resolvedChild = GorePlaceholderResolver.Resolve(child, isRightSide);
+                DisableHitboxesForArea(characterRoot, resolvedChild, isRightSide);
+
+                GoreArea childArea = goreDataLoader.GetAreaByLocation(resolvedChild);
+                if (childArea == null)
+                {
+                    childArea = goreDataLoader.GetAreaByLocation(child);
+                }
+
+                if (childArea?.Children != null)
+                {
+                    DisableHitboxesForChildren(characterRoot, childArea.Children, isRightSide, goreDataLoader);
                 }
             }
         }
@@ -249,7 +526,73 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
         public void ClearCache()
         {
             m_AppliedAreas.Clear();
+            m_PGoreApplier.ClearCache();
             Debug.Log("[GoreManager] All character gore states cleared.");
+        }
+
+        /// <summary>
+        /// Prueft ob eine HitRegion zum zentralen Koerperbereich gehoert (kein festes Links/Rechts).
+        /// Fuer diese Regionen wird die Seite dynamisch aus der Treffer-Position bestimmt.
+        /// </summary>
+        private static bool IsCenterBodyRegion(HitRegion hitRegion)
+        {
+            return hitRegion == HitRegion.Head
+                || hitRegion == HitRegion.Neck
+                || hitRegion == HitRegion.Chest
+                || hitRegion == HitRegion.Gut;
+        }
+
+        /// <summary>
+        /// Bestimmt die Koerperseite anhand der Treffer-Position relativ zum Charakter.
+        /// Vergleicht die Distanz des HitPoints zu bekannten linken/rechten Referenz-Bones
+        /// (lfemurYZ / rfemurYZ). Diese Methode ist rotationsunabhaengig — funktioniert
+        /// korrekt unabhaengig von der aktuellen Yaw-Drehung des Charaktermodells.
+        /// </summary>
+        private static bool DetermineSideFromHitPosition(GoreHitData hitData)
+        {
+            Transform root = hitData.CharacterRoot.transform;
+            Transform leftBone = FindDeepChildStatic(root, "lfemurYZ");
+            Transform rightBone = FindDeepChildStatic(root, "rfemurYZ");
+
+            if (leftBone != null && rightBone != null)
+            {
+                float distToLeft = (hitData.HitPoint - leftBone.position).sqrMagnitude;
+                float distToRight = (hitData.HitPoint - rightBone.position).sqrMagnitude;
+                bool isRight = distToRight <= distToLeft;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"[GoreManager] SIDE-DETECT: distToLeft={distToLeft:F4}, distToRight={distToRight:F4} → isRightSide={isRight}");
+#endif
+                return isRight;
+            }
+
+            // Fallback: lokale X-Achse (unzuverlaessig bei gedrehtem Modell)
+            Vector3 localHitPoint = root.InverseTransformPoint(hitData.HitPoint);
+            Debug.LogWarning($"[GoreManager] SIDE-DETECT fallback (bones not found): localX={localHitPoint.x:F3} → isRightSide={localHitPoint.x >= 0f}");
+            return localHitPoint.x >= 0f;
+        }
+
+        /// <summary>
+        /// Rekursive DFS-Suche nach einem Kind-Transform per Name (case-insensitive).
+        /// Statische Hilfsmethode fuer GoreManager ohne MonoBehaviour-Abhaengigkeit.
+        /// </summary>
+        private static Transform FindDeepChildStatic(Transform parent, string childName)
+        {
+            if (string.Equals(parent.name, childName, StringComparison.OrdinalIgnoreCase))
+            {
+                return parent;
+            }
+
+            int childCount = parent.childCount;
+            for (int i = 0; i < childCount; i++)
+            {
+                Transform result = FindDeepChildStatic(parent.GetChild(i), childName);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
         }
     }
 }

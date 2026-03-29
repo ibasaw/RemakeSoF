@@ -52,6 +52,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         public float PitchAngle;
 
         /// <summary>
+        /// </summary>
+        /// <summary>
         /// Button-Bitfield (SoF2 usercmd_t.buttons).
         /// Verwendet CommandButtons-Konstanten fuer Attack, Jump, Walk, Crouch, etc.
         /// </summary>

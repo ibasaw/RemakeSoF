@@ -1,0 +1,768 @@
+using UnityEngine;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
+
+namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
+{
+    /// <summary>
+    /// Erstellt 19 Hitbox-Collider basierend auf SoF2 Hit Regions.
+    /// Gliedmassen (Kopf, Hals, Arme, Beine) verwenden CapsuleCollider fuer bessere Abdeckung.
+    /// Torso-Segmente (Brust, Bauch, Leiste) verwenden BoxCollider fuer rechteckige Form.
+    /// Haende und Fuesse verwenden BoxCollider fuer terminale Knochen.
+    /// Alle Groessen werden automatisch aus Bone-zu-Bone Distanzen berechnet.
+    /// Jeder Collider erhaelt eine HitboxCollider-Komponente fuer Region-Identifikation.
+    /// Optional: Visual Debug zeichnet semi-transparente Formen farbcodiert nach Region-Typ.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public class ClientHitboxSystem : MonoBehaviour
+    {
+        /// <summary>Physics Layer fuer Hitbox-Collider (muss in Unity Layer Settings existieren).</summary>
+        private const string HITBOX_LAYER_NAME = "Hitbox";
+
+        /// <summary>Fallback-Layer falls "Hitbox" nicht konfiguriert ist.</summary>
+        private const int DEFAULT_LAYER = 0;
+
+        /// <summary>Anzahl der SoF2 Hit Regions (19 Hitboxen).</summary>
+        private const int HITBOX_COUNT = 19;
+
+        /// <summary>Laengenfaktor: Hitboxen sind 90% der Bone-Distanz um Gelenk-Overlap zu vermeiden.</summary>
+        private const float LENGTH_FACTOR = 0.90f;
+
+        [Header("Visual Hitbox Debug")]
+        [SerializeField]
+        private bool m_ShowVisualHitboxes;
+
+        [SerializeField]
+        [Range(0.05f, 1f)]
+        private float m_VisualAlpha = 0.3f;
+
+        /// <summary>Array aller erstellten Hitbox-GameObjects fuer Cleanup und Region-Lookup.</summary>
+        private GameObject[] m_HitboxObjects;
+
+        /// <summary>Indices von Hitboxen die durch Dismemberment permanent deaktiviert wurden.</summary>
+        private System.Collections.Generic.HashSet<int> m_DismemberedIndices = new();
+
+        /// <summary>Flag ob Hitboxen bereits erstellt wurden.</summary>
+        private bool m_IsInitialized;
+
+        /// <summary>Ob Hitboxen erfolgreich erstellt wurden.</summary>
+        public bool IsInitialized => m_IsInitialized;
+
+        /// <summary>
+        /// Erstellt alle 19 Hitbox-BoxCollider aus den Bones des Character-Visuals.
+        /// Groessen werden aus Bone-Distanzen berechnet, keine hardcodierten Werte.
+        /// </summary>
+        public void BuildHitboxes(Transform visualRoot)
+        {
+            if (m_IsInitialized)
+            {
+                Debug.LogWarning("[ClientHitboxSystem] Hitboxen bereits erstellt. ClearHitboxes() zuerst aufrufen.");
+                return;
+            }
+
+            if (visualRoot == null)
+            {
+                Debug.LogError("[ClientHitboxSystem] Visual Root ist null — kann keine Hitboxen erstellen.");
+                return;
+            }
+
+            int hitboxLayer = LayerMask.NameToLayer(HITBOX_LAYER_NAME);
+            if (hitboxLayer == -1)
+            {
+                hitboxLayer = DEFAULT_LAYER;
+            }
+
+            // Alle benoetigten Bones finden
+            Transform cranium = FindDeepChild(visualRoot, "cranium");
+            Transform cervical = FindDeepChild(visualRoot, "cervical");
+            Transform thoracic = FindDeepChild(visualRoot, "thoracic");
+            Transform upperLumbar = FindDeepChild(visualRoot, "upper_lumbar");
+            Transform lowerLumbar = FindDeepChild(visualRoot, "lower_lumbar");
+            Transform pelvis = FindDeepChild(visualRoot, "pelvis");
+
+            Transform lclavical = FindDeepChild(visualRoot, "lclavical");
+            Transform lhumerus = FindDeepChild(visualRoot, "lhumerus");
+            Transform lradius = FindDeepChild(visualRoot, "lradius");
+            Transform lhand = FindDeepChild(visualRoot, "lhand");
+            Transform lhandTag = FindDeepChild(visualRoot, "lhand_tag_bone");
+
+            Transform rclavical = FindDeepChild(visualRoot, "rclavical");
+            Transform rhumerus = FindDeepChild(visualRoot, "rhumerus");
+            Transform rradius = FindDeepChild(visualRoot, "rradius");
+            Transform rhand = FindDeepChild(visualRoot, "rhand");
+            Transform rhandTag = FindDeepChild(visualRoot, "rhand_tag_bone");
+            if (rhandTag == null)
+            {
+                rhandTag = FindDeepChild(visualRoot, "rhang_tag_bone");
+            }
+
+            Transform lfemurYZ = FindDeepChild(visualRoot, "lfemurYZ");
+            Transform ltibia = FindDeepChild(visualRoot, "ltibia");
+            Transform ltarsal = FindDeepChild(visualRoot, "ltarsal");
+
+            Transform rfemurYZ = FindDeepChild(visualRoot, "rfemurYZ");
+            Transform rtibia = FindDeepChild(visualRoot, "rtibia");
+            Transform rtarsal = FindDeepChild(visualRoot, "rtarsal");
+
+            m_HitboxObjects = new GameObject[HITBOX_COUNT];
+            int index = 0;
+
+            // ===================== Kopf / Hals =====================
+            // CapsuleCollider fuer zylindrische Koerperteile (Radius in Metern)
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_Head", cranium, cervical,
+                HitRegion.Head, 1.75f, hitboxLayer, 0.08f, new Vector3(0f, 0.06f, 0f));
+
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_Neck", cervical, thoracic,
+                HitRegion.Neck, 1.75f, hitboxLayer, 0.03f);
+
+            // ===================== Torso (BoxCollider) =====================
+            m_HitboxObjects[index++] = CreateTorsoHitbox("Hitbox_Chest", thoracic, upperLumbar,
+                HitRegion.Chest, 1.0f, hitboxLayer, 0.18f, 0.11f);
+
+            m_HitboxObjects[index++] = CreateTorsoHitbox("Hitbox_Gut", upperLumbar, lowerLumbar,
+                HitRegion.Gut, 1.0f, hitboxLayer, 0.16f, 0.10f);
+
+            m_HitboxObjects[index++] = CreateTorsoHitbox("Hitbox_Groin", lowerLumbar, pelvis,
+                HitRegion.Groin, 1.0f, hitboxLayer, 0.14f, 0.09f);
+
+            // ===================== Linker Arm =====================
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_LeftShoulder", lclavical, lhumerus,
+                HitRegion.LeftShoulder, 0.7f, hitboxLayer, 0.03f);
+
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_LeftArm", lhumerus, lradius,
+                HitRegion.LeftArm, 0.7f, hitboxLayer, 0.03f);
+
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_LeftForearm", lradius, lhand,
+                HitRegion.LeftForearm, 0.3f, hitboxLayer, 0.025f);
+
+            m_HitboxObjects[index++] = CreateTerminalHitbox("Hitbox_LeftHand", lhand, lhandTag,
+                HitRegion.LeftHand, 0.3f, hitboxLayer, 0.55f, 0.80f);
+
+            // ===================== Rechter Arm =====================
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_RightShoulder", rclavical, rhumerus,
+                HitRegion.RightShoulder, 0.7f, hitboxLayer, 0.03f);
+
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_RightArm", rhumerus, rradius,
+                HitRegion.RightArm, 0.7f, hitboxLayer, 0.03f);
+
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_RightForearm", rradius, rhand,
+                HitRegion.RightForearm, 0.3f, hitboxLayer, 0.025f);
+
+            m_HitboxObjects[index++] = CreateTerminalHitbox("Hitbox_RightHand", rhand, rhandTag,
+                HitRegion.RightHand, 0.3f, hitboxLayer, 0.55f, 0.80f);
+
+            // ===================== Linkes Bein =====================
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_LeftThigh", lfemurYZ, ltibia,
+                HitRegion.LeftThigh, 0.7f, hitboxLayer, 0.045f);
+
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_LeftLeg", ltibia, ltarsal,
+                HitRegion.LeftLeg, 0.7f, hitboxLayer, 0.035f);
+
+            m_HitboxObjects[index++] = CreateFootHitbox("Hitbox_LeftFoot", ltarsal, ltibia,
+                HitRegion.LeftFoot, 0.4f, hitboxLayer);
+
+            // ===================== Rechtes Bein =====================
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_RightThigh", rfemurYZ, rtibia,
+                HitRegion.RightThigh, 0.7f, hitboxLayer, 0.045f);
+
+            m_HitboxObjects[index++] = CreateLimbHitbox("Hitbox_RightLeg", rtibia, rtarsal,
+                HitRegion.RightLeg, 0.7f, hitboxLayer, 0.035f);
+
+            m_HitboxObjects[index++] = CreateFootHitbox("Hitbox_RightFoot", rtarsal, rtibia,
+                HitRegion.RightFoot, 0.4f, hitboxLayer);
+
+            m_IsInitialized = true;
+            Debug.Log($"[ClientHitboxSystem] {index} Hitboxen erstellt.");
+        }
+
+        /// <summary>
+        /// Entfernt alle erstellten Hitbox-Collider.
+        /// </summary>
+        public void ClearHitboxes()
+        {
+            if (m_HitboxObjects != null)
+            {
+                for (int i = 0; i < m_HitboxObjects.Length; i++)
+                {
+                    if (m_HitboxObjects[i] != null)
+                    {
+                        Destroy(m_HitboxObjects[i]);
+                    }
+                }
+
+                m_HitboxObjects = null;
+            }
+
+            m_DismemberedIndices.Clear();
+            m_IsInitialized = false;
+        }
+
+        /// <summary>
+        /// Aktiviert oder deaktiviert alle Hitbox-Collider.
+        /// Wird vom Server vor/nach Raycasts aufgerufen um Self-Hits zu vermeiden.
+        /// </summary>
+        public void SetHitboxesEnabled(bool enabled)
+        {
+            if (m_HitboxObjects == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < m_HitboxObjects.Length; i++)
+            {
+                if (m_HitboxObjects[i] == null)
+                {
+                    continue;
+                }
+
+                // Durch Dismemberment permanent deaktivierte Hitboxen NICHT wieder aktivieren
+                if (enabled && m_DismemberedIndices.Contains(i))
+                {
+                    continue;
+                }
+
+                m_HitboxObjects[i].SetActive(enabled);
+            }
+        }
+
+        /// <summary>
+        /// Deaktiviert alle Hitbox-Collider die zur angegebenen HitRegion gehoeren.
+        /// Wird nach Dismemberment aufgerufen damit abgetrennte Koerperteile nicht mehr getroffen werden.
+        /// </summary>
+        public void DisableHitboxForRegion(HitRegion region)
+        {
+            if (m_HitboxObjects == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < m_HitboxObjects.Length; i++)
+            {
+                if (m_HitboxObjects[i] == null)
+                {
+                    continue;
+                }
+
+                HitboxCollider hitboxCollider = m_HitboxObjects[i].GetComponent<HitboxCollider>();
+                if (hitboxCollider != null && hitboxCollider.HitRegion == region)
+                {
+                    m_HitboxObjects[i].SetActive(false);
+                    m_DismemberedIndices.Add(i);
+                    Debug.Log($"[ClientHitboxSystem] Hitbox permanent deaktiviert: {region} (Index {i})");
+                }
+            }
+        }
+
+        private void OnDestroy()
+        {
+            ClearHitboxes();
+        }
+
+        // ===================================================================
+        // Hitbox Creation — CapsuleCollider fuer Gliedmassen
+        // ===================================================================
+
+        /// <summary>
+        /// Erstellt einen CapsuleCollider zwischen zwei Bones fuer Extremitaeten.
+        /// CapsuleCollider bieten bessere zylindrische Abdeckung fuer Arme, Beine, Kopf und Hals.
+        /// Height = Bone-Distanz × LENGTH_FACTOR, Radius = fester Wert passend zum Koerperteil.
+        /// </summary>
+        private GameObject CreateLimbHitbox(
+            string hitboxName,
+            Transform startBone,
+            Transform endBone,
+            HitRegion hitRegion,
+            float damageMultiplier,
+            int layer,
+            float radius,
+            Vector3? localOffset = null)
+        {
+            if (startBone == null || endBone == null)
+            {
+                return null;
+            }
+
+            float boneLength = Vector3.Distance(startBone.position, endBone.position);
+            if (boneLength < 0.001f)
+            {
+                return null;
+            }
+
+            float capsuleHeight = Mathf.Max(boneLength * LENGTH_FACTOR, radius * 2f);
+
+            GameObject hitboxGO = new(hitboxName) { layer = layer };
+            hitboxGO.transform.SetParent(startBone, false);
+
+            // Position: Midpoint zwischen Start und End (im lokalen Raum des Start-Bones)
+            Vector3 toEnd = startBone.InverseTransformPoint(endBone.position);
+            Vector3 localPos = toEnd * 0.5f;
+            if (localOffset.HasValue)
+            {
+                localPos += localOffset.Value;
+            }
+
+            // Rotation: Y-Achse des Hitbox-GOs entlang der Bone-Achse ausrichten
+            Vector3 boneDir = toEnd.normalized;
+            Quaternion localRot = Quaternion.FromToRotation(Vector3.up, boneDir);
+
+            hitboxGO.transform.SetLocalPositionAndRotation(localPos, localRot);
+
+            CapsuleCollider capsule = hitboxGO.AddComponent<CapsuleCollider>();
+            capsule.isTrigger = true;
+            capsule.direction = 1; // Y-Achse
+            capsule.radius = radius;
+            capsule.height = capsuleHeight;
+
+            HitboxCollider hitboxComponent = hitboxGO.AddComponent<HitboxCollider>();
+            hitboxComponent.Initialize(hitRegion, damageMultiplier);
+
+            if (m_ShowVisualHitboxes)
+            {
+                CreateCapsuleVisual(hitboxGO, radius, capsuleHeight, hitRegion);
+            }
+
+            return hitboxGO;
+        }
+
+        // ===================================================================
+        // Hitbox Creation — BoxCollider fuer Torso-Segmente
+        // ===================================================================
+
+        /// <summary>
+        /// Erstellt einen BoxCollider zwischen zwei Wirbelsaeulen-Bones fuer Torso-Regionen.
+        /// Breite und Tiefe sind feste Werte (Brustkorb/Bauch/Leiste haben definierte Proportionen).
+        /// Hoehe = Bone-Distanz × LENGTH_FACTOR.
+        /// </summary>
+        private GameObject CreateTorsoHitbox(
+            string hitboxName,
+            Transform startBone,
+            Transform endBone,
+            HitRegion hitRegion,
+            float damageMultiplier,
+            int layer,
+            float width,
+            float depth)
+        {
+            if (startBone == null || endBone == null)
+            {
+                return null;
+            }
+
+            float boneLength = Vector3.Distance(startBone.position, endBone.position);
+            if (boneLength < 0.001f)
+            {
+                return null;
+            }
+
+            float boxHeight = boneLength * LENGTH_FACTOR;
+
+            GameObject hitboxGO = new(hitboxName) { layer = layer };
+            hitboxGO.transform.SetParent(startBone, false);
+
+            Vector3 toEnd = startBone.InverseTransformPoint(endBone.position);
+            Vector3 localPos = toEnd * 0.5f;
+            Vector3 boneDir = toEnd.normalized;
+            Quaternion localRot = Quaternion.FromToRotation(Vector3.up, boneDir);
+
+            hitboxGO.transform.SetLocalPositionAndRotation(localPos, localRot);
+
+            BoxCollider box = hitboxGO.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+            box.size = new Vector3(width, boxHeight, depth);
+
+            HitboxCollider hitboxComponent = hitboxGO.AddComponent<HitboxCollider>();
+            hitboxComponent.Initialize(hitRegion, damageMultiplier);
+
+            if (m_ShowVisualHitboxes)
+            {
+                CreateBoxVisual(hitboxGO, box.size, hitRegion);
+            }
+
+            return hitboxGO;
+        }
+
+        // ===================================================================
+        // Hitbox Creation — Terminal Bones (Hand)
+        // ===================================================================
+
+        /// <summary>
+        /// Erstellt einen kleinen BoxCollider fuer terminale Knochen (Hand).
+        /// Groesse abgeleitet von der Distanz zwischen Hand und Hand-Tag-Bone.
+        /// </summary>
+        private GameObject CreateTerminalHitbox(
+            string hitboxName,
+            Transform bone,
+            Transform tagBone,
+            HitRegion hitRegion,
+            float damageMultiplier,
+            int layer,
+            float widthRatio,
+            float depthRatio)
+        {
+            if (bone == null)
+            {
+                return null;
+            }
+
+            // Referenz-Laenge: Distanz zum Tag-Bone oder Fallback 0.06m
+            float refLength = tagBone != null
+                ? Vector3.Distance(bone.position, tagBone.position)
+                : 0.06f;
+
+            if (refLength < 0.01f)
+            {
+                refLength = 0.06f;
+            }
+
+            float boxWidth = refLength * widthRatio;
+            float boxHeight = refLength;
+            float boxDepth = refLength * depthRatio;
+
+            GameObject hitboxGO = new(hitboxName) { layer = layer };
+            hitboxGO.transform.SetParent(bone, false);
+
+            // Position: leicht nach vorne (entlang der Hand), kein Offset nach oben
+            Vector3 localPos = Vector3.zero;
+            Quaternion localRot = Quaternion.identity;
+
+            if (tagBone != null)
+            {
+                Vector3 toTag = bone.InverseTransformPoint(tagBone.position);
+                localPos = toTag * 0.5f;
+                localRot = Quaternion.FromToRotation(Vector3.up, toTag.normalized);
+            }
+
+            hitboxGO.transform.SetLocalPositionAndRotation(localPos, localRot);
+
+            BoxCollider box = hitboxGO.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+            box.size = new Vector3(boxWidth, boxHeight, boxDepth);
+
+            HitboxCollider hitboxComponent = hitboxGO.AddComponent<HitboxCollider>();
+            hitboxComponent.Initialize(hitRegion, damageMultiplier);
+
+            if (m_ShowVisualHitboxes)
+            {
+                CreateBoxVisual(hitboxGO, box.size, hitRegion);
+            }
+
+            return hitboxGO;
+        }
+
+        // ===================================================================
+        // Hitbox Creation — Foot
+        // ===================================================================
+
+        /// <summary>
+        /// Erstellt einen kleinen BoxCollider fuer den Fuss.
+        /// Der Fuss hat kein Kind-Bone, daher wird die Groesse aus der tarsal→tibia Distanz abgeleitet.
+        /// Der Collider wird nach vorne (Zehenrichtung) und leicht nach unten versetzt.
+        /// </summary>
+        private GameObject CreateFootHitbox(
+            string hitboxName,
+            Transform tarsal,
+            Transform tibia,
+            HitRegion hitRegion,
+            float damageMultiplier,
+            int layer)
+        {
+            if (tarsal == null || tibia == null)
+            {
+                return null;
+            }
+
+            float shinLength = Vector3.Distance(tibia.position, tarsal.position);
+            float footLength = shinLength * 0.35f;
+            float footWidth = footLength * 0.50f;
+            float footHeight = footLength * 0.25f;
+
+            GameObject hitboxGO = new(hitboxName) { layer = layer };
+            hitboxGO.transform.SetParent(tarsal, false);
+
+            // Fuss zeigt nach vorne: tarsal→forward ist die Zehenrichtung.
+            // Bone-lokale Y-Achse zeigt typischerweise nach unten zum Boden,
+            // daher den Collider um 90° um X drehen damit er flach liegt.
+            Vector3 toShin = tarsal.InverseTransformPoint(tibia.position).normalized;
+            Vector3 footForward = Vector3.Cross(toShin, Vector3.right).normalized;
+            if (footForward.sqrMagnitude < 0.01f)
+            {
+                footForward = Vector3.forward;
+            }
+            Quaternion footRot = Quaternion.LookRotation(footForward, -toShin);
+            hitboxGO.transform.SetLocalPositionAndRotation(
+                new Vector3(0f, -footHeight * 0.5f, footLength * 0.35f),
+                footRot);
+
+            BoxCollider box = hitboxGO.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+            box.size = new Vector3(footWidth, footLength, footHeight);
+
+            HitboxCollider hitboxComponent = hitboxGO.AddComponent<HitboxCollider>();
+            hitboxComponent.Initialize(hitRegion, damageMultiplier);
+
+            if (m_ShowVisualHitboxes)
+            {
+                CreateBoxVisual(hitboxGO, box.size, hitRegion);
+            }
+
+            return hitboxGO;
+        }
+
+        // ===================================================================
+        // Dismemberment — Region + Kinder-Kaskade
+        // ===================================================================
+
+        /// <summary>
+        /// Deaktiviert die angegebene HitRegion UND alle anatomisch untergeordneten Regionen.
+        /// Wird vom Server synchron aufgerufen um sofortige Hitbox-Deaktivierung zu garantieren
+        /// (ClientRpc-basierte Deaktivierung ist asynchron und hat 1+ Frame Verzoegerung).
+        /// </summary>
+        public void DisableHitboxForRegionAndChildren(HitRegion region)
+        {
+            DisableHitboxForRegion(region);
+
+            HitRegion[] children = GetChildRegions(region);
+            for (int i = 0; i < children.Length; i++)
+            {
+                DisableHitboxForRegion(children[i]);
+            }
+        }
+
+        /// <summary>
+        /// Gibt alle anatomisch untergeordneten HitRegions fuer eine gegebene Region zurueck.
+        /// Bildet die Koerperteil-Hierarchie ab: Schulter → Arm → Unterarm → Hand, etc.
+        /// </summary>
+        private static HitRegion[] GetChildRegions(HitRegion region)
+        {
+            switch (region)
+            {
+                case HitRegion.LeftShoulder:
+                case HitRegion.LeftArm:
+                    return new[] { HitRegion.LeftArm, HitRegion.LeftForearm, HitRegion.LeftHand };
+                case HitRegion.LeftForearm:
+                    return new[] { HitRegion.LeftHand };
+                case HitRegion.RightShoulder:
+                case HitRegion.RightArm:
+                    return new[] { HitRegion.RightArm, HitRegion.RightForearm, HitRegion.RightHand };
+                case HitRegion.RightForearm:
+                    return new[] { HitRegion.RightHand };
+                case HitRegion.LeftThigh:
+                    return new[] { HitRegion.LeftLeg, HitRegion.LeftFoot };
+                case HitRegion.LeftLeg:
+                    return new[] { HitRegion.LeftFoot };
+                case HitRegion.RightThigh:
+                    return new[] { HitRegion.RightLeg, HitRegion.RightFoot };
+                case HitRegion.RightLeg:
+                    return new[] { HitRegion.RightFoot };
+                case HitRegion.Neck:
+                    return new[] { HitRegion.Head };
+                default:
+                    return System.Array.Empty<HitRegion>();
+            }
+        }
+
+        // ===================================================================
+        // Bone-Suche
+        // ===================================================================
+
+        /// <summary>
+        /// Rekursive DFS-Suche nach einem Bone per Name (case-sensitive).
+        /// </summary>
+        private static Transform FindDeepChild(Transform parent, string childName)
+        {
+            if (parent.name == childName)
+            {
+                return parent;
+            }
+
+            int childCount = parent.childCount;
+            for (int i = 0; i < childCount; i++)
+            {
+                Transform result = FindDeepChild(parent.GetChild(i), childName);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
+        }
+
+        // ===================================================================
+        // Visual Debug — Box
+        // ===================================================================
+
+        /// <summary>
+        /// Erstellt ein visuelles Box-Mesh als Debug-Darstellung fuer BoxCollider-Hitboxen.
+        /// </summary>
+        private void CreateBoxVisual(GameObject hitboxGO, Vector3 colliderSize, HitRegion hitRegion)
+        {
+            GameObject visualGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            visualGO.name = "Visual";
+
+            if (visualGO.TryGetComponent<Collider>(out Collider primitiveCollider))
+            {
+                Destroy(primitiveCollider);
+            }
+
+            visualGO.transform.SetParent(hitboxGO.transform, false);
+            visualGO.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            visualGO.transform.localScale = colliderSize;
+
+            ApplyDebugMaterial(visualGO, hitRegion);
+        }
+
+        // ===================================================================
+        // Visual Debug — Capsule
+        // ===================================================================
+
+        /// <summary>
+        /// Erstellt ein visuelles Capsule-Mesh als Debug-Darstellung fuer CapsuleCollider-Hitboxen.
+        /// Kompensiert nicht-uniforme Bone-Scale damit das Visual exakt der physischen Capsule entspricht.
+        /// CapsuleCollider (Y-Achse): effektiver Radius = radius × max(|scaleX|, |scaleZ|).
+        /// </summary>
+        private void CreateCapsuleVisual(GameObject hitboxGO, float capsuleRadius, float capsuleHeight, HitRegion hitRegion)
+        {
+            GameObject visualGO = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            visualGO.name = "Visual";
+
+            if (visualGO.TryGetComponent<Collider>(out Collider primitiveCollider))
+            {
+                Destroy(primitiveCollider);
+            }
+
+            visualGO.transform.SetParent(hitboxGO.transform, false);
+            visualGO.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+
+            // CapsuleCollider (direction=Y): effektiver Welt-Radius = capsuleRadius * max(|scaleX|, |scaleZ|)
+            // Unity Capsule Primitive: Durchmesser=1, Hoehe=2 bei localScale=1
+            // Kompensation: Visual-Scale so setzen dass es exakt der Physics-Capsule entspricht.
+            Vector3 lossyScale = hitboxGO.transform.lossyScale;
+            float absX = Mathf.Abs(lossyScale.x);
+            float absY = Mathf.Abs(lossyScale.y);
+            float absZ = Mathf.Abs(lossyScale.z);
+            float maxPerp = Mathf.Max(absX, absZ);
+
+            float effectiveWorldRadius = capsuleRadius * maxPerp;
+            float effectiveWorldHeight = Mathf.Max(capsuleHeight * absY, effectiveWorldRadius * 2f);
+
+            float scaleX = (effectiveWorldRadius * 2f) / Mathf.Max(absX, 0.001f);
+            float scaleZ = (effectiveWorldRadius * 2f) / Mathf.Max(absZ, 0.001f);
+            float scaleY = effectiveWorldHeight / Mathf.Max(absY * 2f, 0.001f);
+
+            visualGO.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
+
+            ApplyDebugMaterial(visualGO, hitRegion);
+        }
+
+        // ===================================================================
+        // Visual Debug — Material
+        // ===================================================================
+
+        /// <summary>
+        /// Wendet ein semi-transparentes URP Unlit Material auf ein Debug-Visual an.
+        /// </summary>
+        private void ApplyDebugMaterial(GameObject visualGO, HitRegion hitRegion)
+        {
+            if (!visualGO.TryGetComponent<MeshRenderer>(out MeshRenderer meshRenderer))
+            {
+                return;
+            }
+
+            Color regionColor = GetRegionColor(hitRegion);
+            regionColor.a = m_VisualAlpha;
+
+            Shader urpUnlit = Shader.Find("Universal Render Pipeline/Unlit");
+            if (urpUnlit == null)
+            {
+                return;
+            }
+
+            Material material = new(urpUnlit);
+            material.SetColor("_BaseColor", regionColor);
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 0f);
+            material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0f);
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+
+            meshRenderer.material = material;
+            meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            meshRenderer.receiveShadows = false;
+        }
+
+        // ===================================================================
+        // Farben fuer Debug-Visualisierung
+        // ===================================================================
+
+        /// <summary>
+        /// Gibt die Debug-Farbe fuer eine HitRegion zurueck, farbcodiert nach Koerperbereich.
+        /// </summary>
+        private static Color GetRegionColor(HitRegion hitRegion)
+        {
+            switch (hitRegion)
+            {
+                // Kopf: leuchtend Rot
+                case HitRegion.Head:
+                    return new Color(1f, 0.1f, 0.1f);
+
+                // Hals: dunkles Orange
+                case HitRegion.Neck:
+                    return new Color(0.9f, 0.4f, 0.1f);
+
+                // Brust: Gelb
+                case HitRegion.Chest:
+                    return new Color(1f, 0.9f, 0.1f);
+
+                // Bauch: Orange-Gelb
+                case HitRegion.Gut:
+                    return new Color(1f, 0.65f, 0.1f);
+
+                // Leiste: dunkles Gelb-Gruen
+                case HitRegion.Groin:
+                    return new Color(0.7f, 0.8f, 0.1f);
+
+                // Schulter: mittelblau
+                case HitRegion.LeftShoulder:
+                case HitRegion.RightShoulder:
+                    return new Color(0.3f, 0.3f, 1f);
+
+                // Oberarm: dunkelblau
+                case HitRegion.LeftArm:
+                case HitRegion.RightArm:
+                    return new Color(0.15f, 0.15f, 0.85f);
+
+                // Unterarm: lila
+                case HitRegion.LeftForearm:
+                case HitRegion.RightForearm:
+                    return new Color(0.6f, 0.2f, 0.9f);
+
+                // Hand: magenta
+                case HitRegion.LeftHand:
+                case HitRegion.RightHand:
+                    return new Color(1f, 0.2f, 0.8f);
+
+                // Oberschenkel: dunkelgruen
+                case HitRegion.LeftThigh:
+                case HitRegion.RightThigh:
+                    return new Color(0.1f, 0.7f, 0.1f);
+
+                // Unterschenkel: hellgruen
+                case HitRegion.LeftLeg:
+                case HitRegion.RightLeg:
+                    return new Color(0.3f, 0.9f, 0.3f);
+
+                // Fuss: tuerkis
+                case HitRegion.LeftFoot:
+                case HitRegion.RightFoot:
+                    return new Color(0.1f, 0.8f, 0.8f);
+
+                default:
+                    return Color.white;
+            }
+        }
+    }
+}

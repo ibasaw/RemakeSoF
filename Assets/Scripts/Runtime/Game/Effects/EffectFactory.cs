@@ -146,7 +146,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             main.startSpeed = 0f; // Velocity ueber Velocity over Lifetime
             main.maxParticles = def.CountMax * 4;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.gravityModifier = def.GravityModifier;
+
+            // SoF2 gravity ist als m/s² gespeichert (SoF2_val × 0.0254).
+            // Die JSON-Daten haben inkonsistente Vorzeichen: Gore-Effekte nutzen negative Werte
+            // (negativ = fallend), Impact-Effekte nutzen positive Werte (positiv = fallend).
+            // Daher immer Absolutwert: alle Partikel fallen nach unten, nur die Staerke variiert.
+            // Unity gravityModifier ist Multiplikator fuer Physics.gravity.y (-9.81).
+            // Beispiel: |±5.08| / 9.81 = 0.518 → Partikel fallen mit ~52% Erdbeschleunigung.
+            main.gravityModifier = Mathf.Approximately(Physics.gravity.y, 0f)
+                ? 0f
+                : Mathf.Abs(def.GravityModifier) / Mathf.Abs(Physics.gravity.y);
 
             // Rotation
             if (def.RotationMin != 0f || def.RotationMax != 0f)
@@ -196,6 +205,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                     ParticleSystem.SizeOverLifetimeModule sol = ps.sizeOverLifetime;
                     sol.enabled = true;
                     float endRatio = avgStart > 0f ? avgEnd / avgStart : 1f;
+
+                    // Wachstum begrenzen: extrem hohe Ratios erzeugen uebergrosse Partikel
+                    // die in Unity unnatuerlich wirken. SoF2-Partikel nutzten niedrigere Bildschirm-
+                    // aufloesung und Q3-Rendering wo 20-30x weniger auffiel.
+                    // Gore-/Rauch-Effekte: 10-15x ist natuerlich (Nebel waechst von mm auf 15-25cm).
+                    if (endRatio > 20f)
+                    {
+                        endRatio = 20f;
+                    }
+
                     AnimationCurve sizeCurve = BuildSizeCurve(endRatio, size.Curve, size.Parm);
                     sol.size = new ParticleSystem.MinMaxCurve(1f, sizeCurve);
                 }
@@ -205,7 +224,48 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             ParticleSystem.EmissionModule emission = ps.emission;
             emission.enabled = true;
 
-            if (def.Burst)
+            // SoF2 impactFx: Sub-Effekt der bei Partikel-Kollision spawnt.
+            // Da Unity kein Per-Particle-Collision-Spawning hat, emulieren wir das als
+            // zeitversetzte Bursts die die Bluttropfen-Regenschauer-Optik nachbilden.
+            bool isImpactSubEffect = segment.Flags != null && segment.Flags.Contains("impactFx")
+                && def.CountMin == 0 && def.CountMax == 0;
+
+            if (isImpactSubEffect)
+            {
+                // Sub-Effekt: 3-6 Tropfen, zeitversetzt ueber die Lebensdauer der Eltern-Partikel
+                int subCount = Random.Range(3, 7);
+                float parentLifetime = def.LifetimeMax > 0f ? def.LifetimeMax : 0.9f;
+
+                emission.rateOverTime = 0f;
+                emission.rateOverDistance = 0f;
+                ParticleSystem.Burst[] subBursts = new ParticleSystem.Burst[subCount];
+                for (int b = 0; b < subCount; b++)
+                {
+                    float t = (b + 1f) / (subCount + 1f) * parentLifetime * 0.7f;
+                    subBursts[b] = new ParticleSystem.Burst(t, 1);
+                }
+                emission.SetBursts(subBursts);
+
+                // Scatter-Velocity wenn keine definiert (Tropfen fallen aus der Blut-Wolke)
+                if (def.VelocityMin == null || def.VelocityMax == null)
+                {
+                    ParticleSystem.VelocityOverLifetimeModule vel = ps.velocityOverLifetime;
+                    vel.enabled = true;
+                    vel.space = ParticleSystemSimulationSpace.Local;
+                    vel.x = new ParticleSystem.MinMaxCurve(-0.3f, 0.3f);
+                    vel.y = new ParticleSystem.MinMaxCurve(-0.1f, 0.5f);
+                    vel.z = new ParticleSystem.MinMaxCurve(0.5f, 2.0f);
+                }
+
+                // Spawn-Offset vergroessern damit Tropfen nicht alle am gleichen Punkt starten
+                ParticleSystem.ShapeModule subShape = ps.shape;
+                subShape.enabled = true;
+                subShape.shapeType = ParticleSystemShapeType.Sphere;
+                subShape.radius = 0.1f;
+
+                main.maxParticles = subCount * 2;
+            }
+            else if (def.Burst)
             {
                 float delaySpan = def.DelayMax - def.DelayMin;
                 int avgCount = Mathf.Max(1, (def.CountMin + def.CountMax) / 2);
@@ -260,19 +320,43 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             }
             else
             {
-                // Trails: Kontinuierliche Emission ueber Distanz
-                emission.rateOverTime = 0f;
-                emission.rateOverDistance = (def.CountMin + def.CountMax) * 0.5f / 0.5f;
+                // SoF2 burst=false: Partikel werden zeitlich gestreut ueber die Delay-Range emittiert.
+                // In SoF2 wählt jeder Partikel eine zufaellige Spawn-Zeit in [delayMin, delayMax].
+                // Unity rateOverDistance funktioniert hier NICHT (Emitter bewegt sich nicht).
+                // Stattdessen: Burst mit zeitlicher Verteilung ueber delaySpan.
+                int avgCount = Mathf.Max(1, (def.CountMin + def.CountMax) / 2);
+                float delaySpan = def.DelayMax - def.DelayMin;
+
+                if (avgCount > 1 && delaySpan > 0.01f)
+                {
+                    // Partikel ueber die Delay-Range verteilen
+                    emission.rateOverTime = 0f;
+                    emission.rateOverDistance = 0f;
+                    float rate = avgCount / delaySpan;
+                    emission.rateOverTime = rate;
+                    main.startDelay = new ParticleSystem.MinMaxCurve(def.DelayMin);
+                    main.duration = delaySpan;
+                    main.loop = false;
+                }
+                else
+                {
+                    // Wenig Partikel oder kein Delay-Spread: als Burst spawnen
+                    emission.rateOverTime = 0f;
+                    emission.rateOverDistance = 0f;
+                    short burstCount = (short)avgCount;
+                    emission.SetBursts(new ParticleSystem.Burst[] { new(def.DelayMin, burstCount) });
+                }
             }
 
             // === Shape Module (Spawn-Offset) ===
+            // SoF2→Unity Achsen-Remap auch fuer Origins: X→Z, Y→-X, Z→Y
             ParticleSystem.ShapeModule shape = ps.shape;
             if (def.OriginMin != null && def.OriginMax != null && def.OriginMin.Length == 3)
             {
                 shape.enabled = true;
                 shape.shapeType = ParticleSystemShapeType.Box;
-                Vector3 originMin = new(def.OriginMin[0], def.OriginMin[1], def.OriginMin[2]);
-                Vector3 originMax = new(def.OriginMax[0], def.OriginMax[1], def.OriginMax[2]);
+                Vector3 originMin = new(-def.OriginMax[1], def.OriginMin[2], def.OriginMin[0]);
+                Vector3 originMax = new(-def.OriginMin[1], def.OriginMax[2], def.OriginMax[0]);
                 shape.scale = originMax - originMin;
                 shape.position = (originMin + originMax) * 0.5f;
             }
@@ -284,14 +368,46 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             }
 
             // === Velocity over Lifetime ===
+            // SoF2 Koordinaten: X=forward, Y=left, Z=up
+            // Unity Local Space: X=right, Y=up, Z=forward (Z zeigt entlang Surface-Normal)
+            // Remap: SoF2_X→Unity_Z, SoF2_Y→Unity_-X, SoF2_Z→Unity_Y
+            //
+            // WICHTIG: SoF2-Velocity ist initiale Geschwindigkeit (Impulse), keine permanente Kraft.
+            // Unity VelocityOverLifetime mit Konstanten = permanente Geschwindigkeit → Partikel fliegen
+            // ewig in eine Richtung. Loesung: Impulse-Decay-Kurve die bei 100% startet und
+            // innerhalb von 15% der Lebenszeit auf 0 faellt. Danach wirkt nur noch Schwerkraft.
             if (def.VelocityMin != null && def.VelocityMax != null && def.VelocityMin.Length == 3)
             {
                 ParticleSystem.VelocityOverLifetimeModule vel = ps.velocityOverLifetime;
                 vel.enabled = true;
                 vel.space = ParticleSystemSimulationSpace.Local;
-                vel.x = new ParticleSystem.MinMaxCurve(def.VelocityMin[0], def.VelocityMax[0]);
-                vel.y = new ParticleSystem.MinMaxCurve(def.VelocityMin[1], def.VelocityMax[1]);
-                vel.z = new ParticleSystem.MinMaxCurve(def.VelocityMin[2], def.VelocityMax[2]);
+
+                // Impulse-Decay: Geschwindigkeit faellt von 100% auf 0% innerhalb der ersten 15% der Lebenszeit
+                AnimationCurve decayMin = new(
+                    new Keyframe(0f, 1f, 0f, -10f),
+                    new Keyframe(0.15f, 0f, -0.5f, 0f),
+                    new Keyframe(1f, 0f, 0f, 0f));
+                AnimationCurve decayMax = new(
+                    new Keyframe(0f, 1f, 0f, -10f),
+                    new Keyframe(0.15f, 0f, -0.5f, 0f),
+                    new Keyframe(1f, 0f, 0f, 0f));
+
+                float xMin = -def.VelocityMax[1];
+                float xMax = -def.VelocityMin[1];
+                float yMin = def.VelocityMin[2];
+                float yMax = def.VelocityMax[2];
+                float zMin = def.VelocityMin[0];
+                float zMax = def.VelocityMax[0];
+
+                vel.x = new ParticleSystem.MinMaxCurve(1f,
+                    ScaleCurve(decayMin, xMin),
+                    ScaleCurve(decayMax, xMax));
+                vel.y = new ParticleSystem.MinMaxCurve(1f,
+                    ScaleCurve(decayMin, yMin),
+                    ScaleCurve(decayMax, yMax));
+                vel.z = new ParticleSystem.MinMaxCurve(1f,
+                    ScaleCurve(decayMin, zMin),
+                    ScaleCurve(decayMax, zMax));
             }
 
             // === Color over Lifetime (Alpha-Fade + rgbComponentInterpolation) ===
@@ -322,17 +438,38 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             // === Collision (usePhysics / expensivePhysics) ===
             bool hasPhysics = segment.Flags != null && segment.Flags.Contains("usePhysics");
             bool hasExpensivePhysics = segment.Flags != null && segment.Flags.Contains("expensivePhysics");
+            bool hasImpactFx = segment.Flags != null && segment.Flags.Contains("impactFx");
+            bool hasImpactKills = segment.Flags != null && segment.Flags.Contains("impactKills");
             if (hasPhysics || hasExpensivePhysics)
             {
                 ParticleSystem.CollisionModule collision = ps.collision;
                 collision.enabled = true;
                 collision.type = ParticleSystemCollisionType.World;
                 collision.bounce = new ParticleSystem.MinMaxCurve(0.2f, 0.5f);
-                collision.lifetimeLoss = 0.1f;
                 collision.dampen = new ParticleSystem.MinMaxCurve(0.1f, 0.3f);
                 collision.quality = hasExpensivePhysics
                     ? ParticleSystemCollisionQuality.High
                     : ParticleSystemCollisionQuality.Medium;
+
+                // Hitbox- und Player-Layer von Partikel-Kollision ausschliessen,
+                // damit Blutpartikel nicht auf Hitbox-Collidern oder dem Spieler-Capsule
+                // Aufprall-Decals erzeugen. Nur Welt-Geometrie soll Splats erhalten.
+                int hitboxLayer = LayerMask.NameToLayer("Hitbox");
+                int playerLayer = LayerMask.NameToLayer("Player");
+                int excludeMask = 0;
+                if (hitboxLayer >= 0) excludeMask |= (1 << hitboxLayer);
+                if (playerLayer >= 0) excludeMask |= (1 << playerLayer);
+                collision.collidesWith = ~excludeMask;
+
+                // SoF2 impactKills: Partikel stirbt beim ersten Aufprall
+                collision.lifetimeLoss = hasImpactKills ? 1.0f : 0.1f;
+
+                // SoF2 impactFx: Collision-Messages aktivieren damit OnParticleCollision
+                // in BloodDropCollisionBehaviour feuert und blood_splat_mp Decals spawnt
+                if (hasImpactFx)
+                {
+                    collision.sendCollisionMessages = true;
+                }
             }
 
             // === Renderer ===
@@ -446,6 +583,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 renderer.lengthScale = length > 0f ? length / Mathf.Max(startWidth, 0.001f) : 4f;
                 renderer.velocityScale = 0.1f;
             }
+        }
+
+        /// <summary>
+        /// Skaliert alle Keyframe-Werte einer AnimationCurve mit einem Faktor.
+        /// Wird fuer Impulse-Decay-Kurven verwendet: Decay-Kurvenwerte (0..1) × tatsaechliche Geschwindigkeit.
+        /// </summary>
+        private static AnimationCurve ScaleCurve(AnimationCurve source, float scale)
+        {
+            Keyframe[] keys = source.keys;
+            Keyframe[] scaled = new Keyframe[keys.Length];
+            for (int i = 0; i < keys.Length; i++)
+            {
+                scaled[i] = new Keyframe(keys[i].time, keys[i].value * scale, keys[i].inTangent * scale, keys[i].outTangent * scale);
+                scaled[i].weightedMode = keys[i].weightedMode;
+                scaled[i].inWeight = keys[i].inWeight;
+                scaled[i].outWeight = keys[i].outWeight;
+            }
+            return new AnimationCurve(scaled);
         }
 
         /// <summary>
@@ -810,7 +965,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 }
                 else
                 {
-                    Debug.LogWarning($"[EffectFactory] Texture not found: {texturePath}, using untextured material");
+                    // Soft-Circle-Fallback: ohne Textur wuerden Alpha-Partikel als solide
+                    // Kreise/Kugeln gerendert. Default-Particle ist ein weiches Kreis-Sprite.
+                    Texture2D fallbackTex = Resources.GetBuiltinResource<Texture2D>("Default-Particle.psd");
+                    if (fallbackTex != null)
+                    {
+                        if (material.HasProperty("_BaseMap"))
+                        {
+                            material.SetTexture("_BaseMap", fallbackTex);
+                        }
+                        else
+                        {
+                            material.mainTexture = fallbackTex;
+                        }
+                    }
+                    Debug.LogWarning($"[EffectFactory] Texture not found: {texturePath}, using soft particle fallback");
                 }
             }
 
@@ -853,6 +1022,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             if (material.HasProperty("_EmissionIntensity"))
             {
                 material.SetFloat("_EmissionIntensity", useAlphaBlend ? 1.0f : 1.5f);
+            }
+
+            // Soft-Particle-Range reduzieren: Default 0.5m im Shader blendet Partikel
+            // aus die naeher als 50cm an Szenen-Geometrie sind. Gore-Effekte spawnen
+            // direkt an Bolt-Positionen (Koerperoberflaeche), depthDiff ≈ 0 → komplett
+            // unsichtbar. 2cm reicht fuer sanfte Uebergaenge an Waenden/Boden.
+            if (material.HasProperty("_SoftParticleRange"))
+            {
+                material.SetFloat("_SoftParticleRange", 0.02f);
             }
 
             return material;
@@ -1122,7 +1300,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             }
             else
             {
-                size = decal?.Size ?? 4.572f;
+                size = decal?.Size ?? 0.3f;
             }
 
             float delay = decal?.Delay ?? 0f;
@@ -1148,11 +1326,41 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 Object.Destroy(col);
             }
 
-            // Quad auf Oberflaeche positionieren (leicht darueber fuer Z-Fighting)
-            decalObj.transform.position = position + normal * 0.02f;
+            // Blut-Decals (Pool, Splat) muessen auf den Boden projiziert werden,
+            // da sie an Bolt-Positionen (Bones) gespawnt werden, nicht an Oberflaechen.
+            bool isBloodDecal = !string.IsNullOrEmpty(segment.Texture)
+                && (segment.Texture.Contains("blood") || segment.Texture.Contains("bloody"));
+
+            Vector3 decalPosition;
+            Vector3 decalNormal;
+
+            if (isBloodDecal)
+            {
+                // Raycast nach unten: Ground-Projektion fuer Blut-Pfuetzen
+                int layerMask = ~LayerMask.GetMask("Hitbox");
+                if (Physics.Raycast(position, Vector3.down, out RaycastHit groundHit, 5f, layerMask, QueryTriggerInteraction.Ignore))
+                {
+                    decalPosition = groundHit.point + groundHit.normal * 0.02f;
+                    decalNormal = groundHit.normal;
+                }
+                else
+                {
+                    // Kein Boden gefunden: direkt unter der Position auf Y=0 projizieren
+                    decalPosition = new Vector3(position.x, 0.02f, position.z);
+                    decalNormal = Vector3.up;
+                }
+            }
+            else
+            {
+                // Standard-Decals (Scorch, Einschuss): auf der Oberflaeche platzieren
+                decalPosition = position + normal * 0.02f;
+                decalNormal = normal;
+            }
+
+            decalObj.transform.position = decalPosition;
 
             // Quad-Face (-Z) zur Oberflaeche ausrichten
-            Vector3 forward = -normal;
+            Vector3 forward = -decalNormal;
             Vector3 up = Mathf.Abs(Vector3.Dot(forward, Vector3.up)) < 0.99f
                 ? Vector3.up
                 : Vector3.forward;
@@ -1406,11 +1614,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
         /// </summary>
         public void SpawnImpactEffect(Vector3 hitPoint, Vector3 hitNormal, string effectId)
         {
+            SpawnImpactEffect(hitPoint, hitNormal, effectId, 1f);
+        }
+
+        /// <summary>
+        /// Spawnt einen datengetriebenen Impact-Effekt mit optionalem Skalierungsfaktor.
+        /// Partikel werden relativ zur Oberflaechen-Normalen orientiert (weg von der Wand).
+        /// </summary>
+        public void SpawnImpactEffect(Vector3 hitPoint, Vector3 hitNormal, string effectId, float scale)
+        {
             EffectDefinition definition = GetDefinition(effectId);
             if (definition?.Segments == null || definition.Segments.Count == 0)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.LogWarning($"[EffectFactory] SpawnImpactEffect: no definition or segments for effectId='{effectId}' (definition={definition != null}, segments={definition?.Segments?.Count ?? 0})");
+#endif
                 return;
             }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[EffectFactory] SpawnImpactEffect: effectId='{effectId}', displayName='{definition.DisplayName}', segments={definition.Segments.Count}, pos={hitPoint}");
+#endif
 
             // Impact-Root: orientiert an der Oberflaechen-Normalen
             // Partikel-Velocities in der JSON sind in Lokal-Space definiert (Z = weg von Wand)
@@ -1422,6 +1646,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 ? Vector3.up
                 : Vector3.forward;
             impactObj.transform.rotation = Quaternion.LookRotation(hitNormal, upHint);
+
+            // Optionale Skalierung fuer groessere/kleinere Blutpfuetzen
+            if (!Mathf.Approximately(scale, 1f))
+            {
+                impactObj.transform.localScale = Vector3.one * scale;
+            }
 
             float maxLifetime = 0f;
 
@@ -1453,6 +1683,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                     }
 
                     ps.Play();
+
+                    // SoF2 impactFx: BloodDropCollisionBehaviour anhaengen damit
+                    // Blutpartikel beim Bodenaufprall blood_splat_mp Decals spawnen
+                    bool segmentHasImpactFx = segment.Flags != null && segment.Flags.Contains("impactFx");
+                    bool segmentHasPhysics = segment.Flags != null && segment.Flags.Contains("usePhysics");
+                    int segCount = segment.Particle?.CountMax ?? 0;
+                    if (segmentHasImpactFx && segmentHasPhysics && segCount > 0)
+                    {
+                        BloodDropCollisionBehaviour collisionBehaviour = psGo.AddComponent<BloodDropCollisionBehaviour>();
+                        collisionBehaviour.Initialize("effects/blood_splat_mp");
+                    }
 
                     float segLife = segment.Particle != null
                         ? segment.Particle.LifetimeMax + segment.Particle.DelayMax
@@ -1680,6 +1921,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 }
 
                 rb.mass = 0.05f;
+                rb.useGravity = true;
                 rb.linearDamping = 0.1f;
                 rb.angularDamping = 0.2f;
 
@@ -1690,20 +1932,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                     : CollisionDetectionMode.Discrete;
 
                 // Datengetriebene Geschwindigkeit
+                // SoF2→Unity Achsen-Remap: X(forward)→Z, Y(left)→-X, Z(up)→Y
                 Vector3 localVelocity = new(
-                    Random.Range(emitter.VelocityMin[0], emitter.VelocityMax[0]),
-                    Random.Range(emitter.VelocityMin[1], emitter.VelocityMax[1]),
-                    Random.Range(emitter.VelocityMin[2], emitter.VelocityMax[2])
+                    -Random.Range(emitter.VelocityMin[1], emitter.VelocityMax[1]),
+                    Random.Range(emitter.VelocityMin[2], emitter.VelocityMax[2]),
+                    Random.Range(emitter.VelocityMin[0], emitter.VelocityMax[0])
                 );
                 rb.linearVelocity = rotation * localVelocity;
 
                 // Datengetriebener Spin (Grad/s → Rad/s) — optional, nicht alle Emitter definieren angleDelta
+                // SoF2→Unity Achsen-Remap: X→Z, Y→-X, Z→Y
                 if (emitter.AngleDeltaMin != null && emitter.AngleDeltaMax != null)
                 {
                     rb.angularVelocity = new Vector3(
-                        Random.Range(emitter.AngleDeltaMin[0], emitter.AngleDeltaMax[0]) * Mathf.Deg2Rad,
-                        Random.Range(emitter.AngleDeltaMin[1], emitter.AngleDeltaMax[1]) * Mathf.Deg2Rad,
-                        Random.Range(emitter.AngleDeltaMin[2], emitter.AngleDeltaMax[2]) * Mathf.Deg2Rad
+                        -Random.Range(emitter.AngleDeltaMin[1], emitter.AngleDeltaMax[1]) * Mathf.Deg2Rad,
+                        Random.Range(emitter.AngleDeltaMin[2], emitter.AngleDeltaMax[2]) * Mathf.Deg2Rad,
+                        Random.Range(emitter.AngleDeltaMin[0], emitter.AngleDeltaMax[0]) * Mathf.Deg2Rad
                     );
                 }
 
@@ -1818,18 +2062,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             if (emitter != null)
             {
                 // Datengetriebene Auswurf-Geschwindigkeit aus Emitter-Definition (bereits m/s)
+                // SoF2→Unity Achsen-Remap: X(forward)→Z, Y(left)→-X, Z(up)→Y
                 Vector3 localVelocity = new(
-                    Random.Range(emitter.VelocityMin[0], emitter.VelocityMax[0]),
-                    Random.Range(emitter.VelocityMin[1], emitter.VelocityMax[1]),
-                    Random.Range(emitter.VelocityMin[2], emitter.VelocityMax[2])
+                    -Random.Range(emitter.VelocityMin[1], emitter.VelocityMax[1]),
+                    Random.Range(emitter.VelocityMin[2], emitter.VelocityMax[2]),
+                    Random.Range(emitter.VelocityMin[0], emitter.VelocityMax[0])
                 );
                 rb.linearVelocity = rotation * localVelocity;
 
                 // Datengetriebener Spin aus angleDelta (Grad/s → Rad/s)
+                // SoF2→Unity Achsen-Remap: X→Z, Y→-X, Z→Y
                 rb.angularVelocity = new Vector3(
-                    Random.Range(emitter.AngleDeltaMin[0], emitter.AngleDeltaMax[0]) * Mathf.Deg2Rad,
-                    Random.Range(emitter.AngleDeltaMin[1], emitter.AngleDeltaMax[1]) * Mathf.Deg2Rad,
-                    Random.Range(emitter.AngleDeltaMin[2], emitter.AngleDeltaMax[2]) * Mathf.Deg2Rad
+                    -Random.Range(emitter.AngleDeltaMin[1], emitter.AngleDeltaMax[1]) * Mathf.Deg2Rad,
+                    Random.Range(emitter.AngleDeltaMin[2], emitter.AngleDeltaMax[2]) * Mathf.Deg2Rad,
+                    Random.Range(emitter.AngleDeltaMin[0], emitter.AngleDeltaMax[0]) * Mathf.Deg2Rad
                 );
 
                 // Datengetriebenes Bounce-Material

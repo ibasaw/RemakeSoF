@@ -45,12 +45,14 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
 
             // --- Left Arm ---
             { HitRegion.LeftShoulder, new GoreAreaMapping("arm_upper", false) },
-            { HitRegion.LeftArm, new GoreAreaMapping("arm_lower", false) },
+            { HitRegion.LeftArm, new GoreAreaMapping("arm_upper", false) },
+            { HitRegion.LeftForearm, new GoreAreaMapping("arm_lower", false) },
             { HitRegion.LeftHand, new GoreAreaMapping("hand", false) },
 
             // --- Right Arm ---
             { HitRegion.RightShoulder, new GoreAreaMapping("arm_upper", true) },
-            { HitRegion.RightArm, new GoreAreaMapping("arm_lower", true) },
+            { HitRegion.RightArm, new GoreAreaMapping("arm_upper", true) },
+            { HitRegion.RightForearm, new GoreAreaMapping("arm_lower", true) },
             { HitRegion.RightHand, new GoreAreaMapping("hand", true) },
 
             // --- Left Leg ---
@@ -73,6 +75,42 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
         public static bool TryGetMapping(HitRegion hitRegion, out GoreAreaMapping mapping)
         {
             return s_Mapping.TryGetValue(hitRegion, out mapping);
+        }
+
+        /// <summary>
+        /// Zentrale Gore-Area-Locations die nur einen Hitbox-Collider haben (kein Links/Rechts).
+        /// Fuer diese Areas wird isRightSide beim Hitbox-Lookup ignoriert, da Head, Neck, Chest, Gut
+        /// und Groin nur jeweils EINE HitRegion im Mapping haben (nicht Left/Right varianten).
+        /// </summary>
+        private static readonly HashSet<string> s_CenterAreas = new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            "head", "torso", "hip"
+        };
+
+        /// <summary>
+        /// Gibt alle HitRegions zurueck die zu einer bestimmten GoreArea-Location und Seite gehoeren.
+        /// Wird nach Dismemberment verwendet um alle betroffenen Hitboxen zu deaktivieren.
+        /// Fuer zentrale Areas (head, torso, hip) wird isRightSide ignoriert, da diese nur
+        /// eine HitRegion besitzen (z.B. Head, Neck, Chest, Gut, Groin).
+        /// </summary>
+        /// <param name="goreAreaLocation">Gore-Area-Location (z.B. "head", "arm_upper").</param>
+        /// <param name="isRightSide">True fuer rechte Seite (wird fuer zentrale Areas ignoriert).</param>
+        /// <returns>Liste der betroffenen HitRegions.</returns>
+        public static List<HitRegion> GetHitRegionsForArea(string goreAreaLocation, bool isRightSide)
+        {
+            bool isCenterArea = s_CenterAreas.Contains(goreAreaLocation);
+            List<HitRegion> result = new();
+
+            foreach (KeyValuePair<HitRegion, GoreAreaMapping> entry in s_Mapping)
+            {
+                if (string.Equals(entry.Value.GoreAreaLocation, goreAreaLocation, System.StringComparison.OrdinalIgnoreCase)
+                    && (isCenterArea || entry.Value.IsRightSide == isRightSide))
+                {
+                    result.Add(entry.Key);
+                }
+            }
+
+            return result;
         }
     }
 }

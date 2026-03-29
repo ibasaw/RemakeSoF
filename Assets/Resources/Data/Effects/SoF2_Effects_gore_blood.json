@@ -783,7 +783,14 @@
     "segments": [
       {
         "type": "decal",
-        "texture": "gfx/damage/dvbloodmark"
+        "texture": "gfx/damage/dvbloodmark",
+        "decal": {
+          "sizeMin": 0.152,
+          "sizeMax": 0.254,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "lifetime": 30.0
+        }
       }
     ]
   },
@@ -959,7 +966,14 @@
     "segments": [
       {
         "type": "decal",
-        "texture": "gfx/damage/bloodpool1"
+        "texture": "gfx/damage/bloodpool1",
+        "decal": {
+          "sizeMin": 0.508,
+          "sizeMax": 0.762,
+          "rotationMin": -180.0,
+          "rotationMax": 180.0,
+          "lifetime": 30.0
+        }
       }
     ]
   },
@@ -969,11 +983,27 @@
     "segments": [
       {
         "type": "decal",
-        "texture": "models/characters/gore/bloody_splotch4"
+        "texture": "models/characters/gore/gil_bloody_splotch4",
+        "decal": {
+          "sizeMin": 0.152,
+          "sizeMax": 0.203,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "lifetime": 30.0
+        }
       },
       {
         "type": "decal",
-        "texture": "models/characters/gore/world_splat2"
+        "texture": "models/characters/gore/gil_bloody_drops2",
+        "decal": {
+          "sizeMin": 0.254,
+          "sizeMax": 0.406,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "alphaMin": 0.4,
+          "alphaMax": 0.6,
+          "lifetime": 30.0
+        }
       }
     ]
   },
@@ -983,7 +1013,14 @@
     "segments": [
       {
         "type": "decal",
-        "texture": "gfx/damage/bloodmark6"
+        "texture": "gfx/damage/bloodmark6",
+        "decal": {
+          "sizeMin": 0.127,
+          "sizeMax": 0.178,
+          "rotationMin": -180.0,
+          "rotationMax": 180.0,
+          "lifetime": 30.0
+        }
       }
     ]
   },
@@ -993,7 +1030,14 @@
     "segments": [
       {
         "type": "decal",
-        "texture": "gfx/damage/bloodmark6"
+        "texture": "gfx/damage/bloodmark6",
+        "decal": {
+          "sizeMin": 0.127,
+          "sizeMax": 0.178,
+          "rotationMin": -180.0,
+          "rotationMax": 180.0,
+          "lifetime": 30.0
+        }
       }
     ]
   },
@@ -1102,8 +1146,8 @@
           "endMax": 0.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
+          "startMin": 0.0,
+          "startMax": 0.0,
           "endMin": 1.016,
           "endMax": 1.27,
           "curve": "linear"
@@ -1156,8 +1200,8 @@
           "endMax": 0.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
+          "startMin": 0.0,
+          "startMax": 0.0,
           "endMin": 0.127,
           "endMax": 0.127,
           "curve": "linear"
@@ -1491,7 +1535,14 @@
       {
         "type": "decal",
         "name": "splat",
-        "texture": "models/characters/gore/bloody_splotch4"
+        "texture": "models/characters/gore/gil_bloody_splotch4",
+        "decal": {
+          "sizeMin": 0.2,
+          "sizeMax": 0.4,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "lifetime": 30.0
+        }
       },
       {
         "type": "particle",
@@ -1544,8 +1595,8 @@
           "endMax": 0.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
+          "startMin": 0.0,
+          "startMax": 0.0,
           "endMin": 0.254,
           "endMax": 0.254,
           "curve": "linear"
@@ -2100,8 +2151,8 @@
           "parm": 60.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
+          "startMin": 0.0,
+          "startMax": 0.0,
           "endMin": 0.2286,
           "endMax": 0.3048,
           "curve": "linear"
@@ -2753,8 +2804,8 @@
           "parm": 40.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
+          "startMin": 0.0,
+          "startMax": 0.0,
           "endMin": 2.54,
           "endMax": 2.794,
           "curve": "linear"
@@ -3005,8 +3056,8 @@
           "parmMax": 70.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
+          "startMin": 0.0,
+          "startMax": 0.0,
           "endMin": 0.2032,
           "endMax": 0.254,
           "curve": "linear"
@@ -3188,8 +3239,8 @@
           "parmMax": 45.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
+          "startMin": 0.0,
+          "startMax": 0.0,
           "endMin": 0.2032,
           "endMax": 0.254,
           "curve": "linear"
@@ -3327,8 +3378,8 @@
           "endMax": 0.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
+          "startMin": 0.0,
+          "startMax": 0.0,
           "endMin": 0.1778,
           "endMax": 0.2032,
           "curve": "linear"
@@ -3496,7 +3547,7 @@
         "flags": [
           "useAlpha"
         ],
-        "texture": "models/characters/gore/world_wall1",
+        "texture": "models/characters/gore/gil_bloody_splotch4",
         "particle": {
           "lifetimeMin": 5.0,
           "lifetimeMax": 5.0,
@@ -3766,7 +3817,14 @@
       {
         "type": "decal",
         "name": "splat",
-        "texture": "models/characters/gore/world_gib1"
+        "texture": "models/characters/gore/gt_uhh_eww6",
+        "decal": {
+          "sizeMin": 0.2,
+          "sizeMax": 0.35,
+          "rotationMin": 0.0,
+          "rotationMax": 360.0,
+          "lifetime": 30.0
+        }
       }
     ]
   },

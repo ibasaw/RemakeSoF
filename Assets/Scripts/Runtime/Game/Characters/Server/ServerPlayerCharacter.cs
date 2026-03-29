@@ -54,7 +54,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
 
         /// <summary>
         /// Berechnet die Eye-Position des Spielers auf dem Server.
-        /// Position ist am Fuss (feet), Eye-Height wird proportional aus CapsuleHeight berechnet.
+        /// SoF2 Eye-Height Ratio: ViewHeight/TotalHeight = 72/89.
         /// </summary>
         public Vector3 GetEyePosition()
         {

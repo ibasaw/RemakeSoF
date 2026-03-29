@@ -85,6 +85,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -177,6 +183,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -307,6 +319,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -424,6 +442,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -537,6 +561,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -658,6 +688,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -755,6 +791,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -871,6 +913,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -963,6 +1011,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.0,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -1073,6 +1127,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -1183,6 +1243,12 @@
         "fps": 10,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -1300,6 +1366,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -1408,6 +1480,12 @@
         "fps": 10,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -1503,6 +1581,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -1636,6 +1720,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -1731,6 +1821,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -1839,6 +1935,12 @@
         "fps": 10,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -1947,6 +2049,12 @@
         "fps": 10,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -2055,6 +2163,12 @@
         "fps": 10,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -2165,6 +2279,12 @@
         "fps": 10,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -2273,6 +2393,12 @@
         "fps": 10,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -2381,6 +2507,12 @@
         "fps": 10,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -2475,6 +2607,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   },
   {
@@ -2588,6 +2726,12 @@
         "fps": 20,
         "loop": false
       }
+    },
+    "foreshorten": 0.6,
+    "viewOffset": {
+      "forward": 0,
+      "right": 0,
+      "up": 0
     }
   }
 ]

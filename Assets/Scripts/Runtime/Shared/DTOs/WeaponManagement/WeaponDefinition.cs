@@ -55,6 +55,21 @@ namespace Tolik.RemakeSoF.Runtime.WeaponManagement
         public string ViewModel;
 
         /// <summary>
+        /// SoF2 Foreshorten-Faktor fuer First-Person-Darstellung.
+        /// Skaliert das Waffenmodell entlang der Z-Achse (0.6 = Standard, 0.0 = keine Verkuerzung).
+        /// </summary>
+        [JsonProperty("foreshorten")]
+        public float Foreshorten = 0.6f;
+
+        /// <summary>
+        /// SoF2 View-Offset in Quake-Units (Forward/Right/Up).
+        /// Verschiebt die First-Person-Kamera relativ zum Standard-Viewpoint pro Waffe.
+        /// Konvertierung: QU × 0.0254 = Unity-Meter.
+        /// </summary>
+        [JsonProperty("viewOffset")]
+        public WeaponViewOffsetDefinition ViewOffset;
+
+        /// <summary>
         /// Ob die Waffe eine Nahkampfwaffe ist.
         /// </summary>
         [JsonProperty("isMelee")]

@@ -12,7 +12,7 @@
         "spawnFlags": [
           "rgbComponentInterpolation"
         ],
-        "texture": "models/characters/gore/mist",
+        "texture": "models/characters/gore/gil_mist",
         "particle": {
           "countMin": 5,
           "countMax": 5,
@@ -143,8 +143,8 @@
           "parmMax": 50.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
+          "startMin": 0.0,
+          "startMax": 0.0,
           "endMin": 0.3048,
           "endMax": 0.3556,
           "parm": 30.0,
@@ -282,12 +282,155 @@
   {
     "id": "effects/blood_spurt_arterial",
     "displayName": "Blood Spurt Arterial (MP)",
-    "segments": []
+    "segments": [
+      {
+        "type": "particle",
+        "name": "blood_stream",
+        "flags": [
+          "useAlpha"
+        ],
+        "texture": "gfx/misc/jk_drop",
+        "particle": {
+          "countMin": 12,
+          "countMax": 18,
+          "lifetimeMin": 0.6,
+          "lifetimeMax": 1.0,
+          "velocityMin": [
+            2.0,
+            -0.3,
+            -0.3
+          ],
+          "velocityMax": [
+            4.0,
+            0.3,
+            0.3
+          ],
+          "gravityModifier": -3.0,
+          "burst": true
+        },
+        "color": {
+          "startMin": [
+            0.55,
+            0.0,
+            0.02
+          ],
+          "startMax": [
+            0.45,
+            0.0,
+            0.01
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 60.0
+        },
+        "size": {
+          "startMin": 0.015,
+          "startMax": 0.03,
+          "endMin": 0.005,
+          "endMax": 0.01
+        }
+      },
+      {
+        "type": "particle",
+        "name": "blood_mist",
+        "flags": [
+          "useAlpha"
+        ],
+        "texture": "gfx/misc/jk_smoke4",
+        "particle": {
+          "countMin": 2,
+          "countMax": 4,
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.7,
+          "burst": true
+        },
+        "color": {
+          "startMin": [
+            0.5,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.4,
+            0.0,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.6,
+          "endMin": 0.0,
+          "endMax": 0.0
+        },
+        "size": {
+          "startMin": 0.02,
+          "startMax": 0.04,
+          "endMin": 0.15,
+          "endMax": 0.25
+        }
+      }
+    ]
   },
   {
     "id": "effects/blood_spurt_arterial_small",
     "displayName": "Blood Spurt Arterial Small (MP)",
-    "segments": []
+    "segments": [
+      {
+        "type": "particle",
+        "name": "blood_stream",
+        "flags": [
+          "useAlpha"
+        ],
+        "texture": "gfx/misc/jk_drop",
+        "particle": {
+          "countMin": 6,
+          "countMax": 10,
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.7,
+          "velocityMin": [
+            1.0,
+            -0.2,
+            -0.2
+          ],
+          "velocityMax": [
+            2.5,
+            0.2,
+            0.2
+          ],
+          "gravityModifier": -2.5,
+          "burst": true
+        },
+        "color": {
+          "startMin": [
+            0.55,
+            0.0,
+            0.02
+          ],
+          "startMax": [
+            0.45,
+            0.0,
+            0.01
+          ]
+        },
+        "alpha": {
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 60.0
+        },
+        "size": {
+          "startMin": 0.01,
+          "startMax": 0.02,
+          "endMin": 0.003,
+          "endMax": 0.008
+        }
+      }
+    ]
   },
   {
     "id": "effects/flesh_chunks",
