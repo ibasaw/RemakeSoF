@@ -18,9 +18,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
     public class WeaponLoader
     {
         /// <summary>
-        /// Z-Rotation-Override fuer SoF2-Waffen-Achsenkorrektur (Grad).
+        /// Standard Z-Rotation fuer TP-Waffen am Hand-Bone (Grad).
+        /// FP-Waffen ueberschreiben dies via SetLocalRotation().
         /// </summary>
-        private const float k_WeaponZRotation = -90f;
+        private const float k_DefaultZRotation = -90f;
+
+        /// <summary>
+        /// Konfigurierbare lokale Rotation der Waffe.
+        /// Default: (0,0,-90) fuer TP-Waffen am Hand-Bone.
+        /// FP-Waffen setzen (0,0,90) via SetLocalRotation().
+        /// </summary>
+        private Quaternion m_LocalRotation = Quaternion.Euler(0f, 0f, k_DefaultZRotation);
 
         /// <summary>
         /// SoF2/MapSurface Shader fuer Waffen — Unlit-Basis mit anteiliger Lambert-Beleuchtung.
@@ -62,6 +70,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
         private Transform m_AttachmentBone;
 
         /// <summary>
+        /// Ob Bone-Scale-Kompensation angewendet werden soll.
+        /// True fuer TP-Waffen (Hand-Bone hat FBX-Import-Scale 2.54).
+        /// False fuer FP-Waffen (FP_WeaponHolder-Scale 0.0254 ist beabsichtigt QU→Meter).
+        /// </summary>
+        private bool m_CompensateBoneScale = true;
+
+        /// <summary>
         /// Aktuell geladener Waffen-Name (leer wenn keine Waffe).
         /// </summary>
         public string CurrentWeaponName => m_CurrentWeaponName;
@@ -73,7 +88,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
 
         /// <summary>
         /// Wendet SoF2 Foreshorten-Skalierung auf die aktuelle Waffe an.
-        /// FP: foreshorten (z.B. 0.6 = 60%), TP: 1.0 (volle Groesse).
+        /// SoF2: VectorScale(hand.axis[0], foreshorten, hand.axis[0]) in CG_AddViewWeapon.
+        /// Skaliert NUR die Forward-Achse (Z) — Waffe wird kuerzer/flacher,
+        /// aber nicht schmaler. Perspektivischer Trick fuer weniger Bildschirmanteil.
         /// </summary>
         public void ApplyForeshorten(float foreshorten)
         {
@@ -87,7 +104,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
                 foreshorten = 1f;
             }
 
-            m_CurrentWeaponInstance.transform.localScale = m_BaseLocalScale * foreshorten;
+            // SoF2 skaliert nur axis[0] (Forward) — in Unity ist das localScale.z
+            m_CurrentWeaponInstance.transform.localScale = new Vector3(
+                m_BaseLocalScale.x,
+                m_BaseLocalScale.y,
+                m_BaseLocalScale.z * foreshorten);
         }
 
         /// <summary>
@@ -97,6 +118,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
         public void SetAttachmentBone(Transform bone)
         {
             m_AttachmentBone = bone;
+        }
+
+        /// <summary>
+        /// Ueberschreibt die lokale Rotation der Waffe.
+        /// TP-Waffen: (0,0,-90) fuer Hand-Bone-Korrektur (Default).
+        /// FP-Waffen: (0,0,90) fuer Kamera-Ausrichtung.
+        /// SoF2: viewG2Model nutzt Kamera-Achsen direkt (cg_weapons.c CG_AddViewWeapon).
+        /// </summary>
+        public void SetLocalRotation(Quaternion rotation)
+        {
+            m_LocalRotation = rotation;
+        }
+
+        /// <summary>
+        /// Aktiviert/deaktiviert Bone-Scale-Kompensation.
+        /// TP (true): Hand-Bone hat FBX-Import-Scale — Waffe muss kompensieren.
+        /// FP (false): FP_WeaponHolder-Scale 0.0254 ist beabsichtigte QU-zu-Meter-Konvertierung.
+        /// </summary>
+        public void SetCompensateBoneScale(bool compensate)
+        {
+            m_CompensateBoneScale = compensate;
         }
 
         /// <summary>
@@ -145,9 +187,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
                 return false;
             }
 
-            // Prefab-Scale vor Instantiierung lesen (wird durch Parenting überschrieben).
-            Vector3 prefabScale = weaponPrefab.transform.localScale;
-
             // Instanziieren als Child des Hand-Bones.
             m_CurrentWeaponInstance = Object.Instantiate(weaponPrefab, m_AttachmentBone);
 
@@ -155,16 +194,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
             ApplyWeaponTextures(m_CurrentWeaponInstance, weaponKey);
 
             Transform weaponTransform = m_CurrentWeaponInstance.transform;
-            weaponTransform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0f, 0f, k_WeaponZRotation));
+            weaponTransform.SetLocalPositionAndRotation(Vector3.zero, m_LocalRotation);
 
-            // Der Character-Bone hat lossyScale=2.54 (FBX-Import-Konvertierung: 1 inch = 2.54 cm).
-            // Ohne Kompensation erbt die Waffe diesen Factor und erscheint 2.54x zu groß.
-            // Lösung: localScale = prefabScale / boneLossyScale → worldScale = prefabScale (wie im Prefab designed).
-            Vector3 boneScale = m_AttachmentBone.lossyScale;
-            weaponTransform.localScale = new Vector3(
-                prefabScale.x / boneScale.x,
-                prefabScale.y / boneScale.y,
-                prefabScale.z / boneScale.z);
+            // Bone-Scale-Kompensation: Nur fuer TP-Waffen noetig.
+            // TP-Hand-Bone hat lossyScale=2.54 (FBX inch→cm) — Waffe muss kompensieren.
+            // FP_WeaponHolder hat 0.0254 als beabsichtigte QU→Meter-Konvertierung —
+            // dort darf NICHT kompensiert werden, sonst wird die Waffe 39x zu gross.
+            Vector3 prefabScale = weaponPrefab.transform.localScale;
+            if (m_CompensateBoneScale)
+            {
+                Vector3 boneScale = m_AttachmentBone.lossyScale;
+                weaponTransform.localScale = new Vector3(
+                    prefabScale.x / boneScale.x,
+                    prefabScale.y / boneScale.y,
+                    prefabScale.z / boneScale.z);
+            }
+            else
+            {
+                weaponTransform.localScale = prefabScale;
+            }
 
             m_BaseLocalScale = weaponTransform.localScale;
             m_CurrentWeaponName = weaponKey;
@@ -293,6 +341,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Setzt die Sichtbarkeit der aktuellen Waffe (SetActive).
+        /// Wird fuer FP/TP-Umschaltung benoetigt: FP-Waffe nur im First-Person-Modus sichtbar,
+        /// TP-Waffe wird ueber ShadowCastingMode gesteuert (nicht hier).
+        /// </summary>
+        public void SetVisible(bool visible)
+        {
+            if (m_CurrentWeaponInstance != null)
+            {
+                m_CurrentWeaponInstance.SetActive(visible);
+            }
         }
 
         /// <summary>

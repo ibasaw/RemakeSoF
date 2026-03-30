@@ -78,7 +78,7 @@ namespace Tolik.RemakeSoF.Runtime
         /// Positive Werte verschieben nach unten (Third-Person Parallax-Korrektur).
         /// 0 = exakt Bildschirmmitte, passend zur Raycast-Richtung.
         /// </summary>
-        private const float CROSSHAIR_VERTICAL_OFFSET_PERCENT = 3.5f;
+        private const float CROSSHAIR_VERTICAL_OFFSET_PERCENT = 0.0f;
 
         /// <summary>
         /// Wird gefeuert sobald die MatchView aktiviert und alle UI-Elemente neu gebunden sind.

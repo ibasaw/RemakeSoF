@@ -171,6 +171,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraSwitcher
   m_AimCam: {fileID: 5126821013092552409}
   m_FirstPersonCam: {fileID: 2500566048307127719}
+  m_Brain: {fileID: 0}
   m_StartFirstPerson: 0
 --- !u!1 &5966535070843944318
 GameObject:
@@ -425,7 +426,7 @@ MonoBehaviour:
     m_InternalValue: 0
   m_ServerPlayerCharacter: {fileID: 5114413647346417949}
   m_SkinHandler: {fileID: 792202953519434536}
-  m_ShowDebugTracers: 1
+  m_ShowDebugTracers: 0
   m_CharacterState: {fileID: 2107942443278687898}
 --- !u!114 &2107942443278687898
 MonoBehaviour:

@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Camera;
@@ -125,7 +126,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Reconciliation Threshold: ab dieser Abweichung wird korrigiert (Meter).</summary>
         private const float k_ReconciliationThreshold = 0.05f;
 
-        /// <summary>GrÃ¶sse des Prediction-Ringbuffers (Anzahl Commands).</summary>
+        /// <summary>Größe des Prediction-Ringbuffers (Anzahl Commands).</summary>
         private const int k_PredictionBufferSize = 128;
 
         /// <summary>
@@ -436,10 +437,55 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         internal event Action<string> OnWeaponSwapTargetChanged;
 
         /// <summary>
-        /// Interner WeaponLoader: laedt Waffen-Prefabs und attached sie an den Hand-Bone.
+        /// Interner WeaponLoader: laedt Waffen-Prefabs und attached sie an den Hand-Bone (Third-Person).
         /// Kein MonoBehaviour — wird hier orchestriert.
         /// </summary>
         private readonly WeaponLoader m_WeaponLoader = new();
+
+        /// <summary>
+        /// Interner WeaponLoader fuer die First-Person-Waffe.
+        /// Laedt das gleiche Prefab, aber parented an die Main Camera.
+        /// SoF2: viewG2Model vs weaponG2Model — zwei unabhaengige Waffenmodelle
+        /// (CG_AddViewWeapon in cg_weapons.c).
+        /// </summary>
+        private readonly WeaponLoader m_FpWeaponLoader = new();
+
+        /// <summary>
+        /// Interner Service fuer SoF2-Style FP-Hands (Buffer + lhand/rhand).
+        /// SoF2: Ghoul2 Composite-Modell Slots 1-3 (Buffer, rhand, lhand)
+        /// werden an der FP-Waffe (Slot 0) attached.
+        /// </summary>
+        private readonly FirstPersonHandsLoader m_FpHandsLoader = new();
+
+        /// <summary>
+        /// Parent-Transform fuer die FP-Waffe (Child von Camera.main).
+        /// Null bei Remote-Clients (kein FP-Weapon noetig).
+        /// </summary>
+        private Transform m_FpWeaponParent;
+
+        /// <summary>
+        /// URP Overlay-Kamera fuer FP-Waffe mit separatem FOV.
+        /// SoF2: CG_CalculateWeaponFov — Waffe wird mit engerem FOV gerendert
+        /// damit sie bei weitem Welt-FOV nicht verzerrt aussieht.
+        /// </summary>
+        private UnityEngine.Camera m_FpWeaponCamera;
+
+        /// <summary>
+        /// Standard-FOV fuer Waffen-Kamera wenn kein per-Weapon fovX definiert ist.
+        /// SoF2 default weapon FOV.
+        /// </summary>
+        private const float k_DefaultWeaponFov = 65f;
+
+        /// <summary>
+        /// Layer-Index fuer FPWeapon (muss mit TagManager uebereinstimmen).
+        /// </summary>
+        private const int k_FpWeaponLayer = 10;
+
+        /// <summary>
+        /// Root-Transform des instanziierten Visuals.
+        /// Wird benoetigt um m_VisualRenderers nach Waffenwechsel zu aktualisieren.
+        /// </summary>
+        private Transform m_VisualRoot;
 
         /// <summary>
         /// Pending Weapon-Name: gesetzt wenn OnWeaponChanged vor OnVisualInstantiated kommt.
@@ -703,8 +749,29 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_CharacterState.OnWeaponChanged -= OnWeaponChanged;
             }
 
-            // Waffe aufraeumen
+            // Waffen aufraeumen (TP + FP + Hands)
             m_WeaponLoader.ClearCurrentWeapon();
+            m_FpHandsLoader.Clear();
+            m_FpWeaponLoader.ClearCurrentWeapon();
+
+            if (m_FpWeaponCamera != null)
+            {
+                // Overlay-Kamera aus dem URP-Stack der Main Camera entfernen
+                UnityEngine.Camera mainCam = UnityEngine.Camera.main;
+                if (mainCam != null)
+                {
+                    UniversalAdditionalCameraData mainCamData = mainCam.GetUniversalAdditionalCameraData();
+                    mainCamData.cameraStack.Remove(m_FpWeaponCamera);
+                }
+                Destroy(m_FpWeaponCamera.gameObject);
+                m_FpWeaponCamera = null;
+            }
+
+            if (m_FpWeaponParent != null)
+            {
+                Destroy(m_FpWeaponParent.gameObject);
+                m_FpWeaponParent = null;
+            }
 
             // TogglePauseMenu Callback entfernen
             m_PlayerActions.TogglePauseMenu.performed -= OnMenuToggle;
@@ -1341,15 +1408,39 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             Debug.Log("[ClientPlayerCharacter] Kamera-Targets verdrahtet (Yaw/Pitch/CameraTarget)");
 
-            // Waffen-Attachment-Bone fuer Owner setzen
+            // Visual-Root cachen fuer Renderer-Refresh nach Waffenwechsel
+            m_VisualRoot = visualInstance.transform;
+
+            // FP-Waffen-Parent unter Main Camera erstellen (SoF2: viewG2Model rendered at vieworg)
+            UnityEngine.Camera mainCam = UnityEngine.Camera.main;
+            if (mainCam != null)
+            {
+                GameObject fpWeaponHolder = new("FP_WeaponHolder");
+                fpWeaponHolder.transform.SetParent(mainCam.transform, false);
+                // Default FP-Waffenposition: rechts, unten, vorwaerts relativ zur Kamera.
+                // Per-Weapon viewOffset aus JSON wird additiv via FirstPersonCameraEffects angewendet.
+                fpWeaponHolder.transform.localPosition = new Vector3(0.1f, -0.25f, 0.3f);
+                m_FpWeaponParent = fpWeaponHolder.transform;
+                m_FpWeaponLoader.SetAttachmentBone(m_FpWeaponParent);
+                m_FpWeaponLoader.SetLocalRotation(Quaternion.Euler(0f, 0f, 0f));
+                m_FpWeaponLoader.SetCompensateBoneScale(false);
+
+                // SoF2: CG_CalculateWeaponFov — separate Overlay-Kamera fuer Waffen-FOV.
+                // Main Camera rendert Welt (ohne FPWeapon-Layer),
+                // Overlay-Kamera rendert nur FPWeapon-Layer mit engerem FOV.
+                SetupWeaponOverlayCamera(mainCam);
+            }
+
+            // Waffen-Attachment-Bone fuer Owner setzen (Third-Person Waffe am Hand-Bone)
             if (rightHandBolt != null)
             {
                 m_WeaponLoader.SetAttachmentBone(rightHandBolt);
                 TryLoadPendingWeapon();
             }
 
-            // Renderer cachen fuer FP-Body-Hiding (ShadowsOnly im First-Person-Modus)
-            m_VisualRenderers = visualInstance.GetComponentsInChildren<Renderer>(true);
+            // Renderer cachen fuer FP-Body-Hiding (ShadowsOnly im First-Person-Modus).
+            // Muss NACH TryLoadPendingWeapon passieren, damit TP-Waffen-Renderer enthalten sind.
+            RefreshVisualRenderers();
 
             // Initialen Kamera-Modus anwenden (falls bereits FP)
             if (m_CameraSwitcher != null)
@@ -1365,12 +1456,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private void OnCameraModeChanged(bool isFirstPerson)
         {
             ApplyFirstPersonVisibility(isFirstPerson);
+
+            // Beim Wechsel zu FP: Idle-Animation starten damit Bones sofort korrekt positioniert sind.
+            // SoF2: CG_AddViewWeapon setzt bei jedem Frame die Animation — beim Wechsel
+            // zu FP muessen die Bones einmalig evaluiert werden (Sample), sonst
+            // bleiben Haende/Waffe bis zum naechsten Frame in Default-Pose.
+            if (isFirstPerson)
+            {
+                m_FpHandsLoader.PlayIdle();
+            }
         }
 
         /// <summary>
         /// Setzt alle Renderer des eigenen Visuals auf ShadowsOnly (FP) oder On (TP).
         /// ShadowsOnly: Mesh ist fuer die Kamera unsichtbar, wirft aber weiterhin Schatten.
         /// Damit sieht man im First-Person-Modus nicht in den eigenen Koerper hinein.
+        /// SoF2: TP-Waffe (weaponG2Model) am Hand-Bone wird mit dem Body versteckt,
+        /// FP-Waffe (viewG2Model) an der Kamera wird stattdessen eingeblendet.
         /// </summary>
         private void ApplyFirstPersonVisibility(bool isFirstPerson)
         {
@@ -1391,8 +1493,72 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 }
             }
 
-            // SoF2 Foreshorten: Waffe in FP auf 60% skalieren, in TP auf 100%
+            // SoF2 Foreshorten: TP-Waffe in FP auf 60% skalieren, in TP auf 100%
             m_WeaponLoader.ApplyForeshorten(isFirstPerson ? m_CurrentForeshorten : 1f);
+
+            // FP-Waffe + Hands: nur im First-Person-Modus sichtbar (SoF2: RF_FIRST_PERSON Flag)
+            m_FpWeaponLoader.SetVisible(isFirstPerson);
+            m_FpHandsLoader.SetVisible(isFirstPerson);
+        }
+
+        /// <summary>
+        /// Aktualisiert den Renderer-Cache (m_VisualRenderers) vom Visual-Root.
+        /// Muss nach jedem Waffenwechsel aufgerufen werden, da neue TP-Waffen-Renderer
+        /// sonst nicht im Cache enthalten sind und in FP nicht versteckt werden.
+        /// </summary>
+        private void RefreshVisualRenderers()
+        {
+            if (m_VisualRoot != null)
+            {
+                m_VisualRenderers = m_VisualRoot.GetComponentsInChildren<Renderer>(true);
+            }
+        }
+
+        /// <summary>
+        /// Erstellt eine URP Overlay-Kamera fuer die FP-Waffe mit separatem FOV.
+        /// SoF2: CG_CalculateWeaponFov berechnet ein eigenes FOV fuer das Waffenmodell
+        /// damit es bei weitem Welt-FOV nicht verzerrt aussieht.
+        /// Main Camera rendert alles ausser FPWeapon-Layer,
+        /// Overlay-Kamera rendert nur FPWeapon-Layer mit engerem FOV.
+        /// </summary>
+        private void SetupWeaponOverlayCamera(UnityEngine.Camera mainCam)
+        {
+            // Main Camera: FPWeapon-Layer aus CullingMask entfernen
+            mainCam.cullingMask &= ~(1 << k_FpWeaponLayer);
+
+            // URP Base-Kamera konfigurieren
+            UniversalAdditionalCameraData mainCamData = mainCam.GetUniversalAdditionalCameraData();
+            mainCamData.renderType = CameraRenderType.Base;
+
+            // Overlay-Kamera als Child der Main Camera erstellen
+            GameObject weaponCamObj = new("FP_WeaponCamera");
+            weaponCamObj.transform.SetParent(mainCam.transform, false);
+
+            m_FpWeaponCamera = weaponCamObj.AddComponent<UnityEngine.Camera>();
+            m_FpWeaponCamera.clearFlags = CameraClearFlags.Depth;
+            m_FpWeaponCamera.cullingMask = 1 << k_FpWeaponLayer;
+            m_FpWeaponCamera.fieldOfView = k_DefaultWeaponFov;
+            m_FpWeaponCamera.nearClipPlane = 0.01f;
+            m_FpWeaponCamera.depth = mainCam.depth + 1;
+
+            // URP Overlay-Kamera konfigurieren und in den Stack der Main Camera einfuegen
+            UniversalAdditionalCameraData weaponCamData = m_FpWeaponCamera.GetUniversalAdditionalCameraData();
+            weaponCamData.renderType = CameraRenderType.Overlay;
+
+            mainCamData.cameraStack.Add(m_FpWeaponCamera);
+        }
+
+        /// <summary>
+        /// Setzt den FPWeapon-Layer rekursiv auf einem GameObject und allen Kindern.
+        /// Damit rendert nur die Overlay-Kamera (Waffen-FOV) diese Objekte.
+        /// </summary>
+        private static void SetLayerRecursive(GameObject root, int layer)
+        {
+            root.layer = layer;
+            foreach (Transform child in root.transform)
+            {
+                SetLayerRecursive(child.gameObject, layer);
+            }
         }
 
         /// <summary>
@@ -1482,6 +1648,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                         m_AttackFramesRemaining = m_AttackFrames;
                         m_AttackFrameAccumulator = 0f;
                         m_AttackSequence++;
+
+                        // FP Inview-Animation: Fire re-trigger
+                        m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet?.Fire);
                     }
                     else if (m_IsAttackGrenadeCook && m_PlayerActions.Attack.IsPressed())
                     {
@@ -1492,6 +1661,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     {
                         m_IsAttacking = false;
                         m_AttackFrameAccumulator = 0f;
+
+                        // FP Inview-Animation: Idle nach Fire-Ende (SoF2: CG_SetWeaponAnim idle)
+                        m_FpHandsLoader.PlayIdle();
 
                         // Auto-Reload nach letztem Schuss wenn Magazin leer
                         if (m_AutoReload && !hasAmmo)
@@ -1523,6 +1695,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     {
                         m_IsAltAttacking = false;
                         m_AltAttackFrameAccumulator = 0f;
+
+                        // FP Inview-Animation: Idle nach Altfire-Ende
+                        m_FpHandsLoader.PlayIdle();
                     }
                 }
             }
@@ -1548,6 +1723,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     {
                         m_IsReloading = false;
                         m_ReloadFrameAccumulator = 0f;
+
+                        // FP Inview-Animation: Idle nach Reload-Ende
+                        m_FpHandsLoader.PlayIdle();
                     }
                 }
 
@@ -1592,6 +1770,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_AttackFramesRemaining = m_AttackFrames;
                 m_AttackFrameAccumulator = 0f;
                 m_AttackSequence++;
+
+                // FP Inview-Animation: Fire (SoF2: CG_SetWeaponAnim fire)
+                m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet?.Fire);
             }
             else if (canStartAttack && noActionRunning && !hasStartAmmo)
             {
@@ -1614,6 +1795,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_IsAltAttacking = true;
                 m_AltAttackFramesRemaining = m_AltAttackFrames;
                 m_AltAttackFrameAccumulator = 0f;
+
+                // FP Inview-Animation: Altfire (SoF2: CG_SetWeaponAnim altfire)
+                m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet?.Altfire);
             }
             else if (m_HasAltAttack && m_PlayerActions.SecondAttack.IsPressed() && noActionRunning && !hasAltAmmo)
             {
@@ -1699,6 +1883,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_IsReloading = true;
             m_ReloadFrameAccumulator = 0f;
 
+            // FP Inview-Animation: Reload (SoF2: CG_SetWeaponAnim reload)
+            m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet?.Reload);
+
             if (m_IsShellReload)
             {
                 int shellsNeeded = weapon.Ammo.MaxClip - m_CharacterState.CurrentClipAmmo;
@@ -1777,6 +1964,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (string.IsNullOrEmpty(weaponName))
             {
                 m_WeaponLoader.ClearCurrentWeapon();
+                m_FpHandsLoader.Clear();
+                m_FpWeaponLoader.ClearCurrentWeapon();
                 m_PendingWeaponName = null;
                 m_IsSwapping = false;
                 m_SwapPhase = WeaponSwapPhase.None;
@@ -1922,6 +2111,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // SoF2 Foreshorten merken (wird nach Waffen-Laden angewendet)
             m_CurrentForeshorten = weapon.Foreshorten;
 
+            // SoF2: CG_CalculateWeaponFov — Waffen-FOV pro Waffe setzen
+            if (m_FpWeaponCamera != null)
+            {
+                float weaponFov = weapon.FovX > 0f ? weapon.FovX : k_DefaultWeaponFov;
+                m_FpWeaponCamera.fieldOfView = weaponFov;
+            }
+
             // Fire-Mode aus Waffen-Definition initialisieren
             m_AvailableFireModes = weapon.Attack?.FireModes;
             string defaultFireMode = weapon.Attack?.FireMode ?? "auto";
@@ -1956,6 +2152,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>
         /// Versucht die Pending-Waffe zu laden, falls AttachmentBone bereits gesetzt ist.
+        /// Laedt sowohl die TP-Waffe (Hand-Bone) als auch die FP-Waffe (Kamera-Child).
+        /// SoF2: CG_RegisterWeapon laedt viewG2Model und weaponG2Model gleichzeitig.
         /// Wird sowohl von OnWeaponChanged als auch von OnVisualInstantiated aufgerufen.
         /// </summary>
         private void TryLoadPendingWeapon()
@@ -1965,13 +2163,46 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return;
             }
 
-            if (m_WeaponLoader.LoadAndAttachWeapon(m_PendingWeaponName))
+            string weaponName = m_PendingWeaponName;
+
+            if (m_WeaponLoader.LoadAndAttachWeapon(weaponName))
             {
                 m_PendingWeaponName = null;
 
-                // SoF2 Foreshorten im FP-Modus anwenden (0.6 = 60% Groesse)
                 bool fp = m_CameraSwitcher != null && m_CameraSwitcher.IsFirstPerson;
+
+                // SoF2 Foreshorten im FP-Modus anwenden (0.6 = 60% Groesse)
                 m_WeaponLoader.ApplyForeshorten(fp ? m_CurrentForeshorten : 1f);
+
+                // FP-Waffe laden (nur Owner — Remote-Clients haben keinen FP-Waffen-Parent)
+                if (m_FpWeaponParent != null)
+                {
+                    m_FpWeaponLoader.LoadAndAttachWeapon(weaponName);
+                    m_FpWeaponLoader.ApplyForeshorten(m_CurrentForeshorten);
+
+                    // SoF2 Composite-Modell: Buffer + Haende an FP-Waffe attachen
+                    // (Slots 1-3 des Ghoul2 Composite-Modells)
+                    if (m_FpWeaponLoader.CurrentWeaponInstance != null && m_WeaponDataLoader != null)
+                    {
+                        WeaponDefinition weaponDef = m_WeaponDataLoader.GetById(weaponName);
+                        if (weaponDef != null)
+                        {
+                            m_FpHandsLoader.LoadAndAttach(m_FpWeaponLoader.CurrentWeaponInstance, weaponDef);
+                        }
+                    }
+
+                    // FPWeapon-Layer zuweisen damit nur die Overlay-Kamera (Waffen-FOV) diese rendert
+                    if (m_FpWeaponLoader.CurrentWeaponInstance != null)
+                    {
+                        SetLayerRecursive(m_FpWeaponLoader.CurrentWeaponInstance, k_FpWeaponLayer);
+                    }
+
+                    // Renderer-Cache aktualisieren (neue TP-Waffe ist jetzt im Visual-Baum)
+                    RefreshVisualRenderers();
+
+                    // FP/TP-Sichtbarkeit anwenden
+                    ApplyFirstPersonVisibility(fp);
+                }
             }
         }
 
@@ -2059,6 +2290,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Animation auf Torso-Layer ab Frame 0 erzwingen
             int dropStateHash = NetworkedPlayerCharacter.GetDropStateHash(dropAnimName);
             m_NetworkedPlayerCharacter.ForcePlaySwapState(dropStateHash, dropFrames, dropFps);
+
+            // FP Inview-Animation: Done (SoF2: CG_SetWeaponAnim done = Waffe wegstecken)
+            m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet?.Done);
         }
 
         /// <summary>
@@ -2086,6 +2320,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     m_IsSwapping = false;
                     m_SwapPhase = WeaponSwapPhase.None;
                     m_ClientSwapTarget = null;
+
+                    // FP Inview-Animation: Idle nach Raise-Ende
+                    m_FpHandsLoader.PlayIdle();
                 }
             }
         }
@@ -2110,6 +2347,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             m_SwapPhase = WeaponSwapPhase.Raise;
             m_SwapFramesRemaining = m_SwapRaiseFrames;
+
+            // FP Inview-Animation: Ready (SoF2: CG_SetWeaponAnim ready = Waffe hochnehmen)
+            m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet?.Ready);
             m_SwapFrameAccumulator = 0f;
             m_SwapFps = m_SwapRaiseFps;
 

@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0a0fad23c4858d94d9b283fa7a074916
+    m_Address: models/weapons/buffer/gren/buffer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0a45b7bdf32f4e5488b2e69dafba6f7a
     m_Address: m4
     m_ReadOnly: 0
@@ -85,6 +90,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1d0bbb5d07dd47245b1a72d032dfddae
+    m_Address: models/weapons/buffer/acc/buffer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1def85f5e74bda3409add6cd46509ca1
     m_Address: characters/models/average_armor
     m_ReadOnly: 0
@@ -135,6 +145,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3aaf8d6a785223448addcd6a25e87a2e
+    m_Address: rhand
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3afb4ed7f713eee45aaceeb7dca37d06
     m_Address: models/chunks/wood/wood_splinter4
     m_ReadOnly: 0
@@ -142,6 +157,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3c95e37f22de9aa4d806893fabae2de9
     m_Address: ussocom
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3dd8fd13f8cf4ed439cc5ebc5d447ab0
+    m_Address: models/weapons/buffer/golda/buffer
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -270,8 +290,23 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad0e90aab8d8de74b80cfc7a8141e434
+    m_Address: models/weapons/buffer/at/buffer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b039a71148b0757449cd48e77b6fe7cb
     m_Address: models/chunks/metal/metal_small
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b0d2896576ee7734eb997a7b705cf644
+    m_Address: lhand
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b3bc22e21738e71469a97d907f3219e0
+    m_Address: models/weapons/buffer/pistol/buffer
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -282,6 +317,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b5035efe1c91f0f40a8ac91ccbbcbf0b
     m_Address: msg90a1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b612843210c1a6a45a2eca8cbb5074b0
+    m_Address: models/weapons/buffer/rifle/buffer
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -342,6 +382,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e18b431239260f7408fe1643afd3687b
     m_Address: f1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e96dffe983e845c429c683f8763edadf
+    m_Address: models/weapons/buffer/mg/buffer
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -70,6 +70,15 @@ namespace Tolik.RemakeSoF.Runtime.WeaponManagement
         public WeaponViewOffsetDefinition ViewOffset;
 
         /// <summary>
+        /// SoF2 Waffen-FOV (Horizontal, Grad).
+        /// Waffe wird mit separatem FOV gerendert damit sie bei weitem Welt-FOV
+        /// nicht verzerrt aussieht. 0 = Standard (65°).
+        /// SoF2: fov_x in weaponInfo_t, genutzt in CG_CalculateWeaponFov.
+        /// </summary>
+        [JsonProperty("fovX")]
+        public float FovX;
+
+        /// <summary>
         /// Ob die Waffe eine Nahkampfwaffe ist.
         /// </summary>
         [JsonProperty("isMelee")]
@@ -105,5 +114,27 @@ namespace Tolik.RemakeSoF.Runtime.WeaponManagement
         /// </summary>
         [JsonProperty("animations")]
         public Dictionary<string, WeaponAnimationEntry> Animations;
+
+        /// <summary>
+        /// Buffer-Skeleton-Definition fuer SoF2-Style First-Person-Darstellung.
+        /// Unsichtbares Skeleton zwischen Waffe und Haenden mit waffen-spezifischen Bolts.
+        /// </summary>
+        [JsonProperty("buffer")]
+        public WeaponBufferDefinition Buffer;
+
+        /// <summary>
+        /// Hand-Definitionen (links/rechts) fuer SoF2-Style First-Person-Darstellung.
+        /// Haende werden an Buffer-Bolts befestigt.
+        /// </summary>
+        [JsonProperty("hands")]
+        public WeaponHandsDefinition Hands;
+
+        /// <summary>
+        /// FP-Composite-Animationen (SoF2 SOF2.inview).
+        /// Pro State (idle, fire, reload, ready, done) separate Clips fuer Waffe, lhand, rhand.
+        /// Speeds sind MP-Werte (mp_speed wo vorhanden, sonst speed).
+        /// </summary>
+        [JsonProperty("inviewAnimations")]
+        public InviewAnimationSet InviewAnimations;
     }
 }

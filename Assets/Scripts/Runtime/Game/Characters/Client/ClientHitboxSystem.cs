@@ -8,7 +8,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
     /// Bone-basiertes Hit-Detection-System mit BoxCollidern auf allen Skeleton-Bones.
     /// Jeder relevanter Knochen bekommt einen Trigger-BoxCollider auf dem Hitbox-Layer
     /// mit HitboxCollider-Komponente fuer Region-spezifische Schadenserkennung.
-    /// 28 BoxCollider auf allen Bones des skeleton_root fuer maximale Praezision:
+    /// 29 BoxCollider auf allen Bones des skeleton_root fuer maximale Praezision:
     /// Mehrere Collider pro Glied (z.B. lhumerus + lhumerusX fuer Oberarm) geben
     /// eine deutlich bessere Koerperform-Annaeherung als ein einzelner Collider pro Region.
     /// </summary>
@@ -45,7 +45,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         /// <summary>
         /// Erstellt Trigger-BoxCollider auf allen Skeleton-Bones fuer Hit-Detection.
-        /// 28 BoxCollider auf dem Hitbox-Layer — mehrere pro Glied fuer bessere Praezision.
+        /// 29 BoxCollider auf dem Hitbox-Layer — mehrere pro Glied fuer bessere Praezision.
         /// </summary>
         public void BuildHitboxes(Transform visualRoot)
         {
@@ -74,6 +74,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // ===================== Alle Bones aus skeleton_root finden =====================
             // Kopf / Wirbelsaeule
             Transform cranium = FindDeepChild(visualRoot, "cranium");
+            Transform ceyebrow = FindDeepChild(visualRoot, "ceyebrow");
             Transform cervical = FindDeepChild(visualRoot, "cervical");
             Transform thoracic = FindDeepChild(visualRoot, "thoracic");
             Transform upperLumbar = FindDeepChild(visualRoot, "upper_lumbar");
@@ -116,6 +117,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             //
             // === Kopf / Hals ===
             CreateBoneHitbox(hitboxLayer, cranium,      HitRegion.Head,           1.75f);
+            CreateBoneHitbox(hitboxLayer, ceyebrow,     HitRegion.Head,           1.75f);
             CreateBoneHitbox(hitboxLayer, cervical,     HitRegion.Neck,           1.75f);
 
             // === Torso ===

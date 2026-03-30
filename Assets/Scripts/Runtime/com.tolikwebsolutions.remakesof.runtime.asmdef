@@ -15,7 +15,8 @@
         "Unity.Addressables",
         "Unity.ResourceManager",
         "Unity.Collections",
-        "Unity.Multiplayer.Tools.NetStatsMonitor.Component"
+        "Unity.Multiplayer.Tools.NetStatsMonitor.Component",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
