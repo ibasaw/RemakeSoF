@@ -333,6 +333,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Ob der Alt-Angriff ein Timer-Granaten-Cook ist (Button halten = kochen).</summary>
         private bool m_IsAltAttackGrenadeCook;
 
+        /// <summary>Ob die throwend-Animation gerade abgespielt wird (primaerer Angriff).</summary>
+        private bool m_IsGrenadeThrowEnd;
+
+        /// <summary>Verbleibende Zeit in Sekunden fuer die throwend-Animation (primaerer Angriff).</summary>
+        private float m_GrenadeThrowEndTimeRemaining;
+
+        /// <summary>Ob die altthrowend-Animation gerade abgespielt wird.</summary>
+        private bool m_IsAltGrenadeThrowEnd;
+
+        /// <summary>Verbleibende Zeit in Sekunden fuer die altthrowend-Animation.</summary>
+        private float m_AltGrenadeThrowEndTimeRemaining;
+
         // ===== Weapon Swap State =====
 
         /// <summary>Ob der Character gerade die Waffe wechselt (Drop/Raise).</summary>
@@ -1417,9 +1429,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             {
                 GameObject fpWeaponHolder = new("FP_WeaponHolder");
                 fpWeaponHolder.transform.SetParent(mainCam.transform, false);
-                // Default FP-Waffenposition: rechts, unten, vorwaerts relativ zur Kamera.
+                // SoF2: viewG2Model wird an vieworg gerendert (Kamera-Ursprung).
                 // Per-Weapon viewOffset aus JSON wird additiv via FirstPersonCameraEffects angewendet.
-                fpWeaponHolder.transform.localPosition = new Vector3(0.1f, -0.25f, 0.3f);
+                fpWeaponHolder.transform.localPosition = Vector3.zero;
                 m_FpWeaponParent = fpWeaponHolder.transform;
                 m_FpWeaponLoader.SetAttachmentBone(m_FpWeaponParent);
                 m_FpWeaponLoader.SetLocalRotation(Quaternion.Euler(0f, 0f, 0f));
@@ -1657,6 +1669,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                         // Granaten-Cook: Button weiterhin als gehalten melden solange physisch gedrueckt
                         // Server-seitiger TickServerGrenadeCook prueft HasButton(Attack) fuer Wurf-/Explosions-Timing
                     }
+                    else if (m_IsAttackGrenadeCook)
+                    {
+                        // Granaten-Cook: Button losgelassen → throwend abspielen (SoF2 two-phase throw)
+                        m_IsAttacking = false;
+                        m_AttackFrameAccumulator = 0f;
+
+                        InviewAnimationState throwEndState = m_FpHandsLoader.AnimationSet?.Throwend;
+                        if (throwEndState != null)
+                        {
+                            m_FpHandsLoader.PlayState(throwEndState);
+                            m_IsGrenadeThrowEnd = true;
+                            m_GrenadeThrowEndTimeRemaining = GetMaxInviewStateDuration(throwEndState);
+                        }
+                        else
+                        {
+                            m_FpHandsLoader.PlayIdle();
+                        }
+                    }
                     else
                     {
                         m_IsAttacking = false;
@@ -1691,6 +1721,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     {
                         // Granaten-Cook (Alt): Button weiterhin als gehalten melden
                     }
+                    else if (m_IsAltAttackGrenadeCook)
+                    {
+                        // Granaten-Cook (Alt): Button losgelassen → altthrowend abspielen
+                        m_IsAltAttacking = false;
+                        m_AltAttackFrameAccumulator = 0f;
+
+                        InviewAnimationState altThrowEndState = m_FpHandsLoader.AnimationSet?.Altthrowend;
+                        if (altThrowEndState != null)
+                        {
+                            m_FpHandsLoader.PlayState(altThrowEndState);
+                            m_IsAltGrenadeThrowEnd = true;
+                            m_AltGrenadeThrowEndTimeRemaining = GetMaxInviewStateDuration(altThrowEndState);
+                        }
+                        else
+                        {
+                            m_FpHandsLoader.PlayIdle();
+                        }
+                    }
                     else
                     {
                         m_IsAltAttacking = false;
@@ -1699,6 +1747,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                         // FP Inview-Animation: Idle nach Altfire-Ende
                         m_FpHandsLoader.PlayIdle();
                     }
+                }
+            }
+
+            // Grenade throwend-Animation herunterzaehlen (zeitbasiert, rein visuell)
+            if (m_IsGrenadeThrowEnd)
+            {
+                m_GrenadeThrowEndTimeRemaining -= Time.deltaTime;
+                if (m_GrenadeThrowEndTimeRemaining <= 0f)
+                {
+                    m_IsGrenadeThrowEnd = false;
+                    m_FpHandsLoader.PlayIdle();
+                }
+            }
+
+            if (m_IsAltGrenadeThrowEnd)
+            {
+                m_AltGrenadeThrowEndTimeRemaining -= Time.deltaTime;
+                if (m_AltGrenadeThrowEndTimeRemaining <= 0f)
+                {
+                    m_IsAltGrenadeThrowEnd = false;
+                    m_FpHandsLoader.PlayIdle();
                 }
             }
 
@@ -1734,7 +1803,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             // Keine neue Aktion starten wenn eine laeuft
-            bool noActionRunning = !m_IsAttacking && !m_IsAltAttacking && !m_IsReloading;
+            bool noActionRunning = !m_IsAttacking && !m_IsAltAttacking && !m_IsReloading
+                && !m_IsGrenadeThrowEnd && !m_IsAltGrenadeThrowEnd;
 
             // Fire-Mode-abhaengiger Attack-Start
             bool hasStartAmmo = m_CurrentWeaponInfiniteAmmo || m_CharacterState.CurrentClipAmmo > 0;
@@ -1771,8 +1841,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_AttackFrameAccumulator = 0f;
                 m_AttackSequence++;
 
-                // FP Inview-Animation: Fire (SoF2: CG_SetWeaponAnim fire)
-                m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet?.Fire);
+                // FP Inview-Animation: Throwbegin fuer Granaten-Cook, sonst Fire
+                if (m_IsAttackGrenadeCook && m_FpHandsLoader.AnimationSet?.Throwbegin != null)
+                {
+                    m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet.Throwbegin);
+                }
+                else
+                {
+                    m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet?.Fire);
+                }
             }
             else if (canStartAttack && noActionRunning && !hasStartAmmo)
             {
@@ -1796,8 +1873,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_AltAttackFramesRemaining = m_AltAttackFrames;
                 m_AltAttackFrameAccumulator = 0f;
 
-                // FP Inview-Animation: Altfire (SoF2: CG_SetWeaponAnim altfire)
-                m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet?.Altfire);
+                // FP Inview-Animation: Altthrowbegin fuer Granaten-Cook, sonst Altfire
+                if (m_IsAltAttackGrenadeCook && m_FpHandsLoader.AnimationSet?.Altthrowbegin != null)
+                {
+                    m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet.Altthrowbegin);
+                }
+                else
+                {
+                    m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet?.Altfire);
+                }
             }
             else if (m_HasAltAttack && m_PlayerActions.SecondAttack.IsPressed() && noActionRunning && !hasAltAmmo)
             {
@@ -1991,6 +2075,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                         m_SwapRaiseFps = raiseAnim.Fps;
                         m_SwapRaiseAnimName = raiseAnim.Name;
                     }
+
+                    // SoF2: weaponTime basiert auf der FP-Inview-Animation (wi->readyTime).
+                    // Timer muss mindestens so lang sein wie die FP Ready-Animation,
+                    // damit sie vor dem Wechsel zu Idle vollstaendig durchlaufen kann.
+                    InviewAnimationTrack readyTrack = weapon?.InviewAnimations?.Ready?.Weapon;
+                    if (readyTrack != null && readyTrack.Duration > 0 && readyTrack.Fps > 0 && readyTrack.Speed > 0f)
+                    {
+                        float fpReadySeconds = (float)readyTrack.Duration / (readyTrack.Fps * readyTrack.Speed);
+                        int fpRaiseFrames = Mathf.CeilToInt(fpReadySeconds * m_SwapRaiseFps);
+                        if (fpRaiseFrames > m_SwapRaiseFrames)
+                        {
+                            m_SwapRaiseFrames = fpRaiseFrames;
+                        }
+                    }
                 }
 
                 // Falls Drop bereits abgeschlossen: sofort zur Raise-Phase wechseln
@@ -2009,6 +2107,32 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[ClientPlayerCharacter] OnWeaponChanged: '{weaponName}' | IsRemote={m_IsRemoteMode} | IsSwapping={m_IsSwapping}");
 #endif
+        }
+
+        /// <summary>
+        /// Berechnet die maximale effektive Dauer (in Sekunden) ueber alle Tracks eines InviewAnimationState.
+        /// Beruecksichtigt Duration, Fps und Speed jedes Tracks (Weapon, LeftHand, RightHand).
+        /// </summary>
+        private float GetMaxInviewStateDuration(InviewAnimationState state)
+        {
+            float maxDuration = 0f;
+            InviewAnimationTrack[] tracks = { state.Weapon, state.LeftHand, state.RightHand };
+            foreach (InviewAnimationTrack track in tracks)
+            {
+                if (track == null || track.Fps <= 0)
+                {
+                    continue;
+                }
+
+                float effectiveSpeed = track.Speed > 0f ? track.Speed : 1f;
+                float trackSeconds = track.DurationInSeconds / effectiveSpeed;
+                if (trackSeconds > maxDuration)
+                {
+                    maxDuration = trackSeconds;
+                }
+            }
+
+            return maxDuration;
         }
 
         /// <summary>
@@ -2093,6 +2217,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_IsAltAttacking = false;
             m_AltAttackFramesRemaining = 0;
             m_AltAttackFrameAccumulator = 0f;
+            m_IsGrenadeThrowEnd = false;
+            m_GrenadeThrowEndTimeRemaining = 0f;
+            m_IsAltGrenadeThrowEnd = false;
+            m_AltGrenadeThrowEndTimeRemaining = 0f;
 
             // SoF2 First-Person View-Offset fuer aktuelle Waffe setzen
             if (m_FirstPersonEffects != null)
@@ -2177,18 +2305,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 // FP-Waffe laden (nur Owner — Remote-Clients haben keinen FP-Waffen-Parent)
                 if (m_FpWeaponParent != null)
                 {
-                    m_FpWeaponLoader.LoadAndAttachWeapon(weaponName);
+                    // SoF2: FP nutzt viewModel (viewG2Model), nicht worldModel.
+                    // viewModel hat die inviewAnimations-Bones und korrekte FP-Geometrie.
+                    WeaponDefinition fpWeaponDef = m_WeaponDataLoader?.GetById(weaponName);
+                    string fpModelKey = fpWeaponDef != null && !string.IsNullOrEmpty(fpWeaponDef.ViewModel)
+                        ? fpWeaponDef.ViewModel
+                        : weaponName;
+
+                    m_FpWeaponLoader.LoadAndAttachWeapon(weaponName, fpModelKey);
                     m_FpWeaponLoader.ApplyForeshorten(m_CurrentForeshorten);
 
                     // SoF2 Composite-Modell: Buffer + Haende an FP-Waffe attachen
                     // (Slots 1-3 des Ghoul2 Composite-Modells)
-                    if (m_FpWeaponLoader.CurrentWeaponInstance != null && m_WeaponDataLoader != null)
+                    if (m_FpWeaponLoader.CurrentWeaponInstance != null && fpWeaponDef != null)
                     {
-                        WeaponDefinition weaponDef = m_WeaponDataLoader.GetById(weaponName);
-                        if (weaponDef != null)
-                        {
-                            m_FpHandsLoader.LoadAndAttach(m_FpWeaponLoader.CurrentWeaponInstance, weaponDef);
-                        }
+                        m_FpHandsLoader.LoadAndAttach(m_FpWeaponLoader.CurrentWeaponInstance, fpWeaponDef);
                     }
 
                     // FPWeapon-Layer zuweisen damit nur die Overlay-Kamera (Waffen-FOV) diese rendert
@@ -2274,6 +2405,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     dropFrames = dropAnim.Duration;
                     dropFps = dropAnim.Fps;
                     dropAnimName = dropAnim.Name;
+                }
+
+                // SoF2: weaponTime basiert auf der FP-Inview-Animation.
+                // Timer muss mindestens so lang sein wie die FP Done-Animation,
+                // damit sie vor dem Phasenwechsel vollstaendig durchlaufen kann.
+                InviewAnimationTrack doneTrack = weapon?.InviewAnimations?.Done?.Weapon;
+                if (doneTrack != null && doneTrack.Duration > 0 && doneTrack.Fps > 0 && doneTrack.Speed > 0f)
+                {
+                    float fpDoneSeconds = (float)doneTrack.Duration / (doneTrack.Fps * doneTrack.Speed);
+                    int fpDoneFrames = Mathf.CeilToInt(fpDoneSeconds * dropFps);
+                    if (fpDoneFrames > dropFrames)
+                    {
+                        dropFrames = fpDoneFrames;
+                    }
                 }
             }
 

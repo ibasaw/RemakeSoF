@@ -21,6 +21,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
     /// Hand-Modelle (lhand/rhand) sind gemeinsam fuer alle Waffen — nur die
     /// Attachment-Bolts unterscheiden sich pro Waffe.
     ///
+    /// Unterstuetzt Fire-Varianten (zufaellige Clip-Auswahl), Knife-Combo-Chaining
+    /// (variants/ends/transitions) und Dual-Wield-States.
+    ///
     /// Kein MonoBehaviour — wird von ClientPlayerCharacter orchestriert.
     /// </summary>
     public class FirstPersonHandsLoader
@@ -196,14 +199,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
                 return;
             }
 
-            // SoF2: CG_SetWeaponAnim — Slots ohne Track fuer diesen State
-            // behalten ihre aktuelle Animation (typischerweise idle loop).
-            // Fallback auf Idle-Track damit die Hand nicht einfriert.
-            InviewAnimationState idle = m_AnimationSet?.Idle;
+            PlayTrackOnAnimation(m_WeaponAnimation, state.Weapon, crossFade);
 
-            PlayTrackOnAnimation(m_WeaponAnimation, state.Weapon ?? idle?.Weapon, crossFade);
-            PlayTrackOnAnimation(m_LeftHandAnimation, state.LeftHand ?? idle?.LeftHand, crossFade);
-            PlayTrackOnAnimation(m_RightHandAnimation, state.RightHand ?? idle?.RightHand, crossFade);
+            // SoF2: Slots ohne Track fuer diesen State werden ausgeblendet.
+            // Knife hat z.B. keine leftHand, Granaten keine rightHand etc.
+            SetHandVisibility(m_LeftHandInstance, state.LeftHand != null);
+            SetHandVisibility(m_RightHandInstance, state.RightHand != null);
+
+            PlayTrackOnAnimation(m_LeftHandAnimation, state.LeftHand, crossFade);
+            PlayTrackOnAnimation(m_RightHandAnimation, state.RightHand, crossFade);
         }
 
         /// <summary>
@@ -212,6 +216,93 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
         public void PlayIdle()
         {
             PlayState(m_AnimationSet?.Idle, true);
+        }
+
+        /// <summary>
+        /// Spielt einen Fire-State mit zufaelliger Varianten-Auswahl ab.
+        /// SoF2: CG_SetWeaponAnim waehlt bei Fire-Events zufaellig aus der
+        /// variants[]-Liste des Waffen-Tracks (z.B. AK-74: ak74fire/fire2/fire3/fire4).
+        ///
+        /// Fuer Knife-Combo: Der zurueckgegebene Varianten-Index kann mit
+        /// <see cref="GetComboTransitionState"/> und <see cref="GetComboEndState"/>
+        /// genutzt werden um den naechsten Combo-State zu bestimmen.
+        /// </summary>
+        /// <param name="state">Der abzuspielende State (default: Fire).</param>
+        /// <returns>
+        /// Varianten-Index (0-basiert). 0 wenn keine Varianten vorhanden.
+        /// Wird fuer Knife-Combo-Lookup benoetigt.
+        /// </returns>
+        public int PlayFireState(InviewAnimationState state = null)
+        {
+            state ??= m_AnimationSet?.Fire;
+            if (state == null)
+            {
+                return 0;
+            }
+
+            InviewAnimationTrack weaponTrack = state.Weapon;
+            int variantIndex = SelectRandomVariantIndex(weaponTrack);
+            string variantClip = GetVariantClip(weaponTrack, variantIndex);
+
+            PlayTrackWithClipOverride(m_WeaponAnimation, weaponTrack, variantClip, false);
+
+            SetHandVisibility(m_LeftHandInstance, state.LeftHand != null);
+            SetHandVisibility(m_RightHandInstance, state.RightHand != null);
+
+            PlayTrackOnAnimation(m_LeftHandAnimation, state.LeftHand, false);
+            PlayTrackOnAnimation(m_RightHandAnimation, state.RightHand, false);
+
+            return variantIndex;
+        }
+
+        /// <summary>
+        /// Gibt den Combo-Transition-State zurueck fuer Knife-Combo-Chaining.
+        /// SoF2: Wenn der Spieler waehrend des Fire-States erneut angreift,
+        /// wird transitions[variantIndex] als naechster State abgespielt.
+        /// </summary>
+        /// <param name="currentState">Der State, dessen Waffen-Track die transitions[] enthaelt.</param>
+        /// <param name="variantIndex">Der von <see cref="PlayFireState"/> zurueckgegebene Index.</param>
+        /// <returns>Der Transition-State oder null wenn kein Combo moeglich.</returns>
+        public InviewAnimationState GetComboTransitionState(InviewAnimationState currentState, int variantIndex)
+        {
+            InviewAnimationTrack weaponTrack = currentState?.Weapon;
+            if (weaponTrack?.Transitions == null || variantIndex < 0 || variantIndex >= weaponTrack.Transitions.Length)
+            {
+                return null;
+            }
+
+            string transitionName = weaponTrack.Transitions[variantIndex];
+            return m_AnimationSet?.GetStateByName(transitionName);
+        }
+
+        /// <summary>
+        /// Gibt den Combo-End-State zurueck fuer Knife-Combo-Beendigung.
+        /// SoF2: Wenn der Spieler nach dem Fire-State NICHT erneut angreift,
+        /// wird ends[variantIndex] abgespielt (Rueckkehr zur Idle-Pose).
+        /// </summary>
+        /// <param name="currentState">Der State, dessen Waffen-Track die ends[] enthaelt.</param>
+        /// <param name="variantIndex">Der von <see cref="PlayFireState"/> zurueckgegebene Index.</param>
+        /// <returns>Der End-State oder null wenn kein spezieller End-State vorhanden.</returns>
+        public InviewAnimationState GetComboEndState(InviewAnimationState currentState, int variantIndex)
+        {
+            InviewAnimationTrack weaponTrack = currentState?.Weapon;
+            if (weaponTrack?.Ends == null || variantIndex < 0 || variantIndex >= weaponTrack.Ends.Length)
+            {
+                return null;
+            }
+
+            string endName = weaponTrack.Ends[variantIndex];
+            return m_AnimationSet?.GetStateByName(endName);
+        }
+
+        /// <summary>
+        /// Prueft ob ein State Combo-Transitions hat (Knife-Combo-System).
+        /// </summary>
+        /// <param name="state">Der zu pruefende State.</param>
+        /// <returns>True wenn der Waffen-Track transitions[] enthaelt.</returns>
+        public static bool HasComboTransitions(InviewAnimationState state)
+        {
+            return state?.Weapon?.Transitions != null && state.Weapon.Transitions.Length > 0;
         }
 
         /// <summary>
@@ -270,6 +361,89 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
         /// FBX-Import fuegt "skeleton_root|" vor jeden Clip-Namen hinzu.
         /// </summary>
         private const string k_ClipPrefix = "skeleton_root|";
+
+        /// <summary>
+        /// Blendet ein Hand-Modell ein oder aus.
+        /// SoF2: Haende ohne Track fuer den aktuellen State werden nicht gerendert.
+        /// Z.B. Knife hat keine leftHand, Granaten haben teilweise keine rightHand.
+        /// </summary>
+        private static void SetHandVisibility(GameObject handInstance, bool visible)
+        {
+            if (handInstance != null)
+            {
+                handInstance.SetActive(visible);
+            }
+        }
+
+        /// <summary>
+        /// Waehlt einen zufaelligen Varianten-Index aus dem Track.
+        /// Gibt 0 zurueck wenn keine Varianten vorhanden.
+        /// </summary>
+        private static int SelectRandomVariantIndex(InviewAnimationTrack track)
+        {
+            if (track?.Variants == null || track.Variants.Length == 0)
+            {
+                return 0;
+            }
+
+            return Random.Range(0, track.Variants.Length);
+        }
+
+        /// <summary>
+        /// Gibt den Clip-Namen fuer den angegebenen Varianten-Index zurueck.
+        /// Faellt auf Track.Clip zurueck wenn keine Varianten oder Index ausserhalb.
+        /// </summary>
+        private static string GetVariantClip(InviewAnimationTrack track, int variantIndex)
+        {
+            if (track?.Variants != null && variantIndex >= 0 && variantIndex < track.Variants.Length)
+            {
+                return track.Variants[variantIndex];
+            }
+
+            return track?.Clip;
+        }
+
+        /// <summary>
+        /// Spielt einen Track mit einem ueberschriebenen Clip-Namen ab.
+        /// Verwendet Speed/Loop vom Track, aber den Clip-Namen aus dem Override.
+        /// Wird fuer Fire-Varianten benoetigt (anderer Clip, gleiche Speed/Loop-Settings).
+        /// </summary>
+        private static void PlayTrackWithClipOverride(
+            Animation animation, InviewAnimationTrack track, string clipOverride, bool crossFade)
+        {
+            if (animation == null || track == null)
+            {
+                return;
+            }
+
+            string clipToPlay = string.IsNullOrEmpty(clipOverride) ? track.Clip : clipOverride;
+            if (string.IsNullOrEmpty(clipToPlay))
+            {
+                return;
+            }
+
+            string clipName = k_ClipPrefix + clipToPlay;
+
+            AnimationState clipState = animation[clipName];
+            if (clipState == null)
+            {
+                Debug.LogWarning($"[FirstPersonHandsLoader] Variant-Clip '{clipName}' " +
+                                 $"nicht gefunden auf '{animation.gameObject.name}'.");
+                return;
+            }
+
+            clipState.speed = track.Speed;
+            clipState.wrapMode = track.Loop ? WrapMode.Loop : WrapMode.Once;
+
+            if (crossFade)
+            {
+                animation.CrossFade(clipName, 0.15f);
+            }
+            else
+            {
+                animation.Play(clipName);
+            }
+        }
 
         private static void PlayTrackOnAnimation(Animation animation, InviewAnimationTrack track, bool crossFade)
         {

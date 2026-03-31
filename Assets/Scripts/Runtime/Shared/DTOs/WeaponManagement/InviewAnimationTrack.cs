@@ -46,6 +46,38 @@ namespace Tolik.RemakeSoF.Runtime.WeaponManagement
         public bool Loop;
 
         /// <summary>
+        /// Alternative Animation-Clip-Namen fuer Fire-Varianten.
+        /// SoF2: Rifles (AK-74, M3A1, M60) und Knife haben mehrere Fire-Clips,
+        /// die zufaellig ausgewaehlt werden fuer visuelles Feedback.
+        /// Index korrespondiert mit <see cref="Ends"/> und <see cref="Transitions"/>.
+        /// </summary>
+        [JsonProperty("variants")]
+        public string[] Variants;
+
+        /// <summary>
+        /// Zusaetzliche Idle-Animationen (z.B. Finger-Adjust, Finger-Spin).
+        /// SoF2: Werden gelegentlich statt der Standard-Idle-Animation abgespielt.
+        /// </summary>
+        [JsonProperty("extras")]
+        public string[] Extras;
+
+        /// <summary>
+        /// End-State-Namen pro Variante fuer Knife-Combo-System.
+        /// SoF2: Nach Fire/Firetrans wird der End-State anhand des Varianten-Index
+        /// nachgeschlagen (z.B. ends[0] = "fireend1" → Knife kehrt zur Ruhepose zurueck).
+        /// </summary>
+        [JsonProperty("ends")]
+        public string[] Ends;
+
+        /// <summary>
+        /// Transition-State-Namen pro Variante fuer Knife-Combo-System.
+        /// SoF2: Bei erneutem Angriff waehrend Fire wird der Transition-State anhand
+        /// des Varianten-Index nachgeschlagen (z.B. transitions[0] = "firetrans1" → naechster Schlag).
+        /// </summary>
+        [JsonProperty("transitions")]
+        public string[] Transitions;
+
+        /// <summary>
         /// Berechnet die Dauer der Animation in Sekunden.
         /// </summary>
         public float DurationInSeconds => Fps > 0 ? (float)Duration / Fps : 0f;

@@ -130,6 +130,28 @@
                     "fps": 10,
                     "duration": 24,
                     "loop": false
+                },
+                "weapon": {
+                    "clip": "knifeur_ll",
+                    "speed": 0.9,
+                    "fps": 10,
+                    "duration": 24,
+                    "loop": false,
+                    "variants": [
+                        "knifeur_ll",
+                        "knifelr_ll",
+                        "knifelr_ul"
+                    ],
+                    "ends": [
+                        "fireend1",
+                        "fireend1",
+                        "fireend1"
+                    ],
+                    "transitions": [
+                        "firetrans1",
+                        "firetrans1",
+                        "firetrans1"
+                    ]
                 }
             },
             "reload": {
@@ -192,6 +214,140 @@
                     "clip": "rknifealtfire",
                     "speed": 1.0,
                     "fps": 20,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "knifecrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lknifecrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "rknifecrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "knifestandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rknifestandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "knifepronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rknifepronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "prefire": {
+                "weapon": {
+                    "clip": "knifepullback",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rknifeidle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "firetrans1": {
+                "weapon": {
+                    "clip": "knifell_lr",
+                    "speed": 0.9,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false,
+                    "variants": [
+                        "knifell_lr",
+                        "knifell_ur",
+                        "knifeul_lr"
+                    ],
+                    "ends": [
+                        "fireend2",
+                        "fireend2",
+                        "fireend2"
+                    ],
+                    "transitions": [
+                        "fire",
+                        "fire",
+                        "fire"
+                    ]
+                },
+                "rightHand": {
+                    "clip": "rknifeidle",
+                    "speed": 0.9,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "fireend1": {
+                "weapon": {
+                    "clip": "knifeupfromll",
+                    "speed": 0.9,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rknifeidle",
+                    "speed": 0.9,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "fireend2": {
+                "weapon": {
+                    "clip": "knifeupfromlr",
+                    "speed": 0.9,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rknifeidle",
+                    "speed": 0.9,
+                    "fps": 10,
                     "duration": 10,
                     "loop": false
                 }
@@ -316,10 +472,23 @@
                     "speed": 0.5,
                     "fps": 10,
                     "duration": 24,
-                    "loop": true
+                    "loop": true,
+                    "extras": [
+                        "rpg7fingeradjust"
+                    ]
                 },
                 "rightHand": {
                     "clip": "rrpg7idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 24,
+                    "loop": true,
+                    "extras": [
+                        "rrpg7fingeradjust"
+                    ]
+                },
+                "leftHand": {
+                    "clip": "lrpg7fingeradjust",
                     "speed": 0.5,
                     "fps": 10,
                     "duration": 24,
@@ -401,6 +570,61 @@
                     "speed": 1.25,
                     "fps": 10,
                     "duration": 24,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "rpg7crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lrpg7crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "rrpg7idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "rpg7standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rrpg7idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "rpg7pronetostand",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rrpg7idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
                     "loop": false
                 }
             }
@@ -683,6 +907,118 @@
                     "duration": 30,
                     "loop": false
                 }
+            },
+            "proneidle": {
+                "weapon": {
+                    "clip": "m4proneidle",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 24,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm4proneidle",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 24,
+                    "loop": true
+                }
+            },
+            "proneready": {
+                "weapon": {
+                    "clip": "m4proneready",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 14,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm4proneready",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 14,
+                    "loop": false
+                }
+            },
+            "pronedone": {
+                "weapon": {
+                    "clip": "m4pronedone",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 6,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm4pronedone",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 6,
+                    "loop": false
+                }
+            },
+            "pronefire": {
+                "weapon": {
+                    "clip": "m4pronefire",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 2,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm4proneidle",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 2,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m4crawl",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm4crawl",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m4standtoprone",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm4standtoprone",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m4pronetostand",
+                    "speed": 1.0,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm4pronetostand",
+                    "speed": 1.0,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
             }
         }
     },
@@ -846,6 +1182,19 @@
                     "fps": 30,
                     "duration": 3,
                     "loop": false
+                },
+                "weapon": {
+                    "clip": "ak74fire",
+                    "speed": 0.65,
+                    "fps": 30,
+                    "duration": 3,
+                    "loop": false,
+                    "variants": [
+                        "ak74fire",
+                        "ak74fire2",
+                        "ak74fire3",
+                        "ak74fire4"
+                    ]
                 }
             },
             "reload": {
@@ -923,6 +1272,54 @@
                     "speed": 0.5,
                     "fps": 30,
                     "duration": 24,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "ak74crawl",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lak74crawl",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "ak74standtoprone",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lak74standtoprone",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "ak74pronetostand",
+                    "speed": 1.0,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lak74pronetostand",
+                    "speed": 1.0,
+                    "fps": 30,
+                    "duration": 10,
                     "loop": false
                 }
             }
@@ -1137,6 +1534,116 @@
                     "duration": 24,
                     "loop": false
                 }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "mm1crawl",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lmm1crawl",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "mm1standtoprone",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmm1standtoprone",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "mm1pronetostand",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmm1pronetostand",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "reloadbegin": {
+                "weapon": {
+                    "clip": "mm1reloadstart",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmm1reloadstart",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmm1reloadstart",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "reloadshell": {
+                "weapon": {
+                    "clip": "mm1reloadshell01",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmm1idle",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "reloadend": {
+                "weapon": {
+                    "clip": "mm1reloadend",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmm1idle",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmm1reloadend",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
             }
         }
     },
@@ -1287,14 +1794,22 @@
                     "speed": 1.0,
                     "fps": 30,
                     "duration": 48,
-                    "loop": true
+                    "loop": true,
+                    "extras": [
+                        "m590fingerspin",
+                        "m590fingeradjust"
+                    ]
                 },
                 "leftHand": {
                     "clip": "lm590idle",
                     "speed": 1.0,
                     "fps": 10,
                     "duration": 24,
-                    "loop": true
+                    "loop": true,
+                    "extras": [
+                        "lm590fingerspin",
+                        "lm590fingeradjust"
+                    ]
                 }
             },
             "fire": {
@@ -1381,6 +1896,123 @@
                     "speed": 0.8,
                     "fps": 30,
                     "duration": 21,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m590crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm590crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m590pronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm590pronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m590standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm590standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "reloadbegin": {
+                "weapon": {
+                    "clip": "m590reloadstart",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm590idle",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm590reloadstart",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "reloadshell": {
+                "weapon": {
+                    "clip": "m590loadshell01",
+                    "speed": 1.1,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm590idle",
+                    "speed": 1.1,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm590loadshell",
+                    "speed": 1.1,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "reloadend": {
+                "weapon": {
+                    "clip": "m590reloadend",
+                    "speed": 1.25,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm590reloadend",
+                    "speed": 1.25,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm590reloadend",
+                    "speed": 1.25,
+                    "fps": 10,
+                    "duration": 10,
                     "loop": false
                 }
             }
@@ -1577,6 +2209,70 @@
                     "speed": 1.5,
                     "fps": 10,
                     "duration": 24,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "usas12crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lusas12crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "usas12standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lusas12standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "usas12pronetostand",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lusas12pronetostand",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "fire2": {
+                "weapon": {
+                    "clip": "usas12autofire",
+                    "speed": 2.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lusas12fire",
+                    "speed": 2.0,
+                    "fps": 10,
+                    "duration": 10,
                     "loop": false
                 }
             }
@@ -1794,6 +2490,86 @@
                     "duration": 24,
                     "loop": false
                 }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "msg90a1crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lak74crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "msg90a1standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmsg90a1standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "msg90a1pronetostand",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmsg90a1pronetostand",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "zoomin": {
+                "weapon": {
+                    "clip": "msg90a1zoomin",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmsg90a1zoomin",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "zoomout": {
+                "weapon": {
+                    "clip": "msg90a1zoomout",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmsg90a1zoomout",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
             }
         }
     },
@@ -1947,6 +2723,55 @@
                     "fps": 10,
                     "duration": 8,
                     "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m60ivcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm60crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m60ivstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m60ivpronetostand",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "fire": {
+                "weapon": {
+                    "clip": "m60ivfire",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false,
+                    "variants": [
+                        "m60ivfire",
+                        "m60ivfire2",
+                        "m60ivfire3",
+                        "m60ivfire4"
+                    ]
                 }
             }
         }
@@ -2192,6 +3017,279 @@
                     "duration": 3,
                     "loop": false
                 }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m1911a1rcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm1911a1rcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "rm1911a1ridle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "rightcrawl": {
+                "weapon": {
+                    "clip": "m1911a1rcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "rm1911a1ridle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftcrawl": {
+                "weapon": {
+                    "clip": "m1911a1lcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm1911a1lcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m1911a1rstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm1911a1rstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftstandtoprone": {
+                "weapon": {
+                    "clip": "m1911a1lstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm1911a1lstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m1911a1rpronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm1911a1rpronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftpronetostand": {
+                "weapon": {
+                    "clip": "m1911a1lpronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm1911a1lready",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "dualready": {
+                "weapon": {
+                    "clip": "m1911a1raltready",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm1911a1ridle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftaltfire": {
+                "weapon": {
+                    "clip": "m1911a1lhandrpistolwhip",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 13,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm1911a1lidle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 13,
+                    "loop": false
+                }
+            },
+            "emptyreload": {
+                "weapon": {
+                    "clip": "m1911a1rreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm1911a1rreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftready": {
+                "weapon": {
+                    "clip": "m1911a1laltready",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 8,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm1911a1lidle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 8,
+                    "loop": false
+                }
+            },
+            "leftidle": {
+                "weapon": {
+                    "clip": "m1911a1lidle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 48,
+                    "loop": true,
+                    "extras": [
+                        "m1911a1lfingeradjust",
+                        "m1911a1lfingergunup",
+                        "m1911a1lfingerspin01"
+                    ]
+                },
+                "leftHand": {
+                    "clip": "lm1911a1lidle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 48,
+                    "loop": true,
+                    "extras": [
+                        "lm1911a1lfingeradjust",
+                        "lm1911a1lfingergunup",
+                        "lm1911a1lfingerspin01"
+                    ]
+                }
+            },
+            "leftdone": {
+                "weapon": {
+                    "clip": "m1911a1ldone",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 7,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm1911a1ldone",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 7,
+                    "loop": false
+                }
+            },
+            "leftfire": {
+                "weapon": {
+                    "clip": "m1911a1lfire",
+                    "speed": 0.8,
+                    "fps": 10,
+                    "duration": 7,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm1911a1lfire",
+                    "speed": 0.8,
+                    "fps": 10,
+                    "duration": 7,
+                    "loop": false
+                }
+            },
+            "leftreload": {
+                "weapon": {
+                    "clip": "m1911a1lfullreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 17,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm1911a1lfullreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 17,
+                    "loop": false
+                }
+            },
+            "leftemptyreload": {
+                "weapon": {
+                    "clip": "m1911a1lreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm1911a1lreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
             }
         }
     },
@@ -2432,6 +3530,139 @@
                     "speed": 0.5,
                     "fps": 10,
                     "duration": 12,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "rm84idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m67standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm84idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m67pronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm84idle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwbegin": {
+                "weapon": {
+                    "clip": "m67throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lf1throw_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rf1throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwend": {
+                "weapon": {
+                    "clip": "m67throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rf1throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowbegin": {
+                "weapon": {
+                    "clip": "m67altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lf1altthrow_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rf1altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowend": {
+                "weapon": {
+                    "clip": "m67altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rf1altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
                     "loop": false
                 }
             }
@@ -2683,6 +3914,279 @@
                     "speed": 0.8,
                     "fps": 10,
                     "duration": 3,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "ussocomrcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lussocomrcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "russocomridle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "rightcrawl": {
+                "weapon": {
+                    "clip": "ussocomrcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "russocomridle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftcrawl": {
+                "weapon": {
+                    "clip": "ussocomlcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lussocomlcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "ussocomrstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "russocomrstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftstandtoprone": {
+                "weapon": {
+                    "clip": "ussocomlstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lussocomlstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "ussocomrpronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "russocomrpronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftpronetostand": {
+                "weapon": {
+                    "clip": "ussocomlpronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lussocomlready",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftaltfire": {
+                "weapon": {
+                    "clip": "ussocomlhandrpistolwhip",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 13,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lussocomlidle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 13,
+                    "loop": false
+                }
+            },
+            "emptyreload": {
+                "weapon": {
+                    "clip": "ussocomrreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "russocomrreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "dualready": {
+                "weapon": {
+                    "clip": "ussocomraltready",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "russocomridle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftready": {
+                "weapon": {
+                    "clip": "ussocomlaltready",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 8,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lussocomlidle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 8,
+                    "loop": false
+                }
+            },
+            "leftidle": {
+                "weapon": {
+                    "clip": "ussocomlidle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 48,
+                    "loop": true,
+                    "extras": [
+                        "ussocomlfingergunup",
+                        "ussocomlfingeradjust",
+                        "ussocomlfingerspin01"
+                    ]
+                },
+                "leftHand": {
+                    "clip": "lussocomlidle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 48,
+                    "loop": true,
+                    "extras": [
+                        "lussocomlfingergunup",
+                        "lussocomlfingeradjust",
+                        "lussocomlfingerspin01"
+                    ]
+                }
+            },
+            "leftdone": {
+                "weapon": {
+                    "clip": "ussocomldone",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 7,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lussocomldone",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 7,
+                    "loop": false
+                }
+            },
+            "leftfire": {
+                "weapon": {
+                    "clip": "ussocomlfire",
+                    "speed": 0.8,
+                    "fps": 10,
+                    "duration": 7,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lussocomlfire",
+                    "speed": 0.8,
+                    "fps": 10,
+                    "duration": 7,
+                    "loop": false
+                }
+            },
+            "leftreload": {
+                "weapon": {
+                    "clip": "ussocomlfullreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 17,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lussocomlfullreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 17,
+                    "loop": false
+                }
+            },
+            "leftemptyreload": {
+                "weapon": {
+                    "clip": "ussocomlreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lussocomlreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
                     "loop": false
                 }
             }
@@ -2941,6 +4445,139 @@
                     "duration": 48,
                     "loop": false
                 }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m67crawl",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm67crawl",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "rm67idle",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m67standtoprone",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm67idle",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m67pronetostand",
+                    "speed": 1.0,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm67idle",
+                    "speed": 1.0,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwbegin": {
+                "weapon": {
+                    "clip": "m67throw_start",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm67throw_start",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm67throw_start",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwend": {
+                "weapon": {
+                    "clip": "m67throw_end",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm67throw_end",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowbegin": {
+                "weapon": {
+                    "clip": "m67altthrow_start",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm67altthrow_start",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm67altthrow_start",
+                    "speed": 0.4,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowend": {
+                "weapon": {
+                    "clip": "m67altthrow_end",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm67altthrow_end",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
             }
         }
     },
@@ -3082,6 +4719,19 @@
                     "fps": 20,
                     "duration": 3,
                     "loop": false
+                },
+                "weapon": {
+                    "clip": "microuzirfire",
+                    "speed": 1.1,
+                    "fps": 10,
+                    "duration": 3,
+                    "loop": false,
+                    "variants": [
+                        "microuzirfire",
+                        "microuzirfire2",
+                        "microuzirfire3",
+                        "microuzirfire4"
+                    ]
                 }
             },
             "reload": {
@@ -3145,6 +4795,269 @@
                     "speed": 1.0,
                     "fps": 10,
                     "duration": 4,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "microuzircrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lmicrouzircrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "rightcrawl": {
+                "weapon": {
+                    "clip": "microuzircrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftcrawl": {
+                "weapon": {
+                    "clip": "microuzilcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmicrouzircrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "microuzirstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmicrouzirstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftstandtoprone": {
+                "weapon": {
+                    "clip": "microuzilstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmicrouzilstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "microuzirpronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmicrouzirpronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftpronetostand": {
+                "weapon": {
+                    "clip": "microuzilpronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmicrouzilready",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "dualready": {
+                "weapon": {
+                    "clip": "microuziraltready",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmicrouziridle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftaltfire": {
+                "weapon": {
+                    "clip": "microuzilhandrpistolwhip",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmicrouzilidle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "emptyreload": {
+                "weapon": {
+                    "clip": "microuzirreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmicrouzirreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "leftidle": {
+                "weapon": {
+                    "clip": "microuzilidle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 24,
+                    "loop": true,
+                    "extras": [
+                        "microuzilfingeradjust",
+                        "microuzilfingergunup"
+                    ]
+                },
+                "leftHand": {
+                    "clip": "lmicrouzilidle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 24,
+                    "loop": true,
+                    "extras": [
+                        "lmicrouzilfingeradjust",
+                        "lmicrouzilfingergunup"
+                    ]
+                }
+            },
+            "leftready": {
+                "weapon": {
+                    "clip": "microuzilaltready",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 8,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmicrouzilidle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 8,
+                    "loop": false
+                }
+            },
+            "leftdone": {
+                "weapon": {
+                    "clip": "microuzildone",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 7,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmicrouzilidle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 7,
+                    "loop": false
+                }
+            },
+            "leftfire": {
+                "weapon": {
+                    "clip": "microuzilfire",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 3,
+                    "loop": false,
+                    "variants": [
+                        "microuzilfire",
+                        "microuzilfire",
+                        "microuzilfire",
+                        "microuzilfire"
+                    ]
+                },
+                "leftHand": {
+                    "clip": "lmicrouzilfire",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 3,
+                    "loop": false
+                }
+            },
+            "leftreload": {
+                "weapon": {
+                    "clip": "microuzilfullreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 17,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmicrouzilfullreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 17,
+                    "loop": false
+                }
+            },
+            "leftemptyreload": {
+                "weapon": {
+                    "clip": "microuzilreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmicrouzilreload",
+                    "speed": 0.7,
+                    "fps": 10,
+                    "duration": 10,
                     "loop": false
                 }
             }
@@ -3411,6 +5324,86 @@
                     "duration": 32,
                     "loop": false
                 }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "oicwcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "loicwcrawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "oicwstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "loicwstandtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "oicwpronetostand",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "loicwpronetostand",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "zoomin": {
+                "weapon": {
+                    "clip": "oicwzoomin",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "loicwzoomin",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "zoomout": {
+                "weapon": {
+                    "clip": "oicwzoomout",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "loicwzoomout",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
             }
         }
     },
@@ -3552,6 +5545,19 @@
                     "fps": 10,
                     "duration": 24,
                     "loop": false
+                },
+                "weapon": {
+                    "clip": "m3a1fire",
+                    "speed": 0.625,
+                    "fps": 30,
+                    "duration": 24,
+                    "loop": false,
+                    "variants": [
+                        "m3a1fire",
+                        "m3a1fire2",
+                        "m3a1fire3",
+                        "m3a1fire4"
+                    ]
                 }
             },
             "reload": {
@@ -3613,6 +5619,54 @@
                     "speed": 0.7,
                     "fps": 30,
                     "duration": 7,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m3a1crawl",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm3a1crawl",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m3a1standtoprone",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm3a1standtoprone",
+                    "speed": 0.5,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m3a1pronetostand",
+                    "speed": 1.0,
+                    "fps": 30,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm3a1pronetostand",
+                    "speed": 1.0,
+                    "fps": 30,
+                    "duration": 10,
                     "loop": false
                 }
             }
@@ -3855,6 +5909,139 @@
                     "duration": 12,
                     "loop": false
                 }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "rm84idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m67standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm84idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m67pronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm84idle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwbegin": {
+                "weapon": {
+                    "clip": "m67throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm84throw_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm84throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwend": {
+                "weapon": {
+                    "clip": "m67throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm84throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowbegin": {
+                "weapon": {
+                    "clip": "m67altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lm84altthrow_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm84altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowend": {
+                "weapon": {
+                    "clip": "m67altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rm84altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
             }
         }
     },
@@ -4095,6 +6282,139 @@
                     "duration": 12,
                     "loop": false
                 }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m67standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m67pronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwbegin": {
+                "weapon": {
+                    "clip": "m67throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmdn11throw_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwend": {
+                "weapon": {
+                    "clip": "m67throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowbegin": {
+                "weapon": {
+                    "clip": "m67altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmdn11altthrow_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowend": {
+                "weapon": {
+                    "clip": "m67altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
             }
         }
     },
@@ -4333,6 +6653,139 @@
                     "speed": 0.5,
                     "fps": 10,
                     "duration": 12,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m67standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m67pronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwbegin": {
+                "weapon": {
+                    "clip": "m67throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "ll2a2throw_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rl2a2throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwend": {
+                "weapon": {
+                    "clip": "m67throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rl2a2throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowbegin": {
+                "weapon": {
+                    "clip": "m67altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "ll2a2altthrow_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rl2a2altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowend": {
+                "weapon": {
+                    "clip": "m67altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rl2a2altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
                     "loop": false
                 }
             }
@@ -4577,6 +7030,139 @@
                     "duration": 12,
                     "loop": false
                 }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m67standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m67pronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwbegin": {
+                "weapon": {
+                    "clip": "m67throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lanm14throw_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "ranm14throw_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwend": {
+                "weapon": {
+                    "clip": "m67throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "ranm14throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowbegin": {
+                "weapon": {
+                    "clip": "m67altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lanm14altthrow_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "ranm14altthrow_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowend": {
+                "weapon": {
+                    "clip": "m67altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "ranm14altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
             }
         }
     },
@@ -4817,6 +7403,139 @@
                     "duration": 12,
                     "loop": false
                 }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m67standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m67pronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwbegin": {
+                "weapon": {
+                    "clip": "m67throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmdn11throw_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwend": {
+                "weapon": {
+                    "clip": "m67throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowbegin": {
+                "weapon": {
+                    "clip": "m67altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmdn11altthrow_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowend": {
+                "weapon": {
+                    "clip": "m67altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
             }
         }
     },
@@ -5055,6 +7774,139 @@
                     "speed": 0.5,
                     "fps": 10,
                     "duration": 12,
+                    "loop": false
+                }
+            },
+            "crawl": {
+                "weapon": {
+                    "clip": "m67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "leftHand": {
+                    "clip": "lm67crawl",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": true
+                }
+            },
+            "standtoprone": {
+                "weapon": {
+                    "clip": "m67standtoprone",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "pronetostand": {
+                "weapon": {
+                    "clip": "m67pronetostand",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11idle",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwbegin": {
+                "weapon": {
+                    "clip": "m67throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmdn11throw_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11throw_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "throwend": {
+                "weapon": {
+                    "clip": "m67throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11throw_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowbegin": {
+                "weapon": {
+                    "clip": "m67altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "leftHand": {
+                    "clip": "lmdn11altthrow_start",
+                    "speed": 1.0,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11altthrow_start",
+                    "speed": 0.4,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                }
+            },
+            "altthrowend": {
+                "weapon": {
+                    "clip": "m67altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
+                    "loop": false
+                },
+                "rightHand": {
+                    "clip": "rmdn11altthrow_end",
+                    "speed": 0.5,
+                    "fps": 10,
+                    "duration": 10,
                     "loop": false
                 }
             }

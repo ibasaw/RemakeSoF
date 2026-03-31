@@ -144,12 +144,28 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
         /// <summary>
         /// Laedt ein Waffen-Prefab ueber Addressables (via PrefabManager) und
         /// instanziiert es als Child des Attachment-Bones.
+        /// Nutzt weaponKey als Addressable-Key (worldModel).
         /// Wendet Base- und Specular-Texturen via viewModel-Pfad aus WeaponDefinition an.
         /// Entfernt vorherige Waffe automatisch.
         /// </summary>
         /// <param name="weaponKey">Addressable-Key der Waffe (z.B. "knife").</param>
         /// <returns>True wenn erfolgreich geladen und attached.</returns>
         public bool LoadAndAttachWeapon(string weaponKey)
+        {
+            return LoadAndAttachWeapon(weaponKey, weaponKey);
+        }
+
+        /// <summary>
+        /// Laedt ein Waffen-Prefab ueber Addressables (via PrefabManager) und
+        /// instanziiert es als Child des Attachment-Bones.
+        /// Nutzt modelKey als Addressable-Key fuer das Prefab (z.B. viewModel-Pfad fuer FP).
+        /// Wendet Base- und Specular-Texturen via viewModel-Pfad aus WeaponDefinition an.
+        /// Entfernt vorherige Waffe automatisch.
+        /// </summary>
+        /// <param name="weaponKey">Waffen-ID fuer Definition-Lookup und Tracking (z.B. "knife").</param>
+        /// <param name="modelKey">Addressable-Key fuer das Prefab (z.B. viewModel-Pfad fuer FP, weaponKey fuer TP).</param>
+        /// <returns>True wenn erfolgreich geladen und attached.</returns>
+        public bool LoadAndAttachWeapon(string weaponKey, string modelKey)
         {
             if (string.IsNullOrEmpty(weaponKey))
             {
@@ -180,10 +196,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.WeaponManagement
                 return false;
             }
 
-            GameObject weaponPrefab = prefabManager.LoadPrefab<GameObject>(weaponKey);
+            GameObject weaponPrefab = prefabManager.LoadPrefab<GameObject>(modelKey);
             if (weaponPrefab == null)
             {
-                Debug.LogWarning($"[WeaponLoader] Waffen-Prefab nicht gefunden: '{weaponKey}'");
+                Debug.LogWarning($"[WeaponLoader] Waffen-Prefab nicht gefunden: '{modelKey}'");
                 return false;
             }
 

@@ -4024,7 +4024,7 @@
     "wpn": {
       "name": "Knife",
       "displayName": "WEAPONS_NAME_KNIFE",
-      "model": "models/weapons/knife/world/knifeworld.glm",
+      "model": "models/weapons/knife/world/knifeworld.glm", 
       "safe": true,
       "rank": 0.05,
       "cvar": "wp_knife",

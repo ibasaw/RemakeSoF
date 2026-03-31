@@ -190,14 +190,32 @@ Jede Waffe hat folgende Animationen (nicht alle zwingend):
 
 `WeaponLoader` — Interner Service (kein MonoBehaviour), instanziiert Waffen-Prefabs:
 
+### Third-Person (TP) Waffen
 ```
 WeaponLoader.LoadAndAttachWeapon("m4")
-  → PrefabManager.GetPrefabAsync("m4")    (Addressables, cache-first)
+  → PrefabManager.LoadPrefab("m4")        (Addressables, cache-first)
   → Instantiate als Child von rhang_tag_bone
   → Scale-Kompensation: localScale = prefabScale / boneLossyScale
   → Z-Rotation: -90° (SoF2 Achsen-Korrektur)
   → Material: SoF2/MapSurface Shader mit _LightBlend=0.5 (50% Lit)
 ```
+
+### First-Person (FP) Waffen
+```
+WeaponLoader.LoadAndAttachWeapon("m4", "models/weapons/m4/m4")
+  → PrefabManager.LoadPrefab("models/weapons/m4/m4")  (viewModel-Pfad als Addressable-Key)
+  → Instantiate als Child von FP_WeaponHolder
+  → Keine Scale-Kompensation (CompensateBoneScale=false)
+  → Rotation: (0,0,0) — Kamera-Ausrichtung
+  → Material: SoF2/MapSurface Shader mit _LightBlend=0.5
+```
+
+SoF2 Dual-Model-System:
+- **worldModel** (`"models/weapons/m4/world/m4world"`) — 3rd-Person: vereinfachtes Mesh für andere Spieler
+- **viewModel** (`"models/weapons/m4/m4"`) — 1st-Person: detailliertes Mesh mit inviewAnimations-Bones
+
+Der FP-Loader nutzt den `viewModel`-Pfad aus der WeaponDefinition als Addressable-Key.
+Der TP-Loader nutzt den Waffen-ID-Key (z.B. `"m4"`) der auf das worldModel gemappt ist.
 
 ### Shader-Strategie
 | System | Shader | _LightBlend | Begründung |
@@ -211,8 +229,12 @@ WeaponLoader.LoadAndAttachWeapon("m4")
 |--------|-------------|
 | `CurrentWeaponInstance` | Aktuell instanziiertes Waffen-GameObject |
 | `CurrentWeaponName` | Name der aktuellen Waffe |
-| `LoadAndAttachWeapon(key)` | Lädt + attached an Hand-Bone |
+| `LoadAndAttachWeapon(weaponKey)` | Lädt TP-Waffe (weaponKey = Addressable-Key) |
+| `LoadAndAttachWeapon(weaponKey, modelKey)` | Lädt Waffe mit separatem Prefab-Key (FP: modelKey = viewModel-Pfad) |
 | `ClearCurrentWeapon()` | Zerstört aktuelle Waffe |
 | `SetAttachmentBone(Transform)` | Setzt Hand-Bone-Referenz |
+| `ApplyForeshorten(float)` | SoF2 Z-Skalierung (Forward-Achse) |
+| `SetLocalRotation(Quaternion)` | TP: (0,0,-90), FP: (0,0,0) |
+| `SetCompensateBoneScale(bool)` | TP: true, FP: false |
 
 Die Waffen-Hierarchie im Prefab enthält Bones wie `ejection_m4` (für Shell-Ejektion/Tracer).
