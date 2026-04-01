@@ -492,7 +492,7 @@
                     "speed": 0.5,
                     "fps": 10,
                     "duration": 24,
-                    "loop": true
+                    "loop": false
                 }
             },
             "fire": {
@@ -2796,7 +2796,7 @@
         "attack": {
             "damage": 50,
             "range": 8192,
-            "fireMode": "auto",
+            "fireMode": "single",
             "gore": true,
             "volume": 0.75,
             "kickAngles": [

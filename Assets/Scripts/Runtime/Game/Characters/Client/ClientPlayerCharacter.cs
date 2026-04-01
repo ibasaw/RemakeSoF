@@ -1644,14 +1644,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     bool hasAmmo = m_CurrentWeaponInfiniteAmmo || m_CharacterState.CurrentClipAmmo > 0;
                     bool shouldRetrigger = false;
 
-                    if (m_CurrentFireMode == "auto" && m_PlayerActions.Attack.IsPressed() && hasAmmo)
+                    // SoF2: Cook-Granaten duerfen nie auto-retriggern (immer single-shot)
+                    if (!m_IsAttackGrenadeCook)
                     {
-                        shouldRetrigger = true;
-                    }
-                    else if (m_CurrentFireMode == "burst" && m_BurstShotsRemaining > 0 && hasAmmo)
-                    {
-                        m_BurstShotsRemaining--;
-                        shouldRetrigger = true;
+                        if (m_CurrentFireMode == "auto" && m_PlayerActions.Attack.IsPressed() && hasAmmo)
+                        {
+                            shouldRetrigger = true;
+                        }
+                        else if (m_CurrentFireMode == "burst" && m_BurstShotsRemaining > 0 && hasAmmo)
+                        {
+                            m_BurstShotsRemaining--;
+                            shouldRetrigger = true;
+                        }
                     }
 
                     if (shouldRetrigger)
@@ -1811,7 +1815,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             bool attackPressed = m_PlayerActions.Attack.IsPressed();
             bool canStartAttack = false;
 
-            if (m_CurrentFireMode == "auto")
+            if (m_IsAttackGrenadeCook || m_IsAltAttackGrenadeCook)
+            {
+                // SoF2: Granaten immer single-shot (Rising-Edge), unabhaengig vom FireMode
+                canStartAttack = attackPressed && !m_AttackButtonWasPressed;
+            }
+            else if (m_CurrentFireMode == "auto")
             {
                 // Auto: Dauerfeuer solange gehalten
                 canStartAttack = attackPressed;
@@ -2249,6 +2258,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Fire-Mode aus Waffen-Definition initialisieren
             m_AvailableFireModes = weapon.Attack?.FireModes;
             string defaultFireMode = weapon.Attack?.FireMode ?? "auto";
+
+            // SoF2: Projektilwaffen (Granaten, RPG) sind immer single-shot wenn kein FireMode definiert
+            if (weapon.Attack?.FireMode == null && weapon.Attack?.Projectile != null)
+            {
+                defaultFireMode = "single";
+            }
 
             // Wenn der aktuelle Modus in den verfuegbaren Modi enthalten ist, beibehalten
             // (damit beim Waffenwechsel zurueck der letzte Modus erhalten bleibt).
