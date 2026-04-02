@@ -1211,7 +1211,129 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 FlashbangScreenEffect.TriggerFlash(position);
             }
 
+            // Incendiary: persistentes Bodenfeuer nach Explosion (SoF2 ANM14)
+            if (effectId.Contains("incendiary_explosion"))
+            {
+                SpawnGroundFire(position, "effects/fire/ground_fire", 10f);
+            }
+
+            // Phosphorus: brennende Chunks fliegen vom Explosionszentrum weg (SoF2 M15 WP)
+            if (effectId.Contains("phosphorus_explosion"))
+            {
+                SpawnPhosphorusScatter(position, 8);
+            }
+
             Object.Destroy(explosionObj, maxLifetime + 1f);
+        }
+
+        /// <summary>
+        /// Spawnt einen persistenten Bodenfeuer-Effekt (SoF2 Incendiary/ANM14).
+        /// Partikel-Segmente werden als Looping-ParticleSysteme konfiguriert und nach Ablauf der Dauer gestoppt.
+        /// </summary>
+        private void SpawnGroundFire(Vector3 position, string effectId, float duration)
+        {
+            EffectDefinition definition = GetDefinition(effectId);
+            if (definition?.Segments == null || definition.Segments.Count == 0)
+            {
+                return;
+            }
+
+            GameObject fireObj = new($"GroundFire_{definition.DisplayName}");
+
+            // Ground-snap: Raycast nach unten um Feuer auf den Boden zu setzen
+            if (Physics.Raycast(position + Vector3.up * 0.5f, Vector3.down, out RaycastHit groundHit, 10f))
+            {
+                fireObj.transform.position = groundHit.point + Vector3.up * 0.05f;
+            }
+            else
+            {
+                fireObj.transform.position = position;
+            }
+
+            fireObj.transform.rotation = Quaternion.LookRotation(Vector3.up);
+
+            foreach (EffectSegment segment in definition.Segments)
+            {
+                if (segment.Type != "particle" && segment.Type != "orientedParticle")
+                {
+                    continue;
+                }
+
+                GameObject psGo = new(segment.Name ?? "FireParticle");
+                psGo.transform.SetParent(fireObj.transform, false);
+
+                ParticleSystem ps = psGo.AddComponent<ParticleSystem>();
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                ConfigureParticleSystem(ps, segment);
+
+                // Looping aktivieren: Partikel emittieren kontinuierlich fuer die Dauer
+                ParticleSystem.MainModule main = ps.main;
+                main.loop = true;
+                main.duration = duration;
+
+                // Emission ueber die Dauer verteilen statt Burst-only
+                ParticleSystem.EmissionModule emission = ps.emission;
+                int avgCount = segment.Particle != null
+                    ? Mathf.Max((segment.Particle.CountMin + segment.Particle.CountMax) / 2, 1)
+                    : 5;
+                float avgLifetime = segment.Particle != null
+                    ? Mathf.Max(segment.Particle.LifetimeMax, 0.5f)
+                    : 1f;
+                emission.rateOverTime = avgCount / avgLifetime;
+
+                ParticleSystemRenderer psRenderer = ps.GetComponent<ParticleSystemRenderer>();
+                if (psRenderer != null && segment.Type == "orientedParticle")
+                {
+                    psRenderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
+                }
+
+                ps.Play();
+            }
+
+            Object.Destroy(fireObj, duration + 2f);
+        }
+
+        /// <summary>
+        /// Spawnt brennende Phosphor-Chunks die vom Explosionszentrum wegfliegen (SoF2 M15 WP).
+        /// Jeder Chunk ist ein unsichtbares Physik-Objekt mit EmitFxBehaviour fuer Rauch-/Glutschweif.
+        /// </summary>
+        private void SpawnPhosphorusScatter(Vector3 position, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                GameObject chunkObj = new($"PhosphorusChunk_{i}");
+                chunkObj.transform.position = position;
+
+                SphereCollider sphere = chunkObj.AddComponent<SphereCollider>();
+                sphere.radius = 0.05f;
+
+                Rigidbody rb = chunkObj.AddComponent<Rigidbody>();
+                rb.mass = 0.02f;
+                rb.useGravity = true;
+                rb.linearDamping = 0.3f;
+
+                // Zufaellige Richtung nach oben/aussen
+                Vector3 randomDir = Random.onUnitSphere;
+                randomDir.y = Mathf.Abs(randomDir.y) + 0.3f;
+                rb.linearVelocity = randomDir.normalized * Random.Range(3f, 8f);
+
+                // Bounce-Material
+                PhysicsMaterial chunkMat = new()
+                {
+                    bounciness = 0.3f,
+                    dynamicFriction = 0.6f,
+                    staticFriction = 0.6f,
+                    bounceCombine = PhysicsMaterialCombine.Average
+                };
+                sphere.material = chunkMat;
+
+                // EmitFx: Rauchschweif waehrend Flugzeit (phosphorus_chunk = Glut + Rauchpuff)
+                float lifetime = Random.Range(2f, 4f);
+                EmitFxBehaviour emitBehaviour = chunkObj.AddComponent<EmitFxBehaviour>();
+                emitBehaviour.Initialize("effects/explosions/phosphorus_chunk", lifetime);
+
+                Object.Destroy(chunkObj, lifetime);
+            }
         }
 
         /// <summary>
@@ -1800,6 +1922,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
         /// Spawnt einen datengetriebenen Debris-Effekt (z.B. effects/chunks/debris_rock).
         /// Verarbeitet Partikel-Segmente (Rauch/Staub) und Emitter-Segmente (3D-Model-Chunks mit Physik).
         /// Wird von Surface-Impact-Code und Explosion-Code aufgerufen.
+        /// Bei Bullet-Impact werden Emitter-Chunks (3D-Modelle) uebersprungen — nur Partikel spawnen.
+        /// Fuer Explosionen: SpawnExplosion nutzt SpawnEmitterChunks direkt.
         /// </summary>
         public void SpawnDebris(Vector3 position, Quaternion rotation, string effectId)
         {
@@ -1832,12 +1956,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                         : (segment.Trail?.Lifetime ?? 1f);
                     maxLifetime = Mathf.Max(maxLifetime, segLife);
                 }
-                else if (segment.Type == "emitter" && segment.Emitter != null)
-                {
-                    SpawnEmitterChunks(position, rotation, segment.Emitter, segment.Flags);
-                    float emitterLife = Mathf.Max(segment.Emitter.LifetimeMin, segment.Emitter.LifetimeMax);
-                    maxLifetime = Mathf.Max(maxLifetime, emitterLife);
-                }
+                // Emitter-Chunks (3D-Modelle) bei Bullet-Impact uebersprungen:
+                // Die Partikel-Segmente (bp_rock, Staub, Rauch) reichen als visuelles Feedback.
+                // 3D-Modell-Chunks spawnen nur via SpawnExplosion → SpawnEmitterChunks direkt.
                 else if (segment.Type == "sound")
                 {
                     PlayEffectSound(position, segment);
@@ -1886,21 +2007,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                         }
                     }
 
-                    // Fallback: kleiner Quader als Chunk
+                    // Fallback: Modell nicht gefunden — ueberspringen.
+                    // Log ausgeben damit klar ist welches Modell fehlt (Addressable-Build pruefen!).
                     if (chunkObj == null)
                     {
-                        chunkObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        chunkObj.name = $"Chunk_Fallback_{i}";
-                        chunkObj.transform.position = position;
-                        chunkObj.transform.rotation = rotation;
-                        chunkObj.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f);
-
-                        Renderer renderer = chunkObj.GetComponent<Renderer>();
-                        if (renderer != null)
-                        {
-                            renderer.material.color = new Color(0.4f, 0.35f, 0.3f);
-                            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                        }
+                        Debug.LogWarning($"[EffectFactory] Emitter model not loaded: '{modelKey}' — check Addressables build. Skipping chunk.");
+                        continue;
                     }
                 }
                 else

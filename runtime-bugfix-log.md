@@ -97,6 +97,62 @@ int worldLayerMask = ~(hitboxLayerMask | LayerMask.GetMask("BrushCollision", "Pl
 
 ---
 
+## Bug #6: Granaten-Doppelwurf (Grenade Double-Throw)
+
+**Symptom**: Nach dem Wurf einer Granate wird sofort eine zweite Granate gecockt/geworfen, obwohl der Spieler den Feuerknopf nicht erneut gedrückt hat.
+
+**Ursache**: Server hatte kein Debounce-System für Feuerknöpfe. Nach Ablauf des `weaponTime` vom Wurf wurde der noch gehaltene Feuerknopf sofort als neuer Angriff interpretiert — es fehlte die Rising-Edge-Erkennung.
+
+**Fix**: Komplettes SoF2 `pm_debounce`-Bitfeld-System implementiert (siehe `server-authoritative-weapon-fire.md`):
+- `m_ServerDebounce` (int) mit Bitflags: `PMD_ATTACK = 0x0002`, `PMD_ALTATTACK = 0x0010`, `PMD_FIREMODE = 0x0004`
+- `ProcessServerCommandLogic()`: Debounce-Check vor jedem Fire-Code — Button muss losgelassen und erneut gedrückt werden
+- `ProcessAttack()` / `ProcessAltAttack()`: Setzen jeweiliges PMD-Bit nach erfolgreichem Schuss
+- Burst-Mask blockiert AltAttack + Reload + Zoom + FireMode während Burst
+
+**Dateien**:
+- `Assets/Scripts/Runtime/Game/Characters/Networked/NetworkedPlayerCharacter.cs`
+- `Assets/Scripts/Runtime/Game/Characters/Shared/PlayerCommand.cs` (CommandButtons.FireMode)
+- `Assets/Scripts/Runtime/Game/Characters/Client/ClientPlayerCharacter.cs` (m_FireModeSwitchRequested)
+
+---
+
+## Bug #7: Knife Alt-Attack Ammo (Messerwurf verbraucht falsche Ammo-Quelle)
+
+**Symptom**: Nach dem ersten Messerwurf kann kein zweiter Wurf mehr ausgeführt werden, obwohl Reserve-Ammo vorhanden ist.
+
+**Ursache**: `TryConsumeAltAmmo()` in `NetworkedCharacterState.cs` konsumierte für den Messerwurf aus `m_CurrentClipAmmo`. Das Messer hat `Ammo.Infinite = true` (unendliche Stabs), aber `ClipSize = 1` — der Wurf zog von Clip ab, was die "unendliche" Stab-Ammo auf 0 setzte.
+
+**Fix**: Drei-Pattern-Logik in `TryConsumeAltAmmo()`:
+1. **Melee** (kein Ammo-Verbrauch): `AltAttack.AmmoPerShot == 0` → return true
+2. **Separater Alt-Ammo**: `weapon.HasSeparateAltAmmo` → `m_AltClipAmmo.Value--`
+3. **Projektil ohne separaten Ammo**:
+   - `weapon.Ammo.Infinite == true` → `m_ReserveAmmo.Value--` (Messerwurf)
+   - `weapon.Ammo.Infinite == false` → `m_CurrentClipAmmo.Value--` (Granaten)
+
+**Dateien**:
+- `Assets/Scripts/Runtime/Game/Characters/Networked/NetworkedCharacterState.cs`
+
+---
+
+## Bug #8: Flashbang zu kurz (M84 Stun Grenade)
+
+**Symptom**: M84 Flashbang blendet nur ~2.8s, was für eine Stun Grenade unrealistisch kurz ist. Kein taktischer Vorteil durch Flashen.
+
+**Ursache**: Fixe Werte (Hold 0.3s + Fade 2.5s) ohne Intensitätsskalierung. SoF2 nutzt bis zu 11s Fade-Zeit.
+
+**Fix**: Komplettes Rework basierend auf SoF2 `CG_FlashBang()` Werten:
+- Affect-Radius: 20.32m → 44.45m (SoF2 `MAX_FLASHBANG_AFFECT_DISTANCE = 1750 QU`)
+- Max-Radius: 20.32m → 76.2m (SoF2 `MAX_FLASHBANG_DISTANCE = 3000 QU`)
+- Fade: 2.5s fix → 0–11s skaliert mit Intensität (SoF2 `MAX_FLASHBANG_TIME = 11000ms`)
+- Hold: 0.3s fix → 0–1.5s skaliert (Hold erst ab 50% Intensität)
+- Blickrichtung: Dot-Product-Lerp → Distanz-Strafe-System
+- Gesamtdauer max: 2.8s → 12.5s
+
+**Dateien**:
+- `Assets/Scripts/Runtime/Game/Effects/FlashbangScreenEffect.cs`
+
+---
+
 ## Offene Punkte (Nice-to-Have)
 
 | Feature | Status | Beschreibung |

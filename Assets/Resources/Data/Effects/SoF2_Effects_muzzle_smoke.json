@@ -627,5 +627,199 @@
         }
       }
     ]
+  },
+  {
+    "id": "effects/muzzle_flashes/smoke_m1911a1",
+    "displayName": "Smoke M1911A1",
+    "segments": [
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "useAlpha",
+          "evenDistribution"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "delayMin": 0.0,
+          "delayMax": 0.4,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -7,
+          "rotationSpeedMax": 7,
+          "originMin": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0762,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.254,
+            0.0,
+            0.0
+          ],
+          "gravityModifierMin": -0.051784,
+          "gravityModifierMax": -0.077676
+        },
+        "color": {
+          "startMin": [
+            0.6549,
+            0.6235,
+            0.6039
+          ]
+        },
+        "alpha": {
+          "startMin": 0.35,
+          "startMax": 0.55,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 0.1016,
+          "endMax": 0.1524,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/smoke_m3",
+    "displayName": "Smoke M3",
+    "segments": [
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke02",
+        "flags": [
+          "useAlpha",
+          "evenDistribution"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 3,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "delayMin": 0.0,
+          "delayMax": 0.3,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -7,
+          "rotationSpeedMax": 7,
+          "originMin": [
+            0.0254,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.127,
+            -0.0508,
+            -0.0508
+          ],
+          "velocityMax": [
+            0.254,
+            0.0508,
+            0.0508
+          ],
+          "gravityModifierMin": -0.077676,
+          "gravityModifierMax": -0.103568
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.35,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762,
+          "endMin": 0.1524,
+          "endMax": 0.2286,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/smoke_ussocom",
+    "displayName": "Smoke Ussocom",
+    "segments": [
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke02",
+        "flags": [
+          "useAlpha",
+          "evenDistribution"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "delayMin": 0.0,
+          "delayMax": 0.15,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -7,
+          "rotationSpeedMax": 7,
+          "originMin": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.1016,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.1524,
+            0.0,
+            0.0
+          ],
+          "gravityModifierMin": -0.051784,
+          "gravityModifierMax": -0.077676
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.3,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "endMin": 0.127,
+          "endMax": 0.2032,
+          "curve": "linear"
+        }
+      }
+    ]
   }
 ]

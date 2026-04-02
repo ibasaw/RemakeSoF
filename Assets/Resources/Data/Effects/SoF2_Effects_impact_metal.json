@@ -123,8 +123,8 @@
           ]
         },
         "size": {
-          "endMin": 0.3048,
-          "endMax": 0.381,
+          "endMin": 0.1524,
+          "endMax": 0.1905,
           "curve": "linear"
         }
       },
@@ -318,8 +318,8 @@
           ]
         },
         "size": {
-          "endMin": 0.3048,
-          "endMax": 0.381,
+          "endMin": 0.1524,
+          "endMax": 0.1905,
           "curve": "linear"
         }
       },
@@ -529,10 +529,10 @@
           ]
         },
         "size": {
-          "startMin": 0.0762,
-          "startMax": 0.127,
-          "endMin": 0.7112,
-          "endMax": 1.016,
+          "startMin": 0.0381,
+          "startMax": 0.0635,
+          "endMin": 0.1778,
+          "endMax": 0.254,
           "curve": "linear"
         }
       },
@@ -738,10 +738,10 @@
           ]
         },
         "size": {
-          "startMin": 0.0762,
-          "startMax": 0.127,
-          "endMin": 0.7112,
-          "endMax": 1.016,
+          "startMin": 0.0381,
+          "startMax": 0.0635,
+          "endMin": 0.1778,
+          "endMax": 0.254,
           "curve": "linear"
         }
       },
@@ -952,8 +952,8 @@
         "size": {
           "startMin": 0.0508,
           "startMax": 0.0762,
-          "endMin": 0.4064,
-          "endMax": 0.508,
+          "endMin": 0.2032,
+          "endMax": 0.254,
           "curve": "linear"
         }
       },
@@ -1162,8 +1162,8 @@
         "size": {
           "startMin": 0.0508,
           "startMax": 0.0762,
-          "endMin": 0.4064,
-          "endMax": 0.508,
+          "endMin": 0.2032,
+          "endMax": 0.254,
           "curve": "linear"
         }
       },
@@ -1355,8 +1355,8 @@
           ]
         },
         "size": {
-          "endMin": 0.3048,
-          "endMax": 0.381,
+          "endMin": 0.1524,
+          "endMax": 0.1905,
           "curve": "linear"
         }
       },
@@ -1548,8 +1548,8 @@
           ]
         },
         "size": {
-          "endMin": 0.3048,
-          "endMax": 0.381,
+          "endMin": 0.1524,
+          "endMax": 0.1905,
           "curve": "linear"
         }
       },
@@ -1757,10 +1757,10 @@
           ]
         },
         "size": {
-          "startMin": 0.0762,
-          "startMax": 0.127,
-          "endMin": 0.7112,
-          "endMax": 1.016,
+          "startMin": 0.0381,
+          "startMax": 0.0635,
+          "endMin": 0.1778,
+          "endMax": 0.254,
           "curve": "linear"
         }
       },

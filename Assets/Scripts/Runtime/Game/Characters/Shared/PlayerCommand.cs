@@ -32,6 +32,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
         /// <summary>Nachladen (BUTTON_RELOAD).</summary>
         public const int Reload = 1 << 7;
+
+        /// <summary>Feuermodus wechseln (BUTTON_FIREMODE). SoF2 bg_pmove.c PMD_FIREMODE.</summary>
+        public const int FireMode = 1 << 8;
     }
 
     /// <summary>

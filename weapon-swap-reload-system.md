@@ -191,6 +191,31 @@ ShellReloadPhase:
 `WeaponAmmoDefinition.Infinite = true` → Knife hat unendliche Munition.
 `TryConsumeAmmo()` gibt sofort `true` zurück ohne Decrement.
 
+### TryConsumeAltAmmo — Drei Patterns
+
+`TryConsumeAltAmmo()` unterscheidet drei Waffen-Typen:
+
+| Pattern | Beispiel | Quelle | Verbrauch |
+|---------|----------|--------|-----------|
+| **Melee-AltAttack** | AK74 Bayonet | `weapon.AltAttack.Melee != null` | Kein Verbrauch, immer erlaubt |
+| **Separate Alt-Ammo** | M4 M203 | `weapon.AltAttack.Ammo != null` | `m_AltClipAmmo--` |
+| **Projektil ohne eigene Ammo** | Knife-Throw, F1-AltThrow | `weapon.AltAttack.Projectile != null` | Siehe unten |
+
+#### Projektil ohne eigene Ammo (SoF2 fireFromClip)
+
+SoF2 unterscheidet über `fireFromClip` / `ammoIndex` woher die Munition kommt.
+Unser System bildet das über `weapon.Ammo.Infinite` ab:
+
+| Waffe | Primary Infinite? | AltAttack verbraucht aus | SoF2-Referenz |
+|-------|-------------------|-------------------------|---------------|
+| **Knife** | Ja (Stab = infinite) | `m_ReserveAmmo` (Wurfmesser-Pool) | bg_pmove.c:3185 "Can't throw last knife" |
+| **F1/M67 Grenade** | Nein (Clip = 1) | `m_CurrentClipAmmo` (gleiche Quelle wie Primary) | Standard fireFromClip |
+
+```
+if weapon.Ammo.Infinite → AltAttack verbraucht Reserve (Knife-Throw)
+else → AltAttack verbraucht Clip (Grenade AltThrow)
+```
+
 ---
 
 ## Attack Gating (Zusammenfassung)
@@ -201,11 +226,16 @@ Alle Combat-Actions werden server-seitig gegated:
 bool noActionRunning = m_ServerAttackFramesRemaining <= 0
                     && m_ServerReloadFramesRemaining <= 0
                     && m_ServerAltAttackFramesRemaining <= 0
-                    && !m_ServerIsSwapping;
+                    && !m_ServerIsSwapping
+                    && !m_ServerIsGrenadeCooking
+                    && m_ServerGrenadeThrowFramesRemaining <= 0;
 ```
 
 Nur wenn **keine** Action läuft, kann Attack/AltAttack/Reload/Swap starten.
 Das verhindert gleichzeitiges Feuern+Nachladen und dient als Anti-Cheat.
+
+**Zusätzlich** wird das Feuern durch das `pm_debounce`-System gegated
+(Semi-Auto, Burst, Grenade-Release). Siehe `server-authoritative-weapon-fire.md`.
 
 ---
 

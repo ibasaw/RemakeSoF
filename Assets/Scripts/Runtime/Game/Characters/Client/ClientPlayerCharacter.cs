@@ -424,6 +424,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private bool m_AttackButtonWasPressed;
 
         /// <summary>
+        /// Ob der AltAttack-Button in diesem Frame erstmals gedrueckt wurde (fuer "single"-Modus).
+        /// </summary>
+        private bool m_AltAttackButtonWasPressed;
+
+        /// <summary>
+        /// Aktueller Feuermodus fuer den Alternativangriff (aus altAttack.fireMode).
+        /// SoF2: altAttack kann eigenen fireMode haben, Default "single" fuer Projektile, "auto" sonst.
+        /// </summary>
+        private string m_CurrentAltFireMode = "auto";
+
+        /// <summary>
         /// Feuert wenn der Feuermodus gewechselt wird. Parameter: neuer Feuermodus-String.
         /// </summary>
         internal event Action<string> OnFireModeChanged;
@@ -432,6 +443,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// Aktueller Feuermodus (fuer HUD-Anzeige).
         /// </summary>
         internal string CurrentFireMode => m_CurrentFireMode;
+
+        /// <summary>
+        /// Ob im aktuellen Frame ein FireMode-Switch angefordert wurde.
+        /// Wird im naechsten RunPhysicsStep als CommandButtons.FireMode gesendet und dann cleared.
+        /// SoF2: BUTTON_FIREMODE in usercmd_t.buttons.
+        /// </summary>
+        private bool m_FireModeSwitchRequested;
 
         // ===== Weapon =====
 
@@ -509,6 +527,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// SoF2 Foreshorten-Faktor der aktuellen Waffe (0.6 = 60% Groesse in FP).
         /// </summary>
         private float m_CurrentForeshorten = 1f;
+
+        // ===== Third-Person Aim Correction =====
+
+        /// <summary>
+        /// SoF2 viewheight / playerMins Ratio (identisch mit ServerPlayerCharacter).
+        /// Wird benoetigt um die Augenposition client-seitig zu berechnen fuer
+        /// Third-Person Parallaxe-Korrektur.
+        /// </summary>
+        private const float EYE_HEIGHT_RATIO = 72f / 89f;
+
+        /// <summary>
+        /// Maximale Raycast-Distanz fuer Third-Person Aim-Correction (in Metern).
+        /// Wenn der Kamera-Ray nichts trifft, wird ein Punkt in dieser Entfernung
+        /// als Ziel verwendet. Entspricht ca. 8000 QU (maximale Waffenreichweite).
+        /// </summary>
+        private const float AIM_CORRECTION_MAX_RANGE = 203.2f;
 
         // ===== Bone / Visual References =====
 
@@ -936,6 +970,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_CurrentFireModeIndex = (m_CurrentFireModeIndex + 1) % m_AvailableFireModes.Count;
             m_CurrentFireMode = m_AvailableFireModes[m_CurrentFireModeIndex];
             m_BurstShotsRemaining = 0;
+            m_FireModeSwitchRequested = true;
             OnFireModeChanged?.Invoke(m_CurrentFireMode);
         }
 
@@ -1031,6 +1066,72 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         }
 
         /// <summary>
+        /// Third-Person Parallaxe-Korrektur: Berechnet korrigierte Yaw/Pitch-Winkel
+        /// damit der Server-Raycast (ab Augenposition) exakt den Punkt trifft,
+        /// den das Crosshair (Bildschirmmitte = Kamera-Forward) anzeigt.
+        /// In First-Person ist Kamera = Augenposition, daher keine Korrektur noetig.
+        /// In Third-Person ist die Kamera hinter/ueber dem Charakter versetzt,
+        /// wodurch Kamera-Forward und Augen-Forward auf verschiedene Punkte zeigen (Parallaxe).
+        /// </summary>
+        private void ComputeThirdPersonCorrectedAim(ref float yawAngle, ref float pitchAngle)
+        {
+            // In First-Person ist keine Korrektur noetig (Kamera = Auge)
+            if (m_CameraSwitcher == null || m_CameraSwitcher.IsFirstPerson)
+            {
+                return;
+            }
+
+            UnityEngine.Camera mainCam = UnityEngine.Camera.main;
+            if (mainCam == null)
+            {
+                return;
+            }
+
+            // Kamera-Ray durch Bildschirmmitte (= wo das Crosshair angezeigt wird)
+            Ray cameraRay = mainCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+
+            // Zielpunkt finden: Raycast von Kamera in die Welt
+            // Layermaske: alles ausser eigene Hitbox und Player-Layer
+            int hitboxLayer = LayerMask.GetMask("Hitbox");
+            int playerLayer = LayerMask.GetMask("Player");
+            int aimLayerMask = ~(hitboxLayer | playerLayer);
+
+            Vector3 worldTarget;
+            if (Physics.Raycast(cameraRay, out RaycastHit aimHit, AIM_CORRECTION_MAX_RANGE, aimLayerMask))
+            {
+                worldTarget = aimHit.point;
+            }
+            else
+            {
+                // Nichts getroffen: Zielpunkt am Ende der maximalen Reichweite
+                worldTarget = cameraRay.GetPoint(AIM_CORRECTION_MAX_RANGE);
+            }
+
+            // Augenposition des Charakters berechnen (identisch zu ServerPlayerCharacter.GetEyePosition)
+            float eyeHeight = m_Simulation.CapsuleHeight * EYE_HEIGHT_RATIO;
+            Vector3 eyePos = transform.position + new Vector3(0f, eyeHeight, 0f);
+
+            // Korrigierte Richtung: von Augenposition zum Kamera-Zielpunkt
+            Vector3 correctedDirection = (worldTarget - eyePos).normalized;
+
+            // Nur korrigieren wenn der Zielpunkt nicht hinter dem Charakter liegt
+            // (kann passieren wenn Kamera sehr nah an einer Wand ist)
+            if (correctedDirection.sqrMagnitude < 0.001f)
+            {
+                return;
+            }
+
+            // Euler-Winkel aus korrigierter Richtung extrahieren
+            // Pitch = Winkel um X-Achse (negativ = nach oben schauen)
+            // Yaw = Winkel um Y-Achse
+            Quaternion correctedRotation = Quaternion.LookRotation(correctedDirection);
+            Vector3 correctedEuler = correctedRotation.eulerAngles;
+
+            yawAngle = correctedEuler.y;
+            pitchAngle = correctedEuler.x;
+        }
+
+        /// <summary>
         /// Komplette SoF2-Physik-Pipeline pro Frame (Client-Side Prediction).
         /// Baut einen PlayerCommand aus aktuellem Input, fuehrt die Shared-Simulation aus,
         /// speichert das Ergebnis im Prediction-Buffer und sendet den Command an den Server.
@@ -1044,6 +1145,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return;
             }
 
+            // TP Aim Correction: Korrigiere Pitch/Yaw fuer Third-Person Parallaxe
+            float yawAngle = m_YawTarget != null ? m_YawTarget.eulerAngles.y : transform.eulerAngles.y;
+            float pitchAngle = m_PitchTarget != null ? m_PitchTarget.eulerAngles.x : 0f;
+            ComputeThirdPersonCorrectedAim(ref yawAngle, ref pitchAngle);
+
             // PlayerCommand aus aktuellem Input bauen (SoF2 usercmd_t)
             int buttons = 0;
             if (m_JumpRequested) buttons |= CommandButtons.Jump;
@@ -1052,17 +1158,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             if (m_IsCrouchPressed) buttons |= CommandButtons.Crouch;
             if (m_IsReloading) buttons |= CommandButtons.Reload;
             if (m_IsAltAttacking) buttons |= CommandButtons.AltAttack;
+            if (m_FireModeSwitchRequested) buttons |= CommandButtons.FireMode;
 
             PlayerCommand cmd = new()
             {
                 MoveInput = m_MoveInput,
-                YawAngle = m_YawTarget != null ? m_YawTarget.eulerAngles.y : transform.eulerAngles.y,
-                PitchAngle = m_PitchTarget != null ? m_PitchTarget.eulerAngles.x : 0f,
+                YawAngle = yawAngle,
+                PitchAngle = pitchAngle,
                 Buttons = buttons,
                 DeltaTime = Time.deltaTime,
                 SequenceNumber = m_NextSequenceNumber++,
             };
             m_JumpRequested = false;
+            m_FireModeSwitchRequested = false;
 
             // Eigenen Collider deaktivieren damit BoxCast sich nicht selbst trifft
             BoxCollider ownCollider = m_ColliderSystem != null ? m_ColliderSystem.PhysicsCollider : null;
@@ -1679,6 +1787,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                         m_IsAttacking = false;
                         m_AttackFrameAccumulator = 0f;
 
+                        // Rising-Edge-Sperre: verhindert erneuten Wurf bis Button komplett losgelassen + neu gedrueckt
+                        m_AttackButtonWasPressed = true;
+
                         InviewAnimationState throwEndState = m_FpHandsLoader.AnimationSet?.Throwend;
                         if (throwEndState != null)
                         {
@@ -1731,6 +1842,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                         m_IsAltAttacking = false;
                         m_AltAttackFrameAccumulator = 0f;
 
+                        // Rising-Edge-Sperre: verhindert erneuten Wurf bis Button komplett losgelassen + neu gedrueckt
+                        m_AltAttackButtonWasPressed = true;
+
                         InviewAnimationState altThrowEndState = m_FpHandsLoader.AnimationSet?.Altthrowend;
                         if (altThrowEndState != null)
                         {
@@ -1762,6 +1876,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 {
                     m_IsGrenadeThrowEnd = false;
                     m_FpHandsLoader.PlayIdle();
+
+                    // Rising-Edge-Sperre: Falls Button noch gehalten, neuen Wurf erst nach erneutem Druecken erlauben
+                    if (m_PlayerActions.Attack.IsPressed())
+                    {
+                        m_AttackButtonWasPressed = true;
+                    }
                 }
             }
 
@@ -1772,6 +1892,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 {
                     m_IsAltGrenadeThrowEnd = false;
                     m_FpHandsLoader.PlayIdle();
+
+                    // Rising-Edge-Sperre: Falls Button noch gehalten, neuen Wurf erst nach erneutem Druecken erlauben
+                    if (m_PlayerActions.SecondAttack.IsPressed())
+                    {
+                        m_AltAttackButtonWasPressed = true;
+                    }
                 }
             }
 
@@ -1815,9 +1941,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             bool attackPressed = m_PlayerActions.Attack.IsPressed();
             bool canStartAttack = false;
 
-            if (m_IsAttackGrenadeCook || m_IsAltAttackGrenadeCook)
+            if (m_IsAttackGrenadeCook)
             {
-                // SoF2: Granaten immer single-shot (Rising-Edge), unabhaengig vom FireMode
+                // SoF2: Cook-Granaten immer single-shot (Rising-Edge), unabhaengig vom FireMode
                 canStartAttack = attackPressed && !m_AttackButtonWasPressed;
             }
             else if (m_CurrentFireMode == "auto")
@@ -1845,6 +1971,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             if (canStartAttack && noActionRunning && hasStartAmmo)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"[Grenade-Debug] NEW ATTACK START | fireMode={m_CurrentFireMode} | cook={m_IsAttackGrenadeCook} | wasPressed={m_AttackButtonWasPressed} | ammo={m_CharacterState.CurrentClipAmmo} | throwEnd={m_IsGrenadeThrowEnd}");
+#endif
                 m_IsAttacking = true;
                 m_AttackFramesRemaining = m_AttackFrames;
                 m_AttackFrameAccumulator = 0f;
@@ -1874,9 +2003,28 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 }
             }
 
-            // AltAttack (Rechtsklick): SecondAttack Input
+            // AltAttack (Rechtsklick): SecondAttack Input mit Fire-Mode-Logik
+            bool altAttackPressed = m_PlayerActions.SecondAttack.IsPressed();
+            bool canStartAltAttack = false;
             bool hasAltAmmo = HasAltAmmo();
-            if (m_HasAltAttack && m_PlayerActions.SecondAttack.IsPressed() && noActionRunning && hasAltAmmo)
+
+            if (m_IsAltAttackGrenadeCook)
+            {
+                // SoF2: Cook-Granaten immer single-shot (Rising-Edge)
+                canStartAltAttack = altAttackPressed && !m_AltAttackButtonWasPressed;
+            }
+            else if (m_CurrentAltFireMode == "auto")
+            {
+                canStartAltAttack = altAttackPressed;
+            }
+            else if (m_CurrentAltFireMode == "single")
+            {
+                canStartAltAttack = altAttackPressed && !m_AltAttackButtonWasPressed;
+            }
+
+            m_AltAttackButtonWasPressed = altAttackPressed;
+
+            if (m_HasAltAttack && canStartAltAttack && noActionRunning && hasAltAmmo)
             {
                 m_IsAltAttacking = true;
                 m_AltAttackFramesRemaining = m_AltAttackFrames;
@@ -1892,7 +2040,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                     m_FpHandsLoader.PlayState(m_FpHandsLoader.AnimationSet?.Altfire);
                 }
             }
-            else if (m_HasAltAttack && m_PlayerActions.SecondAttack.IsPressed() && noActionRunning && !hasAltAmmo)
+            else if (m_HasAltAttack && canStartAltAttack && noActionRunning && !hasAltAmmo)
             {
                 // Leer: AltAttack-Button fuer einen Frame senden → Server spielt Empty-Sound
                 m_IsAltAttacking = true;
@@ -2290,7 +2438,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             m_BurstShotsRemaining = 0;
             m_AttackButtonWasPressed = false;
+            m_AltAttackButtonWasPressed = false;
             OnFireModeChanged?.Invoke(m_CurrentFireMode);
+
+            // AltAttack Fire-Mode: analog zu Attack, Default "single" fuer Projektile
+            string altDefaultFireMode = weapon.AltAttack?.FireMode ?? "auto";
+            if (weapon.AltAttack?.FireMode == null && weapon.AltAttack?.Projectile != null)
+            {
+                altDefaultFireMode = "single";
+            }
+            m_CurrentAltFireMode = altDefaultFireMode;
         }
 
         /// <summary>

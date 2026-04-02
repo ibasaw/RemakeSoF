@@ -91,10 +91,18 @@ namespace Tolik.RemakeSoF.Runtime.WeaponManagement
         public float Spread;
 
         /// <summary>
-        /// Muzzle-Flash-Effekt-Pfad.
+        /// Muzzle-Flash-Effekt-Pfad (1st-Person / Owner-Sicht mit depthHack).
         /// </summary>
         [JsonProperty("muzzleFlash")]
         public string MuzzleFlash;
+
+        /// <summary>
+        /// Muzzle-Flash-Effekt-Pfad fuer 3rd-Person-Sicht (andere Spieler sehen diesen Effekt).
+        /// SoF2: _inworld Variante ohne depthHack, groessere Partikel.
+        /// Falls leer, wird MuzzleFlash fuer alle verwendet.
+        /// </summary>
+        [JsonProperty("muzzleFlashInworld")]
+        public string MuzzleFlashInworld;
 
         /// <summary>
         /// Muzzle-Smoke-Effekt-Pfad.

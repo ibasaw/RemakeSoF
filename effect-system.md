@@ -623,6 +623,81 @@ Der Client spawnt aus diesen 3 Effect-IDs:
               │   └─ TracerClientRpc(6 Parameter)
               │
               └─ ProcessProjectileAttack()
+```
+
+---
+
+## Flashbang-Effekt (M84 Stun Grenade)
+
+### SoF2-Referenz
+
+**Quellcode:** `cg_weapons.c` → `CG_FlashBang()`, `cg_draw.c` → `CG_DrawFlashBang()`
+
+SoF2 nutzt `damageType "flash"` für die M84 Stun Grenade. Bei Explosion wird ein fullscreen weisses Overlay gezeichnet, dessen Dauer und Intensität distanzbasiert skaliert. Es gibt **keine Hold-Phase** in SoF2 (sofortiger linearer Fade), aber wir fügen eine intensitätsabhängige Hold-Phase hinzu für authentischeres "hart geblendet"-Feeling.
+
+### Konstanten
+
+| Konstante | SoF2-Wert | Unity-Wert | Beschreibung |
+|-----------|-----------|------------|--------------|
+| `MAX_FLASHBANG_AFFECT_DISTANCE` | 1750 QU | 44.45m | Voller Effektradius (lineare Skalierung) |
+| `MAX_FLASHBANG_DISTANCE` | 3000 QU | 76.2m | Maximaler Radius überhaupt |
+| `MAX_FLASHBANG_TIME` | 11000ms | 11s | Maximale Fade-Dauer bei voller Intensität |
+| *(Unity-Erweiterung)* | — | 1.5s | Maximale Hold-Dauer (volles Weiss) |
+| *(Unity-Erweiterung)* | — | 0.5 | Hold-Intensity-Threshold (Hold erst ab 50%) |
+
+### Intensitäts-Berechnung
+
+```
+TriggerFlash(explosionPosition)
+  ├─ distance = Vector3.Distance(camera, explosion)
+  ├─ distance > FLASH_MAX_RADIUS (76.2m)? → kein Effekt
+  ├─ Blickrichtung: dot = Dot(camera.forward, toExplosion)
+  │   └─ dot < 0.5 → Distanz-Strafe addieren (bis +50% des Affect-Radius)
+  ├─ invertedDistance = FLASH_AFFECT_RADIUS - effectiveDistance
+  │   └─ invertedDistance <= 0 → kein Effekt
+  ├─ intensity = Clamp01(invertedDistance / FLASH_AFFECT_RADIUS)
+  │   └─ intensity < 0.05 → kein Effekt
+  └─ ActivateFlash(intensity)
+```
+
+### Hold- und Fade-Phase
+
+```
+Update() / OnGUI():
+  ├─ fadeDuration = MAX_FADE_DURATION (11s) × intensity
+  ├─ holdDuration:
+  │   ├─ intensity <= 0.5 → holdDuration = 0 (kein Hold)
+  │   └─ intensity > 0.5 → holdDuration = MAX_HOLD_DURATION × (intensity - 0.5) / 0.5
+  ├─ elapsed < holdDuration → alpha = intensity (volles Weiss)
+  ├─ elapsed >= holdDuration → alpha = intensity × (1 - fadeProgress)
+  └─ totalDuration = holdDuration + fadeDuration
+```
+
+### Beispielwerte
+
+| Szenario | Distanz | Blickrichtung | Intensität | Hold | Fade | Total |
+|----------|---------|---------------|------------|------|------|-------|
+| Direkttreffer, hinschauen | 0m | direkt | 1.0 | 1.5s | 11.0s | 12.5s |
+| Nah, hinschauen | 10m | direkt | ~0.77 | ~0.81s | ~8.5s | ~9.3s |
+| Mittel, seitlich | 30m | 90° | ~0.15 | 0s | ~1.65s | ~1.65s |
+| Nah, wegschauen | 10m | 180° | ~0.27 | 0s | ~3.0s | ~3.0s |
+| Am Rand | 44m+ | egal | ~0.01 | 0s | ~0.11s | ~0.11s |
+
+### Vergleich: Alt vs. Neu vs. SoF2
+
+| Aspekt | Alt (vor Rework) | Neu (aktuell) | SoF2 Original |
+|--------|------------------|---------------|----------------|
+| Affect-Radius | 20.32m | 44.45m | 1750 QU (44.45m) |
+| Max-Radius | 20.32m | 76.2m | 3000 QU (76.2m) |
+| Hold-Dauer | 0.3s (fix) | 0–1.5s (skaliert) | 0s (kein Hold) |
+| Fade-Dauer | 2.5s (fix) | 0–11s (skaliert) | 0–11s (skaliert) |
+| Gesamtdauer max | 2.8s | 12.5s | 11.0s |
+| Blickrichtung | dot-product lerp | Distanz-Strafe | Distanz-basiert |
+| Skalierung | keine | linear mit Intensität | linear mit Invertierung |
+
+### Datei
+
+- `Assets/Scripts/Runtime/Game/Effects/FlashbangScreenEffect.cs`
                   └─ ProjectileSpawnClientRpc(11 Parameter)
                             │
                             ▼

@@ -75,8 +75,8 @@
         "size": {
           "startMin": 0.0254,
           "startMax": 0.0508,
-          "endMin": 0.381,
-          "endMax": 0.508,
+          "endMin": 0.1905,
+          "endMax": 0.254,
           "curve": "linear"
         }
       },
@@ -285,92 +285,180 @@
     "segments": [
       {
         "type": "particle",
-        "name": "blood_stream",
+        "name": "blood_line",
         "flags": [
+          "usePhysics",
+          "impactKills",
           "useAlpha"
         ],
-        "texture": "gfx/misc/jk_drop",
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "texture": "gfx/misc/bp_smoke01",
         "particle": {
-          "countMin": 12,
-          "countMax": 18,
-          "lifetimeMin": 0.6,
-          "lifetimeMax": 1.0,
+          "countMin": 8,
+          "countMax": 8,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.9,
+          "delayMin": 0.0,
+          "delayMax": 0.15,
           "velocityMin": [
-            2.0,
-            -0.3,
-            -0.3
+            4.445,
+            -0.0254,
+            -0.0254
           ],
           "velocityMax": [
-            4.0,
-            0.3,
-            0.3
+            4.572,
+            0.0254,
+            0.0254
           ],
-          "gravityModifier": -3.0,
-          "burst": true
+          "gravityModifier": -5.08,
+          "burst": false
         },
         "color": {
           "startMin": [
-            0.55,
-            0.0,
-            0.02
+            0.302,
+            0.102,
+            0.102
           ],
           "startMax": [
-            0.45,
-            0.0,
-            0.01
-          ]
-        },
-        "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
-          "endMin": 0.0,
-          "endMax": 0.0,
-          "parm": 60.0
-        },
-        "size": {
-          "startMin": 0.015,
-          "startMax": 0.03,
-          "endMin": 0.005,
-          "endMax": 0.01
-        }
-      },
-      {
-        "type": "particle",
-        "name": "blood_mist",
-        "flags": [
-          "useAlpha"
-        ],
-        "texture": "gfx/misc/jk_smoke4",
-        "particle": {
-          "countMin": 2,
-          "countMax": 4,
-          "lifetimeMin": 0.4,
-          "lifetimeMax": 0.7,
-          "burst": true
-        },
-        "color": {
-          "startMin": [
-            0.5,
+            0.302,
+            0.102,
+            0.102
+          ],
+          "endMin": [
+            0.502,
             0.0,
             0.0
           ],
-          "startMax": [
-            0.4,
+          "endMax": [
+            0.502,
             0.0,
             0.0
           ]
         },
         "alpha": {
           "startMin": 0.5,
-          "startMax": 0.6,
+          "startMax": 0.5,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 40.0,
+          "parmMax": 60.0
+        }
+      },
+      {
+        "type": "particle",
+        "name": "emmits_effect",
+        "flags": [
+          "usePhysics",
+          "impactKills",
+          "impactFx",
+          "useAlpha"
+        ],
+        "texture": "gfx/misc/jk_drop",
+        "particle": {
+          "lifetimeMin": 0.9,
+          "lifetimeMax": 0.9,
+          "gravityModifier": -5.08
+        },
+        "color": {
+          "startMin": [
+            0.8235,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.3922,
+            0.0,
+            0.0
+          ],
+          "endMin": [
+            0.8353,
+            0.0,
+            0.0
+          ],
+          "endMax": [
+            0.502,
+            0.0,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 0.1,
+          "startMax": 0.1,
           "endMin": 0.0,
           "endMax": 0.0
         },
         "size": {
-          "startMin": 0.02,
-          "startMax": 0.04,
-          "endMin": 0.15,
-          "endMax": 0.25
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 0.0127,
+          "endMax": 0.0127
+        }
+      },
+      {
+        "type": "tail",
+        "flags": [
+          "usePhysics",
+          "impactKills",
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "evenDistribution",
+          "rgbComponentInterpolation"
+        ],
+        "texture": "gfx/misc/jk_smoke4",
+        "particle": {
+          "countMin": 16,
+          "countMax": 16,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.9,
+          "delayMin": 0.0,
+          "delayMax": 0.2,
+          "velocityMin": [
+            4.445,
+            -0.0254,
+            -0.0254
+          ],
+          "velocityMax": [
+            4.572,
+            0.0254,
+            0.0254
+          ],
+          "gravityModifier": -5.08,
+          "burst": false
+        },
+        "color": {
+          "startMin": [
+            0.5333,
+            0.0824,
+            0.0824
+          ],
+          "startMax": [
+            0.3725,
+            0.0628,
+            0.0628
+          ]
+        },
+        "alpha": {
+          "startMin": 0.6,
+          "startMax": 0.6,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 30.0
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0152,
+          "endMin": 0.0381,
+          "endMax": 0.0254
+        },
+        "length": {
+          "startMin": 0.254,
+          "startMax": 0.254,
+          "endMin": 0.0508,
+          "endMax": 0.0508,
+          "curve": "linear"
         }
       }
     ]
@@ -381,53 +469,180 @@
     "segments": [
       {
         "type": "particle",
-        "name": "blood_stream",
+        "name": "blood_line",
         "flags": [
+          "usePhysics",
+          "impactKills",
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "texture": "gfx/misc/bp_smoke01",
+        "particle": {
+          "countMin": 8,
+          "countMax": 8,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.9,
+          "delayMin": 0.0,
+          "delayMax": 0.25,
+          "velocityMin": [
+            2.032,
+            -0.0254,
+            -0.0254
+          ],
+          "velocityMax": [
+            2.032,
+            0.0254,
+            0.0254
+          ],
+          "gravityModifier": -5.08,
+          "burst": false
+        },
+        "color": {
+          "startMin": [
+            0.302,
+            0.102,
+            0.102
+          ],
+          "startMax": [
+            0.302,
+            0.102,
+            0.102
+          ],
+          "endMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "endMax": [
+            0.502,
+            0.0,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 40.0,
+          "parmMax": 60.0
+        }
+      },
+      {
+        "type": "particle",
+        "name": "emmits_effect",
+        "flags": [
+          "usePhysics",
+          "impactKills",
+          "impactFx",
           "useAlpha"
         ],
         "texture": "gfx/misc/jk_drop",
         "particle": {
-          "countMin": 6,
-          "countMax": 10,
-          "lifetimeMin": 0.4,
-          "lifetimeMax": 0.7,
-          "velocityMin": [
-            1.0,
-            -0.2,
-            -0.2
-          ],
-          "velocityMax": [
-            2.5,
-            0.2,
-            0.2
-          ],
-          "gravityModifier": -2.5,
-          "burst": true
+          "lifetimeMin": 0.8,
+          "lifetimeMax": 0.8,
+          "gravityModifier": -5.08
         },
         "color": {
           "startMin": [
-            0.55,
+            0.8235,
             0.0,
-            0.02
+            0.0
           ],
           "startMax": [
-            0.45,
+            0.3922,
             0.0,
-            0.01
+            0.0
+          ],
+          "endMin": [
+            0.8353,
+            0.0,
+            0.0
+          ],
+          "endMax": [
+            0.502,
+            0.0,
+            0.0
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
+          "startMin": 0.1,
+          "startMax": 0.1,
           "endMin": 0.0,
-          "endMax": 0.0,
-          "parm": 60.0
+          "endMax": 0.0
         },
         "size": {
-          "startMin": 0.01,
-          "startMax": 0.02,
-          "endMin": 0.003,
-          "endMax": 0.008
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 0.0127,
+          "endMax": 0.0127
+        }
+      },
+      {
+        "type": "tail",
+        "flags": [
+          "usePhysics",
+          "impactKills",
+          "useAlpha"
+        ],
+        "spawnFlags": [
+          "evenDistribution",
+          "rgbComponentInterpolation"
+        ],
+        "texture": "gfx/misc/jk_smoke4",
+        "particle": {
+          "countMin": 15,
+          "countMax": 15,
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.9,
+          "delayMin": 0.0,
+          "delayMax": 0.25,
+          "velocityMin": [
+            2.032,
+            -0.0254,
+            -0.0254
+          ],
+          "velocityMax": [
+            2.032,
+            0.0254,
+            0.0254
+          ],
+          "gravityModifier": -5.08,
+          "burst": false
+        },
+        "color": {
+          "startMin": [
+            0.5333,
+            0.0824,
+            0.0824
+          ],
+          "startMax": [
+            0.3725,
+            0.0628,
+            0.0628
+          ]
+        },
+        "alpha": {
+          "startMin": 0.6,
+          "startMax": 0.6,
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "parm": 30.0
+        },
+        "size": {
+          "startMin": 0.0102,
+          "startMax": 0.0152,
+          "endMin": 0.0381,
+          "endMax": 0.0254
+        },
+        "length": {
+          "startMin": 0.1016,
+          "startMax": 0.1016,
+          "endMin": 0.0508,
+          "endMax": 0.0508,
+          "curve": "linear"
         }
       }
     ]
@@ -573,10 +788,10 @@
           "parmMax": 75.0
         },
         "size": {
-          "startMin": 0.1016,
-          "startMax": 0.127,
-          "endMin": 0.254,
-          "endMax": 0.3048,
+          "startMin": 0.0508,
+          "startMax": 0.0635,
+          "endMin": 0.127,
+          "endMax": 0.1524,
           "parm": 50.0,
           "parmMax": 80.0,
           "curve": "clamp"

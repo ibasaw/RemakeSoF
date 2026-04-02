@@ -130,6 +130,13 @@ namespace Tolik.RemakeSoF.Runtime.WeaponManagement
         public WeaponHandsDefinition Hands;
 
         /// <summary>
+        /// Reload-Sound-Events: Definiert wann waehrend der Reload-Animation welche Sounds gespielt werden.
+        /// SoF2-Referenz: Animation-Events in GLM-Dateien triggerten clipOut, clipIn, boltRelease etc.
+        /// </summary>
+        [JsonProperty("reloadSounds")]
+        public ReloadSoundDefinition ReloadSounds;
+
+        /// <summary>
         /// FP-Composite-Animationen (SoF2 SOF2.inview).
         /// Pro State (idle, fire, reload, ready, done) separate Clips fuer Waffe, lhand, rhand.
         /// Speeds sind MP-Werte (mp_speed wo vorhanden, sonst speed).

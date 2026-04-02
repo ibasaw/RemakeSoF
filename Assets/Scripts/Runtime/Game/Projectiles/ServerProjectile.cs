@@ -73,6 +73,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Ob das Projektil an einer Oberflaeche haftet (Sticky-Detonation).</summary>
         private bool m_IsStuck;
 
+        /// <summary>Explosion-Effect-ID fuer Feuer/Phosphorus-Erkennung (z.B. "effects/explosions/incendiary_explosion_mp").</summary>
+        private string m_ExplosionEffectId;
+
         /// <summary>Eindeutige ID fuer Visual-Cleanup bei Sticky-Pickup.</summary>
         private uint m_ProjectileId;
 
@@ -117,9 +120,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             int knockback,
             ulong ownerClientId,
             string weaponName = "",
-            uint projectileId = 0)
+            uint projectileId = 0,
+            string explosionEffectId = "")
         {
             m_ProjectileId = projectileId;
+            m_ExplosionEffectId = explosionEffectId ?? "";
             transform.position = spawnPosition;
             m_Velocity = direction.normalized * (speedQU * SOF2_UNIT_SCALE);
             m_GravityScale = gravityScale;
@@ -343,6 +348,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             Collider[] hits = Physics.OverlapSphere(explosionPoint, radiusMeters, m_ExplosionLayerMask);
 
             // Pro Spieler: Damage mit Distanz-Falloff sammeln
+            // SoF2 G_RadiusDamage → CanDamage(): Trace von Explosion zu Entity-Origin.
+            // Wenn Wand dazwischen → kein Schaden (Granate um Ecke = sicher).
+            int losMask = ~(m_PlayerLayerMask | m_HitboxLayerMask);
             System.Collections.Generic.Dictionary<NetworkedCharacterState, (float damage, Vector3 hitPos)> damagePerTarget =
                 new();
 
@@ -351,6 +359,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 NetworkedCharacterState targetState =
                     col.GetComponentInParent<NetworkedCharacterState>();
                 if (targetState == null)
+                {
+                    continue;
+                }
+
+                // SoF2 CanDamage: Linecast von Explosion zum Spieler-Zentrum.
+                // Wenn Welt-Geometrie blockiert → kein Damage.
+                Vector3 targetCenter = col.bounds.center;
+                if (Physics.Linecast(explosionPoint, targetCenter, losMask))
                 {
                     continue;
                 }
@@ -409,6 +425,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 }
             }
 
+            // Incendiary/Phosphorus: Persistente Feuer-Schadenszone am Boden spawnen (SoF2-authentisch)
+            SpawnFireDamageZoneIfNeeded(explosionPoint);
+
             // Event fuer Visual-RPC
             OnDetonated?.Invoke(explosionPoint);
 
@@ -418,6 +437,47 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
             // Zerstoeren
             Destroy(gameObject);
+        }
+
+        /// <summary>
+        /// Incendiary (ANM14) und Phosphorus (M15): Persistente Feuer-Schadenszone am Boden.
+        /// SoF2-authentisch: Feuer verursacht Burn-Damage-over-Time an Spielern im Bereich.
+        /// ANM14: 10s Dauer, 5 DMG/0.5s (100 DMG total bei durchgehendem Kontakt).
+        /// M15: 6s Dauer, 3 DMG/0.5s (36 DMG total).
+        /// </summary>
+        private void SpawnFireDamageZoneIfNeeded(Vector3 explosionPoint)
+        {
+            if (string.IsNullOrEmpty(m_ExplosionEffectId))
+            {
+                return;
+            }
+
+            bool isIncendiary = m_ExplosionEffectId.Contains("incendiary");
+            bool isPhosphorus = m_ExplosionEffectId.Contains("phosphorus");
+
+            if (!isIncendiary && !isPhosphorus)
+            {
+                return;
+            }
+
+            string zoneName = isIncendiary ? "IncendiaryFireZone" : "PhosphorusFireZone";
+            GameObject zoneObj = new(zoneName);
+            FireDamageZone zone = zoneObj.AddComponent<FireDamageZone>();
+
+            if (isIncendiary)
+            {
+                // ANM14: 10s brennend, 5 DMG/0.5s, Radius == Explosionsradius
+                zone.Initialize(explosionPoint, m_Radius, 5, 0.5f, 10f, m_OwnerClientId);
+            }
+            else
+            {
+                // M15 Phosphorus: 6s brennend, 3 DMG/0.5s, etwas kleinerer Radius
+                zone.Initialize(explosionPoint, Mathf.RoundToInt(m_Radius * 0.8f), 3, 0.5f, 6f, m_OwnerClientId);
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[ServerProjectile] {zoneName} spawned at {explosionPoint} | Duration={( isIncendiary ? 10 : 6 )}s");
+#endif
         }
 
         /// <summary>

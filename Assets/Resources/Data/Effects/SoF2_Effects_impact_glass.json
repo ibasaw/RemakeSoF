@@ -81,8 +81,8 @@
           "curve": "linear nonlinear"
         },
         "size": {
-          "endMin": 0.762,
-          "endMax": 1.016,
+          "endMin": 0.1905,
+          "endMax": 0.254,
           "curve": "linear"
         }
       },
@@ -111,8 +111,8 @@
           "curve": "linear nonlinear"
         },
         "size": {
-          "endMin": 0.3048,
-          "endMax": 0.4572,
+          "endMin": 0.1524,
+          "endMax": 0.2286,
           "curve": "linear"
         }
       },

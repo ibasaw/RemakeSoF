@@ -842,10 +842,10 @@
           "curve": "linear"
         },
         "size": {
-          "startMin": 0.0508,
-          "startMax": 0.0762,
-          "endMin": 2.54,
-          "endMax": 2.54,
+          "startMin": 0.0282,
+          "startMax": 0.0353,
+          "endMin": 0.635,
+          "endMax": 0.635,
           "curve": "linear"
         }
       },
@@ -1937,7 +1937,7 @@
         },
         "size": {
           "startMin": 0.0051,
-          "startMax": 0.0051,
+          "startMax": 0.0063,
           "endMin": 0.0889,
           "endMax": 0.1143,
           "curve": "linear"
@@ -2103,6 +2103,1683 @@
           "lifetime": 0.05,
           "range": 4.0,
           "intensity": 5.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/mflash_ak74_inworld",
+    "displayName": "Mflash Ak74 Inworld",
+    "segments": [
+      {
+        "name": "flash",
+        "type": "particle",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "flags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.2,
+          "lifetimeMax": 0.25,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -5,
+          "rotationSpeedMax": 5,
+          "originMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0762,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.381,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.381,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "color": {
+          "startMin": [
+            1,
+            0.9216,
+            0.749
+          ],
+          "startMax": [
+            1,
+            1,
+            1
+          ]
+        },
+        "alpha": {
+          "startMin": 0.7,
+          "startMax": 0.8,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 50,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.2032,
+          "startMax": 0.2286,
+          "endMin": 0.3048,
+          "endMax": 0.3048,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "embers",
+        "type": "particle",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "flags": [
+          "absoluteAccel",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.15,
+          "lifetimeMax": 0.15,
+          "originMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.1778,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.635,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.762,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.3,
+          "startMax": 0.3,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 40,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.254,
+          "startMax": 0.254,
+          "endMin": 0.0762,
+          "endMax": 0.0762,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke4",
+        "flags": [
+          "useAlpha"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 1,
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.55,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -9,
+          "rotationSpeedMax": 9,
+          "cullrange": 5.08,
+          "originMin": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0762,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.254,
+            -0.1016,
+            -0.1016
+          ],
+          "velocityMax": [
+            0.3048,
+            0.1016,
+            0.1016
+          ],
+          "gravityModifierMin": -0.103568,
+          "gravityModifierMax": -0.155352
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.3,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 40,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.1016,
+          "startMax": 0.1016,
+          "endMin": 0.254,
+          "endMax": 0.254,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/mflash_m3_inworld",
+    "displayName": "Mflash M3 Inworld",
+    "segments": [
+      {
+        "name": "flash",
+        "type": "particle",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "flags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -5,
+          "rotationSpeedMax": 5,
+          "originMin": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.254,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.6,
+          "startMax": 0.6,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 40,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.1778,
+          "startMax": 0.2032,
+          "endMin": 0.3302,
+          "endMax": 0.3302,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "line",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "flags": [
+          "orgOnSphere"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "cullrange": 5.08,
+          "originMin": [
+            0.1778,
+            -0.1016,
+            -0.1016
+          ],
+          "originMax": [
+            0.1778,
+            0.1016,
+            0.1016
+          ]
+        },
+        "alpha": {
+          "startMin": 0.1,
+          "startMax": 0.3,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "endMin": 0.127,
+          "endMax": 0.1778,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke5",
+        "flags": [
+          "useAlpha",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.6,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -9,
+          "rotationSpeedMax": 9,
+          "cullrange": 5.08,
+          "originMin": [
+            0.1016,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.508,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.889,
+            0.0,
+            0.0
+          ],
+          "gravityModifierMin": -0.103568,
+          "gravityModifierMax": -0.207136,
+          "burst": true
+        },
+        "color": {
+          "startMin": [
+            0.6745,
+            0.6745,
+            0.6745
+          ],
+          "startMax": [
+            0.3569,
+            0.3569,
+            0.3922
+          ]
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 20,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.1016,
+          "startMax": 0.127,
+          "endMin": 0.254,
+          "endMax": 0.3048,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/mflash_m4_inworld",
+    "displayName": "Mflash M4 Inworld",
+    "segments": [
+      {
+        "name": "glow",
+        "type": "particle",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "particle": {
+          "lifetimeMin": 0.2,
+          "lifetimeMax": 0.2,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "originMin": [
+            0.0254,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            1.016,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            1.27,
+            0.0,
+            0.0
+          ],
+          "accelerationMin": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "accelerationMax": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 0.8,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.1778,
+          "startMax": 0.3048,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "line",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "cullrange": 15.24,
+          "originMin": [
+            0.0,
+            0.254,
+            0.127
+          ],
+          "originMax": [
+            0.0,
+            0.381,
+            0.127
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0254,
+          "endMin": 0.0508,
+          "endMax": 0.127,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Copy of Unnamed Line 9",
+        "type": "line",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "cullrange": 15.24,
+          "originMin": [
+            0.0,
+            -0.254,
+            -0.127
+          ],
+          "originMax": [
+            0.0,
+            -0.381,
+            -0.127
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0254,
+          "endMin": 0.0508,
+          "endMax": 0.127,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Copy of Copy of Unnamed Line 9",
+        "type": "line",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "cullrange": 15.24,
+          "originMin": [
+            0.0,
+            -0.127,
+            0.254
+          ],
+          "originMax": [
+            0.0,
+            -0.127,
+            0.381
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "endMin": 0.0762,
+          "endMax": 0.127,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Copy of Copy of Copy of Unnamed",
+        "type": "line",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "cullrange": 15.24,
+          "originMin": [
+            0.0,
+            0.127,
+            -0.254
+          ],
+          "originMax": [
+            0.0,
+            0.127,
+            -0.381
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "endMin": 0.0762,
+          "endMax": 0.127,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "center",
+        "type": "line",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "originMin": [
+            0.254,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.508,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.6,
+          "startMax": 0.3,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "endMin": 0.0762,
+          "endMax": 0.127,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke5",
+        "flags": [
+          "useAlpha",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.6,
+          "rotationMin": 0,
+          "rotationMax": -360,
+          "rotationSpeedMin": -9,
+          "rotationSpeedMax": 9,
+          "cullrange": 5.08,
+          "originMin": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0762,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.508,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.762,
+            0.0,
+            0.0
+          ],
+          "gravityModifierMin": -0.12946,
+          "gravityModifierMax": -0.155352,
+          "burst": true
+        },
+        "color": {
+          "startMin": [
+            0.4863,
+            0.4863,
+            0.5294
+          ],
+          "startMax": [
+            0.2941,
+            0.2941,
+            0.3216
+          ]
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 20,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.1016,
+          "startMax": 0.127,
+          "endMin": 0.254,
+          "endMax": 0.3048,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/mflash_m60_inworld",
+    "displayName": "Mflash M60 Inworld",
+    "segments": [
+      {
+        "name": "glow",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mflash_ak74",
+        "particle": {
+          "lifetimeMin": 0.125,
+          "lifetimeMax": 0.125,
+          "originMin": [
+            0.0254,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            1.778,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            1.778,
+            0.0,
+            0.0
+          ],
+          "accelerationMin": [
+            0.381,
+            0.0,
+            0.0
+          ],
+          "accelerationMax": [
+            0.381,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 0.8,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 40,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.2286,
+          "startMax": 0.254,
+          "endMin": 0.1016,
+          "endMax": 0.1016,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "line",
+        "texture": "gfx/misc/jk_mflash_ak74",
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "cullrange": 8.89,
+          "originMin": [
+            0.0,
+            0.254,
+            0.127
+          ],
+          "originMax": [
+            0.0,
+            0.254,
+            0.254
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 30,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "endMin": 0.0762,
+          "endMax": 0.1016,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Copy of Unnamed Line 9",
+        "type": "line",
+        "texture": "gfx/misc/jk_mflash_ak74",
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "cullrange": 8.89,
+          "originMin": [
+            0.0,
+            -0.254,
+            -0.127
+          ],
+          "originMax": [
+            0.0,
+            -0.254,
+            -0.254
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 20,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "endMin": 0.0762,
+          "endMax": 0.1016,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Copy of Copy of Unnamed Line 9",
+        "type": "line",
+        "texture": "gfx/misc/jk_mflash_ak74",
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "cullrange": 8.89,
+          "originMin": [
+            0.0,
+            -0.127,
+            0.254
+          ],
+          "originMax": [
+            0.0,
+            -0.254,
+            0.254
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 20,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "endMin": 0.0762,
+          "endMax": 0.1016,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Copy of Copy of Copy of Unnamed",
+        "type": "line",
+        "texture": "gfx/misc/jk_mflash_ak74",
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "cullrange": 8.89,
+          "originMin": [
+            0.0,
+            0.127,
+            -0.254
+          ],
+          "originMax": [
+            0.0,
+            0.254,
+            -0.254
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 20,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "endMin": 0.0762,
+          "endMax": 0.1016,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke4",
+        "flags": [
+          "useAlpha",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.45,
+          "lifetimeMax": 0.6,
+          "rotationMin": 0,
+          "rotationMax": -360,
+          "rotationSpeedMin": -9,
+          "rotationSpeedMax": 9,
+          "cullrange": 6.35,
+          "originMin": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0762,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.254,
+            -0.0762,
+            -0.0762
+          ],
+          "velocityMax": [
+            0.508,
+            0.0762,
+            0.0762
+          ],
+          "gravityModifierMin": -0.103568,
+          "gravityModifierMax": -0.155352,
+          "burst": true
+        },
+        "color": {
+          "startMin": [
+            1,
+            1,
+            1
+          ],
+          "startMax": [
+            0.4863,
+            0.4863,
+            0.5294
+          ]
+        },
+        "alpha": {
+          "startMin": 0.7,
+          "startMax": 0.8,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.1016,
+          "startMax": 0.127,
+          "endMin": 0.2032,
+          "endMax": 0.254,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "glow2",
+        "type": "particle",
+        "texture": "gfx/misc/jk_uzi_flash",
+        "particle": {
+          "lifetimeMin": 0.115,
+          "lifetimeMax": 0.115,
+          "cullrange": 11.43,
+          "originMin": [
+            0.0254,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.762,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.762,
+            0.0,
+            0.0
+          ],
+          "accelerationMin": [
+            0.1778,
+            0.0,
+            0.0
+          ],
+          "accelerationMax": [
+            0.1778,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 0.8,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 40,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.0762,
+          "startMax": 0.0762,
+          "endMin": 0.127,
+          "endMax": 0.127,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "glow3",
+        "type": "particle",
+        "texture": "gfx/misc/jk_uzi_flash",
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "cullrange": 6.35,
+          "originMin": [
+            0.0254,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "accelerationMin": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "accelerationMax": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.8,
+          "startMax": 0.8,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 40,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.127,
+          "endMin": 0.2032,
+          "endMax": 0.2286,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/mflash_mm1_inworld",
+    "displayName": "Mflash Mm1 Inworld",
+    "segments": [
+      {
+        "name": "flash",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mflash_ak74",
+        "flags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.15,
+          "lifetimeMax": 0.2,
+          "rotationMin": 20,
+          "rotationMax": 45,
+          "originMin": [
+            0.0254,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0508,
+            0.0,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762,
+          "endMin": 0.2286,
+          "endMax": 0.3556,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "ring",
+        "type": "orientedParticle",
+        "texture": "gfx/misc/jk_ring",
+        "particle": {
+          "lifetimeMin": 0.25,
+          "lifetimeMax": 0.3,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.15,
+          "startMax": 0.15,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "endMin": 0.635,
+          "endMax": 0.762,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke3",
+        "flags": [
+          "useAlpha",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.5,
+          "lifetimeMax": 0.5,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -10,
+          "rotationSpeedMax": 10,
+          "velocityMin": [
+            0.508,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.889,
+            0.0,
+            0.0
+          ],
+          "gravityModifierMin": -0.103568,
+          "gravityModifierMax": -0.12946,
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.3,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762,
+          "endMin": 0.381,
+          "endMax": 0.508,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/mflash_pistols_inworld",
+    "displayName": "Mflash Pistols Inworld",
+    "segments": [
+      {
+        "name": "flash",
+        "type": "particle",
+        "texture": "gfx/misc/jk_sniper_flash",
+        "flags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.15,
+          "lifetimeMax": 0.2,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -9,
+          "rotationSpeedMax": 9,
+          "originMin": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0762,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.254,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 0.5,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 25,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.2032,
+          "endMin": 0.2794,
+          "endMax": 0.3048,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/mflash_uzi_inworld",
+    "displayName": "Mflash Uzi Inworld",
+    "segments": [
+      {
+        "name": "flash",
+        "type": "particle",
+        "texture": "gfx/misc/jk_uzi_flash",
+        "flags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "rotationMin": 3,
+          "rotationMax": 300,
+          "rotationSpeedMin": 4,
+          "rotationSpeedMax": 5,
+          "originMin": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.25,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 10,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.127,
+          "endMin": 0.254,
+          "endMax": 0.254,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "embers",
+        "type": "particle",
+        "texture": "gfx/misc/jk_uzi_flash",
+        "flags": [
+          "absoluteAccel",
+          "evenDistribution",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.2,
+          "lifetimeMax": 0.2,
+          "originMin": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            1.016,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            1.143,
+            0.0,
+            0.0
+          ]
+        },
+        "color": {
+          "startMin": [
+            0.9922,
+            0.9333,
+            0.5098
+          ],
+          "startMax": [
+            1,
+            1,
+            1
+          ]
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.25,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.1778,
+          "endMin": 0.0254,
+          "endMax": 0.0508,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "Copy of Copy of flash",
+        "type": "particle",
+        "texture": "gfx/misc/jk_uzi_flash",
+        "flags": [
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "rotationMin": 3,
+          "rotationMax": 300,
+          "rotationSpeedMin": -5,
+          "rotationSpeedMax": 5,
+          "cullrange": 5.08,
+          "originMin": [
+            0.0762,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.1778,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.15,
+          "startMax": 0.2,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0762,
+          "startMax": 0.0762,
+          "endMin": 0.1524,
+          "endMax": 0.1524,
+          "curve": "linear"
+        }
+      },
+      {
+        "type": "line",
+        "texture": "gfx/misc/jk_uzi_flash",
+        "particle": {
+          "lifetimeMin": 0.1,
+          "lifetimeMax": 0.1,
+          "cullrange": 5.08,
+          "originMin": [
+            0.254,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.508,
+            0.0,
+            0.0
+          ],
+          "burst": true
+        },
+        "alpha": {
+          "startMin": 0.15,
+          "startMax": 0.2,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "endMin": 0.0762,
+          "endMax": 0.127,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "smoke",
+        "type": "particle",
+        "texture": "gfx/misc/jk_smoke5",
+        "flags": [
+          "useAlpha",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.4,
+          "lifetimeMax": 0.55,
+          "rotationMin": 0,
+          "rotationMax": -360,
+          "rotationSpeedMin": -9,
+          "rotationSpeedMax": 9,
+          "cullrange": 5.08,
+          "originMin": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0762,
+            0.0,
+            0.0
+          ],
+          "velocityMin": [
+            0.381,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.762,
+            0.0,
+            0.0
+          ],
+          "gravityModifierMin": -0.103568,
+          "gravityModifierMax": -0.155352,
+          "burst": true
+        },
+        "color": {
+          "startMin": [
+            0.4863,
+            0.4863,
+            0.5294
+          ],
+          "startMax": [
+            0.2941,
+            0.2941,
+            0.3216
+          ]
+        },
+        "alpha": {
+          "startMin": 0.3,
+          "startMax": 0.4,
+          "endMin": 0,
+          "endMax": 0,
+          "parm": 20,
+          "curve": "nonlinear"
+        },
+        "size": {
+          "startMin": 0.1016,
+          "startMax": 0.1016,
+          "endMin": 0.254,
+          "endMax": 0.254,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/mflash_m1911a1",
+    "displayName": "Mflash M1911A1",
+    "segments": [
+      {
+        "name": "flash",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mflash_ak74",
+        "flags": [
+          "depthHack",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.3,
+          "lifetimeMax": 0.35,
+          "rotationMin": 20,
+          "rotationMax": 45
+        },
+        "alpha": {
+          "startMin": 0.7,
+          "startMax": 0.9,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762,
+          "endMin": 0.1016,
+          "endMax": 0.1524,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "BURST",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mflash_ak74",
+        "flags": [
+          "depthHack"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.2,
+          "lifetimeMax": 0.3,
+          "rotationMin": 3,
+          "rotationMax": 300,
+          "rotationSpeedMin": 4,
+          "rotationSpeedMax": 5
+        },
+        "alpha": {
+          "startMin": 0.1,
+          "startMax": 0.3,
+          "endMin": 0.2,
+          "endMax": 0.3,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 0.0762,
+          "endMax": 0.1016,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "BURST2",
+        "type": "particle",
+        "texture": "gfx/misc/jk_mflash_ak74",
+        "flags": [
+          "depthHack"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.2,
+          "lifetimeMax": 0.35,
+          "delayMin": 0.08,
+          "delayMax": 0.0,
+          "velocityMin": [
+            1.27,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            1.27,
+            0.0,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.3,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.1016,
+          "startMax": 0.127,
+          "endMin": 0.0508,
+          "endMax": 0.0762,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "smokepuff",
+        "type": "particle",
+        "texture": "gfx/misc/bp_smoke01",
+        "flags": [
+          "depthHack",
+          "useAlpha",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 0.2,
+          "lifetimeMax": 0.25,
+          "delayMin": 0.09,
+          "delayMax": 0.09,
+          "rotationMin": 0,
+          "rotationMax": 360,
+          "rotationSpeedMin": -7,
+          "rotationSpeedMax": 7,
+          "velocityMin": [
+            0.254,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            0.508,
+            0.0,
+            0.0
+          ],
+          "gravityModifierMin": -0.012946,
+          "gravityModifierMax": -0.025892
+        },
+        "alpha": {
+          "startMin": 0.2,
+          "startMax": 0.3,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762,
+          "endMin": 0.2032,
+          "endMax": 0.254,
+          "curve": "linear"
+        }
+      }
+    ]
+  },
+  {
+    "id": "effects/muzzle_flashes/mflash_uzi_final",
+    "displayName": "Mflash Uzi Final",
+    "segments": [
+      {
+        "name": "flash",
+        "type": "particle",
+        "texture": "gfx/misc/jk_uzi_flash",
+        "flags": [
+          "depthHack",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "lifetimeMin": 0.15,
+          "lifetimeMax": 0.2,
+          "rotationMin": 3,
+          "rotationMax": 300,
+          "rotationSpeedMin": 4,
+          "rotationSpeedMax": 5,
+          "burst": true
+        },
+        "alpha": {
+          "endMin": 0.5,
+          "endMax": 0.5,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.1016,
+          "endMin": 0.127,
+          "endMax": 0.1778,
+          "curve": "linear"
+        }
+      },
+      {
+        "name": "embers",
+        "type": "particle",
+        "texture": "gfx/misc/jk_uzi_flash",
+        "flags": [
+          "depthHack",
+          "absoluteAccel",
+          "evenDistribution",
+          "rgbComponentInterpolation"
+        ],
+        "particle": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 0.2,
+          "lifetimeMax": 0.3,
+          "delayMin": 0.03,
+          "delayMax": 0.0,
+          "velocityMin": [
+            2.54,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            2.54,
+            0.0,
+            0.0
+          ]
+        },
+        "color": {
+          "startMin": [
+            0.9922,
+            0.9333,
+            0.5098
+          ],
+          "startMax": [
+            1,
+            1,
+            1
+          ]
+        },
+        "alpha": {
+          "startMin": 0.5,
+          "startMax": 1,
+          "endMin": 0,
+          "endMax": 0,
+          "curve": "linear"
+        },
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.1778,
+          "endMin": 0.0254,
+          "endMax": 0.0508,
+          "curve": "linear"
         }
       }
     ]

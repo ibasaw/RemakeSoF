@@ -83,10 +83,10 @@
           "curve": "linear"
         },
         "size": {
-          "startMin": 0.076,
-          "startMax": 0.178,
-          "endMin": 0.762,
-          "endMax": 1.016,
+          "startMin": 0.038,
+          "startMax": 0.089,
+          "endMin": 0.381,
+          "endMax": 0.508,
           "curve": "linear"
         }
       }

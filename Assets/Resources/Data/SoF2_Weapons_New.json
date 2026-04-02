@@ -20,7 +20,7 @@
             "damage": 65,
             "range": 60,
             "fireMode": "auto",
-            "gore": false,
+            "gore": true,
             "volume": 1
         },
         "altAttack": {
@@ -401,7 +401,8 @@
         "sounds": {
             "fire": "sound/weapons/rpg7/fire01",
             "ready": "sound/weapons/rpg7/ready",
-            "empty": "sound/weapons/rpg7/empty"
+            "empty": "sound/weapons/rpg7/empty",
+            "fingerAdjust": "sound/weapons/idle/idle01"
         },
         "animations": {
             "mp_idle": {
@@ -662,6 +663,7 @@
             "inaccuracy": 0.12,
             "maxInaccuracy": 2.15,
             "muzzleFlash": "effects/muzzle_flashes/mflash_m4",
+            "muzzleFlashInworld": "effects/muzzle_flashes/mflash_m4_inworld",
             "muzzleSmoke": "effects/muzzle_flashes/smoke_m4",
             "shellCasingEject": "effects/shell_brass",
             "ejectBone": "ejection_m4",
@@ -685,6 +687,7 @@
                 1
             ],
             "muzzleFlash": "effects/muzzle_flashes/mflash_mm1",
+            "muzzleFlashInworld": "effects/muzzle_flashes/mflash_mm1_inworld",
             "muzzleSmoke": "effects/muzzle_flashes/smoke_mm1",
             "projectile": {
                 "gravity": 0.5,
@@ -715,7 +718,14 @@
             "clipIn": "sound/weapons/m4/clip_insert",
             "boltPull": "sound/weapons/m4/bolt_pull",
             "boltRelease": "sound/weapons/m4/bolt_release",
-            "empty": "sound/weapons/m4/empty"
+            "empty": "sound/weapons/m4/empty",
+            "bulletRam": "sound/weapons/m4/bullet_ram_in",
+            "click": "sound/weapons/m4/click",
+            "slideGrenade": "sound/weapons/m4/grenade_slide",
+            "loadGrenade": "sound/weapons/m4/grenade_load",
+            "slideGrenade2": "sound/weapons/m4/grenade_slide2",
+            "knuckles": "sound/weapons/m4/knuckle",
+            "fingerAdjust": "sound/weapons/idle/idle01"
         },
         "animations": {
             "mp_idle": {
@@ -1020,6 +1030,26 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.15,
+                    "sound": "clipOut"
+                },
+                {
+                    "time": 0.5,
+                    "sound": "clipIn"
+                },
+                {
+                    "time": 0.72,
+                    "sound": "boltPull"
+                },
+                {
+                    "time": 0.85,
+                    "sound": "boltRelease"
+                }
+            ]
         }
     },
     {
@@ -1054,6 +1084,7 @@
             "inaccuracy": 0.18,
             "maxInaccuracy": 2.5,
             "muzzleFlash": "effects/muzzle_flashes/mflash_ak74",
+            "muzzleFlashInworld": "effects/muzzle_flashes/mflash_ak74_inworld",
             "muzzleSmoke": "effects/muzzle_flashes/smoke_ak74",
             "shellCasingEject": "effects/shell_brass",
             "ejectBone": "ejection_ak74",
@@ -1086,7 +1117,8 @@
             "clipIn": "sound/weapons/ak74/new_clip",
             "slideRelease": "sound/weapons/ak74/slide_release",
             "slap": "sound/weapons/ak74/slap",
-            "empty": "sound/weapons/ak74/empty"
+            "empty": "sound/weapons/ak74/empty",
+            "fingerCheck": "sound/weapons/idle/idle03"
         },
         "animations": {
             "mp_idle": {
@@ -1323,6 +1355,26 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.15,
+                    "sound": "clipOut"
+                },
+                {
+                    "time": 0.5,
+                    "sound": "clipIn"
+                },
+                {
+                    "time": 0.75,
+                    "sound": "slap"
+                },
+                {
+                    "time": 0.88,
+                    "sound": "slideRelease"
+                }
+            ]
         }
     },
     {
@@ -1358,6 +1410,7 @@
             ],
             "ejectBone": "ejection_mm1",
             "muzzleFlash": "effects/muzzle_flashes/mflash_mm1",
+            "muzzleFlashInworld": "effects/muzzle_flashes/mflash_mm1_inworld",
             "muzzleSmoke": "effects/muzzle_flashes/smoke_mm1",
             "tracerEffect": "effects/tracerTest2",
             "projectile": {
@@ -1377,7 +1430,9 @@
             "drumOpen": "sound/weapons/mm1/open_chamber",
             "drumClose": "sound/weapons/mm1/close_chamber",
             "reload": "sound/weapons/mm1/grenade_load",
-            "empty": "sound/weapons/mm1/empty"
+            "empty": "sound/weapons/mm1/empty",
+            "fingerAdjust": "sound/weapons/idle/idle01",
+            "tipUp": "sound/weapons/idle/idle03"
         },
         "animations": {
             "mp_idle": {
@@ -1645,6 +1700,26 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "startEvents": [
+                {
+                    "time": 0.3,
+                    "sound": "drumOpen"
+                }
+            ],
+            "shellEvents": [
+                {
+                    "time": 0.4,
+                    "sound": "reload"
+                }
+            ],
+            "endEvents": [
+                {
+                    "time": 0.5,
+                    "sound": "drumClose"
+                }
+            ]
         }
     },
     {
@@ -1699,7 +1774,12 @@
             "pumpBack": "sound/weapons/m590/pump1",
             "pumpForward": "sound/weapons/m590/pump2",
             "reload": "sound/weapons/m590/reload_shells",
-            "empty": "sound/weapons/m590/empty"
+            "empty": "sound/weapons/m590/empty",
+            "altFire": [
+                "sound/weapons/ak74/swing01",
+                "sound/weapons/ak74/swing02"
+            ],
+            "fingerAdjust": "sound/weapons/idle/idle01"
         },
         "animations": {
             "mp_idle": {
@@ -2016,6 +2096,24 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "shellEvents": [
+                {
+                    "time": 0.4,
+                    "sound": "reload"
+                }
+            ],
+            "endEvents": [
+                {
+                    "time": 0.25,
+                    "sound": "pumpBack"
+                },
+                {
+                    "time": 0.65,
+                    "sound": "pumpForward"
+                }
+            ]
         }
     },
     {
@@ -2070,7 +2168,9 @@
             "slideRelease": "sound/weapons/usas12/slide_release",
             "clipOut": "sound/weapons/usas12/snapout",
             "clipIn": "sound/weapons/usas12/snapin",
-            "empty": "sound/weapons/usas12/empty"
+            "empty": "sound/weapons/usas12/empty",
+            "pat": "sound/weapons/usas12/pat",
+            "fingerAdjust": "sound/weapons/idle/idle01"
         },
         "animations": {
             "mp_idle": {
@@ -2276,6 +2376,26 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.15,
+                    "sound": "clipOut"
+                },
+                {
+                    "time": 0.5,
+                    "sound": "clipIn"
+                },
+                {
+                    "time": 0.68,
+                    "sound": "pat"
+                },
+                {
+                    "time": 0.85,
+                    "sound": "slideRelease"
+                }
+            ]
         }
     },
     {
@@ -2333,7 +2453,12 @@
             "zoomIn": "sound/weapons/sniper/scope_zoom",
             "zoomFinal": "sound/weapons/sniper/final_zoom",
             "zoomFirst": "sound/weapons/sniper/first_zoom",
-            "empty": "sound/weapons/sniper/empty"
+            "empty": "sound/weapons/sniper/empty",
+            "clipOut": "sound/weapons/sniper/clipout",
+            "clipIn": "sound/weapons/sniper/clipin",
+            "slap": "sound/weapons/sniper/slap",
+            "fingerAdjust01": "sound/weapons/idle/idle01",
+            "fingerAdjust02": "sound/weapons/idle/idle02"
         },
         "animations": {
             "mp_idle": {
@@ -2571,6 +2696,22 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.15,
+                    "sound": "clipOut"
+                },
+                {
+                    "time": 0.55,
+                    "sound": "clipIn"
+                },
+                {
+                    "time": 0.82,
+                    "sound": "slap"
+                }
+            ]
         }
     },
     {
@@ -2605,6 +2746,7 @@
             "inaccuracy": 0.475,
             "maxInaccuracy": 3.0,
             "muzzleFlash": "effects/m60_mflash",
+            "muzzleFlashInworld": "effects/muzzle_flashes/mflash_m60_inworld",
             "muzzleSmoke": "effects/muzzle_flashes/smoke_m60",
             "shellCasingEject": "effects/shell_brass",
             "ejectBone": "ejection_m60",
@@ -2620,7 +2762,9 @@
             "ammoBelt": "sound/weapons/m60/ammo_belt",
             "latchClose": "sound/weapons/m60/latch_close",
             "reloadFinal": "sound/weapons/m60/final",
-            "empty": "sound/weapons/m60/empty"
+            "empty": "sound/weapons/m60/empty",
+            "ready": "sound/weapons/m60/ready",
+            "fingerAdjust": "sound/weapons/m60/idle01"
         },
         "animations": {
             "mp_idle": {
@@ -2774,6 +2918,26 @@
                     ]
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.1,
+                    "sound": "latchOpen"
+                },
+                {
+                    "time": 0.45,
+                    "sound": "ammoBelt"
+                },
+                {
+                    "time": 0.72,
+                    "sound": "latchClose"
+                },
+                {
+                    "time": 0.9,
+                    "sound": "reloadFinal"
+                }
+            ]
         }
     },
     {
@@ -2809,6 +2973,7 @@
             "maxInaccuracy": 2.5,
             "armorPiercing": 0.25,
             "muzzleFlash": "effects/muzzle_flashes/mflash_m1911a1_final",
+            "muzzleFlashInworld": "effects/muzzle_flashes/mflash_pistols_inworld",
             "shellCasingEject": "effects/shell_brass",
             "ejectBone": "ejection_m1911"
         },
@@ -2833,7 +2998,9 @@
             "clipOut": "sound/weapons/m1911a1/clipout",
             "clipIn": "sound/weapons/m1911a1/clipin",
             "slideRelease": "sound/weapons/m1911a1/slide",
-            "empty": "sound/weapons/m1911a1/empty"
+            "empty": "sound/weapons/m1911a1/empty",
+            "spin": "sound/weapons/ussocom/spin",
+            "gunUp": "sound/weapons/idle/idle03"
         },
         "animations": {
             "mp_idle": {
@@ -3291,6 +3458,26 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.15,
+                    "sound": "clipOut"
+                },
+                {
+                    "time": 0.48,
+                    "sound": "clipIn"
+                },
+                {
+                    "time": 0.72,
+                    "sound": "slideRelease"
+                },
+                {
+                    "time": 0.88,
+                    "sound": "hammerBack"
+                }
+            ]
         }
     },
     {
@@ -3700,6 +3887,7 @@
             "inaccuracy": 0.25,
             "maxInaccuracy": 2.0,
             "muzzleFlash": "effects/muzzle_flashes/mflash_ussocom_final",
+            "muzzleFlashInworld": "effects/muzzle_flashes/mflash_pistols_inworld",
             "silencedFlash": "effects/muzzle_flashes/mflash_silencer",
             "muzzleSmoke": "effects/muzzle_flashes/smoke_m4",
             "shellCasingEject": "effects/shell_brass_small",
@@ -3732,7 +3920,8 @@
             "slideRelease": "sound/weapons/ussocom/slide",
             "slideBack": "sound/weapons/ussocom/slideback",
             "ready": "sound/weapons/ussocom/spin",
-            "empty": "sound/weapons/ussocom/empty"
+            "empty": "sound/weapons/ussocom/empty",
+            "gunUp": "sound/weapons/idle/idle03"
         },
         "animations": {
             "mp_idle": {
@@ -4190,6 +4379,30 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.12,
+                    "sound": "clipOut"
+                },
+                {
+                    "time": 0.42,
+                    "sound": "clipIn"
+                },
+                {
+                    "time": 0.62,
+                    "sound": "slideBack"
+                },
+                {
+                    "time": 0.78,
+                    "sound": "slideRelease"
+                },
+                {
+                    "time": 0.9,
+                    "sound": "hammerBack"
+                }
+            ]
         }
     },
     {
@@ -4613,6 +4826,7 @@
             "inaccuracy": 0.5,
             "maxInaccuracy": 2.0,
             "muzzleFlash": "effects/muzzle_flashes/mflash_uzi",
+            "muzzleFlashInworld": "effects/muzzle_flashes/mflash_uzi_inworld",
             "muzzleSmoke": "effects/muzzle_flashes/smoke_uzi",
             "shellCasingEject": "effects/shell_brass_small",
             "ejectBone": "ejection_microuzi",
@@ -4631,7 +4845,10 @@
             "clipOut": "sound/weapons/micro_uzi/clipout",
             "clipIn": "sound/weapons/micro_uzi/clipin",
             "bolt": "sound/weapons/micro_uzi/bolt",
-            "empty": "sound/weapons/micro_uzi/empty"
+            "empty": "sound/weapons/micro_uzi/empty",
+            "gunUp01": "sound/weapons/idle/idle03",
+            "gunUp02": "sound/weapons/idle/idle04",
+            "fingerAdjust": "sound/weapons/idle/idle01"
         },
         "animations": {
             "mp_idle": {
@@ -5061,6 +5278,22 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.15,
+                    "sound": "clipOut"
+                },
+                {
+                    "time": 0.55,
+                    "sound": "clipIn"
+                },
+                {
+                    "time": 0.82,
+                    "sound": "bolt"
+                }
+            ]
         }
     },
     {
@@ -5123,6 +5356,7 @@
                 5
             ],
             "muzzleFlash": "effects/muzzle_flashes/mflash_mm1",
+            "muzzleFlashInworld": "effects/muzzle_flashes/mflash_mm1_inworld",
             "muzzleSmoke": "effects/muzzle_flashes/smoke_mm1",
             "projectile": {
                 "gravity": 1.0,
@@ -5151,7 +5385,10 @@
             "clipIn": "sound/weapons/oicw/clipin",
             "bolt": "sound/weapons/oicw/bolt",
             "boltForward": "sound/weapons/oicw/bolt_forward",
-            "empty": "sound/weapons/oicw/empty"
+            "empty": "sound/weapons/oicw/empty",
+            "knobAdjust": "sound/weapons/oicw/adjust",
+            "altClipOut": "sound/weapons/usas12/snapout",
+            "altClipIn": "sound/weapons/usas12/snapin"
         },
         "animations": {
             "mp_idle": {
@@ -5405,6 +5642,26 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.15,
+                    "sound": "clipOut"
+                },
+                {
+                    "time": 0.48,
+                    "sound": "clipIn"
+                },
+                {
+                    "time": 0.7,
+                    "sound": "bolt"
+                },
+                {
+                    "time": 0.85,
+                    "sound": "boltForward"
+                }
+            ]
         }
     },
     {
@@ -5440,6 +5697,7 @@
             "maxInaccuracy": 1.5,
             "armorPiercing": 0.25,
             "muzzleFlash": "effects/muzzle_flashes/mflash_m3",
+            "muzzleFlashInworld": "effects/muzzle_flashes/mflash_m3_inworld",
             "muzzleSmoke": "effects/muzzle_flashes/smoke_m4",
             "shellCasingEject": "effects/shell_brass",
             "ejectBone": "ejection_m3a1",
@@ -5670,6 +5928,34 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.08,
+                    "sound": "coverUp"
+                },
+                {
+                    "time": 0.2,
+                    "sound": "clipOut"
+                },
+                {
+                    "time": 0.48,
+                    "sound": "clipIn"
+                },
+                {
+                    "time": 0.65,
+                    "sound": "coverDown"
+                },
+                {
+                    "time": 0.78,
+                    "sound": "boltBack"
+                },
+                {
+                    "time": 0.88,
+                    "sound": "boltForward"
+                }
+            ]
         }
     },
     {
@@ -8099,6 +8385,22 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.15,
+                    "sound": "clipOut"
+                },
+                {
+                    "time": 0.55,
+                    "sound": "clipIn"
+                },
+                {
+                    "time": 0.82,
+                    "sound": "bolt"
+                }
+            ]
         }
     },
     {
@@ -8346,6 +8648,26 @@
                     "loop": false
                 }
             }
+        },
+        "reloadSounds": {
+            "events": [
+                {
+                    "time": 0.15,
+                    "sound": "clipOut"
+                },
+                {
+                    "time": 0.48,
+                    "sound": "clipIn"
+                },
+                {
+                    "time": 0.72,
+                    "sound": "slideRelease"
+                },
+                {
+                    "time": 0.88,
+                    "sound": "hammerBack"
+                }
+            ]
         }
     }
 ]

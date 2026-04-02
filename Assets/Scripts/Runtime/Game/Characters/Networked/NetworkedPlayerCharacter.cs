@@ -201,6 +201,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <summary>Verbleibende Frames in der aktuellen Shell-Reload-Phase.</summary>
         private int m_ServerShellPhaseFramesRemaining;
 
+        // ===== Server-Side Reload Sound Tracking =====
+
+        /// <summary>Reload-Sound-Events fuer die aktuelle Waffe (aus WeaponDefinition.ReloadSounds).</summary>
+        private ReloadSoundDefinition m_ServerReloadSounds;
+
+        /// <summary>Bitmask: welche Standard-Reload-Sound-Events bereits gefeuert wurden (max 32).</summary>
+        private int m_ServerReloadSoundsFired;
+
+        /// <summary>Bitmask: welche Phase-Sound-Events bereits gefeuert wurden (max 32, pro Phase reset).</summary>
+        private int m_ServerShellPhaseSoundsFired;
+
         // ===== Server-Side AltAttack Gating =====
 
         /// <summary>Verbleibende AltAttack-Frames auf dem Server (autoritativ).</summary>
@@ -288,6 +299,49 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>Minimaler grenadeTimer-Wert bevor Zwangs-Detonation (SoF2: 50ms).</summary>
         private const float GRENADE_MIN_TIMER = 0.05f;
+
+        // ===== SoF2 pm_debounce (Server-Authoritative Button Debounce) =====
+        // Direkt aus bg_public.h: PMD_ATTACK, PMD_ALTATTACK.
+        // PM_GetAttackButtons() in bg_pmove.c setzt das Flag beim Feuern.
+        // Solange das Flag gesetzt ist UND der Button gehalten wird UND der FireMode != auto,
+        // wird der Button serverseitig maskiert (kein erneuter Schuss).
+        // Cleared sobald der Button losgelassen wird.
+
+        /// <summary>SoF2 PMD_ATTACK: Gesetzt wenn Primary Attack gefeuert wurde. Cleared bei Button-Release.</summary>
+        private const int PMD_ATTACK = 0x0002;
+
+        /// <summary>SoF2 PMD_FIREMODE: Gesetzt wenn FireMode-Button gedrueckt. Cleared bei Release.</summary>
+        private const int PMD_FIREMODE = 0x0004;
+
+        /// <summary>SoF2 PMD_ALTATTACK: Gesetzt wenn AltAttack gefeuert wurde. Cleared bei Button-Release.</summary>
+        private const int PMD_ALTATTACK = 0x0010;
+
+        /// <summary>
+        /// SoF2 pm_debounce Bitfield (server-autoritativ).
+        /// Verhindert Auto-Re-Fire bei gehaltener Taste fuer Single/Burst/Grenade-Waffen.
+        /// Exakt wie bg_pmove.c PM_GetAttackButtons() — Flag wird beim Feuern gesetzt,
+        /// bei Button-Release cleared, bei gehaltener Taste + non-auto Modus wird Button maskiert.
+        /// </summary>
+        private int m_ServerDebounce;
+
+        /// <summary>
+        /// Server-seitig gecachter Feuermodus der aktuellen Waffe ("auto", "single", "burst").
+        /// Wird bei Waffenwechsel aus WeaponDataLoader aktualisiert.
+        /// SoF2: ps->firemode[ps->weapon] — Server kennt den Modus autoritativ.
+        /// </summary>
+        private string m_ServerFireMode = "auto";
+
+        /// <summary>
+        /// Server-seitig gecachter Alt-Feuermodus der aktuellen Waffe.
+        /// SoF2: altAttack kann eigenen fireMode haben.
+        /// </summary>
+        private string m_ServerAltFireMode = "auto";
+
+        /// <summary>
+        /// Verbleibende Burst-Schuesse auf dem Server (nur im "burst"-Modus).
+        /// SoF2: weaponFireBurstCount in bg_pmove.c.
+        /// </summary>
+        private int m_ServerBurstShotsRemaining;
 
         // ===== Movement Sync =====
 
@@ -557,6 +611,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                         m_ServerReloadFramesRemaining--;
                     }
 
+                    // Reload-Sound-Events pruefen (Standard-Reload)
+                    TickServerReloadSounds();
+
                     // Reload abgeschlossen: Munition transferieren
                     if (m_ServerReloadFramesRemaining <= 0)
                     {
@@ -593,6 +650,70 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 TickServerGrenadeThrow(cmd.DeltaTime);
             }
 
+            // ===== SoF2 PM_GetAttackButtons (bg_pmove.c:2482-2580) =====
+            // Server-autoritative Button-Debounce: maskiert Buttons bei gehaltener Taste
+            // fuer Single/Burst/Grenade-Waffen. Exakt wie SoF2 pm_debounce.
+            int attackButtons = cmd.Buttons;
+
+            // SoF2 BUTTON_FIREMODE Debounce (bg_pmove.c:2489-2500): Feuermodus-Wechsel
+            if (cmd.HasButton(CommandButtons.FireMode))
+            {
+                if ((m_ServerDebounce & PMD_FIREMODE) == 0)
+                {
+                    m_ServerDebounce |= PMD_FIREMODE;
+                    CycleServerFireMode();
+                }
+            }
+            else
+            {
+                m_ServerDebounce &= ~PMD_FIREMODE;
+            }
+
+            // PMD_ATTACK Debounce (SoF2 bg_pmove.c:2504-2512)
+            if ((m_ServerDebounce & PMD_ATTACK) != 0)
+            {
+                if (!cmd.HasButton(CommandButtons.Attack))
+                {
+                    // Button losgelassen → Debounce aufheben
+                    m_ServerDebounce &= ~PMD_ATTACK;
+                }
+                else if (m_ServerFireMode != "auto")
+                {
+                    // Button gehalten + nicht Auto → Attack maskieren (kein Re-Fire)
+                    attackButtons &= ~CommandButtons.Attack;
+                }
+            }
+
+            // SoF2 Burst-Fire (bg_pmove.c:2530-2545): Attack gedrueckt + kein laufender Burst → Burst starten
+            if (m_ServerFireMode == "burst" && (attackButtons & CommandButtons.Attack) != 0
+                && m_ServerBurstShotsRemaining <= 0)
+            {
+                m_ServerBurstShotsRemaining = 3;
+            }
+
+            // PMD_ALTATTACK Debounce (SoF2 bg_pmove.c:2558-2569)
+            if ((m_ServerDebounce & PMD_ALTATTACK) != 0)
+            {
+                if (!cmd.HasButton(CommandButtons.AltAttack))
+                {
+                    m_ServerDebounce &= ~PMD_ALTATTACK;
+                }
+                else if (m_ServerAltFireMode != "auto")
+                {
+                    attackButtons &= ~CommandButtons.AltAttack;
+                }
+            }
+
+            // Burst-Fire: Verbleibende Burst-Schuesse automatisch abfeuern (SoF2 bg_pmove.c:2539-2545)
+            if (m_ServerBurstShotsRemaining > 0)
+            {
+                attackButtons |= CommandButtons.Attack;
+                attackButtons &= ~CommandButtons.AltAttack;
+                attackButtons &= ~CommandButtons.Reload;
+                attackButtons &= ~CommandButtons.Zoom;
+                attackButtons &= ~CommandButtons.FireMode;
+            }
+
             // Button-Inputs verarbeiten (SoF2: FireWeapon aus usercmd_t.buttons)
             // Server gated: Attack nur starten wenn keine Attacke, kein Reload, kein AltAttack, kein Swap und keine Granate laeuft (Anti-Cheat)
             bool noActionRunning = m_ServerAttackFramesRemaining <= 0
@@ -602,13 +723,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 && !m_ServerIsGrenadeCooking
                 && m_ServerGrenadeThrowFramesRemaining <= 0;
 
-            if (cmd.HasButton(CommandButtons.Attack) && noActionRunning)
+            // SoF2 bg_pmove.c:2930-2932: Burst-Counter dekrementieren wenn Waffe bereit
+            // (vor dem Fire-Code, nicht pro Schuss — damit Burst bei leerem Magazin auslaueft)
+            if (noActionRunning && m_ServerBurstShotsRemaining > 0)
+            {
+                m_ServerBurstShotsRemaining--;
+            }
+
+            if ((attackButtons & CommandButtons.Attack) != 0 && noActionRunning)
             {
                 ProcessAttack(cmd);
             }
 
             // Server gated: AltAttack nur starten wenn keine Action laeuft
-            if (cmd.HasButton(CommandButtons.AltAttack) && noActionRunning)
+            if ((attackButtons & CommandButtons.AltAttack) != 0 && noActionRunning)
             {
                 ProcessAltAttack(cmd);
             }
@@ -714,6 +842,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
+            // SoF2 bg_pmove.c:3255 — pm_debounce setzen bei erfolgreichem Schuss
+            m_ServerDebounce |= PMD_ATTACK;
+
             // Attack-Parameter von aktueller Waffe laden
             UpdateServerAttackParameters();
 
@@ -817,6 +948,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Muzzle-Effekte (Flash, Smoke, Shell, Shellsound, Fire-Sound) einmal pro Schuss an alle Clients
             MuzzleEffectsClientRpc(
                 attackDef.MuzzleFlash ?? "",
+                attackDef.MuzzleFlashInworld ?? "",
                 attackDef.MuzzleSmoke ?? "",
                 attackDef.ShellCasingEject ?? "",
                 attackDef.EjectBone ?? "",
@@ -865,6 +997,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                         SurfaceImpactDataLoader surfaceLoader = ServiceLocator.Get<SurfaceImpactDataLoader>();
                         if (surfaceLoader != null)
                         {
+                            impactEffectId = surfaceLoader.GetImpactEffectId("flesh", ammoType);
+                            debrisEffectId = surfaceLoader.GetDebrisEffectId("flesh", ammoType);
                             impactSoundPath = surfaceLoader.GetImpactSoundPath("flesh", ammoType);
                         }
                     }
@@ -976,6 +1110,80 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 int fireDelayFrames = Mathf.CeilToInt((attackDef.FireDelay / 1000f) * m_ServerAttackFps);
                 m_ServerAttackFrames = Mathf.Max(m_ServerAttackFrames, fireDelayFrames);
             }
+        }
+
+        /// <summary>
+        /// Server: Wechselt den Primary FireMode zyklisch durch die verfuegbaren Modi.
+        /// SoF2 BG_FindFireMode (bg_weapons.c): Zykliert durch ps->firemode[weapon] Liste.
+        /// Wird bei PMD_FIREMODE Debounce-Trigger aufgerufen.
+        /// </summary>
+        private void CycleServerFireMode()
+        {
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                return;
+            }
+
+            WeaponDefinition weapon = loader.GetById(m_CharacterState?.CurrentWeaponName ?? "");
+            System.Collections.Generic.List<string> modes = weapon?.Attack?.FireModes;
+            if (modes == null || modes.Count <= 1)
+            {
+                return;
+            }
+
+            int currentIndex = modes.IndexOf(m_ServerFireMode);
+            if (currentIndex < 0)
+            {
+                currentIndex = 0;
+            }
+
+            m_ServerFireMode = modes[(currentIndex + 1) % modes.Count];
+            m_ServerBurstShotsRemaining = 0;
+        }
+
+        /// <summary>
+        /// Server: Aktualisiert FireMode, AltFireMode und setzt Debounce/Burst zurueck.
+        /// Wird nur bei Waffenwechsel aufgerufen (nicht bei jedem Schuss).
+        /// SoF2: ps->firemode[ps->weapon] wird bei Waffenwechsel initialisiert.
+        /// </summary>
+        private void UpdateServerFireModeParameters()
+        {
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                return;
+            }
+
+            WeaponDefinition weapon = loader.GetById(m_CharacterState?.CurrentWeaponName ?? "");
+            if (weapon == null)
+            {
+                m_ServerFireMode = "auto";
+                m_ServerAltFireMode = "auto";
+                m_ServerDebounce = 0;
+                m_ServerBurstShotsRemaining = 0;
+                return;
+            }
+
+            // SoF2 ps->firemode[ps->weapon]: Server-seitig den FireMode cachen
+            // Projektilwaffen (Granaten, RPG) sind immer "single" wenn kein FireMode definiert
+            string defaultFireMode = weapon.Attack?.FireMode ?? "auto";
+            if (weapon.Attack?.FireMode == null && weapon.Attack?.Projectile != null)
+            {
+                defaultFireMode = "single";
+            }
+            m_ServerFireMode = defaultFireMode;
+
+            // AltAttack FireMode (SoF2: altAttack kann eigenen fireMode haben)
+            m_ServerAltFireMode = weapon.AltAttack?.FireMode ?? "auto";
+            if (weapon.AltAttack?.FireMode == null && weapon.AltAttack?.Projectile != null)
+            {
+                m_ServerAltFireMode = "single";
+            }
+
+            // Debounce + Burst bei Waffenwechsel zuruecksetzen
+            m_ServerDebounce = 0;
+            m_ServerBurstShotsRemaining = 0;
         }
 
         /// <summary>
@@ -1107,6 +1315,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Muzzle-Effekte fuer Sofort-Projektile (RPG, MM1) — nicht fuer gekochte Granaten
             MuzzleEffectsClientRpc(
                 attackDef.MuzzleFlash ?? "",
+                attackDef.MuzzleFlashInworld ?? "",
                 attackDef.MuzzleSmoke ?? "",
                 attackDef.ShellCasingEject ?? "",
                 attackDef.EjectBone ?? "",
@@ -1158,7 +1367,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 attackDef.Knockback,
                 OwnerClientId,
                 m_CharacterState.CurrentWeaponName,
-                projectileId
+                projectileId,
+                projDef.ExplosionEffect ?? ""
             );
 
             // Sticky-Pickup: Callback registrieren fuer Visual-Cleanup
@@ -1291,7 +1501,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 attackDef.Knockback,
                 OwnerClientId,
                 m_CharacterState.CurrentWeaponName,
-                projectileId
+                projectileId,
+                projDef.ExplosionEffect ?? ""
             );
 
             // Visual-RPC an alle Clients
@@ -1346,12 +1557,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
 
             // Throw-Follow-Through fertig: Automatisch nachladen (Granaten haben kein mp_reload)
-            if (m_ServerGrenadeThrowFramesRemaining <= 0 && m_CharacterState.CanReload())
+            // SoF2: Kein extra PMD nach Throw — der Release der den Throw triggert hat PMD_ATTACK
+            // bereits cleared. noActionRunning (ThrowFrames > 0) verhindert Re-Fire waehrend Throw.
+            if (m_ServerGrenadeThrowFramesRemaining <= 0)
             {
-                m_CharacterState.CompleteReload();
+                if (m_CharacterState.CanReload())
+                {
+                    m_CharacterState.CompleteReload();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade auto-reload after throw for client {OwnerClientId}");
+                    Debug.Log($"[NetworkedPlayerCharacter] Server: Grenade auto-reload after throw for client {OwnerClientId}");
 #endif
+                }
             }
         }
 
@@ -1551,7 +1767,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Sonderfaelle: OICW (flashtop_oicw), Granaten (ejectBone=gun → flashBone=flash).
         /// </summary>
         [Rpc(SendTo.Everyone)]
-        private void MuzzleEffectsClientRpc(string muzzleFlashId, string muzzleSmokeId,
+        private void MuzzleEffectsClientRpc(string muzzleFlashId, string muzzleFlashInworldId, string muzzleSmokeId,
             string shellCasingId, string ejectBoneName, string shellsoundPath, string fireSoundPath, float soundVolume)
         {
             if (m_Animator == null)
@@ -1626,7 +1842,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
                 if (!string.IsNullOrEmpty(muzzleFlashId))
                 {
-                    effectFactory.SpawnMuzzleEffect(flashPos, flashRot, muzzleFlashId);
+                    // SoF2: Owner sieht 1P-Flash (depthHack), andere Spieler sehen _inworld-Variante
+                    string resolvedFlashId = muzzleFlashId;
+                    if (!IsOwner && !string.IsNullOrEmpty(muzzleFlashInworldId))
+                    {
+                        resolvedFlashId = muzzleFlashInworldId;
+                    }
+
+                    effectFactory.SpawnMuzzleEffect(flashPos, flashRot, resolvedFlashId);
                 }
 
                 if (!string.IsNullOrEmpty(muzzleSmokeId))
@@ -1921,6 +2144,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
+            // SoF2 bg_pmove.c:3255 — pm_debounce setzen bei erfolgreichem AltAttack
+            m_ServerDebounce |= PMD_ALTATTACK;
+
             // AltAttack-Parameter von aktueller Waffe laden
             UpdateServerAltAttackParameters();
 
@@ -1981,6 +2207,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
                 MuzzleEffectsClientRpc(
                     altAttackDef.MuzzleFlash ?? "",
+                    altAttackDef.MuzzleFlashInworld ?? "",
                     altAttackDef.MuzzleSmoke ?? "",
                     altAttackDef.ShellCasingEject ?? "",
                     altAttackDef.EjectBone ?? "",
@@ -2036,6 +2263,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                         SurfaceImpactDataLoader surfaceLoader = ServiceLocator.Get<SurfaceImpactDataLoader>();
                         if (surfaceLoader != null)
                         {
+                            impactEffectId = surfaceLoader.GetImpactEffectId("flesh", altAmmoType);
+                            debrisEffectId = surfaceLoader.GetDebrisEffectId("flesh", altAmmoType);
                             impactSoundPath = surfaceLoader.GetImpactSoundPath("flesh", altAmmoType);
                         }
                     }
@@ -2298,6 +2527,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
+            // Reload-Sound-Events laden und Tracking zuruecksetzen
+            WeaponDataLoader soundLoader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition soundWeapon = soundLoader?.GetById(m_CharacterState.CurrentWeaponName);
+            m_ServerReloadSounds = soundWeapon?.ReloadSounds;
+            m_ServerReloadSoundsFired = 0;
+            m_ServerShellPhaseSoundsFired = 0;
+
             if (m_ServerIsShellReload)
             {
                 WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
@@ -2392,6 +2628,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_ServerShellPhaseFramesRemaining--;
             }
 
+            // Shell-Phase-Sound-Events pruefen
+            TickServerShellReloadSounds();
+
             if (m_ServerShellPhaseFramesRemaining > 0)
             {
                 return;
@@ -2402,6 +2641,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 case ShellReloadPhase.Start:
                     m_ServerShellReloadPhase = ShellReloadPhase.Shell;
                     m_ServerShellPhaseFramesRemaining = m_ServerReloadShellFrames;
+                    m_ServerShellPhaseSoundsFired = 0;
                     break;
 
                 case ShellReloadPhase.Shell:
@@ -2411,11 +2651,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     if (m_ServerShellsRemaining > 0)
                     {
                         m_ServerShellPhaseFramesRemaining = m_ServerReloadShellFrames;
+                        m_ServerShellPhaseSoundsFired = 0;
                     }
                     else
                     {
                         m_ServerShellReloadPhase = ShellReloadPhase.End;
                         m_ServerShellPhaseFramesRemaining = m_ServerReloadEndFrames;
+                        m_ServerShellPhaseSoundsFired = 0;
                     }
                     break;
 
@@ -2425,6 +2667,152 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     m_ServerReloadFrameAccumulator = 0f;
                     break;
             }
+        }
+
+        /// <summary>
+        /// Server: Prueft und feuert Reload-Sound-Events fuer Standard-Reloads (einzelne Animation).
+        /// Berechnet den aktuellen Fortschritt (0-1) und feuert alle faelligen Events per RPC.
+        /// </summary>
+        private void TickServerReloadSounds()
+        {
+            ReloadSoundEvent[] events = m_ServerReloadSounds?.Events;
+            if (events == null || events.Length == 0 || m_ServerReloadFrames <= 0)
+            {
+                return;
+            }
+
+            float progress = 1f - (float)m_ServerReloadFramesRemaining / m_ServerReloadFrames;
+
+            for (int i = 0; i < events.Length && i < 32; i++)
+            {
+                if ((m_ServerReloadSoundsFired & (1 << i)) != 0)
+                {
+                    continue;
+                }
+
+                if (progress >= events[i].Time)
+                {
+                    m_ServerReloadSoundsFired |= (1 << i);
+                    FireReloadSoundRpc(events[i].Sound);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Server: Prueft und feuert Reload-Sound-Events fuer Shell-Reloads (phasenbasiert).
+        /// Waehlt die Events der aktuellen Phase und berechnet den Phase-Fortschritt (0-1).
+        /// </summary>
+        private void TickServerShellReloadSounds()
+        {
+            if (m_ServerReloadSounds == null)
+            {
+                return;
+            }
+
+            ReloadSoundEvent[] events;
+            int totalPhaseFrames;
+
+            switch (m_ServerShellReloadPhase)
+            {
+                case ShellReloadPhase.Start:
+                    events = m_ServerReloadSounds.StartEvents;
+                    totalPhaseFrames = m_ServerReloadStartFrames;
+                    break;
+                case ShellReloadPhase.Shell:
+                    events = m_ServerReloadSounds.ShellEvents;
+                    totalPhaseFrames = m_ServerReloadShellFrames;
+                    break;
+                case ShellReloadPhase.End:
+                    events = m_ServerReloadSounds.EndEvents;
+                    totalPhaseFrames = m_ServerReloadEndFrames;
+                    break;
+                default:
+                    return;
+            }
+
+            if (events == null || events.Length == 0 || totalPhaseFrames <= 0)
+            {
+                return;
+            }
+
+            float progress = 1f - (float)m_ServerShellPhaseFramesRemaining / totalPhaseFrames;
+
+            for (int i = 0; i < events.Length && i < 32; i++)
+            {
+                if ((m_ServerShellPhaseSoundsFired & (1 << i)) != 0)
+                {
+                    continue;
+                }
+
+                if (progress >= events[i].Time)
+                {
+                    m_ServerShellPhaseSoundsFired |= (1 << i);
+                    FireReloadSoundRpc(events[i].Sound);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Loest den Sound-Key auf und sendet den Reload-Sound per RPC an alle Clients.
+        /// </summary>
+        private void FireReloadSoundRpc(string soundKey)
+        {
+            if (string.IsNullOrEmpty(soundKey))
+            {
+                return;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+            string soundPath = ResolveWeaponSoundPath(weapon, soundKey);
+
+            if (!string.IsNullOrEmpty(soundPath))
+            {
+                ReloadSoundClientRpc(soundPath);
+            }
+        }
+
+        /// <summary>
+        /// Server → Alle Clients: Spielt einen Reload-Sound (clipOut, clipIn, boltRelease etc.).
+        /// SoF2-Referenz: Animation-Events triggerten Waffensounds bei bestimmten Reload-Frames.
+        /// </summary>
+        [Rpc(SendTo.Everyone)]
+        private void ReloadSoundClientRpc(string soundPath)
+        {
+            if (string.IsNullOrEmpty(soundPath))
+            {
+                return;
+            }
+
+            SoundManager soundManager = ServiceLocator.Get<SoundManager>();
+            if (soundManager == null)
+            {
+                return;
+            }
+
+            AudioClip clip = soundManager.GetClip(soundPath);
+            if (clip == null)
+            {
+                return;
+            }
+
+            Vector3 soundPos = transform.position;
+            GameObject soundObj = new("ReloadSoundFX");
+            soundObj.transform.position = soundPos;
+            AudioSource source = soundObj.AddComponent<AudioSource>();
+            source.clip = clip;
+            source.spatialBlend = 1f;
+            source.playOnAwake = false;
+            source.maxDistance = 20f;
+            source.rolloffMode = AudioRolloffMode.Linear;
+
+            if (soundManager.SfxGroup != null)
+            {
+                source.outputAudioMixerGroup = soundManager.SfxGroup;
+            }
+
+            source.Play();
+            UnityEngine.Object.Destroy(soundObj, clip.length + 0.1f);
         }
 
         // ===== Weapon Swap (Drop/Raise) =====
@@ -2520,6 +2908,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     m_CharacterState.SetCurrentWeaponName(m_ServerSwapTargetWeapon);
                     UpdateServerAttackParameters();
                     UpdateServerReloadParameters();
+                    UpdateServerFireModeParameters();
 
                     // Raise-Phase starten
                     m_ServerSwapPhase = WeaponSwapPhase.Raise;

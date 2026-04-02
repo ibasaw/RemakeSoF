@@ -53,8 +53,8 @@
         "size": {
           "startMin": 0.0127,
           "startMax": 0.0508,
-          "endMin": 1.27,
-          "endMax": 1.524
+          "endMin": 0.3175,
+          "endMax": 0.381
         }
       },
       {
@@ -103,8 +103,8 @@
           ]
         },
         "size": {
-          "endMin": 1.016,
-          "endMax": 1.27,
+          "endMin": 0.254,
+          "endMax": 0.3175,
           "curve": "linear"
         }
       },
@@ -156,8 +156,8 @@
           ]
         },
         "size": {
-          "endMin": 1.27,
-          "endMax": 1.524,
+          "endMin": 0.3175,
+          "endMax": 0.381,
           "curve": "linear"
         }
       },
@@ -214,8 +214,8 @@
         "size": {
           "startMin": 0.0127,
           "startMax": 0.0508,
-          "endMin": 1.27,
-          "endMax": 1.524
+          "endMin": 0.3175,
+          "endMax": 0.381
         }
       },
       {
@@ -285,8 +285,8 @@
         "size": {
           "startMin": 0.0127,
           "startMax": 0.0508,
-          "endMin": 1.27,
-          "endMax": 1.524
+          "endMin": 0.3175,
+          "endMax": 0.381
         }
       },
       {
@@ -335,8 +335,8 @@
           ]
         },
         "size": {
-          "endMin": 0.508,
-          "endMax": 0.635,
+          "endMin": 0.254,
+          "endMax": 0.3175,
           "curve": "linear"
         }
       },
@@ -388,8 +388,8 @@
           ]
         },
         "size": {
-          "endMin": 1.27,
-          "endMax": 1.524,
+          "endMin": 0.3175,
+          "endMax": 0.381,
           "curve": "linear"
         }
       },
@@ -446,8 +446,8 @@
         "size": {
           "startMin": 0.0127,
           "startMax": 0.0508,
-          "endMin": 1.27,
-          "endMax": 1.524
+          "endMin": 0.3175,
+          "endMax": 0.381
         }
       },
       {
@@ -1258,8 +1258,8 @@
         "size": {
           "startMin": 0.0127,
           "startMax": 0.0508,
-          "endMin": 1.27,
-          "endMax": 1.524
+          "endMin": 0.3175,
+          "endMax": 0.381
         },
         "impactFx": [
           "blood_splat_mp_small"
@@ -1343,8 +1343,8 @@
         "size": {
           "startMin": 0.0254,
           "startMax": 0.0508,
-          "endMin": 0.381,
-          "endMax": 0.508,
+          "endMin": 0.1905,
+          "endMax": 0.254,
           "curve": "linear"
         }
       },

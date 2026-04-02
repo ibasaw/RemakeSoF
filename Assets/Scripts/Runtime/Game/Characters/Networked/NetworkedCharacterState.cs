@@ -701,9 +701,26 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return true;
             }
 
-            // Projektil ohne eigene Ammo (Knife-Throw): aus Clip verbrauchen
+            // Projektil ohne eigene Ammo (Knife-Throw, Grenade AltThrow):
+            // SoF2 unterscheidet ueber fireFromClip / ammoIndex.
+            // In unserem System: Wenn Primary infinite (Knife-Stab), verbraucht Alt aus Reserve
+            // (Wurfmesser-Pool, SoF2 bg_pmove.c:3185: "Can't throw last knife").
+            // Wenn Primary endlich (Granaten), verbraucht Alt aus Clip (gleiche Quelle wie Primary).
             if (weapon.AltAttack.Projectile != null)
             {
+                if (weapon.Ammo != null && weapon.Ammo.Infinite)
+                {
+                    // Knife-Throw: aus Reserve (spare knives) verbrauchen
+                    if (m_ReserveAmmo.Value <= 0)
+                    {
+                        return false;
+                    }
+
+                    m_ReserveAmmo.Value--;
+                    return true;
+                }
+
+                // Grenade/RPG alt-throw: aus Clip verbrauchen (wie Primary)
                 if (m_CurrentClipAmmo.Value <= 0)
                 {
                     return false;
