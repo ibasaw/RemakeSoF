@@ -1,7 +1,42 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UIToolkit/UnityStyleSheet.uss?fileID=7433441132597879392&amp;guid=819e6491a1421a14db87a36e0c93b136&amp;type=3#UnityStyleSheet" />
-    <ui:VisualElement style="flex-grow: 1;">
-        <ui:Label text="JOIN SERVER" />
-        <ui:Button text="Join Server" name="joinServerButton" class="button"/>
+    <Style src="ServerBrowser.uss" />
+
+    <!-- SoF2 Server Browser: wird in contentBackground (MainMenuView) eingebettet -->
+    <ui:VisualElement name="browserRoot" class="sof2-browser-root">
+
+        <!-- Scanline CRT Overlay -->
+        <ui:VisualElement name="scanlineOverlay" class="sof2-scanline-overlay" />
+
+        <!-- Top Bar: Buttons links, Titel mitte, Join rechts -->
+        <ui:VisualElement name="topBar" class="sof2-top-bar">
+            <ui:VisualElement class="sof2-top-bar-left">
+                <ui:Button name="getListButton" class="sof2-submenu-button" />
+                <ui:Button name="refreshButton" class="sof2-submenu-button" />
+            </ui:VisualElement>
+            <ui:Label text="JOIN SERVER" name="titleLabel" class="sof2-title" />
+            <ui:VisualElement class="sof2-top-bar-right">
+                <ui:Button name="connectButton" class="sof2-submenu-button sof2-join-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Column Headers -->
+        <ui:VisualElement name="columnHeaders" class="server-row server-header-row">
+            <ui:VisualElement class="server-cell server-cell-lock" />
+            <ui:Label text="Server Name" class="server-cell server-cell-name" />
+            <ui:Label text="Map Name" class="server-cell server-cell-map" />
+            <ui:Label text="#Plyrs" class="server-cell server-cell-players" />
+            <ui:Label text="Type" class="server-cell server-cell-gametype" />
+            <ui:Label text="Ping" class="server-cell server-cell-ping" />
+        </ui:VisualElement>
+
+        <!-- Server List (scrollable) -->
+        <ui:ScrollView name="serverListScrollView" class="server-list-scroll">
+            <ui:VisualElement name="serverListContainer" />
+        </ui:ScrollView>
+
+        <!-- Status / Loading -->
+        <ui:Label text="" name="statusLabel" class="sof2-status" />
+
     </ui:VisualElement>
 </ui:UXML>

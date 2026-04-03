@@ -4,6 +4,7 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.Core;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using Tolik.RemakeSoF.Runtime.Management.MapManagement;
 using Unity.Collections;
 using Unity.Netcode;
@@ -184,6 +185,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
     /// <summary>
     /// State: Map wird geladen/gebaut.
     /// Wartet auf MapLoadPhase.Complete um in WaitingForReady zu wechseln.
+    /// Despawnt vorhandene AI-Bots vor dem Laden einer neuen Map.
     /// </summary>
     internal sealed class RoundFlowLoadingState : RoundFlowState
     {
@@ -192,6 +194,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             Debug.Log("[RoundFlow] Enter LoadingState");
             Manager.ClientsReadyForRound.Clear();
             GameState.matchCountdown.Value = 0;
+
+            // AI-Bots despawnen bevor die neue Map geladen wird
+            if (GameState.AIBotSpawner != null)
+            {
+                GameState.AIBotSpawner.DespawnAllBots();
+            }
         }
 
         public override void Exit() { }
@@ -207,7 +215,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
     /// <summary>
     /// State: Map ist geladen, es wird auf alle Client-Ready-Signale und MinPlayers gewartet.
-    /// Respawnt Spieler beim Eintritt. Wechselt zu StartingRound sobald alles bereit.
+    /// Respawnt Spieler und AI-Bots beim Eintritt. Wechselt zu StartingRound sobald alles bereit.
     /// </summary>
     internal sealed class RoundFlowWaitingForReadyState : RoundFlowState
     {
@@ -216,6 +224,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             Debug.Log("[RoundFlow] Enter WaitingForReadyState");
 
             Manager.RespawnAllConnectedPlayers();
+
+            // AI-Bots spawnen (erstmalig) oder respawnen (nach Rundenwechsel)
+            if (GameState.AIBotSpawner != null)
+            {
+                if (GameState.AIBotSpawner.SpawnedBotCount == 0)
+                {
+                    GameState.AIBotSpawner.SpawnInitialBots();
+                }
+                else
+                {
+                    GameState.AIBotSpawner.RespawnAllBots();
+                }
+            }
 
             // Host-Mode: Server-Client hat kein Loading-Overlay, gilt sofort als bereit.
             if (GameState.IsHost)
@@ -329,6 +350,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         public override void Enter()
         {
             Debug.Log("[RoundFlow] Enter RunningState");
+
+            // GametypeManager ueber Rundenstart informieren
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            gametypeManager?.OnRoundStart();
+
             GameState.BroadcastMatchStarted();
             m_CountdownRoutine = Manager.StartCoroutine(RunCountdown());
         }
@@ -340,15 +366,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 Manager.StopCoroutine(m_CountdownRoutine);
                 m_CountdownRoutine = null;
             }
+
+            // GametypeManager ueber Rundenende informieren
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            gametypeManager?.OnRoundEnd();
         }
 
         IEnumerator RunCountdown()
         {
-            MapDataLoader mapDataLoader = ServiceLocator.Get<MapDataLoader>();
-            string mapId = GameState.currentMapName.Value.ToString();
-            MapDefinition mapDef = mapDataLoader?.GetByMapId(mapId);
-            uint countdownValue = mapDef != null && mapDef.countdownStartValue > 0
-                ? mapDef.countdownStartValue
+            // Countdown-Wert vom GametypeManager (Server-Config: timelimit / roundtimelimit)
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            uint countdownValue = gametypeManager != null
+                ? gametypeManager.GetRoundTimeLimit()
                 : 300;
 
             GameState.matchCountdown.Value = countdownValue;
@@ -399,9 +428,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
         IEnumerator MapSwitchCountdown()
         {
-            MapDataLoader mapDataLoader = ServiceLocator.Get<MapDataLoader>();
             string currentMap = GameState.currentMapName.Value.ToString();
-            string nextMap = mapDataLoader.GetNextMapId(currentMap);
+
+            // Map-Rotation aus Server-Config (sv_mapRotation)
+            ServerConfigurationLoader configLoader = ServiceLocator.Get<ServerConfigurationLoader>();
+            string nextMap = GetNextMapFromRotation(configLoader, currentMap);
 
             Debug.Log($"[RoundFlow] Map-Rotation: {currentMap} -> {nextMap}");
 
@@ -416,6 +447,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
             m_SwitchRoutine = null;
             GameState.currentMapName.Value = new FixedString128Bytes(nextMap);
+        }
+
+        /// <summary>
+        /// Ermittelt die naechste Map aus sv_mapRotation der Server-Config (Round-Robin).
+        /// Fallback: aktuelle Map wiederholen.
+        /// </summary>
+        static string GetNextMapFromRotation(ServerConfigurationLoader configLoader, string currentMap)
+        {
+            string[] rotation = configLoader?.Configuration?.sv_mapRotation;
+            if (rotation == null || rotation.Length == 0)
+            {
+                return currentMap;
+            }
+
+            int currentIndex = System.Array.IndexOf(rotation, currentMap);
+            int nextIndex = (currentIndex + 1) % rotation.Length;
+            return rotation[nextIndex];
         }
     }
 }

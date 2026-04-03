@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.Game.Networked;
 using Unity.Netcode;
@@ -83,6 +84,8 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
                 m_MinPlayerConnected = true;
                 Manager.EventManager.Broadcast(new MinNumberPlayersConnectedEvent());
             }
+
+            UpdateMasterServerPlayerCount();
         }
 
         public override void OnClientDisconnect(ulong clientId)
@@ -90,6 +93,7 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
             Debug.Log($"Client {clientId} disconnected from the server.");
             m_ClientPayloads.Remove(clientId);
             Manager.EventManager.Broadcast(new ClientDisconnectedEvent());
+            UpdateMasterServerPlayerCount();
             if (Manager.NetworkManager.ConnectedClientsIds.Count == 1 && Manager.NetworkManager.ConnectedClients.ContainsKey(clientId))
             {
                 // This callback is invoked by the last client disconnecting from the server
@@ -178,6 +182,24 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 
             return ConnectStatus.Success;
             //todo add support to deny connection if map or game version is different
+        }
+
+        /// <summary>
+        /// Aktualisiert den Spielerstand beim Master-Server nach Connect/Disconnect.
+        /// </summary>
+        void UpdateMasterServerPlayerCount()
+        {
+            MasterServerService masterService = ServiceLocator.Get<MasterServerService>();
+            if (masterService == null || !masterService.IsRegistered)
+            {
+                return;
+            }
+
+            int playerCount = Manager.NetworkManager.ConnectedClientsIds.Count;
+            string currentMap = NetworkedGameState.Singleton != null
+                ? NetworkedGameState.Singleton.currentMapName.Value.ToString()
+                : "";
+            masterService.UpdateServerInfo(playerCount, currentMap);
         }
     }
 }

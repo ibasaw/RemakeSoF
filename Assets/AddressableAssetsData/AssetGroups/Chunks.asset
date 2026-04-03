@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Chunks
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Chunks
+  m_GUID: c11c24360fa4bd44ca603a5193c56558
+  m_SerializeEntries:
+  - m_GUID: 0d29ead66afccf3478c7694f739c2d60
+    m_Address: models/chunks/ice/ice_big
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 16356302a926e0046b6133f5d2d2bf2b
+    m_Address: models/chunks/rock/rock_med
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1a8678b5f139cae48b1308da54f5cd95
+    m_Address: models/chunks/wood/wood_big
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1c92ce631fe5b8b4aae3ab4e8af5b5dc
+    m_Address: models/chunks/wood/wood_small
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2281aff7d04679f42ab0ff8b11a09923
+    m_Address: models/chunks/wood/wood_med
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d24e47e381ac454d9d54441be5eb342
+    m_Address: models/chunks/ice/ice_small
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 368a7c0795d5500459753f7d010243f9
+    m_Address: models/chunks/metal/metal_med
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3afb4ed7f713eee45aaceeb7dca37d06
+    m_Address: models/chunks/wood/wood_splinter4
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4894783626909ca44ba5d834a11f02c1
+    m_Address: models/chunks/rock/rock_big
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 646fb1bededdb2749beeb6cbcac2fdc7
+    m_Address: models/chunks/metal/metal_big
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6f173d15890179f4fbd34aadc7c1a5d6
+    m_Address: models/chunks/wood/wood_splinter
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 88514314410347545ab2baf54a36ff05
+    m_Address: models/chunks/rock/rock_small
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9264ec14d8c84784fbeb8e36a166f3a4
+    m_Address: models/chunks/ice/ice_med
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b039a71148b0757449cd48e77b6fe7cb
+    m_Address: models/chunks/metal/metal_small
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 9500df7d393bcc147931f5c826073cc6, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 28acc89f9c715044287e1787589fff66, type: 2}
+    - {fileID: 11400000, guid: 11979c9f245be974a9be3412222020f0, type: 2}

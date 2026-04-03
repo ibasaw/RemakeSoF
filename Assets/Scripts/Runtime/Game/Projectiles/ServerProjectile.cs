@@ -73,6 +73,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Ob das Projektil an einer Oberflaeche haftet (Sticky-Detonation).</summary>
         private bool m_IsStuck;
 
+        /// <summary>Guard-Flag: Verhindert mehrfaches Pickup durch mehrere Collider im selben Frame.</summary>
+        private bool m_IsPickedUp;
+
         /// <summary>Explosion-Effect-ID fuer Feuer/Phosphorus-Erkennung (z.B. "effects/explosions/incendiary_explosion_mp").</summary>
         private string m_ExplosionEffectId;
 
@@ -542,7 +545,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// </summary>
         private void OnTriggerEnter(Collider other)
         {
-            if (!m_IsStuck)
+            if (!m_IsStuck || m_IsPickedUp)
             {
                 return;
             }
@@ -560,6 +563,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 return;
             }
 
+            m_IsPickedUp = true;
             targetState.AddReserveAmmoForWeapon(m_WeaponName, 1);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

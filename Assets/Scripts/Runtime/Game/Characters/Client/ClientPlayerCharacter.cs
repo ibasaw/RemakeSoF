@@ -834,6 +834,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         private void OnNetworkSpawn()
         {
+            // Dedicated Server: keine Visuals, kein Input, keine Waffen-Modelle.
+            // Hitboxen werden vom ClientCharacterSkinHandler + ClientHitboxSystem verwaltet.
+            if (m_NetworkedPlayerCharacter.IsServer && !m_NetworkedPlayerCharacter.IsHost)
+            {
+                return;
+            }
+
             // Waffen-Event fuer Owner UND Remote abonnieren (beide muessen Waffen laden/anzeigen)
             m_WeaponDataLoader = ServiceLocator.Get<WeaponDataLoader>();
 
@@ -864,6 +871,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             // Owner: Player Action Map aktivieren
             m_PlayerActions.Enable();
+
+            // GroundMask: Player + Hitbox Layer ausschliessen.
+            // Player-Layer wuerde Self-Collision verursachen (eigener BoxCollider wird von
+            // OverlapBox/BoxCast erkannt → ResolvePenetration drueckt Spieler weg).
+            // Hitbox-Layer sind zwar Trigger (QueryTriggerInteraction.Ignore filtert),
+            // aber expliziter Ausschluss ist sicherer.
+            m_Simulation.GroundMask = ~LayerMask.GetMask("Player");
 
             // Jump per Callback (zuverlaessiger als WasPressedThisFrame in FixedUpdate)
             m_PlayerActions.Jump.performed += OnJumpPerformed;
@@ -1146,7 +1160,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             // TP Aim Correction: Korrigiere Pitch/Yaw fuer Third-Person Parallaxe
-            float yawAngle = m_YawTarget != null ? m_YawTarget.eulerAngles.y : transform.eulerAngles.y;
+            // MoveYawAngle: unkorrigierter Kamera-Yaw fuer Bewegungsrichtung
+            float moveYawAngle = m_YawTarget != null ? m_YawTarget.eulerAngles.y : transform.eulerAngles.y;
+            float yawAngle = moveYawAngle;
             float pitchAngle = m_PitchTarget != null ? m_PitchTarget.eulerAngles.x : 0f;
             ComputeThirdPersonCorrectedAim(ref yawAngle, ref pitchAngle);
 
@@ -1165,6 +1181,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 MoveInput = m_MoveInput,
                 YawAngle = yawAngle,
                 PitchAngle = pitchAngle,
+                MoveYawAngle = moveYawAngle,
                 Buttons = buttons,
                 DeltaTime = Time.deltaTime,
                 SequenceNumber = m_NextSequenceNumber++,

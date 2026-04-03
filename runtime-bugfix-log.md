@@ -161,3 +161,46 @@ int worldLayerMask = ~(hitboxLayerMask | LayerMask.GetMask("BrushCollision", "Pl
 | Decal Fade-Out | Nicht implementiert | Decals verschwinden nach 30s abrupt (`Object.Destroy`), kein gradueller Fade |
 | parmMax Randomization | Nicht implementiert | Alpha + Size ignorieren `parmMax` → kein per-Partikel Timing-Randomisierung |
 | fireDelay | Nicht implementiert | MM1 (350ms), USAS12 (75ms), MSG90A1 (100ms) Pre-Fire-Delay |
+
+---
+
+## Bug #9: Dedicated Server — Spieler fällt durch die Map (MeshCollider Read/Write)
+
+**Symptom**: Spieler fällt beim Spawn durch die Map. Server-Log zeigt:
+`CollisionMeshData couldn't be created because the mesh has been marked as non-accessible.`
+`This Mesh Collider [...] doesn't have Read/Write enabled.`
+
+**Ursache**: `MapColliderApplier` setzte `cookingOptions` explizit auf
+`CookForFasterSimulation | EnableMeshCleaning | WeldColocatedVertices`. Diese Werte sind
+identisch mit Unity-Defaults, aber das explizite Setzen erzwingt `Read/Write Enabled` auf den Meshes.
+Ohne Read/Write kann Unity die CollisionMeshData nicht bauen → keine Collider → Durchfallen.
+
+**Fix**: `cookingOptions`-Zuweisung an allen 3 Stellen (Brush, Clip, Surface) entfernt.
+Unity nutzt intern dieselben Defaults, aber ohne die Read/Write-Anforderung.
+
+**Dateien**:
+- `Assets/Scripts/Runtime/Game/MapLoader/MapColliderApplier.cs`
+
+---
+
+## Bug #10: Dedicated Server — Shader-Crash bei Waffen/Effekt-Loading
+
+**Symptom**: `ArgumentNullException: Value cannot be null. Parameter name: shader` beim Schießen.
+`Trying to access a shader but no shaders were included in the build because Dedicated Server Optimizations is enabled.`
+
+**Ursache**: Mehrere `[Rpc(SendTo.Everyone)]` RPCs in `NetworkedPlayerCharacter` erzeugten
+visuelle Effekte (Tracer, Projektile, Muzzle-Flash) die auf dem Dedicated Server ausgeführt
+wurden. `Shader.Find()` returned null (Shader gestripped) → `new Material(null)` → Crash.
+
+Zusätzlich: `ClientPlayerCharacter.OnNetworkSpawn()` hatte keinen Server-Guard und lud
+Waffen-Modelle (WeaponLoader → Shader.Find → Material) auf dem Dedicated Server.
+
+**Fix (4 Stellen)**:
+1. `TracerClientRpc` — Server-Guard: `if (IsServer && !IsHost) return;`
+2. `ProjectileSpawnClientRpc` — Server-Guard: `if (IsServer && !IsHost) return;`
+3. `MuzzleEffectsClientRpc` — Server-Guard: `if (IsServer && !IsHost) return;`
+4. `ClientPlayerCharacter.OnNetworkSpawn()` — Early-Return für Dedicated Server
+
+**Dateien**:
+- `Assets/Scripts/Runtime/Game/Characters/Networked/NetworkedPlayerCharacter.cs`
+- `Assets/Scripts/Runtime/Game/Characters/Client/ClientPlayerCharacter.cs`

@@ -2752,8 +2752,8 @@
           "useAlpha"
         ],
         "particle": {
-          "countMin": 1,
-          "countMax": 1,
+          "countMin": 4,
+          "countMax": 4,
           "lifetimeMin": 1.5,
           "lifetimeMax": 1.5,
           "delayMin": 0.1,
@@ -2764,14 +2764,14 @@
           "rotationSpeedMax": 5.0,
           "gravityModifier": -0.0259,
           "originMin": [
-            -1.27,
-            -1.27,
-            1.27
+            -0.5,
+            -0.5,
+            0.3
           ],
           "originMax": [
-            1.27,
-            1.27,
-            1.778
+            0.5,
+            0.5,
+            1.5
           ],
           "burst": true
         },
@@ -2784,8 +2784,8 @@
         "size": {
           "startMin": 1.27,
           "startMax": 1.27,
-          "endMin": 3.81,
-          "endMax": 3.81,
+          "endMin": 5.0,
+          "endMax": 6.0,
           "parm": 3,
           "curve": "clamp"
         }
@@ -2807,12 +2807,12 @@
           "originMin": [
             0.0,
             0.0,
-            1.27
+            1.0
           ],
           "originMax": [
             0.0,
             0.0,
-            1.27
+            1.0
           ],
           "burst": true
         },
@@ -2823,10 +2823,10 @@
           "curve": "linear"
         },
         "size": {
-          "startMin": 3.81,
-          "startMax": 3.81,
-          "endMin": 7.62,
-          "endMax": 7.62,
+          "startMin": 3.0,
+          "startMax": 3.0,
+          "endMin": 6.0,
+          "endMax": 6.0,
           "curve": "linear"
         }
       },
@@ -2849,8 +2849,8 @@
           "rgbComponentInterpolation"
         ],
         "particle": {
-          "countMin": 1,
-          "countMax": 1,
+          "countMin": 4,
+          "countMax": 4,
           "lifetimeMin": 12.0,
           "lifetimeMax": 12.0,
           "delayMin": 0.1,
@@ -2860,14 +2860,14 @@
           "rotationSpeedMin": -0.5,
           "rotationSpeedMax": -0.5,
           "originMin": [
-            -1.524,
-            1.524,
-            1.905
+            -1.2,
+            -1.2,
+            0.5
           ],
           "originMax": [
-            -2.286,
-            2.286,
-            1.905
+            1.2,
+            1.2,
+            3.0
           ],
           "velocityMin": [
             -0.0508,
@@ -2879,7 +2879,8 @@
             0.0508,
             0.0254
           ],
-          "burst": true
+          "burst": true,
+          "gravityModifier": -0.005
         },
         "alpha": {
           "endMin": 0.0,
@@ -2888,10 +2889,10 @@
           "curve": "nonlinear"
         },
         "size": {
-          "startMin": 1.905,
-          "startMax": 1.905,
-          "endMin": 3.81,
-          "endMax": 3.81,
+          "startMin": 0.8,
+          "startMax": 1.2,
+          "endMin": 6.0,
+          "endMax": 7.0,
           "parm": 3,
           "curve": "clamp"
         },
@@ -2919,8 +2920,8 @@
           "rgbComponentInterpolation"
         ],
         "particle": {
-          "countMin": 1,
-          "countMax": 1,
+          "countMin": 4,
+          "countMax": 4,
           "lifetimeMin": 12.0,
           "lifetimeMax": 12.0,
           "delayMin": 0.1,
@@ -2930,14 +2931,14 @@
           "rotationSpeedMin": -0.5,
           "rotationSpeedMax": -0.5,
           "originMin": [
-            1.524,
-            1.524,
-            1.905
+            -1.2,
+            -1.2,
+            0.5
           ],
           "originMax": [
-            2.286,
-            2.286,
-            1.905
+            1.2,
+            1.2,
+            3.0
           ],
           "velocityMin": [
             -0.0508,
@@ -2949,7 +2950,8 @@
             0.0508,
             0.0254
           ],
-          "burst": true
+          "burst": true,
+          "gravityModifier": -0.005
         },
         "alpha": {
           "endMin": 0.0,
@@ -2958,10 +2960,10 @@
           "curve": "nonlinear"
         },
         "size": {
-          "startMin": 1.27,
-          "startMax": 1.27,
-          "endMin": 2.54,
-          "endMax": 2.54,
+          "startMin": 0.8,
+          "startMax": 1.2,
+          "endMin": 6.0,
+          "endMax": 7.0,
           "parm": 3,
           "curve": "clamp"
         },
@@ -2989,8 +2991,8 @@
           "rgbComponentInterpolation"
         ],
         "particle": {
-          "countMin": 1,
-          "countMax": 1,
+          "countMin": 4,
+          "countMax": 4,
           "lifetimeMin": 12.0,
           "lifetimeMax": 12.0,
           "delayMin": 0.1,
@@ -3000,14 +3002,14 @@
           "rotationSpeedMin": -0.5,
           "rotationSpeedMax": -0.5,
           "originMin": [
-            1.524,
-            -1.524,
-            1.905
+            -1.2,
+            -1.2,
+            0.5
           ],
           "originMax": [
-            2.286,
-            -2.286,
-            1.905
+            1.2,
+            1.2,
+            3.0
           ],
           "velocityMin": [
             -0.0508,
@@ -3019,7 +3021,8 @@
             0.0508,
             0.0254
           ],
-          "burst": true
+          "burst": true,
+          "gravityModifier": -0.005
         },
         "alpha": {
           "endMin": 0.0,
@@ -3028,10 +3031,10 @@
           "curve": "nonlinear"
         },
         "size": {
-          "startMin": 1.27,
-          "startMax": 1.27,
-          "endMin": 2.54,
-          "endMax": 2.54,
+          "startMin": 0.8,
+          "startMax": 1.2,
+          "endMin": 6.0,
+          "endMax": 7.0,
           "parm": 3,
           "curve": "clamp"
         },
@@ -3059,8 +3062,8 @@
           "rgbComponentInterpolation"
         ],
         "particle": {
-          "countMin": 1,
-          "countMax": 1,
+          "countMin": 4,
+          "countMax": 4,
           "lifetimeMin": 12.0,
           "lifetimeMax": 12.0,
           "delayMin": 0.1,
@@ -3070,14 +3073,14 @@
           "rotationSpeedMin": -0.5,
           "rotationSpeedMax": -0.5,
           "originMin": [
-            -1.524,
-            -1.524,
-            1.905
+            -1.2,
+            -1.2,
+            0.5
           ],
           "originMax": [
-            -2.286,
-            -2.286,
-            1.905
+            1.2,
+            1.2,
+            3.0
           ],
           "velocityMin": [
             -0.0508,
@@ -3089,7 +3092,8 @@
             0.0508,
             0.0254
           ],
-          "burst": true
+          "burst": true,
+          "gravityModifier": -0.005
         },
         "alpha": {
           "endMin": 0.0,
@@ -3098,10 +3102,10 @@
           "curve": "nonlinear"
         },
         "size": {
-          "startMin": 1.27,
-          "startMax": 1.27,
-          "endMin": 2.54,
-          "endMax": 2.54,
+          "startMin": 0.8,
+          "startMax": 1.2,
+          "endMin": 6.0,
+          "endMax": 7.0,
           "parm": 3,
           "curve": "clamp"
         },
@@ -3129,8 +3133,8 @@
           "rgbComponentInterpolation"
         ],
         "particle": {
-          "countMin": 2,
-          "countMax": 2,
+          "countMin": 6,
+          "countMax": 6,
           "lifetimeMin": 12.0,
           "lifetimeMax": 12.0,
           "delayMin": 0.1,
@@ -3141,14 +3145,14 @@
           "rotationSpeedMax": 1.5,
           "gravityModifier": -0.0026,
           "originMin": [
-            -0.254,
-            -0.254,
-            1.905
+            -0.5,
+            -0.5,
+            0.8
           ],
           "originMax": [
-            0.254,
-            0.254,
-            2.54
+            0.5,
+            0.5,
+            3.0
           ],
           "velocityMin": [
             -0.0508,
@@ -3169,10 +3173,10 @@
           "curve": "nonlinear"
         },
         "size": {
-          "startMin": 1.27,
-          "startMax": 1.27,
-          "endMin": 4.445,
-          "endMax": 5.08,
+          "startMin": 0.8,
+          "startMax": 1.0,
+          "endMin": 6.5,
+          "endMax": 7.5,
           "parm": 3,
           "curve": "clamp"
         },
@@ -3200,8 +3204,8 @@
           "rgbComponentInterpolation"
         ],
         "particle": {
-          "countMin": 2,
-          "countMax": 2,
+          "countMin": 6,
+          "countMax": 6,
           "lifetimeMin": 12.0,
           "lifetimeMax": 12.0,
           "delayMin": 0.1,
@@ -3212,14 +3216,14 @@
           "rotationSpeedMax": 1.0,
           "gravityModifier": -0.0013,
           "originMin": [
-            -0.762,
-            -0.762,
-            1.143
+            -0.8,
+            -0.8,
+            0.3
           ],
           "originMax": [
-            0.762,
-            0.762,
-            2.794
+            0.8,
+            0.8,
+            3.0
           ],
           "velocityMin": [
             -0.0508,
@@ -3244,8 +3248,8 @@
         "size": {
           "startMin": 0.508,
           "startMax": 0.762,
-          "endMin": 1.27,
-          "endMax": 1.524,
+          "endMin": 2.0,
+          "endMax": 2.5,
           "parm": 1,
           "curve": "clamp"
         },
@@ -3273,8 +3277,8 @@
           "rgbComponentInterpolation"
         ],
         "particle": {
-          "countMin": 1,
-          "countMax": 1,
+          "countMin": 4,
+          "countMax": 4,
           "lifetimeMin": 12.0,
           "lifetimeMax": 12.0,
           "delayMin": 0.1,
@@ -3285,14 +3289,14 @@
           "rotationSpeedMax": 1.0,
           "gravityModifier": -0.0013,
           "originMin": [
-            -0.762,
-            -0.762,
-            3.302
+            -0.8,
+            -0.8,
+            2.0
           ],
           "originMax": [
-            0.762,
-            0.762,
-            3.683
+            0.8,
+            0.8,
+            4.0
           ],
           "velocityMin": [
             -0.0508,
@@ -3317,8 +3321,8 @@
         "size": {
           "startMin": 0.508,
           "startMax": 0.762,
-          "endMin": 1.27,
-          "endMax": 1.524,
+          "endMin": 2.0,
+          "endMax": 2.5,
           "parm": 1,
           "curve": "clamp"
         },

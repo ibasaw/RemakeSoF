@@ -13,6 +13,7 @@ using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.ConsoleManagement;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
 using Tolik.RemakeSoF.Runtime.GoreManagement;
+using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using Tolik.RemakeSoF.Runtime.SoundManagement;
 using UnityEngine.Audio;
 
@@ -68,6 +69,7 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         {
             m_ConnectionManager.EventManager.RemoveListener<ConnectionEvent>(OnConnectionEvent);
             m_AuthenticationManager.EventManager.RemoveListener<AuthenticationEvent>(OnAuthenticationEvent);
+            DeregisterFromMasterServer();
             ServiceLocator.ClearAll();
         }
 
@@ -102,6 +104,20 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                     Application.targetFrameRate = commandLineArgumentsParser.TargetFramerate;
                     QualitySettings.vSyncCount = 0;
 
+                    // Server-Konfiguration laden (SoF2-CVARs aus JSON)
+                    ServerConfigurationLoader serverConfigLoader = new();
+                    ServiceLocator.Register(serverConfigLoader);
+
+                    // Gametype-Definitionen laden
+                    GametypeDefinitionLoader serverGametypeLoader = new();
+                    ServiceLocator.Register(serverGametypeLoader);
+
+                    // Port aus Config ueberschreiben falls nicht per CLI gesetzt
+                    if (commandLineArgumentsParser.Port == 7777 && serverConfigLoader.Configuration.sv_port != 7777)
+                    {
+                        listeningPort = (ushort)serverConfigLoader.Configuration.sv_port;
+                    }
+
                     // SkinDefinitionLoader fuer server-seitige Hitbox-Skeleton-Aufloesung (skinName → modelName)
                     SkinDefinitionLoader serverSkinLoader = new();
                     ServiceLocator.Register(serverSkinLoader);
@@ -122,16 +138,39 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                     MapDataLoader serverMapDataLoader = new();
                     ServiceLocator.Register(serverMapDataLoader);
 
+                    // GametypeManager erstellen (liest g_gametype aus ServerConfiguration)
+                    GametypeManager gametypeManager = new();
+                    ServiceLocator.Register(gametypeManager);
+
                     // Start CLI command listener for server
                     m_ServerCommandListener = new ServerCommandListener();
                     ServiceLocator.Register(m_ServerCommandListener);
                     m_ServerCommandListener.Start();
 
-                    m_ConnectionManager.StartServerIP(k_DefaultServerListenAddress, listeningPort);
+                    // MasterServerService fuer Server-Registrierung beim Master-Server
+                    MasterServerService serverMasterService = new(serverConfigLoader.Configuration.sv_master);
+                    ServiceLocator.Register(serverMasterService);
+
+                    // Server-IP aus Config (CLI hat Vorrang)
+                    string listenAddress = serverConfigLoader.Configuration.sv_ip ?? k_DefaultServerListenAddress;
+                    m_ConnectionManager.StartServerIP(listenAddress, listeningPort);
                     break;
                 case MultiplayerRoleFlags.Client:
                     {
                         // 1. Pure Services registrieren
+
+                        // Server-Konfiguration laden fuer sv_master (Client braucht Master-Server-URL)
+                        ServerConfigurationLoader clientConfigLoader = new();
+                        ServiceLocator.Register(clientConfigLoader);
+
+                        // MasterServerService fuer Server-Browser (Server-Liste abrufen)
+                        MasterServerService clientMasterService = new(clientConfigLoader.Configuration.sv_master);
+                        ServiceLocator.Register(clientMasterService);
+
+                        // Gametype-Definitionen fuer Client-UI (Gametype-Auswahl etc.)
+                        GametypeDefinitionLoader clientGametypeLoader = new();
+                        ServiceLocator.Register(clientGametypeLoader);
+
                         TextureManager textureManager = new();
                         ServiceLocator.Register(textureManager);
 
@@ -201,11 +240,13 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                     case ConnectStatus.GenericDisconnect:
                     case ConnectStatus.ServerEndedSession:
                     case ConnectStatus.StartServerFailed:
-                        // If server ends networked session or fails to start, quit the application
+                        // Deregister from master server before quitting
+                        DeregisterFromMasterServer();
                         Quit();
                         break;
                     case ConnectStatus.Success:
-                        // If server successfully starts, load game scene
+                        // If server successfully starts, register at master server and load game scene
+                        RegisterAtMasterServer();
                         NetworkManager.Singleton.SceneManager.LoadScene("GameScene01", LoadSceneMode.Single);
                         break;
                 }
@@ -232,6 +273,36 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
 #else
             Application.Quit();
 #endif
+        }
+
+        /// <summary>
+        /// Registriert diesen Server beim Master-Server nach erfolgreichem Start.
+        /// </summary>
+        async void RegisterAtMasterServer()
+        {
+            MasterServerService masterService = ServiceLocator.Get<MasterServerService>();
+            ServerConfigurationLoader configLoader = ServiceLocator.Get<ServerConfigurationLoader>();
+            if (masterService == null || configLoader == null)
+            {
+                return;
+            }
+
+            int currentPlayers = NetworkManager.Singleton != null ? NetworkManager.Singleton.ConnectedClientsIds.Count : 0;
+            await masterService.RegisterServerAsync(configLoader.Configuration, currentPlayers);
+        }
+
+        /// <summary>
+        /// Deregistriert diesen Server beim Master-Server vor dem Beenden.
+        /// </summary>
+        async void DeregisterFromMasterServer()
+        {
+            MasterServerService masterService = ServiceLocator.Get<MasterServerService>();
+            if (masterService == null || !masterService.IsRegistered)
+            {
+                return;
+            }
+
+            await masterService.DeregisterServerAsync();
         }
     }
 }

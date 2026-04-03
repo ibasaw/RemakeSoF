@@ -1,13 +1,14 @@
 using System;
-using System.Collections;
-using System.Text;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace Tolik.RemakeSoF.Runtime
 {
+    /// <summary>
+    /// Controller fuer die Registrierungs-View. Delegiert HTTP-Kommunikation an MasterServerService.
+    /// </summary>
     internal class RegisterController : Controller<MetagameApplication>
     {
         RegisterView View => App.View.RegisterView;
@@ -21,105 +22,67 @@ namespace Tolik.RemakeSoF.Runtime
             ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
         }
 
-        // Called when the user clicks the "Register" button on the registration view to attempt to register
+        /// <summary>
+        /// Wird aufgerufen wenn der Benutzer den Register-Button klickt.
+        /// Validiert die Eingaben und delegiert den HTTP-Request an MasterServerService.
+        /// </summary>
         void OnPlayerRegister(PlayerRegisterEvent evt)
         {
-            Debug.Log($"Attempting to register user: {evt.username} with email: {evt.email} and password: {evt.password}");
-            
-            // Validate all registration data
+            Debug.Log($"Attempting to register user: {evt.username} with email: {evt.email}");
+
             if (!View.ValidateRegistrationData())
             {
-                return; // Validation failed, error message already shown
+                return;
             }
-            
-            // Clear any previous status message
+
             View.ClearStatusMessage();
-            
-            // Set UI to loading state
             View.SetRegisterInProgress(true);
-            
-            // Start coroutine to handle HTTP request
-            StartCoroutine(RegisterToServer(evt.username, evt.email, evt.password));
+
+            RegisterViaService(evt.username, evt.email, evt.password);
         }
 
-        IEnumerator RegisterToServer(string username, string email, string password)
+        /// <summary>
+        /// Delegiert die Registrierung an den MasterServerService.
+        /// </summary>
+        async void RegisterViaService(string username, string email, string password)
         {
-            // Create JSON payload
-            var registerData = new RegisterRequest
+            MasterServerService masterService = ServiceLocator.Get<MasterServerService>();
+            if (masterService == null)
             {
-                username = username,
-                email = email,
-                password = password
-            };
-            
-            string jsonData = JsonUtility.ToJson(registerData);
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
-            
-            // Create UnityWebRequest
-            using (UnityWebRequest request = new("http://localhost:8000/api/registerUser", "POST"))
+                View.SetStatusMessage("Service not available.", true);
+                View.SetRegisterInProgress(false, false);
+                return;
+            }
+
+            try
             {
-                request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                request.downloadHandler = new DownloadHandlerBuffer();
-                request.SetRequestHeader("Content-Type", "application/json");
-                
-                // Send request
-                yield return request.SendWebRequest();
-                
-                // Handle response
-                if (request.result == UnityWebRequest.Result.Success)
+                MasterServerRegisterResult result = await masterService.RegisterUserAsync(username, email, password);
+
+                if (result.IsSuccess)
                 {
-                    // Parse response if needed
-                    try
-                    {
-                        var response = JsonUtility.FromJson<RegisterResponse>(request.downloadHandler.text);
-                        Debug.Log($"Server response: {response.message}");
-                        
-                        // Show success message and keep UI disabled (user should proceed to login)
-                        View.SetStatusMessage("Registration successful! Please login.", false);
-                        View.SetRegisterInProgress(false, false); // false = don't clear status message
-                        
-                        // Optionally switch to login view after successful registration
-                        // Broadcast(new ChangeToLoginEvent());
-                    }
-                    catch (Exception e)
-                    {
-                        // Show success message and keep UI disabled
-                        View.SetStatusMessage($"Registration failed: {e.Message}", true);
-                        View.SetRegisterInProgress(false, false); // false = don't clear status message
-                    }
+                    Debug.Log($"[RegisterController] Registration successful: {result.Message}");
+                    View.SetStatusMessage("Registration successful! Please login.", false);
+                    View.SetRegisterInProgress(false, false);
                 }
                 else
                 {
-                    View.SetStatusMessage($"Registration failed: {request.error}", true);
-                    // Re-enable UI for retry
-                    View.SetRegisterInProgress(false, false); // false = don't clear status message
+                    View.SetStatusMessage($"Registration failed: {result.ErrorMessage}", true);
+                    View.SetRegisterInProgress(false, false);
                 }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[RegisterController] Register Exception: {e.Message}");
+                View.SetStatusMessage($"Registration failed: {e.Message}", true);
+                View.SetRegisterInProgress(false, false);
             }
         }
 
-        [System.Serializable]
-        public class RegisterRequest
-        {
-            public string username;
-            public string email;
-            public string password;
-        }
-
-        [System.Serializable]
-        public class RegisterResponse
-        {
-            public bool success;
-            public string message;
-            public string userId;
-        }
-
-        // Called when the user clicks the "Back" button on the registration view to switch back to the login view
         void OnChangeToLogin(ChangeToLoginEvent evt)
         {
             View.Hide();
         }
 
-        // Called when the user clicks the "Register" button on the login view to switch to the registration view
         void OnChangeToRegister(ChangeToRegisterEvent evt)
         {
             View.Show();

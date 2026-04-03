@@ -3,6 +3,7 @@ using Unity.Collections;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
 using Tolik.RemakeSoF.Runtime.DataManagement;
+using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using Tolik.RemakeSoF.Runtime.Management.MapManagement;
 using Unity.Netcode;
 using UnityEngine;
@@ -17,13 +18,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         /// <summary>Singleton-Instanz fuer globalen Zugriff auf Spielkonfiguration.</summary>
         public static NetworkedGameState Singleton { get; private set; }
 
-        /// <summary>Minimale Spieleranzahl um ein Match zu starten.</summary>
-        [SerializeField]
-        internal int MinPlayers = 1;
+        /// <summary>Minimale Spieleranzahl um ein Match zu starten (aus Server-Config).</summary>
+        internal int MinPlayers { get; private set; }
 
-        /// <summary>Maximale Spieleranzahl pro Match.</summary>
-        [SerializeField]
-        internal int MaxPlayers = 2;
+        /// <summary>Maximale Spieleranzahl pro Match (aus Server-Config).</summary>
+        internal int MaxPlayers { get; private set; }
 
         internal NetworkVariable<uint> matchCountdown = new();
         internal NetworkVariable<int> playersConnected = new();
@@ -59,6 +58,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             NetworkVariableWritePermission.Server
         );
 
+        /// <summary>
+        /// Der aktive Gametype-Identifier, synchronisiert ueber das Netzwerk.
+        /// Clients nutzen diesen Wert fuer UI und gametype-spezifisches Rendering.
+        /// </summary>
+        internal NetworkVariable<FixedString64Bytes> activeGametypeId = new(
+            default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
         internal event Action OnMatchStarted;
         internal event Action OnMatchEnded;
 
@@ -79,9 +88,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         /// </summary>
         internal event Action<MapDefinition> OnMapChangeStarting;
 
-        const string k_DefaultMapName = "maps/mp_kam3"; //TODO: Platzhalter, bis Map-Auswahl implementiert ist
+        /// <summary>Geladene Server-Konfiguration (nur Server, lazy resolved).</summary>
+        ServerConfigurationLoader m_ServerConfigLoader;
 
         RoundFlowStateMachine m_RoundFlowStateMachine;
+
+        /// <summary>
+        /// Server-seitiger AI-Bot-Spawner. Wird wie die RoundFlowStateMachine am selben GameObject verwaltet.
+        /// </summary>
+        AIBotSpawner m_AIBotSpawner;
+
+        /// <summary>
+        /// Oeffentlicher Zugriff auf den AIBotSpawner fuer die RoundFlowStateMachine.
+        /// </summary>
+        internal AIBotSpawner AIBotSpawner => m_AIBotSpawner;
 
         /// <summary>
         /// MapLoader wird auf Server UND Client verwendet.
@@ -109,6 +129,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             }
         }
 
+        /// <summary>
+        /// Stellt sicher, dass ein AIBotSpawner am selben GameObject vorhanden ist (nur Server).
+        /// </summary>
+        void EnsureAIBotSpawner()
+        {
+            if (m_AIBotSpawner != null)
+            {
+                return;
+            }
+
+            m_AIBotSpawner = GetComponent<AIBotSpawner>();
+            if (m_AIBotSpawner == null)
+            {
+                m_AIBotSpawner = gameObject.AddComponent<AIBotSpawner>();
+            }
+        }
+
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
@@ -125,12 +162,31 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 ConnectionManager.EventManager.AddListener<ClientConnectedEvent>(OnServerClientConnected);
                 ConnectionManager.EventManager.AddListener<ClientDisconnectedEvent>(OnServerClientDisconnected);
                 playersConnected.Value = NetworkManager.ConnectedClientsIds.Count;
+                EnsureAIBotSpawner();
+
+                // Server-Konfiguration auflösen: Map, Spieleranzahl, Gametype
+                m_ServerConfigLoader = ServiceLocator.Get<ServerConfigurationLoader>();
+                if (m_ServerConfigLoader == null)
+                {
+                    Debug.LogError("[NetworkedGameState] ServerConfigurationLoader nicht im ServiceLocator registriert!");
+                    return;
+                }
+
+                ServerConfiguration config = m_ServerConfigLoader.Configuration;
+                string startMap = config.g_mapname;
+                MinPlayers = config.sv_minclients;
+                MaxPlayers = config.sv_maxclients;
+                if (!string.IsNullOrEmpty(config.g_gametype))
+                {
+                    activeGametypeId.Value = new FixedString64Bytes(config.g_gametype);
+                }
+
                 m_RoundFlowStateMachine.Initialize(this);
-                currentMapName.Value = new FixedString128Bytes(k_DefaultMapName);
+                currentMapName.Value = new FixedString128Bytes(startMap);
 
                 // Server lädt Map für SpawnPoints, Kollision, etc.
-                Debug.Log($"[NetworkedGameState] Server loading map: {k_DefaultMapName}");
-                _ = m_MapLoader.LoadMapAsync(k_DefaultMapName);
+                Debug.Log($"[NetworkedGameState] Server loading map: {startMap} (gametype={activeGametypeId.Value})");
+                _ = m_MapLoader.LoadMapAsync(startMap);
             }
 
             if (!IsServer)

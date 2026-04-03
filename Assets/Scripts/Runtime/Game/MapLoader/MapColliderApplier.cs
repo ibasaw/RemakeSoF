@@ -140,9 +140,6 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             if (IsBrushVolume(go))
             {
                 MeshCollider collider = go.AddComponent<MeshCollider>();
-                collider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
-                                        | MeshColliderCookingOptions.EnableMeshCleaning
-                                        | MeshColliderCookingOptions.WeldColocatedVertices;
                 collider.sharedMesh = mesh;
 
                 go.layer = LayerMask.NameToLayer(k_BrushCollisionLayerName);
@@ -157,9 +154,6 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             if (IsClipVolume(go))
             {
                 MeshCollider collider = go.AddComponent<MeshCollider>();
-                collider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
-                                        | MeshColliderCookingOptions.EnableMeshCleaning
-                                        | MeshColliderCookingOptions.WeldColocatedVertices;
                 collider.sharedMesh = mesh;
 
                 go.layer = LayerMask.NameToLayer(k_BrushCollisionLayerName);
@@ -192,9 +186,6 @@ namespace Tolik.RemakeSoF.Runtime.Management.MapManagement
             // Alle anderen visuellen Surfaces: MeshCollider + SurfaceTypeMarker.
             // Ermoeglicht Raycast-Hit-Detection mit korrektem Surface-Typ.
             MeshCollider surfaceCollider = go.AddComponent<MeshCollider>();
-            surfaceCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
-                                           | MeshColliderCookingOptions.EnableMeshCleaning
-                                           | MeshColliderCookingOptions.WeldColocatedVertices;
             surfaceCollider.sharedMesh = mesh;
 
             ApplySurfaceTypeMarker(renderer);

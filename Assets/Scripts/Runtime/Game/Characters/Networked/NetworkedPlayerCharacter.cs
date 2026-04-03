@@ -566,7 +566,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             // Server-Position als Source of Truth aktualisieren
             m_ServerPosition.Value = ack.Position;
-            m_ServerRotation.Value = Quaternion.Euler(0f, cmd.YawAngle, 0f);
+            m_ServerRotation.Value = Quaternion.Euler(0f, cmd.MoveYawAngle, 0f);
 
             // Button-Inputs, Frame-Counting, Attack/Reload/Swap verarbeiten
             ProcessServerCommandLogic(cmd);
@@ -1578,6 +1578,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         [Rpc(SendTo.Everyone)]
         private void ProjectileSpawnClientRpc(Vector3 spawnPosition, Vector3 direction, float speed, float gravity, float bounce, string detonation, float timer, uint projectileId, string effectId, string explosionEffectId, string modelKey, string loopSoundPath)
         {
+            // Dedicated Server: keine visuellen Effekte — Shader sind gestripped.
+            if (IsServer && !IsHost)
+            {
+                return;
+            }
+
             GameObject visualObj = new($"ProjectileVisual_{OwnerClientId}");
             ClientProjectileVisual visual = visualObj.AddComponent<ClientProjectileVisual>();
             visual.Initialize(spawnPosition, direction, speed, gravity, bounce, detonation, timer, projectileId, effectId, explosionEffectId, modelKey, loopSoundPath);
@@ -1611,6 +1617,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private void TracerClientRpc(Vector3 serverStart, Vector3 end, Vector3 hitNormal,
             string tracerEffectId, string impactEffectId, string debrisEffectId, string impactSoundPath)
         {
+            // Dedicated Server: keine visuellen Effekte (Tracer, Impact, Sound) — Shader sind gestripped.
+            if (IsServer && !IsHost)
+            {
+                return;
+            }
+
             // Tracer-Startpunkt: Owner sieht Tracer ab Eye-Position (= Crosshair-Linie),
             // andere Clients sehen Tracer ab Waffen-Muendung (EjectBone) fuer visuellen Realismus.
             // Ohne diese Trennung entsteht Parallaxe: Crosshair zeigt auf Trefferpunkt (Eye-Ray),
@@ -1770,6 +1782,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private void MuzzleEffectsClientRpc(string muzzleFlashId, string muzzleFlashInworldId, string muzzleSmokeId,
             string shellCasingId, string ejectBoneName, string shellsoundPath, string fireSoundPath, float soundVolume)
         {
+            // Dedicated Server: keine visuellen/Audio-Effekte — Shader und Audio sind gestripped.
+            if (IsServer && !IsHost)
+            {
+                return;
+            }
+
             if (m_Animator == null)
             {
                 return;

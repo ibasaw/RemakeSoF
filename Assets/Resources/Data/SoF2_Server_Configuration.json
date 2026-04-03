@@ -1,19 +1,53 @@
 {
-    "maxPlayers": 16,
-    "mapName": "maps/mp_col1",
-    "serverName": "SoF2 Remake Server",
-    "serverDescription": "Ein SoF2 Remake Server. Viel Spaß beim Spielen!",
-    "motd": "Willkommen auf unserem SoF2 Remake Server! Viel Spaß beim Spielen und lasst es ordentlich krachen!",
-    "tickRate": 20,
-    "enableFriendlyFire": true,
-    "mapRotation": [
-        "maps/mp_col1",
-        "maps/mp_finca"
-    ],
-    "gameMode": "tdm",
-    "port": 7777,
-    "ip": "127.0.0.1",
-    "timeLimit": 300,
-    "scoreLimit": 50
+    "sv_hostname": "SoF2 Remake Server",
+    "sv_description": "Ein SoF2 Remake Server. Viel Spaß beim Spielen!",
+    "sv_motd": "Willkommen auf unserem SoF2 Remake Server! Viel Spaß beim Spielen und lasst es ordentlich krachen!",
+    "sv_maxclients": 16,
+    "sv_minclients": 1,
+    "sv_port": 7777,
+    "sv_ip": "127.0.0.1",
+    "sv_tickrate": 20,
+    "sv_allowdownload": true,
+    "sv_pure": false,
+    "sv_password": "123",
+    "sv_privatePassword": "",
+    "rconPassword": "",
+    "sv_master": "http://localhost:8000",
 
+    "g_gametype": "hideandseek",
+    "g_mapname": "maps/mp_kam2",
+    "g_friendlyfire": false,
+
+    "timelimit": 300,
+    "fraglimit": 0,
+    "scorelimit": 50,
+    "roundlimit": 0,
+    "roundtimelimit": 180,
+    "dmflags": 0,
+
+    "g_gravity": 800,
+    "g_speed": 320,
+    "g_knockback": 1000,
+    "g_weaponrespawn": 5,
+    "g_forcerespawn": 0,
+    "g_inactivity": 120,
+    "g_warmup": 10,
+    "g_allowvote": true,
+    "g_teamAutoJoin": false,
+    "g_teamForceBalance": true,
+
+    "sv_mapRotation": [
+        "maps/mp_kam2",
+        "maps/mp_finca",
+        "maps/mp_kam3"
+    ],
+
+    "hideandseek_hidetime": 30,
+    "hideandseek_seektime": 120,
+    "hideandseek_seekercount": 1,
+    "hideandseek_hidermodel": "",
+    "hideandseek_seekermodel": "",
+    "hideandseek_hiderweapons": false,
+    "hideandseek_seekerweapons": true,
+    "hideandseek_roundlimit": 5
 }

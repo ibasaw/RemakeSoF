@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Maps
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Maps
+  m_GUID: 0c109078ef6c3da45b232ae9fc1adcfc
+  m_SerializeEntries:
+  - m_GUID: 0effbd82b1e58f34cab5605279b3e302
+    m_Address: maps/mp_finca
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4799f2bf38df09549ae6760c3964e3d3
+    m_Address: maps/mp_hos1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5a8a9bf3c47b9454b99578fc3fdf3f72
+    m_Address: maps/mp_kam3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5b0fc96c5b4e40848a7d8ef956674bb8
+    m_Address: maps/mp_kam2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df23064154bfb854e962ee13b44329af
+    m_Address: maps/mp_col1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 9500df7d393bcc147931f5c826073cc6, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 2fc9cc20386c30a43af40688ff3eb94a, type: 2}
+    - {fileID: 11400000, guid: 758a9c82a2a5663458c20a96cf2bcafe, type: 2}

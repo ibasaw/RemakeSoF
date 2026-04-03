@@ -746,15 +746,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(weaponName);
+            int maxReserve = (weapon?.Ammo != null) ? weapon.Ammo.MaxClip * weapon.Ammo.ExtraClips : int.MaxValue;
+
             if (string.Equals(CurrentWeaponName, weaponName, System.StringComparison.Ordinal))
             {
-                m_ReserveAmmo.Value += amount;
+                m_ReserveAmmo.Value = Mathf.Min(m_ReserveAmmo.Value + amount, maxReserve);
                 return;
             }
 
             if (m_AmmoCache.TryGetValue(weaponName, out (int clip, int reserve, int altClip, int altReserve) cached))
             {
-                m_AmmoCache[weaponName] = (cached.clip, cached.reserve + amount, cached.altClip, cached.altReserve);
+                int newReserve = Mathf.Min(cached.reserve + amount, maxReserve);
+                m_AmmoCache[weaponName] = (cached.clip, newReserve, cached.altClip, cached.altReserve);
             }
         }
 

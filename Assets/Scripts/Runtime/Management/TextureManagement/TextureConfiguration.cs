@@ -35,8 +35,24 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 public string logoutButtonGlow;
                 public string logoutButton;
             }
+
+            [Serializable]
+            public class JoinServerTextures
+            {
+                public string background;
+                public string scanline;
+                public string lockIcon;
+                public string getListButton;
+                public string getListButtonAlt;
+                public string refreshButton;
+                public string refreshButtonAlt;
+                public string joinButton;
+                public string joinButtonAlt;
+            }
+
             public LoginTextures login;
             public MainMenuTextures mainMenu;
+            public JoinServerTextures joinServer;
         }
 
         [Serializable]

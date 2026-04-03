@@ -1,8 +1,8 @@
 using System;
-using System.Text;
 using System.Threading.Tasks;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
 {
@@ -10,41 +10,18 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
     /// Authentication state corresponding to when the user is attempting to authenticate.
     /// From this state we can transition to AuthenticatedState on success or back to
     /// UnauthenticatedState on failure.
+    /// Delegiert HTTP-Kommunikation an MasterServerService.
     /// </summary>
     class AuthenticatingState : AuthenticationState
     {
-        private string m_Username;
-        private string m_Password;
+        string m_Username;
+        string m_Password;
 
         public void Configure(string username, string password)
         {
             m_Username = username;
             m_Password = password;
         }
-
-        public override async void Enter()
-        {
-            var authEvent = new AuthenticationEvent { status = AuthenticationStatus.Authenticating };
-            Manager.EventManager.Broadcast(authEvent);
-
-            //await LoginToServer(m_Username, m_Password);
-            await MockAuthenticationProcess();
-        }
-
-        public override void Exit() { }
-
-        public override void OnAuthenticationSuccess()
-        {
-            Manager.ChangeState(Manager.m_Authenticated);
-        }
-
-        public override void OnAuthenticationFailure(AuthenticationStatus status)
-        {
-            var authEvent = new AuthenticationEvent { status = status };
-            Manager.EventManager.Broadcast(authEvent);
-            Manager.ChangeState(Manager.m_Unauthenticated);
-        }
-
         private async Task MockAuthenticationProcess()
         {
             await Task.Delay(2000); // Simulate network delay
@@ -61,52 +38,70 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
             Manager.OnAuthenticationSuccess();
         }
 
-        private async Task LoginToServer(string username, string password)
+        public override async void Enter()
         {
-            var loginData = new AuthenticationPayload
+            AuthenticationEvent authEvent = new() { status = AuthenticationStatus.Authenticating };
+            Manager.EventManager.Broadcast(authEvent);
+
+            //await LoginViaMasterServer(m_Username, m_Password);
+            await MockAuthenticationProcess();
+        }
+
+        public override void Exit() { }
+
+        public override void OnAuthenticationSuccess()
+        {
+            Manager.ChangeState(Manager.m_Authenticated);
+        }
+
+        public override void OnAuthenticationFailure(AuthenticationStatus status)
+        {
+            AuthenticationEvent authEvent = new() { status = status };
+            Manager.EventManager.Broadcast(authEvent);
+            Manager.ChangeState(Manager.m_Unauthenticated);
+        }
+
+        /// <summary>
+        /// Delegiert den Login an den MasterServerService und verarbeitet das Ergebnis.
+        /// </summary>
+        async Task LoginViaMasterServer(string username, string password)
+        {
+            MasterServerService masterService = ServiceLocator.Get<MasterServerService>();
+            if (masterService == null)
             {
-                username = username,
-                password = password
-            };
+                Debug.LogError("[AuthenticatingState] MasterServerService nicht im ServiceLocator registriert!");
+                OnAuthenticationFailure(AuthenticationStatus.ServerError);
+                return;
+            }
 
-            string jsonData = JsonUtility.ToJson(loginData);
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonData);
-
-            using var request = new UnityWebRequest("http://localhost:8000/api/loginUser", "POST");
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            await request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
+            try
             {
-                try
+                MasterServerAuthResult result = await masterService.LoginUserAsync(username, password);
+
+                if (result.IsSuccess)
                 {
-                    var response = JsonUtility.FromJson<AuthenticationResponse>(request.downloadHandler.text);
-                    Debug.Log($"Server response: {response.message}");
-                    Manager.m_Authenticated.Configure(response);
+                    Manager.m_Authenticated.Configure(result.Response);
                     Manager.OnAuthenticationSuccess();
                 }
-                catch (Exception e)
+                else
                 {
-                    Debug.LogError($"Failed to parse response: {e.Message}");
-                    OnAuthenticationFailure(AuthenticationStatus.Undefined);
+                    AuthenticationStatus status = result.ResponseCode switch
+                    {
+                        401 or 403 => AuthenticationStatus.InvalidCredentials,
+                        404 => AuthenticationStatus.ServerError,
+                        500 or 502 or 503 => AuthenticationStatus.ServerError,
+                        0 => AuthenticationStatus.NetworkError,
+                        666 => AuthenticationStatus.AccountDisabled,
+                        667 => AuthenticationStatus.UserNotFound,
+                        _ => AuthenticationStatus.Undefined
+                    };
+                    OnAuthenticationFailure(status);
                 }
             }
-            else
+            catch (Exception e)
             {
-                AuthenticationStatus status = request.responseCode switch
-                {
-                    401 or 403 => AuthenticationStatus.InvalidCredentials,
-                    404 or 404 => AuthenticationStatus.ServerError,
-                    500 or 502 or 503 => AuthenticationStatus.ServerError,
-                    0 => AuthenticationStatus.NetworkError,
-                    666 => AuthenticationStatus.AccountDisabled,   // Custom
-                    667 => AuthenticationStatus.UserNotFound,   // Custom
-                    _ => AuthenticationStatus.Undefined
-                };
-                OnAuthenticationFailure(status);
+                Debug.LogError($"[AuthenticatingState] Login Exception: {e.Message}");
+                OnAuthenticationFailure(AuthenticationStatus.NetworkError);
             }
         }
     }

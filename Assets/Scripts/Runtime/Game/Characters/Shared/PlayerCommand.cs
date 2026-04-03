@@ -48,11 +48,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Move-Input (WASD / Stick). X = Strafe, Y = Forward/Back.</summary>
         public Vector2 MoveInput;
 
-        /// <summary>Yaw-Winkel des Charakters in Grad (Kamera-Blickrichtung Y-Rotation).</summary>
+        /// <summary>Yaw-Winkel fuer Aim/Schuss in Grad (TP-Parallaxe-korrigiert).</summary>
         public float YawAngle;
 
-        /// <summary>Pitch-Winkel des Charakters in Grad (Kamera-Blickrichtung X-Rotation). Benötigt fuer server-seitige Hitscan-Richtung.</summary>
+        /// <summary>Pitch-Winkel fuer Aim/Schuss in Grad (TP-Parallaxe-korrigiert).</summary>
         public float PitchAngle;
+
+        /// <summary>Yaw-Winkel fuer Bewegungsrichtung in Grad (unkorrigiert, reiner Kamera-Yaw).
+        /// In First-Person identisch mit YawAngle. In Third-Person weicht YawAngle durch
+        /// Parallaxe-Korrektur ab — Bewegung muss aber dem unkorregierten Kamera-Yaw folgen.</summary>
+        public float MoveYawAngle;
 
         /// <summary>
         /// </summary>
@@ -79,6 +84,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             serializer.SerializeValue(ref MoveInput);
             serializer.SerializeValue(ref YawAngle);
             serializer.SerializeValue(ref PitchAngle);
+            serializer.SerializeValue(ref MoveYawAngle);
             serializer.SerializeValue(ref Buttons);
             serializer.SerializeValue(ref DeltaTime);
             serializer.SerializeValue(ref SequenceNumber);

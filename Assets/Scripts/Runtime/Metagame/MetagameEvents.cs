@@ -83,4 +83,18 @@ namespace Tolik.RemakeSoF.Runtime
     internal class LoadPreviousSkinEvent : AppEvent { }
     internal class CreateServerClickEvent : AppEvent { }
     internal class JoinServerClickEvent : AppEvent { }
+
+    /// <summary>
+    /// Wird gefeuert wenn der Benutzer die Server-Liste aktualisieren will.
+    /// </summary>
+    internal class RefreshServerListEvent : AppEvent { }
+
+    /// <summary>
+    /// Wird gefeuert wenn der Benutzer einen Server im Browser auswaehlt und verbinden will.
+    /// </summary>
+    internal class ConnectToServerEvent : AppEvent
+    {
+        public string ipAddress;
+        public ushort port;
+    }
 }

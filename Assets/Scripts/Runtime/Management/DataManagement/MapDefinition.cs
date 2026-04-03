@@ -30,9 +30,6 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// <summary>Anzeigename der Map (z.B. "Cemetery").</summary>
         public string mapName;
 
-        /// <summary>Match-Countdown in Sekunden.</summary>
-        public uint countdownStartValue;
-
         /// <summary>Texturpfad fuer den Ladescreen-Hintergrund (z.B. "gfx/menus/levelshots/cem1").</summary>
         public string levelShotBackgroundTexturePath;
 

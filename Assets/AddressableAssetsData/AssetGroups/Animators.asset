@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Animators
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Animators
+  m_GUID: b5aba8e81024587498f94e10c0632c37
+  m_SerializeEntries:
+  - m_GUID: 0af4f13a340015f49bf37f2faf41bb9b
+    m_Address: models/animator/game_average_sleeves
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 946cfc264987bfa4db94ad069480e56a
+    m_Address: models/animator/loadout_female_pants
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: acae1b99ec54d864f99c3cdc6a5069b6
+    m_Address: models/animator/loadout_average_sleeves
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 9500df7d393bcc147931f5c826073cc6, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: ab99152154b8e0341bbf62f2f46c07dd, type: 2}
+    - {fileID: 11400000, guid: 77c9c00f405b9c245a0cd6dfeda6d57b, type: 2}

@@ -879,8 +879,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             PM_Friction();
 
-            // Forward/Right aus YawAngle
-            Quaternion yawRotation = Quaternion.Euler(0f, cmd.YawAngle, 0f);
+            // Forward/Right aus MoveYawAngle (unkorrigierter Kamera-Yaw fuer Bewegung)
+            Quaternion yawRotation = Quaternion.Euler(0f, cmd.MoveYawAngle, 0f);
             Vector3 forward = yawRotation * Vector3.forward;
             Vector3 right = yawRotation * Vector3.right;
 
@@ -991,7 +991,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         {
             PM_Friction();
 
-            Quaternion yawRotation = Quaternion.Euler(0f, cmd.YawAngle, 0f);
+            Quaternion yawRotation = Quaternion.Euler(0f, cmd.MoveYawAngle, 0f);
             Vector3 forward = yawRotation * Vector3.forward;
             Vector3 right = yawRotation * Vector3.right;
             forward.y = 0f;

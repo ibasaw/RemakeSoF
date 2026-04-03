@@ -1102,7 +1102,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             }
 
             GameObject explosionObj = new($"Explosion_{definition.DisplayName}");
-            explosionObj.transform.position = position;
+
+            // Phosphorus: Wolke soll oben schweben, nicht am Boden clippen
+            // Ground-Snap: Raycast zur Bodenebene, dann Offset nach oben
+            if (effectId.Contains("phosphorus_explosion"))
+            {
+                Vector3 groundPos = position;
+                if (Physics.Raycast(position + Vector3.up * 2f, Vector3.down, out RaycastHit groundHit, 10f))
+                {
+                    groundPos = groundHit.point;
+                }
+                explosionObj.transform.position = groundPos + Vector3.up * 2.5f;
+            }
+            else
+            {
+                explosionObj.transform.position = position;
+            }
 
             // SoF2 Effekt-Koordinaten: X = "forward" (Surface-Normal), Y/Z = perpendicular
             // Fuer Boden-Explosionen: X = nach oben, Y/Z = horizontal
@@ -1137,6 +1152,38 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                             psRenderer.renderMode = ParticleSystemRenderMode.Stretch;
                             psRenderer.lengthScale = 4f;
                         }
+
+                        // Phosphorus/Smoke: groessere SoftParticleRange damit Partikel an
+                        // Waenden/Boden sanft ausfaden statt durchzuschneiden.
+                        // Default 0.5m ist fuer Gore; hier 4.0m fuer grosse Rauchwolken
+                        // (halbe Partikelgroesse, ~7m max → 3.5m Range + Puffer).
+                        if (effectId.Contains("phosphorus_explosion") && segment.Type == "particle")
+                        {
+                            Material mat = psRenderer.material;
+                            if (mat != null && mat.HasProperty("_SoftParticleRange"))
+                            {
+                                mat.SetFloat("_SoftParticleRange", 4f);
+                            }
+                        }
+                    }
+
+                    // Phosphorus-Wolke: Welt-Kollision aktivieren, damit Partikel nicht
+                    // durch Waende/Boden fliegen. Hitbox- und Player-Layer ausschliessen,
+                    // damit Spieler die Wolke nicht wegschieben koennen.
+                    // radiusScale=1.0 nutzt volle Partikelgroesse fuer Kollisionserkennung
+                    // (bei 6-7m Partikeln => 3-3.5m Kollisionsradius statt nur 0.7m).
+                    if (effectId.Contains("phosphorus_explosion") && segment.Type == "particle")
+                    {
+                        ParticleSystem.CollisionModule collision = ps.collision;
+                        collision.enabled = true;
+                        collision.type = ParticleSystemCollisionType.World;
+                        collision.mode = ParticleSystemCollisionMode.Collision3D;
+                        collision.quality = ParticleSystemCollisionQuality.High;
+                        collision.collidesWith = ~LayerMask.GetMask("Hitbox", "Player");
+                        collision.bounce = 0f;
+                        collision.dampen = 1f;
+                        collision.lifetimeLoss = 0f;
+                        collision.radiusScale = 1f;
                     }
 
                     ps.Play();
@@ -1221,6 +1268,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             if (effectId.Contains("phosphorus_explosion"))
             {
                 SpawnPhosphorusScatter(position, 8);
+
+                // Sichtbehinderung fuer lokalen Spieler innerhalb der Wolke.
+                // Radius ~5m passend zur Partikelgroesse, Dauer = Wolken-Lebenszeit.
+                PhosphorusScreenEffect.RegisterCloud(
+                    explosionObj.transform.position, 5f, maxLifetime);
             }
 
             Object.Destroy(explosionObj, maxLifetime + 1f);
@@ -1748,15 +1800,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
             EffectDefinition definition = GetDefinition(effectId);
             if (definition?.Segments == null || definition.Segments.Count == 0)
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.LogWarning($"[EffectFactory] SpawnImpactEffect: no definition or segments for effectId='{effectId}' (definition={definition != null}, segments={definition?.Segments?.Count ?? 0})");
-#endif
                 return;
             }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log($"[EffectFactory] SpawnImpactEffect: effectId='{effectId}', displayName='{definition.DisplayName}', segments={definition.Segments.Count}, pos={hitPoint}");
-#endif
+            // Debug.Log($"[EffectFactory] SpawnImpactEffect: effectId='{effectId}', displayName='{definition.DisplayName}', segments={definition.Segments.Count}, pos={hitPoint}");
 
             // Impact-Root: orientiert an der Oberflaechen-Normalen
             // Partikel-Velocities in der JSON sind in Lokal-Space definiert (Z = weg von Wand)

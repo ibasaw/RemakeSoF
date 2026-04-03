@@ -18,6 +18,17 @@
             "loadoutButtonGlow": "ui/metagame/icons/icon_credits_glow_mp",
             "logoutButton": "ui/metagame/icons/icon_quit_mp",
             "logoutButtonGlow": "ui/metagame/icons/icon_quit_glow_mp"
+        },
+        "joinServer": {
+            "background": "gfx/menus/backdrop/menu_back",
+            "scanline": "gfx/menus/backdrop/menu_scanline",
+            "lockIcon": "gfx/menus/icons/icon_lock_mp",
+            "getListButton": "gfx/menus/icons/submenu_get_list",
+            "getListButtonAlt": "gfx/menus/icons/submenu_get_list_alt",
+            "refreshButton": "gfx/menus/icons/submenu_refresh",
+            "refreshButtonAlt": "gfx/menus/icons/submenu_refresh_alt",
+            "joinButton": "gfx/menus/icons/submenu_join",
+            "joinButtonAlt": "gfx/menus/icons/submenu_join_alt"
         }
     },
     "gameplay": {
