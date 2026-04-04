@@ -34,6 +34,9 @@ namespace Tolik.RemakeSoF.Runtime
             m_BackToLoginButton.RegisterCallback<ClickEvent>(OnClickBackToLogin);
             m_RegisterButton.RegisterCallback<ClickEvent>(OnClickRegister);
 
+            m_BackToLoginButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            m_RegisterButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+
             m_UsernameTextField.RegisterValueChangedCallback(OnUsernameChanged);
             m_PasswordTextField.RegisterValueChangedCallback(OnPasswordChanged);
             m_ConfirmPasswordTextField.RegisterValueChangedCallback(OnConfirmPasswordChanged);
@@ -70,11 +73,13 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnClickBackToLogin(ClickEvent evt)
         {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click);
             Broadcast(new ChangeToLoginEvent());
         }
 
         void OnClickRegister(ClickEvent evt)
         {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.ApplyChanges);
             Broadcast(new PlayerRegisterEvent
             {
                 username = m_UsernameTextField.text,

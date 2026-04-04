@@ -15,6 +15,10 @@ namespace Tolik.RemakeSoF.Runtime.SoundManagement
     public class SoundManager
     {
         private readonly SoundRegistry m_Registry;
+        private readonly SoundConfiguration m_Configuration;
+
+        /// <summary>Sound configuration loaded from SoundConfiguration.json.</summary>
+        public SoundConfiguration Configuration => m_Configuration;
 
         /// <summary>AudioMixerGroup fuer SFX-Routing (z.B. MasterMixer/SFX).</summary>
         private AudioMixerGroup m_SfxGroup;
@@ -78,7 +82,9 @@ namespace Tolik.RemakeSoF.Runtime.SoundManagement
         public SoundManager(string externalBasePath = null)
         {
             m_Registry = new SoundRegistry();
+            m_Configuration = new SoundConfiguration();
             Initialize(externalBasePath);
+            m_Configuration.Initialize();
             Debug.Log($"[SoundManager] Initialized. Registered {m_Registry.SoundCache.Count} sounds.");
         }
 

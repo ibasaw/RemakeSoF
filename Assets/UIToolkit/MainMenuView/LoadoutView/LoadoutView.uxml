@@ -1,13 +1,64 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UIToolkit/UnityStyleSheet.uss?fileID=7433441132597879392&amp;guid=819e6491a1421a14db87a36e0c93b136&amp;type=3#UnityStyleSheet" />
-    <ui:VisualElement style="flex-grow: 1;">
-        <ui:Label text="MY LOADOUT VIEW" />
-        <ui:Label text="Label" name="playerName" />
-        <ui:Label text="Label" name="playerId" />
-        <ui:VisualElement name="previewContainer" style="flex-grow: 1;">
-            <ui:Button text="Button" name="loadPrevious" class="button" />
-            <ui:VisualElement name="previewArea" style="width: 400px; height: 600px; background-color: rgb(91, 85, 85); border-width: 2px; border-color: rgb(255, 255, 255); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
-            <ui:Button text="Button" name="loadNext" class="button" />
+    <Style src="LoadoutView.uss" />
+    <ui:VisualElement name="loadoutRoot" class="loadout-root">
+
+        <!-- Top bar: player info -->
+        <ui:VisualElement class="loadout-top-bar">
+            <ui:VisualElement class="loadout-top-left">
+                <ui:Label text="PlayerName" name="playerName" class="loadout-player-name" />
+                <ui:Label text="playerID-000" name="playerId" class="loadout-player-id" />
+            </ui:VisualElement>
         </ui:VisualElement>
+
+        <!-- Icon tab row (SoF2-style) -->
+        <ui:VisualElement class="loadout-icon-row">
+            <ui:Button name="tabSkin" class="loadout-icon-tab loadout-icon-tab-active loadout-icon-tab-player" />
+            <ui:Button name="tabGun" class="loadout-icon-tab loadout-icon-tab-disabled loadout-icon-tab-scale" />
+            <ui:Button name="tabGear" class="loadout-icon-tab loadout-icon-tab-disabled loadout-icon-tab-misc" />
+            <ui:Button name="tabEmote" class="loadout-icon-tab loadout-icon-tab-disabled loadout-icon-tab-back" />
+            <ui:Button name="tabKeys" class="loadout-icon-tab loadout-icon-tab-disabled loadout-icon-tab-keys" />
+            <ui:Button name="tabDisplay" class="loadout-icon-tab loadout-icon-tab-disabled loadout-icon-tab-display" />
+            <ui:Button name="tabSound" class="loadout-icon-tab loadout-icon-tab-disabled loadout-icon-tab-sound" />
+            <ui:Button name="tabNetwork" class="loadout-icon-tab loadout-icon-tab-disabled loadout-icon-tab-network" />
+        </ui:VisualElement>
+
+        <!-- Content: two columns -->
+        <ui:VisualElement class="loadout-content">
+
+            <!-- Left: character preview with overlays -->
+            <ui:VisualElement class="loadout-preview-wrapper">
+                <ui:VisualElement name="previewArea" class="loadout-preview-area" />
+
+                <!-- Player name overlay above head -->
+                <ui:Label text="PlayerName" name="playerNameOverlay" class="loadout-player-name-overlay" />
+
+                <!-- Nav buttons close to character -->
+                <ui:Button text="&#x25C0;" name="loadPrevious" class="loadout-nav-btn loadout-nav-btn-left" />
+                <ui:Button text="&#x25B6;" name="loadNext" class="loadout-nav-btn loadout-nav-btn-right" />
+            </ui:VisualElement>
+
+            <!-- Right: SoF2-style info panel -->
+            <ui:VisualElement class="loadout-right-panel">
+                <ui:Label text="Name" class="loadout-section-label" />
+                <ui:TextField name="displayNameInput" class="loadout-display-name-input" />
+
+                <ui:Label text="Identity" class="loadout-section-label loadout-section-label-gap" />
+                <ui:VisualElement class="loadout-skin-info">
+                    <ui:Label text="Skin Name" name="skinName" class="loadout-skin-name" />
+
+                    <!-- Horizontal skin thumbnail list (SoF2-style, custom scroll) -->
+                    <Tolik.RemakeSoF.Runtime.Core.HorizontalScrollView name="skinListScroll" class="loadout-skin-list" />
+
+                    <ui:Label text="[ DEFAULT ]" name="skinRarity" class="loadout-skin-rarity" />
+                    <ui:Label text="Standard tactical operator" name="skinDescription" class="loadout-skin-description" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+        </ui:VisualElement>
+
+        <!-- Hidden: equip button kept for C# compat -->
+        <ui:Button name="equipButton" class="loadout-hidden" />
+
     </ui:VisualElement>
 </ui:UXML>

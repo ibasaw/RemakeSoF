@@ -19,6 +19,7 @@ namespace Tolik.RemakeSoF.Runtime
             PlayerSkinManager.EventManager.AddListener<PlayerSkinChangedEvent>(OnPlayerSkinChanged);
             AddListener<LoadNextSkinEvent>(OnClickLoadNextSkin);
             AddListener<LoadPreviousSkinEvent>(OnClickLoadPreviousSkin);
+            AddListener<ChangeSkinByNameEvent>(OnChangeSkinByName);
             Debug.Log("[LoadoutController] Awake - LoadoutController initialized and listeners added");
         }
 
@@ -35,6 +36,12 @@ namespace Tolik.RemakeSoF.Runtime
             PlayerSkinManager.LoadPreviousSkin();
         }
 
+        void OnChangeSkinByName(ChangeSkinByNameEvent evt)
+        {
+            Debug.Log($"[LoadoutController] OnChangeSkinByName - Requesting skin '{evt.skinName}' from PlayerSkinManager");
+            PlayerSkinManager.ChangeSkin(evt.skinName);
+        }
+
         void OnPlayerSkinChanged(PlayerSkinChangedEvent evt)
         {
             GameObject prefab = PlayerSkinManager.GetCurrentPlayerPrefab();
@@ -46,6 +53,7 @@ namespace Tolik.RemakeSoF.Runtime
 
             Debug.Log($"[LoadoutController] OnPlayerSkinChanged - Setting character prefab in LoadoutView: {prefab.name}");
             View.SetCharacterPrefab(prefab);
+            View.UpdateSkinInfo(evt.skinName);
         }
 
         void OnDestroy()
@@ -61,6 +69,7 @@ namespace Tolik.RemakeSoF.Runtime
             PlayerSkinManager.EventManager.RemoveListener<PlayerSkinChangedEvent>(OnPlayerSkinChanged);
             RemoveListener<LoadNextSkinEvent>(OnClickLoadNextSkin);
             RemoveListener<LoadPreviousSkinEvent>(OnClickLoadPreviousSkin);
+            RemoveListener<ChangeSkinByNameEvent>(OnChangeSkinByName);
         }
 
         void OnConnectionEvent(ConnectionEvent evt)

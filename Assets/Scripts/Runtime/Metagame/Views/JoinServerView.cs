@@ -1,7 +1,3 @@
-using System;
-using System.Diagnostics;
-using System.Net.NetworkInformation;
-using System.Threading.Tasks;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
@@ -21,14 +17,25 @@ namespace Tolik.RemakeSoF.Runtime
         /// <summary>Timeout fuer ICMP Ping in Millisekunden.</summary>
         const int k_PingTimeoutMs = 2000;
 
+        /// <summary>Scroll-Schwelle in Pixel: wenn weniger als dieser Abstand zum Ende, naechstes Paket laden.</summary>
+        const float k_ScrollThreshold = 50f;
+
+        /// <summary>Mindestdistanz in Pixel bevor ein Drag erkannt wird (damit Klicks durchkommen).</summary>
+        const float k_DragThreshold = 5f;
+
         UIDocument m_UIDocument;
 
         VisualElement m_ServerListContainer;
-        VisualElement m_ServerListScrollView;
+        ScrollView m_ServerListScrollView;
         Label m_StatusLabel;
         Button m_GetListButton;
         Button m_RefreshButton;
         Button m_ConnectButton;
+        Button m_NewFavoriteButton;
+        Button m_AddFavoriteButton;
+        Button m_ServerInfoButton;
+        Button m_FindFriendButton;
+        Label m_SelectedServerLabel;
 
         /// <summary>Aktuell selektierter Server-Eintrag (oder null).</summary>
         ServerBrowserEntry m_SelectedEntry;
@@ -36,11 +43,26 @@ namespace Tolik.RemakeSoF.Runtime
         /// <summary>Aktuell selektiertes Row-Element fuer Styling.</summary>
         VisualElement m_SelectedRow;
 
-        /// <summary>Gecachte Server-Liste fuer Doppelklick-Erkennung.</summary>
-        ServerBrowserEntry[] m_CachedServers;
-
         /// <summary>Gecachte Lock-Textur fuer Server-Zeilen mit Passwort.</summary>
         Texture2D m_LockTexture;
+
+        /// <summary>Ob weitere Server-Eintraege verfuegbar sind.</summary>
+        bool m_HasMore;
+
+        /// <summary>Ob ein Content-Drag aussteht (Maus gedrueckt, Schwelle noch nicht erreicht).</summary>
+        bool m_ContentDragPending;
+
+        /// <summary>Ob gerade aktiv per Drag gescrollt wird.</summary>
+        bool m_IsDraggingContent;
+
+        /// <summary>Pointer-ID fuer den aktiven Content-Drag.</summary>
+        int m_ContentDragPointerId;
+
+        /// <summary>Y-Position bei Drag-Start.</summary>
+        float m_ContentDragStartY;
+
+        /// <summary>Scroll-Wert bei Drag-Start.</summary>
+        float m_ContentDragStartScroll;
 
         void Awake()
         {
@@ -53,11 +75,16 @@ namespace Tolik.RemakeSoF.Runtime
 
             // UI-Elemente finden
             m_ServerListContainer = root.Q<VisualElement>("serverListContainer");
-            m_ServerListScrollView = root.Q<VisualElement>("serverListScrollView");
+            m_ServerListScrollView = root.Q<ScrollView>("serverListScrollView");
             m_StatusLabel = root.Q<Label>("statusLabel");
             m_GetListButton = root.Q<Button>("getListButton");
             m_RefreshButton = root.Q<Button>("refreshButton");
             m_ConnectButton = root.Q<Button>("connectButton");
+            m_NewFavoriteButton = root.Q<Button>("newFavoriteButton");
+            m_AddFavoriteButton = root.Q<Button>("addFavoriteButton");
+            m_ServerInfoButton = root.Q<Button>("serverInfoButton");
+            m_FindFriendButton = root.Q<Button>("findFriendButton");
+            m_SelectedServerLabel = root.Q<Label>("selectedServerLabel");
 
             // SoF2-Texturen laden und anwenden
             LoadAndApplyMenuTextures(root);
@@ -67,6 +94,21 @@ namespace Tolik.RemakeSoF.Runtime
             m_RefreshButton.RegisterCallback<ClickEvent>(OnClickRefresh);
             m_ConnectButton.RegisterCallback<ClickEvent>(OnClickConnect);
 
+            // Hover-Sounds fuer Buttons
+            m_GetListButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            m_RefreshButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            m_ConnectButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            m_NewFavoriteButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            m_AddFavoriteButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            m_ServerInfoButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            m_FindFriendButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+
+            // Click-Sounds fuer Toolbar-Buttons
+            m_NewFavoriteButton.RegisterCallback<ClickEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click));
+            m_AddFavoriteButton.RegisterCallback<ClickEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click));
+            m_ServerInfoButton.RegisterCallback<ClickEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click));
+            m_FindFriendButton.RegisterCallback<ClickEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click));
+
             // Tooltips fuer Buttons (sichtbar beim Hovern)
             m_GetListButton.tooltip = "Get Server List";
             m_RefreshButton.tooltip = "Refresh Server List";
@@ -75,6 +117,18 @@ namespace Tolik.RemakeSoF.Runtime
             m_ConnectButton.SetEnabled(false);
             m_SelectedEntry = null;
             m_SelectedRow = null;
+            m_HasMore = false;
+            m_ContentDragPending = false;
+            m_IsDraggingContent = false;
+
+            // Infinite-Scroll: Scroll-Event abonnieren
+            m_ServerListScrollView.verticalScroller.valueChanged += OnScrollValueChanged;
+
+            // Content-Drag fuer vertikales Scrollen per Maus-Drag
+            m_ServerListScrollView.contentContainer.RegisterCallback<PointerDownEvent>(OnContentDragDown);
+            m_ServerListScrollView.contentContainer.RegisterCallback<PointerMoveEvent>(OnContentDragMove);
+            m_ServerListScrollView.contentContainer.RegisterCallback<PointerUpEvent>(OnContentDragUp);
+            m_ServerListScrollView.contentContainer.RegisterCallback<PointerCaptureOutEvent>(OnContentDragCaptureOut);
 
             // Auto-Fetch beim Anzeigen der View
             Broadcast(new RefreshServerListEvent());
@@ -82,6 +136,14 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnDisable()
         {
+            if (m_ServerListScrollView != null)
+            {
+                m_ServerListScrollView.verticalScroller.valueChanged -= OnScrollValueChanged;
+                m_ServerListScrollView.contentContainer.UnregisterCallback<PointerDownEvent>(OnContentDragDown);
+                m_ServerListScrollView.contentContainer.UnregisterCallback<PointerMoveEvent>(OnContentDragMove);
+                m_ServerListScrollView.contentContainer.UnregisterCallback<PointerUpEvent>(OnContentDragUp);
+                m_ServerListScrollView.contentContainer.UnregisterCallback<PointerCaptureOutEvent>(OnContentDragCaptureOut);
+            }
             if (m_GetListButton != null)
             {
                 m_GetListButton.UnregisterCallback<ClickEvent>(OnClickRefresh);
@@ -134,10 +196,73 @@ namespace Tolik.RemakeSoF.Runtime
             // Lock-Textur cachen fuer Server-Zeilen
             m_LockTexture = LoadMenuTexture(textureManager, config.lockIcon);
 
+            // Lock-Icon im Column-Header setzen
+            VisualElement headerLock = root.Q<VisualElement>(className: "server-cell-lock");
+            if (m_LockTexture != null && headerLock != null)
+            {
+                headerLock.style.backgroundImage = new StyleBackground(m_LockTexture);
+            }
+
             // Button-Texturen setzen
             SetupButtonTexture(textureManager, m_GetListButton, config.getListButton, config.getListButtonAlt);
             SetupButtonTexture(textureManager, m_RefreshButton, config.refreshButton, config.refreshButtonAlt);
             SetupButtonTexture(textureManager, m_ConnectButton, config.joinButton, config.joinButtonAlt);
+
+            // Vertikale Scrollbar-Texturen anwenden
+            ApplyScrollbarTextures(textureManager, config);
+        }
+
+        /// <summary>
+        /// Wendet SoF2-Texturen auf die vertikale Scrollbar der Server-Liste an.
+        /// </summary>
+        void ApplyScrollbarTextures(TextureManager textureManager, TextureConfiguration.MetagameConfiguration.JoinServerTextures config)
+        {
+            if (m_ServerListScrollView == null)
+            {
+                return;
+            }
+
+            Scroller verticalScroller = m_ServerListScrollView.verticalScroller;
+
+            // Up Arrow
+            Texture2D arrowUpTex = LoadMenuTexture(textureManager, config.scrollbarArrowUp);
+            if (arrowUpTex != null)
+            {
+                RepeatButton lowButton = verticalScroller.lowButton;
+                lowButton.style.backgroundImage = new StyleBackground(arrowUpTex);
+                lowButton.text = "";
+            }
+
+            // Down Arrow
+            Texture2D arrowDownTex = LoadMenuTexture(textureManager, config.scrollbarArrowDown);
+            if (arrowDownTex != null)
+            {
+                RepeatButton highButton = verticalScroller.highButton;
+                highButton.style.backgroundImage = new StyleBackground(arrowDownTex);
+                highButton.text = "";
+            }
+
+            // Track
+            Texture2D trackTex = LoadMenuTexture(textureManager, config.scrollbarTrack);
+            if (trackTex != null)
+            {
+                VisualElement tracker = verticalScroller.slider.Q<VisualElement>("unity-tracker");
+                if (tracker != null)
+                {
+                    tracker.style.backgroundImage = new StyleBackground(trackTex);
+                }
+            }
+
+            // Thumb (Dragger)
+            Texture2D thumbTex = LoadMenuTexture(textureManager, config.scrollbarThumb);
+            if (thumbTex != null)
+            {
+                VisualElement dragger = verticalScroller.slider.Q<VisualElement>("unity-dragger");
+                if (dragger != null)
+                {
+                    dragger.style.backgroundImage = new StyleBackground(thumbTex);
+                }
+            }
         }
 
         /// <summary>
@@ -192,6 +317,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnClickRefresh(ClickEvent evt)
         {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click);
             Broadcast(new RefreshServerListEvent());
         }
 
@@ -201,6 +327,8 @@ namespace Tolik.RemakeSoF.Runtime
             {
                 return;
             }
+
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.ApplyChanges);
 
             Broadcast(new ConnectToServerEvent
             {
@@ -230,99 +358,163 @@ namespace Tolik.RemakeSoF.Runtime
         }
 
         /// <summary>
-        /// Aktualisiert die Server-Liste in der UI.
+        /// Beginnt eine neue Server-Liste. Loescht vorherige Eintraege und setzt Status.
         /// </summary>
-        /// <param name="servers">Array von Server-Eintraegen vom Master-Server.</param>
-        internal void PopulateServerList(ServerBrowserEntry[] servers)
+        /// <param name="totalCount">Gesamtanzahl aller verfuegbaren Server.</param>
+        internal void BeginServerList(int totalCount)
         {
-            m_CachedServers = servers;
             m_ServerListContainer.Clear();
             m_SelectedEntry = null;
             m_SelectedRow = null;
             m_ConnectButton.SetEnabled(false);
             m_GetListButton.SetEnabled(true);
-            m_RefreshButton.SetEnabled(true);
 
-            if (servers == null || servers.Length == 0)
+            if (m_SelectedServerLabel != null)
+            {
+                m_SelectedServerLabel.text = "";
+            }
+            m_RefreshButton.SetEnabled(true);
+            m_HasMore = false;
+
+            if (totalCount == 0)
             {
                 m_StatusLabel.text = "No servers found.";
                 return;
             }
 
-            m_StatusLabel.text = $"{servers.Length} server(s) found.";
+            m_StatusLabel.text = $"{totalCount} server(s) found.";
+        }
 
-            for (int i = 0; i < servers.Length; i++)
+        /// <summary>
+        /// Haengt ein Paket von Server-Eintraegen an die bestehende Liste an (infinite scroll).
+        /// </summary>
+        /// <param name="batch">Die naechsten Server-Eintraege.</param>
+        /// <param name="loadedSoFar">Bisher insgesamt geladene Anzahl.</param>
+        /// <param name="totalCount">Gesamtanzahl aller Server.</param>
+        /// <param name="hasMore">Ob noch weitere Eintraege verfuegbar sind.</param>
+        internal void AppendServerBatch(ServerBrowserEntry[] batch, int loadedSoFar, int totalCount, bool hasMore)
+        {
+            m_HasMore = hasMore;
+
+            for (int i = 0; i < batch.Length; i++)
             {
-                ServerBrowserEntry entry = servers[i];
-                Debug.Log($"[JoinServerView] Server[{i}]: {entry.hostname}, hasPassword={entry.hasPassword}, ip={entry.ip}");
+                ServerBrowserEntry entry = batch[i];
                 VisualElement row = CreateServerRow(entry);
                 m_ServerListContainer.Add(row);
             }
 
-            // Ping asynchron messen und in den Zeilen aktualisieren
-            _ = MeasurePingsAsync(servers);
-        }
+            m_StatusLabel.text = hasMore
+                ? $"{loadedSoFar} / {totalCount} server(s) loaded..."
+                : $"{totalCount} server(s) found.";
 
-        /// <summary>
-        /// Misst den ICMP-Ping zu jedem Server und aktualisiert die Ping-Labels in der UI.
-        /// Laeuft asynchron nach dem Aufbau der Liste.
-        /// </summary>
-        async Task MeasurePingsAsync(ServerBrowserEntry[] servers)
-        {
-            Task<long>[] pingTasks = new Task<long>[servers.Length];
-            for (int i = 0; i < servers.Length; i++)
+            // Wenn der Content den Viewport noch nicht fuellt, sofort naechstes Paket anfordern
+            if (hasMore)
             {
-                pingTasks[i] = PingHostAsync(servers[i].ip);
-            }
-
-            long[] results = await Task.WhenAll(pingTasks);
-
-            // Zurueck auf Main-Thread: Labels aktualisieren
-            for (int i = 0; i < results.Length; i++)
-            {
-                if (i >= m_ServerListContainer.childCount)
+                m_ServerListScrollView.schedule.Execute(() =>
                 {
-                    break;
-                }
-
-                long pingMs = results[i];
-                servers[i].ping = (int)pingMs;
-
-                VisualElement row = m_ServerListContainer[i];
-                Label pingLabel = row.Q<Label>(className: "server-cell-ping");
-                if (pingLabel != null)
-                {
-                    pingLabel.text = pingMs >= 0 ? pingMs.ToString() : "timeout";
-                }
+                    float scrollMax = m_ServerListScrollView.verticalScroller.highValue;
+                    if (scrollMax <= 0f)
+                    {
+                        Broadcast(new LoadMoreServersEvent());
+                    }
+                });
             }
         }
 
         /// <summary>
-        /// Sendet einen ICMP-Ping an den angegebenen Host und gibt die Roundtrip-Zeit in ms zurueck.
-        /// Gibt -1 zurueck bei Timeout oder Fehler.
+        /// Prueft ob der Nutzer nah genug am Ende der Liste gescrollt hat und laedt das naechste Paket.
         /// </summary>
-        async Task<long> PingHostAsync(string host)
+        void OnScrollValueChanged(float value)
         {
-            if (string.IsNullOrEmpty(host))
+            if (!m_HasMore)
             {
-                return -1;
+                return;
             }
 
-            try
+            float scrollMax = m_ServerListScrollView.verticalScroller.highValue;
+            if (scrollMax <= 0f)
             {
-                using System.Net.NetworkInformation.Ping pingSender = new();
-                PingReply reply = await pingSender.SendPingAsync(host, k_PingTimeoutMs);
-                if (reply.Status == IPStatus.Success)
+                return;
+            }
+
+            if (value >= scrollMax - k_ScrollThreshold)
+            {
+                Broadcast(new LoadMoreServersEvent());
+            }
+        }
+
+        // ── Content Drag (threshold-basiert, Klicks kommen durch) ──
+
+        /// <summary>
+        /// Startet einen potenziellen Drag wenn die linke Maustaste gedrueckt wird.
+        /// </summary>
+        void OnContentDragDown(PointerDownEvent evt)
+        {
+            if (evt.button != 0)
+            {
+                return;
+            }
+
+            m_ContentDragPending = true;
+            m_IsDraggingContent = false;
+            m_ContentDragPointerId = evt.pointerId;
+            m_ContentDragStartY = evt.position.y;
+            m_ContentDragStartScroll = m_ServerListScrollView.verticalScroller.value;
+        }
+
+        /// <summary>
+        /// Prueft ob die Drag-Schwelle ueberschritten ist und scrollt die Liste vertikal.
+        /// </summary>
+        void OnContentDragMove(PointerMoveEvent evt)
+        {
+            if (!m_ContentDragPending && !m_IsDraggingContent)
+            {
+                return;
+            }
+
+            if (m_ContentDragPending)
+            {
+                float distance = Mathf.Abs(evt.position.y - m_ContentDragStartY);
+                if (distance < k_DragThreshold)
                 {
-                    return reply.RoundtripTime;
+                    return;
                 }
 
-                return -1;
+                m_ContentDragPending = false;
+                m_IsDraggingContent = true;
+                m_ServerListScrollView.contentContainer.CapturePointer(m_ContentDragPointerId);
             }
-            catch (Exception)
+
+            if (m_IsDraggingContent)
             {
-                return -1;
+                float delta = m_ContentDragStartY - evt.position.y;
+                m_ServerListScrollView.verticalScroller.value = m_ContentDragStartScroll + delta;
+                evt.StopPropagation();
             }
+        }
+
+        /// <summary>
+        /// Beendet den Content-Drag und gibt den Pointer frei.
+        /// </summary>
+        void OnContentDragUp(PointerUpEvent evt)
+        {
+            if (m_IsDraggingContent)
+            {
+                m_IsDraggingContent = false;
+                m_ServerListScrollView.contentContainer.ReleasePointer(evt.pointerId);
+                evt.StopPropagation();
+            }
+
+            m_ContentDragPending = false;
+        }
+
+        /// <summary>
+        /// Setzt den Drag-State zurueck wenn der Pointer-Capture extern verloren geht.
+        /// </summary>
+        void OnContentDragCaptureOut(PointerCaptureOutEvent evt)
+        {
+            m_IsDraggingContent = false;
+            m_ContentDragPending = false;
         }
 
         /// <summary>
@@ -344,7 +536,7 @@ namespace Tolik.RemakeSoF.Runtime
                 if (m_LockTexture != null)
                 {
                     lockIcon.style.backgroundImage = new StyleBackground(m_LockTexture);
-                    lockIcon.style.unityBackgroundImageTintColor = new StyleColor(new Color(1f, 0.3f, 0.3f, 1f));
+                    lockIcon.style.unityBackgroundImageTintColor = new StyleColor(new Color(0.12f, 0.12f, 0.08f, 1f));
                 }
                 else
                 {
@@ -371,24 +563,31 @@ namespace Tolik.RemakeSoF.Runtime
             mapLabel.AddToClassList("server-cell-map");
             row.Add(mapLabel);
 
-            Label playersLabel = new($"{entry.currentPlayers}/{entry.maxPlayers}");
-            playersLabel.AddToClassList("server-cell");
-            playersLabel.AddToClassList("server-cell-players");
-            row.Add(playersLabel);
-
             Label gametypeLabel = new(entry.gametype ?? "");
             gametypeLabel.AddToClassList("server-cell");
             gametypeLabel.AddToClassList("server-cell-gametype");
             row.Add(gametypeLabel);
 
-            string pingText = "...";
+            Label playersLabel = new($"{entry.currentPlayers}/{entry.maxPlayers}");
+            playersLabel.AddToClassList("server-cell");
+            playersLabel.AddToClassList("server-cell-players");
+            row.Add(playersLabel);
+
+            string pingText = entry.ping > 0 ? entry.ping.ToString() : "...";
             Label pingLabel = new(pingText);
             pingLabel.AddToClassList("server-cell");
             pingLabel.AddToClassList("server-cell-ping");
             row.Add(pingLabel);
 
             // Klick-Handler: Auswahl
-            row.RegisterCallback<ClickEvent>(evt => SelectRow(row, entry));
+            row.RegisterCallback<ClickEvent>(evt =>
+            {
+                UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Select);
+                SelectRow(row, entry);
+            });
+
+            // Hover-Sound
+            row.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
 
             // Doppelklick: Direkt verbinden
             row.RegisterCallback<MouseDownEvent>(evt =>
@@ -422,6 +621,11 @@ namespace Tolik.RemakeSoF.Runtime
             m_SelectedEntry = entry;
             row.AddToClassList("server-row-selected");
             m_ConnectButton.SetEnabled(true);
+
+            if (m_SelectedServerLabel != null)
+            {
+                m_SelectedServerLabel.text = entry.hostname ?? "Unknown";
+            }
         }
     }
 }

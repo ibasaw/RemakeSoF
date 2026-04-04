@@ -28,7 +28,26 @@
             "refreshButton": "gfx/menus/icons/submenu_refresh",
             "refreshButtonAlt": "gfx/menus/icons/submenu_refresh_alt",
             "joinButton": "gfx/menus/icons/submenu_join",
-            "joinButtonAlt": "gfx/menus/icons/submenu_join_alt"
+            "joinButtonAlt": "gfx/menus/icons/submenu_join_alt",
+            "scrollbarArrowUp": "gfx/menus/scrollbar/scrollbar_arrow_up",
+            "scrollbarArrowDown": "gfx/menus/scrollbar/scrollbar_arrow_down",
+            "scrollbarTrack": "gfx/menus/scrollbar/scrollbar",
+            "scrollbarThumb": "gfx/menus/scrollbar/scrollbar_thumb"
+        },
+        "loadout": {
+            "background": "ui/metagame/background",
+            "iconPlayer": "gfx/menus/icons/submenu_player",
+            "iconScale": "gfx/menus/icons/submenu_scale",
+            "iconMisc": "gfx/menus/icons/submenu_misc",
+            "iconBack": "gfx/menus/icons/submenu_back",
+            "iconKeys": "gfx/menus/icons/submenu_keys",
+            "iconDisplay": "gfx/menus/icons/submenu_display",
+            "iconSound": "gfx/menus/icons/submenu_sound",
+            "iconNetwork": "gfx/menus/icons/submenu_network",
+            "scrollbarArrowLeft": "gfx/menus/scrollbar/scrollbar_arrow_left",
+            "scrollbarArrowRight": "gfx/menus/scrollbar/scrollbar_arrow_right",
+            "scrollbarTrack": "gfx/menus/scrollbar/scrollbar_horiz",
+            "scrollbarThumb": "gfx/menus/scrollbar/scrollbar"
         }
     },
     "gameplay": {

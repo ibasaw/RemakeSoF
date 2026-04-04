@@ -139,6 +139,14 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
 
         public int TotalSkinCount => m_SkinDefinitionByName.Count;
 
+        /// <summary>
+        /// Returns a list of all available skin names.
+        /// </summary>
+        public List<string> GetAllSkinNames()
+        {
+            return m_SkinDefinitionByName.Keys.ToList();
+        }
+
         public int GetSkinCountForModel(string modelType)
         {
             return m_SkinDefinitionsByModelName.TryGetValue(modelType, out List<SkinDefinition> skins) ? skins.Count : 0;

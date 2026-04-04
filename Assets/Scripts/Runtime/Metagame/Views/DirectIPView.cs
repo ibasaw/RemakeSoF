@@ -25,6 +25,8 @@ namespace Tolik.RemakeSoF.Runtime
             m_PortTextField = root.Q<TextField>("portTextField");;
             m_JoinButton.RegisterCallback<ClickEvent>(OnClickJoin);
             m_QuitButton.RegisterCallback<ClickEvent>(OnClickQuit);
+            m_JoinButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            m_QuitButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
             m_IPTextField.RegisterValueChangedCallback(OnIpAddressChanged);
             m_PortTextField.RegisterValueChangedCallback(OnPortChanged);
         }
@@ -72,11 +74,13 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnClickQuit(ClickEvent evt)
         {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click);
             Broadcast(new ExitIPConnectionEvent());
         }
 
         void OnClickJoin(ClickEvent evt)
         {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.ApplyChanges);
             if (ushort.TryParse(m_PortTextField.value, out var port))
             {
                 Broadcast(new JoinThroughDirectIPEvent { ipAddress = m_IPTextField.value, port = port });

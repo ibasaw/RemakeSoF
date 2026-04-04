@@ -88,11 +88,19 @@ namespace Tolik.RemakeSoF.Runtime
 
                 if (cfg.TargetView != null)
                 {
-                    cfg.ButtonRef.RegisterCallback<ClickEvent>(evt => LoadSubView(cfg));
+                    cfg.ButtonRef.RegisterCallback<ClickEvent>(evt =>
+                    {
+                        UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click);
+                        LoadSubView(cfg);
+                    });
                 }
                 else if (cfg.OnClick != null)
                 {
-                    cfg.ButtonRef.RegisterCallback<ClickEvent>(evt => cfg.OnClick(cfg));
+                    cfg.ButtonRef.RegisterCallback<ClickEvent>(evt =>
+                    {
+                        UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click);
+                        cfg.OnClick(cfg);
+                    });
                 }
 
                 cfg.ButtonRef.RegisterCallback<PointerEnterEvent>(evt => OnPointerEnterEvent(evt, cfg));
@@ -123,6 +131,8 @@ namespace Tolik.RemakeSoF.Runtime
 
                 // Dann erst nach dem nächsten Frame das VisualElement laden
                 VisualElement element = cfg.TargetView.LoadVisualElement();
+                element.style.flexGrow = 1;
+                element.style.flexShrink = 1;
                 m_ContentBackground.Add(element);
 
                 SetButtonActive(cfg.Name, true);
@@ -133,6 +143,7 @@ namespace Tolik.RemakeSoF.Runtime
         {
             if (cfg.IsActive) return;
             cfg.ButtonRef.style.backgroundImage = new StyleBackground(cfg.HoverIconPath);
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite);
         }
 
         void OnPointerLeaveEvent(PointerLeaveEvent evt, ButtonConfig cfg)

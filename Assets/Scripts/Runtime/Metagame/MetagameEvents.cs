@@ -81,6 +81,15 @@ namespace Tolik.RemakeSoF.Runtime
     
     internal class LoadNextSkinEvent : AppEvent { }
     internal class LoadPreviousSkinEvent : AppEvent { }
+
+    /// <summary>
+    /// Called when the user clicks a specific skin thumbnail in the skin list.
+    /// </summary>
+    internal class ChangeSkinByNameEvent : AppEvent
+    {
+        public string skinName;
+    }
+
     internal class CreateServerClickEvent : AppEvent { }
     internal class JoinServerClickEvent : AppEvent { }
 
@@ -88,6 +97,11 @@ namespace Tolik.RemakeSoF.Runtime
     /// Wird gefeuert wenn der Benutzer die Server-Liste aktualisieren will.
     /// </summary>
     internal class RefreshServerListEvent : AppEvent { }
+
+    /// <summary>
+    /// Wird gefeuert wenn die View mehr Server-Eintraege benoetigt (infinite scroll).
+    /// </summary>
+    internal class LoadMoreServersEvent : AppEvent { }
 
     /// <summary>
     /// Wird gefeuert wenn der Benutzer einen Server im Browser auswaehlt und verbinden will.

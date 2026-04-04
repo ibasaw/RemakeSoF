@@ -48,11 +48,34 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 public string refreshButtonAlt;
                 public string joinButton;
                 public string joinButtonAlt;
+                public string scrollbarArrowUp;
+                public string scrollbarArrowDown;
+                public string scrollbarTrack;
+                public string scrollbarThumb;
+            }
+
+            [Serializable]
+            public class LoadoutTextures
+            {
+                public string background;
+                public string iconPlayer;
+                public string iconScale;
+                public string iconMisc;
+                public string iconBack;
+                public string iconKeys;
+                public string iconDisplay;
+                public string iconSound;
+                public string iconNetwork;
+                public string scrollbarArrowLeft;
+                public string scrollbarArrowRight;
+                public string scrollbarTrack;
+                public string scrollbarThumb;
             }
 
             public LoginTextures login;
             public MainMenuTextures mainMenu;
             public JoinServerTextures joinServer;
+            public LoadoutTextures loadout;
         }
 
         [Serializable]

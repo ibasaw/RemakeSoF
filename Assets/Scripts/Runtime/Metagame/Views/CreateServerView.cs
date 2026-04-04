@@ -20,6 +20,7 @@ namespace Tolik.RemakeSoF.Runtime
             var root = m_UIDocument.rootVisualElement;
             m_CreateServerButton = root.Q<Button>("createServerButton");
             m_CreateServerButton.RegisterCallback<ClickEvent>(OnClickCreateServer);
+            m_CreateServerButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
         }
 
         void OnDisable()
@@ -29,6 +30,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnClickCreateServer(ClickEvent evt)
         {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.ApplyChanges);
             Debug.Log("Create Server button clicked");
             Broadcast(new CreateServerClickEvent());
         }

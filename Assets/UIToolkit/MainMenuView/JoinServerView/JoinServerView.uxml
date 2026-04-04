@@ -8,13 +8,23 @@
         <!-- Scanline CRT Overlay -->
         <ui:VisualElement name="scanlineOverlay" class="sof2-scanline-overlay" />
 
-        <!-- Top Bar: Buttons links, Titel mitte, Join rechts -->
+        <!-- Top Bar: Icon-Buttons links, Filter-Info mitte, Join rechts -->
         <ui:VisualElement name="topBar" class="sof2-top-bar">
             <ui:VisualElement class="sof2-top-bar-left">
                 <ui:Button name="getListButton" class="sof2-submenu-button" />
                 <ui:Button name="refreshButton" class="sof2-submenu-button" />
             </ui:VisualElement>
-            <ui:Label text="JOIN SERVER" name="titleLabel" class="sof2-title" />
+            <ui:VisualElement class="sof2-top-bar-info">
+                <ui:VisualElement class="sof2-info-column">
+                    <ui:Label text="Source:  Internet" class="sof2-info-label" />
+                    <ui:Label text="Type:  All" class="sof2-info-label" />
+                </ui:VisualElement>
+                <ui:VisualElement class="sof2-info-column">
+                    <ui:Label text="Empty:  Yes" class="sof2-info-label" />
+                    <ui:Label text="Full:  Yes" class="sof2-info-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Label name="selectedServerLabel" text="" class="sof2-selected-server" />
             <ui:VisualElement class="sof2-top-bar-right">
                 <ui:Button name="connectButton" class="sof2-submenu-button sof2-join-button" />
             </ui:VisualElement>
@@ -22,12 +32,12 @@
 
         <!-- Column Headers -->
         <ui:VisualElement name="columnHeaders" class="server-row server-header-row">
-            <ui:VisualElement class="server-cell server-cell-lock" />
-            <ui:Label text="Server Name" class="server-cell server-cell-name" />
-            <ui:Label text="Map Name" class="server-cell server-cell-map" />
-            <ui:Label text="#Plyrs" class="server-cell server-cell-players" />
-            <ui:Label text="Type" class="server-cell server-cell-gametype" />
-            <ui:Label text="Ping" class="server-cell server-cell-ping" />
+            <ui:VisualElement class="server-cell server-cell-lock server-cell-bordered" />
+            <ui:Label text="Server Name" class="server-cell server-cell-name server-cell-bordered" />
+            <ui:Label text="Map Name" class="server-cell server-cell-map server-cell-bordered" />
+            <ui:Label text="Type" class="server-cell server-cell-gametype server-cell-bordered" />
+            <ui:Label text="#Plyrs" class="server-cell server-cell-players server-cell-bordered" />
+            <ui:Label text="Ping" class="server-cell server-cell-ping server-cell-bordered" />
         </ui:VisualElement>
 
         <!-- Server List (scrollable) -->
@@ -37,6 +47,14 @@
 
         <!-- Status / Loading -->
         <ui:Label text="" name="statusLabel" class="sof2-status" />
+
+        <!-- Bottom Toolbar (Original SoF2 Buttons) -->
+        <ui:VisualElement name="bottomToolbar" class="sof2-bottom-toolbar">
+            <ui:Button text="New Favorite" name="newFavoriteButton" class="sof2-toolbar-button" />
+            <ui:Button text="Add Favorite" name="addFavoriteButton" class="sof2-toolbar-button" />
+            <ui:Button text="Server Info" name="serverInfoButton" class="sof2-toolbar-button" />
+            <ui:Button text="Find Friend" name="findFriendButton" class="sof2-toolbar-button" />
+        </ui:VisualElement>
 
     </ui:VisualElement>
 </ui:UXML>

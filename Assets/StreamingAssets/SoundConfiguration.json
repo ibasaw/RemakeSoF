@@ -1,0 +1,15 @@
+{
+    "menu": {
+        "hilite": "sound/misc/menus/hilite.wav",
+        "click": "sound/misc/menus/click.wav",
+        "select": "sound/misc/menus/select.wav",
+        "applyChanges": "sound/misc/menus/apply_changes.wav",
+        "invalid": "sound/misc/menus/invalid.wav",
+        "printout": "sound/misc/menus/printout.wav",
+        "objUpdate": "sound/misc/menus/obj_update.wav",
+        "rotary01": "sound/misc/menus/rotary01.wav",
+        "rotary02": "sound/misc/menus/rotary02.wav",
+        "lockSound": "sound/misc/menus/lock.wav",
+        "unlockSound": "sound/misc/menus/unlock.wav"
+    }
+}

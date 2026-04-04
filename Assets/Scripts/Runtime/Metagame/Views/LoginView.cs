@@ -45,6 +45,10 @@ namespace Tolik.RemakeSoF.Runtime
             m_ChangeToRegisterButton.RegisterCallback<ClickEvent>(OnClickChangeToRegister);
             m_QuitButton.RegisterCallback<ClickEvent>(OnClickQuit);
 
+            m_LoginButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            m_ChangeToRegisterButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            m_QuitButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+
             m_UsernameTextField.RegisterValueChangedCallback(OnUsernameChanged);
             m_PasswordTextField.RegisterValueChangedCallback(OnPasswordChanged);
 
@@ -119,6 +123,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnClickQuit(ClickEvent evt)
         {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click);
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -128,6 +133,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnClickLogin(ClickEvent evt)
         {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.ApplyChanges);
             Broadcast(new PlayerLoginEvent
             {
                 username = m_UsernameTextField.text,
@@ -136,6 +142,7 @@ namespace Tolik.RemakeSoF.Runtime
         }
         void OnClickChangeToRegister(ClickEvent evt)
         {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click);
             Broadcast(new ChangeToRegisterEvent());
         }
 
