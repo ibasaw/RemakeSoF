@@ -33,6 +33,8 @@ namespace Tolik.RemakeSoF.Runtime
             {
                 case ConnectStatus.Connecting:
                     App.Model.ClientConnecting.InitializeTimer();
+                    App.Model.ClientConnecting.SetServerAddress(evt.serverAddress);
+                    App.Model.ClientConnecting.SetServerName(evt.serverName);
                     View.Show();
                     break;
                 case ConnectStatus.Success:

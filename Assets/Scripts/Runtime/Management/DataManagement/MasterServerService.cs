@@ -249,14 +249,16 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
 
         // Client-Seite
         /// <summary>
-        /// Ruft die aktuelle Server-Liste vom Master-Server ab.
+        /// Ruft eine paginierte Seite der Server-Liste vom Master-Server ab.
         /// </summary>
-        /// <returns>Array von ServerBrowserEntry oder leeres Array bei Fehler.</returns>
-        public async Task<ServerBrowserEntry[]> FetchServerListAsync()
+        /// <param name="offset">Start-Index (0-basiert).</param>
+        /// <param name="limit">Maximale Anzahl Server pro Seite.</param>
+        /// <returns>Paginierte Antwort mit Servern, Total-Count und hasMore-Flag.</returns>
+        public async Task<ServerBrowserPageResponse> FetchServerPageAsync(int offset, int limit)
         {
             try
             {
-                using UnityWebRequest request = UnityWebRequest.Get($"{m_MasterServerUrl}/api/servers");
+                using UnityWebRequest request = UnityWebRequest.Get($"{m_MasterServerUrl}/api/servers?offset={offset}&limit={limit}");
                 request.SetRequestHeader("Accept", "application/json");
 
                 await request.SendWebRequest();
@@ -264,33 +266,26 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                 if (request.result == UnityWebRequest.Result.Success)
                 {
                     string responseText = request.downloadHandler.text;
-                    Debug.Log($"[MasterServerService] FetchServerList raw response: {responseText}");
+                    Debug.Log($"[MasterServerService] FetchServerPage raw response (offset={offset}): {responseText}");
 
-                    // Master-Server liefert entweder { "servers": [...] } oder direkt [...]
-                    // Versuch Wrapper zuerst, dann direktes Array
-                    if (responseText.TrimStart().StartsWith("{"))
+                    ServerBrowserPageResponse page = JsonUtility.FromJson<ServerBrowserPageResponse>(responseText);
+                    if (page.servers == null)
                     {
-                        ServerBrowserEntryList list = JsonUtility.FromJson<ServerBrowserEntryList>(responseText);
-                        return list.servers ?? Array.Empty<ServerBrowserEntry>();
+                        page.servers = Array.Empty<ServerBrowserEntry>();
                     }
-                    else
-                    {
-                        // Top-Level Array: JsonUtility Wrapper-Trick
-                        string wrapped = "{\"servers\":" + responseText + "}";
-                        ServerBrowserEntryList list = JsonUtility.FromJson<ServerBrowserEntryList>(wrapped);
-                        return list.servers ?? Array.Empty<ServerBrowserEntry>();
-                    }
+
+                    return page;
                 }
                 else
                 {
-                    Debug.LogWarning($"[MasterServerService] Server-Liste abrufen fehlgeschlagen: {request.responseCode} - {request.error}");
-                    return Array.Empty<ServerBrowserEntry>();
+                    Debug.LogWarning($"[MasterServerService] Server-Seite abrufen fehlgeschlagen: {request.responseCode} - {request.error}");
+                    return new ServerBrowserPageResponse { servers = Array.Empty<ServerBrowserEntry>(), total = 0, offset = offset, hasMore = false };
                 }
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[MasterServerService] FetchServerList Exception: {e.Message}");
-                return Array.Empty<ServerBrowserEntry>();
+                Debug.LogWarning($"[MasterServerService] FetchServerPage Exception: {e.Message}");
+                return new ServerBrowserPageResponse { servers = Array.Empty<ServerBrowserEntry>(), total = 0, offset = offset, hasMore = false };
             }
         }
 

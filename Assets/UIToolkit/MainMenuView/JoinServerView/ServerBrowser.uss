@@ -50,14 +50,10 @@
 .sof2-selected-server {
     flex-grow: 1;
     flex-shrink: 1;
-    -unity-text-align: middle-center;
-    font-size: 16px;
-    color: rgb(220, 245, 180);
-    -unity-font-style: bold;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     margin: 0;
     padding: 0 8px;
 }
@@ -258,7 +254,7 @@
     height: 28px;
     flex-shrink: 0;
     -unity-background-scale-mode: scale-to-fit;
-    -unity-background-image-tint-color: rgb(30, 30, 20);
+    -unity-background-image-tint-color: rgb(200, 30, 30);
     padding-left: 4px;
     padding-right: 2px;
 }

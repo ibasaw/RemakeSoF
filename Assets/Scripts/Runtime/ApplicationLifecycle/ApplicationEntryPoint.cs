@@ -218,7 +218,6 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                         ServiceLocator.Register(crosshairDataLoader);
 
                         SceneManager.LoadScene("MetagameScene");
-                        Debug.Log($"[ApplicationEntryPoint] InitializeNetworkLogic - Client instance started, loaded MetagameScene.");
                         break;
                     }
                 case MultiplayerRoleFlags.ClientAndServer:

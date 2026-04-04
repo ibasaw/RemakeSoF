@@ -36,7 +36,7 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
             NetworkManager.ConnectionApprovalCallback += ApprovalCheck;
             NetworkManager.OnTransportFailure += OnTransportFailure;
             NetworkManager.OnServerStopped += OnServerStopped;
-            Debug.Log("[ConnectionManager] Initialized");
+            //Debug.Log("[ConnectionManager] Initialized");
         }
 
         void OnDestroy()
@@ -92,9 +92,9 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
         /// <summary>
         /// Startet die Client-Verbindung und übergibt Spieler-Identitätsdaten direkt an den ClientConnectingState.
         /// </summary>
-        public void StartClient(string ipaddress, ushort port, string playerName, string skinName)
+        public void StartClient(string ipaddress, ushort port, string playerName, string skinName, string serverName = "")
         {
-            m_CurrentState.StartClient(ipaddress, port, playerName, skinName);
+            m_CurrentState.StartClient(ipaddress, port, playerName, skinName, serverName);
         }
 
         public void StartServerMatchmaker()

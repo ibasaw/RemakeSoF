@@ -130,7 +130,7 @@ namespace Tolik.RemakeSoF.Runtime.PrefabManagement
                 {
                     prefabData = PrefabDataFactory.Create(key, asset, PrefabSource.System);
                     prefabData.Handle = handle;
-                    Debug.Log($"[PrefabRegistry] Loaded prefab from Addressables: {key}");
+                    //Debug.Log($"[PrefabRegistry] Loaded prefab from Addressables: {key}");
                     return true;
                 }
             }

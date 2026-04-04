@@ -32,7 +32,8 @@
             "scrollbarArrowUp": "gfx/menus/scrollbar/scrollbar_arrow_up",
             "scrollbarArrowDown": "gfx/menus/scrollbar/scrollbar_arrow_down",
             "scrollbarTrack": "gfx/menus/scrollbar/scrollbar",
-            "scrollbarThumb": "gfx/menus/scrollbar/scrollbar_thumb"
+            "scrollbarThumb": "gfx/menus/scrollbar/scrollbar_thumb",
+            "bigcharsAtlas": "gfx/2d/bigchars"
         },
         "loadout": {
             "background": "ui/metagame/background",
@@ -47,7 +48,16 @@
             "scrollbarArrowLeft": "gfx/menus/scrollbar/scrollbar_arrow_left",
             "scrollbarArrowRight": "gfx/menus/scrollbar/scrollbar_arrow_right",
             "scrollbarTrack": "gfx/menus/scrollbar/scrollbar_horiz",
-            "scrollbarThumb": "gfx/menus/scrollbar/scrollbar"
+            "scrollbarThumb": "gfx/menus/scrollbar/scrollbar",
+            "bigcharsAtlas": "gfx/2d/bigchars"
+        },
+        "clientConnecting": {
+            "background": "ui/metagame/main_menu_background",
+            "logo": "ui/metagame/logo",
+            "joinIcon": "ui/metagame/icons/icon_join_server_glow_mp",
+            "loadBullet": "gfx/menus/misc/load_bullet",
+            "loadClip": "gfx/menus/misc/load_clip",
+            "bigcharsAtlas": "gfx/2d/bigchars"
         }
     },
     "gameplay": {

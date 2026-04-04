@@ -20,25 +20,25 @@ namespace Tolik.RemakeSoF.Runtime
             AddListener<LoadNextSkinEvent>(OnClickLoadNextSkin);
             AddListener<LoadPreviousSkinEvent>(OnClickLoadPreviousSkin);
             AddListener<ChangeSkinByNameEvent>(OnChangeSkinByName);
-            Debug.Log("[LoadoutController] Awake - LoadoutController initialized and listeners added");
+            //Debug.Log("[LoadoutController] Awake - LoadoutController initialized and listeners added");
         }
 
 
         void OnClickLoadNextSkin(LoadNextSkinEvent evt)
         {
-            Debug.Log("[LoadoutController] OnClickLoadNextSkin - Requesting next skin from PlayerSkinManager");
+            //Debug.Log("[LoadoutController] OnClickLoadNextSkin - Requesting next skin from PlayerSkinManager");
             PlayerSkinManager.LoadNextSkin();
         }
         
         void OnClickLoadPreviousSkin(LoadPreviousSkinEvent evt)
         {
-            Debug.Log("[LoadoutController] OnClickLoadPreviousSkin - Requesting previous skin from PlayerSkinManager");
+            //Debug.Log("[LoadoutController] OnClickLoadPreviousSkin - Requesting previous skin from PlayerSkinManager");
             PlayerSkinManager.LoadPreviousSkin();
         }
 
         void OnChangeSkinByName(ChangeSkinByNameEvent evt)
         {
-            Debug.Log($"[LoadoutController] OnChangeSkinByName - Requesting skin '{evt.skinName}' from PlayerSkinManager");
+            //Debug.Log($"[LoadoutController] OnChangeSkinByName - Requesting skin '{evt.skinName}' from PlayerSkinManager");
             PlayerSkinManager.ChangeSkin(evt.skinName);
         }
 
@@ -51,7 +51,7 @@ namespace Tolik.RemakeSoF.Runtime
                 return;
             }
 
-            Debug.Log($"[LoadoutController] OnPlayerSkinChanged - Setting character prefab in LoadoutView: {prefab.name}");
+            //Debug.Log($"[LoadoutController] OnPlayerSkinChanged - Setting character prefab in LoadoutView: {prefab.name}");
             View.SetCharacterPrefab(prefab);
             View.UpdateSkinInfo(evt.skinName);
         }
@@ -59,7 +59,7 @@ namespace Tolik.RemakeSoF.Runtime
         void OnDestroy()
         {
             RemoveListeners();
-            Debug.Log("[LoadoutController] OnDestroy - LoadoutController destroyed and listeners removed");
+            //Debug.Log("[LoadoutController] OnDestroy - LoadoutController destroyed and listeners removed");
         }
 
         internal override void RemoveListeners()

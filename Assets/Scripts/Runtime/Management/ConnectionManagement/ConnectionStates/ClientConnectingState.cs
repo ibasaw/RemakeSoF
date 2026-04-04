@@ -14,18 +14,20 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
         ushort m_Port;
         string m_PlayerName;
         string m_SkinName;
+        string m_ServerName;
 
-        public void Configure(string iPAddress, ushort port, string playerName, string skinName)
+        public void Configure(string iPAddress, ushort port, string playerName, string skinName, string serverName = "")
         {
             m_IPAddress = iPAddress;
             m_Port = port;
             m_PlayerName = playerName;
             m_SkinName = skinName;
+            m_ServerName = serverName;
         }
 
         public override void Enter()
         {
-            Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.Connecting });
+            Manager.EventManager.Broadcast(new ConnectionEvent { status = ConnectStatus.Connecting, serverAddress = $"{m_IPAddress}:{m_Port}", serverName = m_ServerName });
             ConnectClient();
         }
 

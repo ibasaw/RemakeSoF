@@ -32,7 +32,14 @@ namespace Tolik.RemakeSoF.Runtime
         Button m_LoadNextSkinButton;
         Button m_EquipButton;
         TextField m_DisplayNameInput;
-        Label m_PlayerNameOverlay;
+        QuakeColorLabel m_PlayerNameOverlay;
+
+        /// <summary>Gecachte bigchars-Atlas-Textur fuer Quake-Color-Labels.</summary>
+        Texture2D m_BigcharsAtlas;
+
+
+        /// <summary>QuakeColorLabel-Overlay direkt auf dem TextField fuer Live-Preview.</summary>
+        QuakeColorLabel m_InputOverlay;
 
         HorizontalScrollView m_SkinListScroll;
         Dictionary<string, VisualElement> m_SkinThumbnails = new();
@@ -66,14 +73,58 @@ namespace Tolik.RemakeSoF.Runtime
             m_EquipButton = root.Q<Button>("equipButton");
             m_CharacterPreviewContainer = root.Q<VisualElement>("previewArea");
             m_CharacterPreviewContainer.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-            m_PlayerNameOverlay = root.Q<Label>("playerNameOverlay");
+            // PlayerNameOverlay: Label durch QuakeColorLabel ersetzen
+            Label overlayPlaceholder = root.Q<Label>("playerNameOverlay");
+            if (overlayPlaceholder != null)
+            {
+                m_PlayerNameOverlay = new QuakeColorLabel();
+                m_PlayerNameOverlay.name = "playerNameOverlay";
+                m_PlayerNameOverlay.AddToClassList("loadout-player-name-overlay");
+                m_PlayerNameOverlay.style.justifyContent = Justify.Center;
+                overlayPlaceholder.parent.Insert(overlayPlaceholder.parent.IndexOf(overlayPlaceholder), m_PlayerNameOverlay);
+                overlayPlaceholder.RemoveFromHierarchy();
+            }
+
             m_DisplayNameInput = root.Q<TextField>("displayNameInput");
+
+            // QuakeColorLabel-Overlay auf dem TextField erstellen
+            if (m_DisplayNameInput != null)
+            {
+                VisualElement inputContainer = m_DisplayNameInput.Q(className: "unity-text-field__input");
+                if (inputContainer != null)
+                {
+                    inputContainer.style.position = Position.Relative;
+
+                    m_InputOverlay = new QuakeColorLabel();
+                    m_InputOverlay.style.position = Position.Absolute;
+                    m_InputOverlay.style.left = 12;
+                    m_InputOverlay.style.right = 12;
+                    m_InputOverlay.style.top = 0;
+                    m_InputOverlay.style.bottom = 0;
+                    m_InputOverlay.style.alignItems = Align.Center;
+                    m_InputOverlay.pickingMode = PickingMode.Ignore;
+                    m_InputOverlay.ShowCursor = true;
+                    inputContainer.Add(m_InputOverlay);
+
+                    // TextField-Text komplett unsichtbar machen (TextElement direkt ansprechen)
+                    VisualElement textElement = inputContainer.Q(className: "unity-text-element");
+                    if (textElement != null)
+                    {
+                        textElement.style.color = new StyleColor(new Color(0, 0, 0, 0));
+                        textElement.style.unityBackgroundImageTintColor = new StyleColor(new Color(0, 0, 0, 0));
+                    }
+
+                    inputContainer.style.color = new StyleColor(new Color(0, 0, 0, 0));
+                    // Caret bleibt sichtbar
+                    m_DisplayNameInput.style.unityBackgroundImageTintColor = new StyleColor(new Color(1, 1, 1, 1));
+                }
+            }
 
             m_PlayerNameLabel.text = App.Model.PlayerData.PlayerName;
             m_PlayerIdLabel.text = App.Model.PlayerData.PlayerId;
             if (m_PlayerNameOverlay != null)
             {
-                m_PlayerNameOverlay.text = App.Model.PlayerData.PlayerName;
+                m_PlayerNameOverlay.Text = App.Model.PlayerData.PlayerName;
             }
 
             if (m_DisplayNameInput != null)
@@ -99,6 +150,11 @@ namespace Tolik.RemakeSoF.Runtime
 
             CreateStage();
             UpdateRenderTexture();
+
+            if (m_DisplayNameInput != null)
+            {
+                m_DisplayNameInput.schedule.Execute(() => m_DisplayNameInput.Focus());
+            }
         }
 
         void OnClickLoadNextSkin(ClickEvent evt)
@@ -120,13 +176,23 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         void OnDisplayNameChanged(ChangeEvent<string> evt)
         {
-            if (m_PlayerNameOverlay == null) return;
+            string rawValue = evt.newValue ?? "";
 
-            string displayName = string.IsNullOrWhiteSpace(evt.newValue)
-                ? App.Model.PlayerData.PlayerName
-                : evt.newValue.Trim();
+            // Live-Preview im Input-Overlay aktualisieren
+            if (m_InputOverlay != null)
+            {
+                m_InputOverlay.Text = rawValue;
+            }
 
-            m_PlayerNameOverlay.text = displayName;
+            // Player-Name-Overlay unter dem Charakter aktualisieren
+            if (m_PlayerNameOverlay != null)
+            {
+                string displayName = string.IsNullOrWhiteSpace(rawValue)
+                    ? App.Model.PlayerData.PlayerName
+                    : rawValue.Trim();
+
+                m_PlayerNameOverlay.Text = displayName;
+            }
         }
 
         public void SetCharacterPrefab(GameObject prefab)
@@ -168,6 +234,25 @@ namespace Tolik.RemakeSoF.Runtime
             ApplyTexture(textureManager, root.Q<Button>("tabDisplay"), config.iconDisplay);
             ApplyTexture(textureManager, root.Q<Button>("tabSound"), config.iconSound);
             ApplyTexture(textureManager, root.Q<Button>("tabNetwork"), config.iconNetwork);
+
+            // bigchars-Atlas fuer Quake-Color-Labels laden
+            if (!string.IsNullOrEmpty(config.bigcharsAtlas))
+            {
+                TextureData atlasData = textureManager.GetTextureData(config.bigcharsAtlas);
+                if (atlasData?.Texture != null)
+                {
+                    m_BigcharsAtlas = atlasData.Texture;
+                    if (m_PlayerNameOverlay != null)
+                    {
+                        m_PlayerNameOverlay.Atlas = m_BigcharsAtlas;
+                    }
+
+                    if (m_InputOverlay != null)
+                    {
+                        m_InputOverlay.Atlas = m_BigcharsAtlas;
+                    }
+                }
+            }
 
             // Hover sounds for icon tabs
             string[] tabNames = { "tabSkin", "tabGun", "tabGear", "tabEmote", "tabKeys", "tabDisplay", "tabSound", "tabNetwork" };

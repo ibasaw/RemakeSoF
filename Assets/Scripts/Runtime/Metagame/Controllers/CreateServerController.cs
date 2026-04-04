@@ -16,13 +16,13 @@ namespace Tolik.RemakeSoF.Runtime
         {
            // ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
             AddListener<CreateServerClickEvent>(OnCreateServerClick);
-            Debug.Log("[CreateServerController] Awake - CreateServerController initialized and listeners added");
+            //Debug.Log("[CreateServerController] Awake - CreateServerController initialized and listeners added");
         }
 
         void OnDestroy()
         {
             RemoveListeners();
-            Debug.Log("[CreateServerController] OnDestroy - CreateServerController destroyed and listeners removed");
+            //Debug.Log("[CreateServerController] OnDestroy - CreateServerController destroyed and listeners removed");
         }
 
         internal override void RemoveListeners()

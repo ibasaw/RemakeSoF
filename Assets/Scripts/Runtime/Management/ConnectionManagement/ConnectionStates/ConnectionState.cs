@@ -18,7 +18,7 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
 
         public virtual void OnServerStarted() { }
 
-        public virtual void StartClient(string ipaddress, ushort port, string playerName, string skinName) { }
+        public virtual void StartClient(string ipaddress, ushort port, string playerName, string skinName, string serverName = "") { }
 
         public virtual void StartServerIP(string ipaddress, ushort port) { }
 

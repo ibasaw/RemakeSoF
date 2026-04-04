@@ -52,6 +52,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 public string scrollbarArrowDown;
                 public string scrollbarTrack;
                 public string scrollbarThumb;
+                public string bigcharsAtlas;
             }
 
             [Serializable]
@@ -70,12 +71,25 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 public string scrollbarArrowRight;
                 public string scrollbarTrack;
                 public string scrollbarThumb;
+                public string bigcharsAtlas;
+            }
+
+            [Serializable]
+            public class ClientConnectingTextures
+            {
+                public string background;
+                public string logo;
+                public string joinIcon;
+                public string loadBullet;
+                public string loadClip;
+                public string bigcharsAtlas;
             }
 
             public LoginTextures login;
             public MainMenuTextures mainMenu;
             public JoinServerTextures joinServer;
             public LoadoutTextures loadout;
+            public ClientConnectingTextures clientConnecting;
         }
 
         [Serializable]

@@ -55,6 +55,26 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
     }
 
     /// <summary>
+    /// Paginierte Antwort vom Master-Server fuer den Server-Browser.
+    /// Enthaelt eine Seite von Servern sowie Metadaten fuer Infinite Scroll.
+    /// </summary>
+    [Serializable]
+    public class ServerBrowserPageResponse
+    {
+        /// <summary>Server-Eintraege dieser Seite.</summary>
+        public ServerBrowserEntry[] servers;
+
+        /// <summary>Gesamtanzahl aller verfuegbaren Server.</summary>
+        public int total;
+
+        /// <summary>Offset ab dem diese Seite beginnt.</summary>
+        public int offset;
+
+        /// <summary>Ob weitere Server nach dieser Seite verfuegbar sind.</summary>
+        public bool hasMore;
+    }
+
+    /// <summary>
     /// Payload der beim Registrieren eines Servers an den Master-Server gesendet wird.
     /// Enthaelt alle relevanten Server-CVARs aus der ServerConfiguration.
     /// </summary>

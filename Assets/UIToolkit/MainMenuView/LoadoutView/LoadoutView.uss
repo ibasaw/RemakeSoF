@@ -153,11 +153,10 @@
     left: 0;
     right: 0;
     bottom: 8%;
-    -unity-text-align: upper-center;
-    font-size: 28px;
-    color: rgba(210, 225, 245, 0.9);
-    -unity-font-style: bold;
-    letter-spacing: 1px;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    align-self: center;
 }
 
 /* ===== NAV BUTTONS (absolute, close to character) ===== */
@@ -247,13 +246,14 @@
     border-top-width: 1px;
     border-bottom-width: 1px;
     border-color: rgba(60, 90, 130, 0.5);
-    color: rgb(230, 240, 255);
-    font-size: 28px;
-    -unity-font-style: bold;
-    padding-left: 12px;
-    padding-right: 12px;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    color: rgba(0, 0, 0, 0);
+    min-height: 42px;
+    --unity-cursor-color: rgba(0, 0, 0, 0);
+}
+
+.loadout-display-name-input .unity-text-element {
+    color: rgba(0, 0, 0, 0) !important;
+    font-size: 1px !important;
 }
 
 .loadout-skin-info {

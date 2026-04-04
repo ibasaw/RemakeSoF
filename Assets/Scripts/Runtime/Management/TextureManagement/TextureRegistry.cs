@@ -64,7 +64,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             if (m_TextureCache.TryGetValue(key, out TextureData data))
             {
                 data.Texture = texture;
-                Debug.Log($"[TextureRegistry] set new texture for key: {key}");
+                //Debug.Log($"[TextureRegistry] set new texture for key: {key}");
             }
             else
             {
@@ -77,7 +77,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             if (m_TextureCache.TryGetValue(key, out TextureData data))
             {
                 data.Material = material;
-                Debug.Log($"[TextureRegistry] set new material for key: {key}");
+                //Debug.Log($"[TextureRegistry] set new material for key: {key}");
             }
             else
             {
@@ -91,7 +91,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             {
                 targetData.AliasKeys.Add(targetKey);
                 targetData.Material = material;
-                Debug.Log($"[TextureRegistry] Created alias '{targetKey}' for alias key: {aliasKey} and set material");
+                //Debug.Log($"[TextureRegistry] Created alias '{targetKey}' for alias key: {aliasKey} and set material");
             }
             else
             {

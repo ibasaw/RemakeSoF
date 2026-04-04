@@ -17,7 +17,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 
         public override void Enter()
         {
-            Debug.Log("[PlayerSkinManager] Entered Loading state");
+            //Debug.Log("[PlayerSkinManager] Entered Loading state");
             LoadSkin();
         }
 
@@ -29,7 +29,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             {
                 if (Manager.TryLoadAndApplySkin(m_LoadingSkinName, out GameObject prefab))
                 {
-                    Debug.Log($"[PlayerSkinManager] Successfully loaded skin: {m_LoadingSkinName}");
+                    //Debug.Log($"[PlayerSkinManager] Successfully loaded skin: {m_LoadingSkinName}");
                     Manager.OnSkinLoadSuccess(m_LoadingSkinName, prefab);
                 }
             }

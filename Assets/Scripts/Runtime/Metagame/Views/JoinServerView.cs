@@ -1,4 +1,5 @@
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.Core;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
@@ -35,7 +36,7 @@ namespace Tolik.RemakeSoF.Runtime
         Button m_AddFavoriteButton;
         Button m_ServerInfoButton;
         Button m_FindFriendButton;
-        Label m_SelectedServerLabel;
+        QuakeColorLabel m_SelectedServerLabel;
 
         /// <summary>Aktuell selektierter Server-Eintrag (oder null).</summary>
         ServerBrowserEntry m_SelectedEntry;
@@ -45,6 +46,9 @@ namespace Tolik.RemakeSoF.Runtime
 
         /// <summary>Gecachte Lock-Textur fuer Server-Zeilen mit Passwort.</summary>
         Texture2D m_LockTexture;
+
+        /// <summary>Gecachte bigchars-Atlas-Textur fuer Quake-Color-Labels.</summary>
+        Texture2D m_BigcharsAtlas;
 
         /// <summary>Ob weitere Server-Eintraege verfuegbar sind.</summary>
         bool m_HasMore;
@@ -84,7 +88,16 @@ namespace Tolik.RemakeSoF.Runtime
             m_AddFavoriteButton = root.Q<Button>("addFavoriteButton");
             m_ServerInfoButton = root.Q<Button>("serverInfoButton");
             m_FindFriendButton = root.Q<Button>("findFriendButton");
-            m_SelectedServerLabel = root.Q<Label>("selectedServerLabel");
+            // Selected-Server-Label durch QuakeColorLabel ersetzen
+            Label selectedLabelPlaceholder = root.Q<Label>("selectedServerLabel");
+            if (selectedLabelPlaceholder != null)
+            {
+                m_SelectedServerLabel = new QuakeColorLabel();
+                m_SelectedServerLabel.name = "selectedServerLabel";
+                m_SelectedServerLabel.AddToClassList("sof2-selected-server");
+                selectedLabelPlaceholder.parent.Insert(selectedLabelPlaceholder.parent.IndexOf(selectedLabelPlaceholder), m_SelectedServerLabel);
+                selectedLabelPlaceholder.RemoveFromHierarchy();
+            }
 
             // SoF2-Texturen laden und anwenden
             LoadAndApplyMenuTextures(root);
@@ -195,6 +208,15 @@ namespace Tolik.RemakeSoF.Runtime
 
             // Lock-Textur cachen fuer Server-Zeilen
             m_LockTexture = LoadMenuTexture(textureManager, config.lockIcon);
+
+            // bigchars-Atlas fuer Quake-Color-Labels cachen
+            m_BigcharsAtlas = LoadMenuTexture(textureManager, config.bigcharsAtlas);
+
+            // Selected-Server-Label bekommt auch den Atlas
+            if (m_SelectedServerLabel != null)
+            {
+                m_SelectedServerLabel.Atlas = m_BigcharsAtlas;
+            }
 
             // Lock-Icon im Column-Header setzen
             VisualElement headerLock = root.Q<VisualElement>(className: "server-cell-lock");
@@ -333,7 +355,8 @@ namespace Tolik.RemakeSoF.Runtime
             Broadcast(new ConnectToServerEvent
             {
                 ipAddress = m_SelectedEntry.ip,
-                port = (ushort)m_SelectedEntry.port
+                port = (ushort)m_SelectedEntry.port,
+                serverName = m_SelectedEntry.hostname
             });
         }
 
@@ -371,7 +394,7 @@ namespace Tolik.RemakeSoF.Runtime
 
             if (m_SelectedServerLabel != null)
             {
-                m_SelectedServerLabel.text = "";
+                m_SelectedServerLabel.Text = "";
             }
             m_RefreshButton.SetEnabled(true);
             m_HasMore = false;
@@ -536,7 +559,7 @@ namespace Tolik.RemakeSoF.Runtime
                 if (m_LockTexture != null)
                 {
                     lockIcon.style.backgroundImage = new StyleBackground(m_LockTexture);
-                    lockIcon.style.unityBackgroundImageTintColor = new StyleColor(new Color(0.12f, 0.12f, 0.08f, 1f));
+                    lockIcon.style.unityBackgroundImageTintColor = new StyleColor(new Color(0.78f, 0.12f, 0.12f, 1f));
                 }
                 else
                 {
@@ -547,10 +570,13 @@ namespace Tolik.RemakeSoF.Runtime
             }
             row.Add(lockIcon);
 
-            Label nameLabel = new(entry.hostname ?? "Unknown");
-            nameLabel.AddToClassList("server-cell");
-            nameLabel.AddToClassList("server-cell-name");
-            row.Add(nameLabel);
+            // Quake-Color-Label: rendert farbige Servernamen via bigchars-Atlas
+            QuakeColorLabel colorName = new();
+            colorName.AddToClassList("server-cell");
+            colorName.AddToClassList("server-cell-name");
+            colorName.Atlas = m_BigcharsAtlas;
+            colorName.Text = entry.hostname ?? "Unknown";
+            row.Add(colorName);
 
             // Map-Name: Nur den letzten Teil anzeigen (z.B. "mp_col1" statt "maps/mp_col1")
             string displayMap = entry.mapName ?? "";
@@ -573,7 +599,7 @@ namespace Tolik.RemakeSoF.Runtime
             playersLabel.AddToClassList("server-cell-players");
             row.Add(playersLabel);
 
-            string pingText = entry.ping > 0 ? entry.ping.ToString() : "...";
+            string pingText = entry.ping > -1 ? entry.ping.ToString() : "...";
             Label pingLabel = new(pingText);
             pingLabel.AddToClassList("server-cell");
             pingLabel.AddToClassList("server-cell-ping");
@@ -598,7 +624,8 @@ namespace Tolik.RemakeSoF.Runtime
                     Broadcast(new ConnectToServerEvent
                     {
                         ipAddress = entry.ip,
-                        port = (ushort)entry.port
+                        port = (ushort)entry.port,
+                        serverName = entry.hostname
                     });
                 }
             });
@@ -624,7 +651,7 @@ namespace Tolik.RemakeSoF.Runtime
 
             if (m_SelectedServerLabel != null)
             {
-                m_SelectedServerLabel.text = entry.hostname ?? "Unknown";
+                m_SelectedServerLabel.Text = entry.hostname ?? "Unknown";
             }
         }
     }

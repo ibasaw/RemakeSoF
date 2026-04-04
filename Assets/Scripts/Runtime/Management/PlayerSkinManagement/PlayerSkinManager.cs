@@ -40,7 +40,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             List<PlayerSkinState> states = new() { m_Idle, m_Loading, m_Applied, m_Error };
             InitializeStates(states, m_Idle);
 
-            Debug.Log("[PlayerSkinManager] Initialized");
+            //Debug.Log("[PlayerSkinManager] Initialized");
         }
 
         void OnDestroy()
@@ -59,7 +59,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
             m_CurrentPlayerPrefabAsset = null;
             m_CurrentSkinName = null;
 
-            Debug.Log("[PlayerSkinManager] Destroyed");
+            //Debug.Log("[PlayerSkinManager] Destroyed");
         }
 
         public bool TryApplyAnimationSet(GameObject prefab, string animatorControllerPath)

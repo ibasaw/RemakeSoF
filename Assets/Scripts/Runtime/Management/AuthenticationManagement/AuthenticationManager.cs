@@ -23,7 +23,7 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
             DontDestroyOnLoad(gameObject);
             List<AuthenticationState> states = new() { m_Unauthenticated, m_Authenticating, m_Authenticated, m_SessionExpired };
             InitializeStates(states, m_Unauthenticated);
-            Debug.Log("[AuthenticationManager] Initialized");
+            //Debug.Log("[AuthenticationManager] Initialized");
         }
 
         public bool IsAuthenticated()

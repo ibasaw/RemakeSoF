@@ -57,7 +57,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
                 TextureData textureData = ServiceLocator.Get<TextureManager>().GetTextureData(textureKey);
                 if (textureData == null || !textureData.IsValid())
                 {
-                    Debug.Log($"[PlayerSkinApplier] Search by alias TextureData for key: '{textureKey}' in skin definition: '{skinName}'");
+                    //Debug.Log($"[PlayerSkinApplier] Search by alias TextureData for key: '{textureKey}' in skin definition: '{skinName}'");
                     textureData = ServiceLocator.Get<TextureManager>().GetTextureDataByAlias(textureKey);
                 }
 
@@ -256,7 +256,7 @@ namespace Tolik.RemakeSoF.Runtime.PlayerSkinManagement
 
             // TODO: Hier mit den gesammelten Items arbeiten
             allItems = allItems.GroupBy(i => i.Name).Select(g => g.First()).ToList();
-            Debug.Log($"[PlayerSkinApplier] Total items collected: {allItems.Count}");
+            //Debug.Log($"[PlayerSkinApplier] Total items collected: {allItems.Count}");
             ItemDefinitionLoader itemLoader = ServiceLocator.Get<ItemDefinitionLoader>();
             //map collected items to item definitions and collect as list of item definitions to apply
             List<Item> itemDefinitionsToApply = new();
