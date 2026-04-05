@@ -111,5 +111,6 @@ namespace Tolik.RemakeSoF.Runtime
         public string ipAddress;
         public ushort port;
         public string serverName;
+        public string serverDescription;
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using Tolik.RemakeSoF.Runtime.Core;
 using Tolik.RemakeSoF.Runtime.CrosshairManagement;
 using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using UnityEngine;
@@ -20,6 +21,7 @@ namespace Tolik.RemakeSoF.Runtime
         Label m_HudBlueTeamScoreLabel;
         VisualElement m_HudRedTeamLogo;
         VisualElement m_HudBlueTeamLogo;
+        Label m_RoundLabel;
         Label m_FpsLabel;
 
         // Debug HUD Container
@@ -81,6 +83,11 @@ namespace Tolik.RemakeSoF.Runtime
         Label m_HitRegionLabel;
         Label m_HitDamageLabel;
 
+        // Gametype Message HUD (QuakeColorLabel fuer farbige Spielernamen)
+        VisualElement m_GametypeMessageContainer;
+        QuakeColorLabel m_GametypeMessageLabel;
+        Texture2D m_BigcharsAtlas;
+
         // Crosshair HUD
         VisualElement m_CrosshairContainer;
 
@@ -114,6 +121,7 @@ namespace Tolik.RemakeSoF.Runtime
             m_HudBlueTeamScoreLabel = root.Query<Label>("hudBlueTeamScoreLabel");
             m_HudRedTeamLogo = root.Query<VisualElement>("hudRedTeamLogo");
             m_HudBlueTeamLogo = root.Query<VisualElement>("hudBlueTeamLogo");
+            m_RoundLabel = root.Query<Label>("roundLabel");
             m_FpsLabel = root.Query<Label>("fpsLabel");
 
             // Debug HUD
@@ -173,6 +181,20 @@ namespace Tolik.RemakeSoF.Runtime
             m_HitRegionLabel = root.Query<Label>("hitRegionLabel");
             m_HitDamageLabel = root.Query<Label>("hitDamageLabel");
 
+            // Gametype Message HUD
+            m_GametypeMessageContainer = root.Query<VisualElement>("GametypeMessageContainer");
+            if (m_GametypeMessageContainer != null)
+            {
+                m_GametypeMessageLabel = new QuakeColorLabel();
+                m_GametypeMessageLabel.CharWidth = 16f;
+                m_GametypeMessageLabel.CharHeight = 24f;
+                if (m_BigcharsAtlas != null)
+                {
+                    m_GametypeMessageLabel.Atlas = m_BigcharsAtlas;
+                }
+                m_GametypeMessageContainer.Add(m_GametypeMessageLabel);
+            }
+
             // Crosshair HUD
             m_CrosshairContainer = root.Query<VisualElement>("CrosshairContainer");
             if (m_CrosshairContainer != null)
@@ -231,24 +253,29 @@ namespace Tolik.RemakeSoF.Runtime
         }
 
         /// <summary>
-        /// Aktualisiert den Status (Alive/Dead) des lokalen Spielers.
+        /// Aktualisiert den Status (Alive/Dead/Stunned) des lokalen Spielers.
         /// </summary>
-        internal void UpdatePlayerStatus(bool isAlive)
+        internal void UpdatePlayerStatus(bool isAlive, bool isStunned = false)
         {
             if (m_PlayerStatusLabel == null)
             {
                 return;
             }
 
-            if (isAlive)
-            {
-                m_PlayerStatusLabel.text = "ALIVE";
-                m_PlayerStatusLabel.style.color = new Color(0.4f, 1f, 0.4f, 1f);
-            }
-            else
+            if (!isAlive)
             {
                 m_PlayerStatusLabel.text = "DEAD";
                 m_PlayerStatusLabel.style.color = new Color(1f, 0.3f, 0.3f, 1f);
+            }
+            else if (isStunned)
+            {
+                m_PlayerStatusLabel.text = "STUNNED";
+                m_PlayerStatusLabel.style.color = new Color(1f, 0.8f, 0.2f, 1f);
+            }
+            else
+            {
+                m_PlayerStatusLabel.text = "ALIVE";
+                m_PlayerStatusLabel.style.color = new Color(0.4f, 1f, 0.4f, 1f);
             }
         }
 
@@ -266,6 +293,21 @@ namespace Tolik.RemakeSoF.Runtime
             {
                 m_HudBlueTeamScoreLabel.text = blueScore.ToString();
             }
+        }
+
+        /// <summary>
+        /// Aktualisiert die Runden-Anzeige. Zeigt "Round X/Y" oder "Round X" bei unendlichen Runden.
+        /// </summary>
+        internal void UpdateRoundDisplay(int currentRound, int roundLimit)
+        {
+            if (m_RoundLabel == null)
+            {
+                return;
+            }
+
+            m_RoundLabel.text = roundLimit > 0
+                ? $"Round {currentRound}/{roundLimit}"
+                : $"Round {currentRound}";
         }
 
         /// <summary>
@@ -565,6 +607,46 @@ namespace Tolik.RemakeSoF.Runtime
             if (m_HitConfirmContainer != null)
             {
                 m_HitConfirmContainer.style.display = DisplayStyle.None;
+            }
+        }
+
+        /// <summary>
+        /// Setzt die Bigchars-Atlas-Textur fuer QuakeColorLabel-Nachrichten.
+        /// Wird vom Controller nach dem Laden der Texturen aufgerufen.
+        /// </summary>
+        internal void SetBigcharsAtlas(Texture2D atlas)
+        {
+            m_BigcharsAtlas = atlas;
+
+            if (m_GametypeMessageLabel != null && atlas != null)
+            {
+                m_GametypeMessageLabel.Atlas = atlas;
+            }
+        }
+
+        /// <summary>
+        /// Zeigt eine Gametype-Nachricht als QuakeColorLabel im HUD an.
+        /// Unterstuetzt Quake-Farbcodes (^1Rot, ^2Gruen etc.) fuer Spielernamen.
+        /// </summary>
+        internal void ShowGametypeMessage(string message)
+        {
+            if (m_GametypeMessageContainer == null || m_GametypeMessageLabel == null)
+            {
+                return;
+            }
+
+            m_GametypeMessageLabel.Text = message;
+            m_GametypeMessageContainer.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// Versteckt die Gametype-Nachricht.
+        /// </summary>
+        internal void HideGametypeMessage()
+        {
+            if (m_GametypeMessageContainer != null)
+            {
+                m_GametypeMessageContainer.style.display = DisplayStyle.None;
             }
         }
 

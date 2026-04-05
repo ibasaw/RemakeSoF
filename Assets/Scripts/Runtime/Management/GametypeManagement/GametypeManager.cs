@@ -176,6 +176,12 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             return m_ActiveGametype?.GetCurrentPhase() ?? 0;
         }
 
+        /// <summary>Gibt die verbleibende Zeit der aktuellen Phase in Sekunden zurueck.</summary>
+        public float GetPhaseTimeRemaining()
+        {
+            return m_ActiveGametype?.GetPhaseTimeRemaining() ?? 0f;
+        }
+
         /// <summary>Initialisiert den Runden-State mit aktuellen Teamgroessen.</summary>
         public void InitializeRoundState(int redCount, int blueCount)
         {
@@ -192,6 +198,41 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         public bool AreTeamsReady(int currentRedCount, int currentBlueCount)
         {
             return m_ActiveGametype?.AreTeamsReady(currentRedCount, currentBlueCount) ?? true;
+        }
+
+        /// <summary>Gibt die aktuelle Rundennummer zurueck (1-basiert).</summary>
+        public int GetCurrentRound()
+        {
+            return m_ActiveGametype?.GetCurrentRound() ?? 0;
+        }
+
+        /// <summary>Gibt das Rundenlimit zurueck. 0 = unendlich.</summary>
+        public int GetRoundLimit()
+        {
+            return m_ActiveGametype?.GetRoundLimit() ?? 0;
+        }
+
+        /// <summary>Prueft ob das Rundenlimit erreicht ist.</summary>
+        public bool IsRoundLimitReached()
+        {
+            return m_ActiveGametype?.IsRoundLimitReached() ?? false;
+        }
+
+        /// <summary>Gibt das Match-Timelimit in Sekunden zurueck. 0 = unendlich.</summary>
+        public int GetTimelimit()
+        {
+            return m_ActiveGametype?.GetTimelimit() ?? 0;
+        }
+
+        /// <summary>Delegiert Damage-Modifikation an den aktiven Gametype.</summary>
+        public GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName)
+        {
+            if (m_ActiveGametype == null)
+            {
+                return GametypeDamageResult.Default(damage);
+            }
+
+            return m_ActiveGametype.OnDamage(attackerClientId, victimClientId, attackerTeam, victimTeam, damage, weaponName);
         }
     }
 }

@@ -63,6 +63,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         /// <summary>Client-IDs die fuer die aktuelle Runde "Gameplay sichtbar" gemeldet haben.</summary>
         internal readonly HashSet<ulong> ClientsReadyForRound = new();
 
+        /// <summary>Kumulierte Match-Zeit in Sekunden (ueber alle Runden). Fuer timelimit-basiertes Map-Switching bei roundlimit=0.</summary>
+        internal float MatchElapsedTime;
+
         /// <summary>Delay in Sekunden zwischen "alle bereit" und Match-Start.</summary>
         internal const float RoundStartDelaySeconds = 3.1f;
 
@@ -70,6 +73,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         internal string CurrentStateName => m_CurrentState?.GetType().Name ?? "None";
 
         bool m_Initialized;
+
+        /// <summary>
+        /// Gibt die Gesamtzahl aller Spieler zurueck (menschliche Clients + AI-Bots).
+        /// </summary>
+        internal int GetTotalPlayerCount()
+        {
+            int humanCount = GameState.NetworkManager.ConnectedClientsIds.Count;
+            int botCount = GameState.AIBotSpawner != null ? GameState.AIBotSpawner.SpawnedBotCount : 0;
+            return humanCount + botCount;
+        }
+
+        /// <summary>
+        /// Aktualisiert playersConnected-NetworkVariable und MinPlayersReached-Flag
+        /// unter Beruecksichtigung von menschlichen Clients und AI-Bots.
+        /// </summary>
+        internal void UpdatePlayerCounts()
+        {
+            int total = GetTotalPlayerCount();
+            GameState.playersConnected.Value = total;
+            MinPlayersReached = total >= GameState.MinPlayers;
+        }
 
         /// <summary>
         /// Wird von NetworkedGameState.OnNetworkSpawn aufgerufen.
@@ -94,8 +118,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 m_Initialized = true;
             }
 
-            MinPlayersReached = GameState.NetworkManager.ConnectedClientsIds.Count >= GameState.MinPlayers;
+            UpdatePlayerCounts();
             ClientsReadyForRound.Clear();
+            MatchElapsedTime = 0f;
             ChangeState(LoadingState);
         }
 
@@ -117,15 +142,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         /// <summary>Aktualisiert MinPlayers-Flag und delegiert an den aktuellen State.</summary>
         internal void OnMinPlayersReached()
         {
-            MinPlayersReached = true;
+            UpdatePlayerCounts();
             m_CurrentState?.OnMinPlayersReached();
         }
 
         /// <summary>Aktualisiert Spieleranzahl und delegiert an den aktuellen State.</summary>
         internal void OnClientConnected()
         {
-            GameState.playersConnected.Value = GameState.NetworkManager.ConnectedClientsIds.Count;
-            MinPlayersReached = GameState.NetworkManager.ConnectedClientsIds.Count >= GameState.MinPlayers;
+            UpdatePlayerCounts();
             m_CurrentState?.OnClientConnected();
         }
 
@@ -133,8 +157,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         internal void OnClientDisconnected()
         {
             ClientsReadyForRound.IntersectWith(GameState.NetworkManager.ConnectedClientsIds);
-            GameState.playersConnected.Value = GameState.NetworkManager.ConnectedClientsIds.Count;
-            MinPlayersReached = GameState.NetworkManager.ConnectedClientsIds.Count >= GameState.MinPlayers;
+            UpdatePlayerCounts();
             m_CurrentState?.OnClientDisconnected();
         }
 
@@ -145,6 +168,46 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         }
 
         // ----- Hilfsmethoden fuer States -----
+
+        /// <summary>
+        /// Prueft ob nach Rundenende ein Map-Wechsel stattfinden soll.
+        /// Regeln:
+        /// - roundlimit > 0 und erreicht → Map wechseln.
+        /// - roundlimit == 0 und timelimit > 0 und MatchElapsedTime >= timelimit → Map wechseln.
+        /// - roundlimit == 0 und timelimit == 0 → nie wechseln (unendlich).
+        /// </summary>
+        internal bool ShouldSwitchMap()
+        {
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            if (gametypeManager == null)
+            {
+                return false;
+            }
+
+            // Rundenlimit gesetzt und erreicht → Map wechseln
+            if (gametypeManager.IsRoundLimitReached())
+            {
+                Debug.Log($"[RoundFlow] Round limit reached ({gametypeManager.GetCurrentRound()}/{gametypeManager.GetRoundLimit()}) → switch map");
+                return true;
+            }
+
+            // Rundenlimit == 0: Timelimit entscheidet
+            int roundLimit = gametypeManager.GetRoundLimit();
+            if (roundLimit == 0)
+            {
+                int timelimit = gametypeManager.GetTimelimit();
+                if (timelimit > 0 && MatchElapsedTime >= timelimit)
+                {
+                    Debug.Log($"[RoundFlow] Timelimit reached ({MatchElapsedTime:F0}s / {timelimit}s) → switch map");
+                    return true;
+                }
+
+                // timelimit == 0 → unendlich, nie wechseln
+                return false;
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// Prueft ob alle verbundenen Clients "Gameplay sichtbar" gemeldet haben.
@@ -189,6 +252,50 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         }
 
         /// <summary>
+        /// Sperrt oder entsperrt die Bewegung aller verbundenen Spieler auf dem Server.
+        /// </summary>
+        internal void SetAllPlayersMovementLocked(bool locked)
+        {
+            foreach (ulong clientId in GameState.NetworkManager.ConnectedClientsIds)
+            {
+                NetworkObject playerObject = GameState.NetworkManager.SpawnManager.GetPlayerNetworkObject(clientId);
+                if (playerObject == null)
+                {
+                    continue;
+                }
+
+                if (playerObject.TryGetComponent(out NetworkedPlayerCharacter playerCharacter))
+                {
+                    playerCharacter.SetMovementLocked(locked);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sperrt oder entsperrt die Bewegung eines bestimmten Teams auf dem Server.
+        /// </summary>
+        internal void SetTeamMovementLocked(uint teamId, bool locked)
+        {
+            foreach (ulong clientId in GameState.NetworkManager.ConnectedClientsIds)
+            {
+                NetworkObject playerObject = GameState.NetworkManager.SpawnManager.GetPlayerNetworkObject(clientId);
+                if (playerObject == null)
+                {
+                    continue;
+                }
+
+                if (playerObject.TryGetComponent(out NetworkedPlayerCharacter playerCharacter))
+                {
+                    NetworkedCharacterState charState = playerObject.GetComponent<NetworkedCharacterState>();
+                    if (charState != null && charState.TeamId == teamId)
+                    {
+                        playerCharacter.SetMovementLocked(locked);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Zaehlt die aktuelle Teamverteilung aller verbundenen Spieler.
         /// </summary>
         internal (int redCount, int blueCount) CountTeams()
@@ -212,6 +319,28 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 else if (team == GametypeTeam.Blue)
                 {
                     blue++;
+                }
+            }
+
+            // AI-Bots zaehlen (sind server-owned, nicht in GetPlayerNetworkObject)
+            if (GameState.AIBotSpawner != null)
+            {
+                foreach (NetworkObject bot in GameState.AIBotSpawner.SpawnedBots)
+                {
+                    if (bot == null || !bot.IsSpawned || !bot.TryGetComponent(out NetworkedCharacterState botState))
+                    {
+                        continue;
+                    }
+
+                    GametypeTeam botTeam = (GametypeTeam)botState.TeamId;
+                    if (botTeam == GametypeTeam.Red)
+                    {
+                        red++;
+                    }
+                    else if (botTeam == GametypeTeam.Blue)
+                    {
+                        blue++;
+                    }
                 }
             }
 
@@ -271,14 +400,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             // AI-Bots spawnen (erstmalig) oder respawnen (nach Rundenwechsel)
             if (GameState.AIBotSpawner != null)
             {
+                Debug.Log($"[RoundFlow] AIBotSpawner vorhanden, SpawnedBotCount={GameState.AIBotSpawner.SpawnedBotCount}");
                 if (GameState.AIBotSpawner.SpawnedBotCount == 0)
                 {
+                    // Callback abonnieren fuer den Fall dass Addressable-Laden async ist
+                    GameState.AIBotSpawner.OnInitialBotsSpawned += OnBotsSpawned;
                     GameState.AIBotSpawner.SpawnInitialBots();
+                    Debug.Log($"[RoundFlow] Nach SpawnInitialBots: SpawnedBotCount={GameState.AIBotSpawner.SpawnedBotCount}");
                 }
                 else
                 {
                     GameState.AIBotSpawner.RespawnAllBots();
                 }
+            }
+            else
+            {
+                Debug.LogWarning("[RoundFlow] AIBotSpawner ist NULL!");
             }
 
             // Host-Mode: Server-Client hat kein Loading-Overlay, gilt sofort als bereit.
@@ -293,6 +430,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         public override void Exit()
         {
             GameState.waitingForPlayers.Value = false;
+
+            // Callback abmelden
+            if (GameState.AIBotSpawner != null)
+            {
+                GameState.AIBotSpawner.OnInitialBotsSpawned -= OnBotsSpawned;
+            }
+        }
+
+        /// <summary>
+        /// Wird aufgerufen wenn AI-Bots nach dem async Addressable-Laden gespawnt wurden.
+        /// Prueft erneut ob das Match gestartet werden kann.
+        /// </summary>
+        void OnBotsSpawned()
+        {
+            Debug.Log("[RoundFlow] AI-Bots gespawnt — aktualisiere Spielerzahlen und pruefe Match-Start...");
+            Manager.UpdatePlayerCounts();
+            TryStartMatch();
         }
 
         internal override void OnClientReadyForRound()
@@ -413,8 +567,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
             m_WarmupRoutine = null;
 
-            // Alle Spieler an Spawn-Points teleportieren
+            // Alle Spieler und Bots an Spawn-Points teleportieren
             Manager.RespawnAllConnectedPlayers();
+            if (GameState.AIBotSpawner != null)
+            {
+                GameState.AIBotSpawner.RespawnAllBots();
+            }
 
             Manager.ChangeState(Manager.StartingRoundState);
         }
@@ -432,6 +590,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         public override void Enter()
         {
             Debug.Log("[RoundFlow] Enter StartingRoundState");
+
+            // Server-seitig: Alle Spieler Movement-Lock setzen (3,2,1-Countdown)
+            Manager.SetAllPlayersMovementLocked(true);
 
             GameState.roundStartCountdown.Value = 3;
             GameState.BroadcastRoundStarting();
@@ -508,6 +669,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             // GametypeManager ueber Rundenstart informieren
             gametypeManager?.OnRoundStart();
 
+            // Runden-Info an Clients synchronisieren
+            if (gametypeManager != null)
+            {
+                GameState.currentRound.Value = gametypeManager.GetCurrentRound();
+                GameState.roundLimit.Value = gametypeManager.GetRoundLimit();
+            }
+
             // Initiale Phase synchronisieren
             if (gametypeManager != null)
             {
@@ -515,6 +683,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             }
 
             GameState.BroadcastMatchStarted();
+
+            // Server-seitig: Alle Spieler entsperren (Hider duerfen sofort laufen).
+            // Fuer HideAndSeek: Seeker bleiben gesperrt waehrend Hiding-Phase.
+            Manager.SetAllPlayersMovementLocked(false);
+
+            string activeGametype = GameState.activeGametypeId.Value.ToString();
+            if (activeGametype == "hideandseek" && gametypeManager != null
+                && gametypeManager.GetCurrentPhase() == (int)HideAndSeekPhase.Hiding)
+            {
+                // Seeker (Blue) bleiben gesperrt bis Seeking-Phase beginnt
+                Manager.SetTeamMovementLocked((uint)GametypeTeam.Blue, true);
+                Debug.Log("[RoundFlow] HideAndSeek: Seeker movement locked during Hiding phase");
+            }
+
             m_CountdownRoutine = Manager.StartCoroutine(RunCountdown());
             m_GameLoopRoutine = Manager.StartCoroutine(GameLoop());
         }
@@ -561,6 +743,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         {
             GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
             int lastPhase = gametypeManager?.GetCurrentPhase() ?? 0;
+            uint lastPhaseTime = 0;
 
             while (true)
             {
@@ -575,8 +758,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                     if (currentPhase != lastPhase)
                     {
                         GameState.gametypePhase.Value = currentPhase;
-                        lastPhase = currentPhase;
                         Debug.Log($"[RoundFlow] Gametype phase changed to {currentPhase}");
+
+                        // HideAndSeek: Seeker entsperren wenn Seeking-Phase beginnt
+                        if (lastPhase == (int)HideAndSeekPhase.Hiding
+                            && currentPhase == (int)HideAndSeekPhase.Seeking)
+                        {
+                            Manager.SetTeamMovementLocked((uint)GametypeTeam.Blue, false);
+                            Debug.Log("[RoundFlow] HideAndSeek: Seeker movement unlocked — Seeking phase");
+                        }
+
+                        lastPhase = currentPhase;
+                    }
+
+                    // Phasen-Restzeit synchronisieren (auf ganze Sekunden gerundet, nur bei Aenderung)
+                    uint currentPhaseTime = (uint)Mathf.CeilToInt(gametypeManager.GetPhaseTimeRemaining());
+                    if (currentPhaseTime != lastPhaseTime)
+                    {
+                        GameState.phaseTimeRemaining.Value = currentPhaseTime;
+                        lastPhaseTime = currentPhaseTime;
                     }
                 }
 
@@ -585,6 +785,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 {
                     yield return new WaitForSeconds(m_RoundRestartDelay);
                     m_GameLoopRoutine = null;
+
+                    // Pruefen ob Map gewechselt werden soll
+                    if (Manager.ShouldSwitchMap())
+                    {
+                        Manager.ChangeState(Manager.SwitchingMapState);
+                        yield break;
+                    }
+
                     Manager.ChangeState(Manager.WaitingForReadyState);
                     yield break;
                 }
@@ -605,6 +813,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             {
                 yield return CoroutinesHelper.OneSecond;
                 GameState.matchCountdown.Value--;
+
+                // Match-Zeit kumulieren (fuer timelimit-basiertes Map-Switching)
+                Manager.MatchElapsedTime += 1f;
             }
 
             m_CountdownRoutine = null;
@@ -619,9 +830,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
                 if (result.RestartRound)
                 {
-                    // Naechste Runde auf gleicher Map
-                    Debug.Log($"[RoundFlow] Time expired → restart round: {result.BroadcastMessage}");
+                    Debug.Log($"[RoundFlow] Time expired: {result.BroadcastMessage}");
                     yield return new WaitForSeconds(result.RestartDelaySeconds);
+
+                    // Pruefen ob Map gewechselt werden soll
+                    if (Manager.ShouldSwitchMap())
+                    {
+                        Manager.ChangeState(Manager.SwitchingMapState);
+                        yield break;
+                    }
+
+                    // Naechste Runde auf gleicher Map
                     Manager.ChangeState(Manager.WaitingForReadyState);
                     yield break;
                 }

@@ -1,3 +1,4 @@
+using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
 using UnityEngine;
@@ -23,15 +24,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         /// </summary>
         [SerializeField]
         private PlayerPhysicsSimulation m_Simulation = new();
-
-        /// <summary>Default Capsule-Höhe bis Client aktuelle Werte sendet.</summary>
-        private const float k_DefaultCapsuleHeight = 1.8f;
-
-        /// <summary>Default Capsule-Radius bis Client aktuelle Werte sendet.</summary>
-        private const float k_DefaultCapsuleRadius = 0.25f;
-
-        /// <summary>Default Capsule-Center bis Client aktuelle Werte sendet.</summary>
-        private static readonly Vector3 k_DefaultCapsuleCenter = new(0f, 0.9f, 0f);
 
         /// <summary>
         /// Physics BoxCollider fuer server-seitige Player-Player Collision (SoF2 AABB).
@@ -82,11 +74,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         public void InitializeServer()
         {
             // Default Capsule-Dimensionen setzen (bis Client aktuelle Werte sendet)
-            m_Simulation.SetCapsuleDimensions(
-                k_DefaultCapsuleHeight,
-                k_DefaultCapsuleRadius,
-                k_DefaultCapsuleCenter
-            );
+            float height = ClientColliderSystem.k_SoF2StandingHeight;
+            float radius = ClientColliderSystem.k_SoF2Radius;
+            Vector3 center = new(0f, height * 0.5f, 0f);
+
+            m_Simulation.SetCapsuleDimensions(height, radius, center);
 
             // GroundMask: Alle Layer inkl. Player-Layer (SoF2 MASK_PLAYERSOLID inkl. CONTENTS_BODY).
             // Self-Collision wird verhindert, indem der eigene BoxCollider vor jedem
@@ -95,8 +87,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
 
             // Physics BoxCollider fuer Player-Player Collision (SoF2 AABB)
             m_PhysicsCollider = gameObject.AddComponent<BoxCollider>();
-            m_PhysicsCollider.size = new Vector3(k_DefaultCapsuleRadius * 2f, k_DefaultCapsuleHeight, k_DefaultCapsuleRadius * 2f);
-            m_PhysicsCollider.center = k_DefaultCapsuleCenter;
+            m_PhysicsCollider.size = new Vector3(radius * 2f, height, radius * 2f);
+            m_PhysicsCollider.center = center;
         }
 
         /// <summary>
@@ -228,6 +220,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         /// SoF2 Schwerkraft-Skalierung fuer Knockback (0.8 bei g_gravity > 0).
         /// </summary>
         private const float SOF2_KNOCKBACK_GRAVITY_SCALE = 0.8f;
+
+        /// <summary>
+        /// Setzt die aktuelle Velocity auf Zero.
+        /// Wird fuer Stun-Effekte verwendet (z.B. HideAndSeek: Hider trifft Seeker).
+        /// </summary>
+        public void ZeroVelocity()
+        {
+            m_Simulation.Velocity = Vector3.zero;
+        }
 
         /// <summary>
         /// Wendet SoF2-authentischen Knockback auf den Spieler an.

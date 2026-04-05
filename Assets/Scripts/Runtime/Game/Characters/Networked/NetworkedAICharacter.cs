@@ -10,6 +10,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
     /// Networked AI-Character. Server-owned (kein Owner-Client).
     /// Server steuert Position/Rotation direkt, Clients interpolieren.
     /// Nutzt dieselbe NetworkedCharacterState fuer Skin, Health, Team etc.
+    /// Hat ClientHitboxSystem fuer Bone-basierte Trefferkennung (analog zu Spielern).
+    /// Hat ServerCharacterController fuer Damage/Death/Respawn-Logik.
     /// </summary>
     public class NetworkedAICharacter : NetworkedCharacter, ICharacter
     {
@@ -32,6 +34,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         private NetworkedCharacterState m_CharacterState;
 
         /// <summary>
+        /// Server-seitiger Damage/Death/Respawn-Controller (analog zu Spielern).
+        /// </summary>
+        [SerializeField]
+        private ServerCharacterController m_ServerCharacterController;
+
+        /// <summary>
+        /// Client-seitiges Hitbox-System fuer Bone-basierte Trefferkennung.
+        /// Wird nach Visual-Instanziierung aufgebaut (29 BoxCollider auf Skeleton-Bones).
+        /// </summary>
+        [SerializeField]
+        private ClientHitboxSystem m_HitboxSystem;
+
+        /// <summary>
+        /// Client-seitiges Collider-System fuer physische Kollision (SoF2 AABB).
+        /// Erzeugt identischen BoxCollider wie bei Spielern (draufspringen, Kollision etc.).
+        /// Wird nur auf Clients initialisiert (Server hat BoxCollider via ServerAICharacter).
+        /// </summary>
+        [SerializeField]
+        private ClientColliderSystem m_ColliderSystem;
+
+        /// <summary>
         /// Interpolationsgeschwindigkeit fuer Clients.
         /// </summary>
         private const float k_InterpolationSpeed = 15f;
@@ -42,6 +65,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         protected override void OnServerSpawn()
         {
             base.OnServerSpawn();
+
+            // Hitboxen aufbauen sobald Visual geladen ist (Server braucht Hitboxes fuer Bone-Tracking)
+            SubscribeToVisualInstantiated();
 
             if (ServerPlayerSpawnPoints.Instance == null)
             {
@@ -54,13 +80,104 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
-        /// Remote-Client: Startet Interpolation.
+        /// Remote-Client: Startet Interpolation und Hitbox-Aufbau nach Visual-Load.
         /// AI-Bots haben keinen Owner-Client, daher gibt es kein OnOwnerSpawn.
         /// </summary>
         protected override void OnRemoteSpawn()
         {
             base.OnRemoteSpawn();
+
+            // Hitboxen aufbauen sobald Visual geladen ist (Client braucht Hitboxes fuer Trefferkennung)
+            SubscribeToVisualInstantiated();
+
             Debug.Log($"[NetworkedAICharacter] Remote-Client: AI-Character {NetworkObjectId} interpoliert.");
+        }
+
+        /// <summary>
+        /// Abonniert das OnVisualInstantiated-Event des SkinHandlers.
+        /// </summary>
+        private void SubscribeToVisualInstantiated()
+        {
+            if (m_SkinHandler != null)
+            {
+                m_SkinHandler.OnVisualInstantiated += OnVisualInstantiated;
+            }
+        }
+
+        /// <summary>
+        /// Callback nach Visual-Instanziierung: Baut Hitboxen und Collider auf den Skeleton-Bones auf.
+        /// Collider wird auf Server UND Client identisch erstellt (ClientColliderSystem).
+        /// </summary>
+        private void OnVisualInstantiated(GameObject visualInstance)
+        {
+            if (m_HitboxSystem != null)
+            {
+                m_HitboxSystem.BuildHitboxes(visualInstance.transform);
+                Debug.Log("[NetworkedAICharacter] Hitboxen aufgebaut fuer AI-Bot.");
+            }
+
+            // Physik-Collider auf Server UND Client identisch aufbauen (SoF2 AABB)
+            if (m_ColliderSystem != null)
+            {
+                Transform highestPoint = FindDeepChild(visualInstance.transform, "*head_t_0");
+                Transform cranium = FindDeepChild(visualInstance.transform, "cranium");
+                Transform rightHandBolt = FindDeepChild(visualInstance.transform, "rhang_tag_bone");
+                Transform leftHandBolt = FindDeepChild(visualInstance.transform, "lhand_tag_bone");
+                Transform rightFoot = FindDeepChild(visualInstance.transform, "rtarsal");
+                Transform leftFoot = FindDeepChild(visualInstance.transform, "ltarsal");
+                Transform pelvis = FindDeepChild(visualInstance.transform, "pelvis");
+
+                m_ColliderSystem.CalculateAutoCapsuleSize(
+                    highestPoint != null ? highestPoint : cranium,
+                    pelvis, leftHandBolt, rightHandBolt, leftFoot, rightFoot);
+                Debug.Log("[NetworkedAICharacter] Collider aufgebaut fuer AI-Bot.");
+            }
+
+            // Server: Collider-Referenz an ServerAICharacter uebergeben fuer Physik-Simulation
+            if (IsServer && m_ServerAICharacter != null && m_ColliderSystem != null)
+            {
+                m_ServerAICharacter.SetColliderSystem(m_ColliderSystem);
+            }
+        }
+
+        /// <summary>
+        /// Sucht rekursiv ein Kind-Transform per Name.
+        /// </summary>
+        private static Transform FindDeepChild(Transform parent, string childName)
+        {
+            foreach (Transform child in parent)
+            {
+                if (child.name == childName)
+                {
+                    return child;
+                }
+
+                Transform result = FindDeepChild(child, childName);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Raeumt Event-Abos auf beim Despawn.
+        /// </summary>
+        public override void OnNetworkDespawn()
+        {
+            base.OnNetworkDespawn();
+
+            if (m_SkinHandler != null)
+            {
+                m_SkinHandler.OnVisualInstantiated -= OnVisualInstantiated;
+            }
+
+            if (m_HitboxSystem != null)
+            {
+                m_HitboxSystem.ClearHitboxes();
+            }
         }
 
         /// <summary>

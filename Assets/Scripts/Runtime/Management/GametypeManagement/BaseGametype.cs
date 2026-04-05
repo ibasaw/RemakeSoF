@@ -106,6 +106,12 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         }
 
         /// <inheritdoc />
+        public virtual float GetPhaseTimeRemaining()
+        {
+            return 0f;
+        }
+
+        /// <inheritdoc />
         public virtual void InitializeRoundState(int redCount, int blueCount)
         {
             // Default: keine Aktion
@@ -122,6 +128,38 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         {
             // Default: Keine Team-Anforderungen, jeder Spieler reicht.
             return true;
+        }
+
+        /// <inheritdoc />
+        public virtual int GetCurrentRound()
+        {
+            return CurrentRound;
+        }
+
+        /// <inheritdoc />
+        public virtual int GetRoundLimit()
+        {
+            return ServerConfig.roundlimit;
+        }
+
+        /// <inheritdoc />
+        public virtual bool IsRoundLimitReached()
+        {
+            int roundLimit = GetRoundLimit();
+            return roundLimit > 0 && CurrentRound >= roundLimit;
+        }
+
+        /// <inheritdoc />
+        public virtual int GetTimelimit()
+        {
+            return ServerConfig.timelimit;
+        }
+
+        /// <inheritdoc />
+        public virtual GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName)
+        {
+            // Default: Schaden unveraendert durchlassen.
+            return GametypeDamageResult.Default(damage);
         }
     }
 }

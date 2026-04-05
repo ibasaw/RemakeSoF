@@ -210,13 +210,14 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
         }
 
         /// <summary>
-        /// Zaehlt die aktuelle Teamverteilung aller verbundenen Spieler.
+        /// Zaehlt die aktuelle Teamverteilung aller verbundenen Spieler und AI-Bots.
         /// </summary>
         (int redCount, int blueCount) CountTeams()
         {
             int red = 0;
             int blue = 0;
 
+            // Menschliche Spieler
             foreach (ulong cid in Manager.NetworkManager.ConnectedClientsIds)
             {
                 NetworkObject obj = Manager.NetworkManager.SpawnManager.GetPlayerNetworkObject(cid);
@@ -233,6 +234,29 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
                 else if (team == GametypeTeam.Blue)
                 {
                     blue++;
+                }
+            }
+
+            // AI-Bots zaehlen
+            AIBotSpawner botSpawner = NetworkedGameState.Singleton?.AIBotSpawner;
+            if (botSpawner != null)
+            {
+                foreach (NetworkObject bot in botSpawner.SpawnedBots)
+                {
+                    if (bot == null || !bot.IsSpawned || !bot.TryGetComponent(out NetworkedCharacterState botState))
+                    {
+                        continue;
+                    }
+
+                    GametypeTeam botTeam = (GametypeTeam)botState.TeamId;
+                    if (botTeam == GametypeTeam.Red)
+                    {
+                        red++;
+                    }
+                    else if (botTeam == GametypeTeam.Blue)
+                    {
+                        blue++;
+                    }
                 }
             }
 

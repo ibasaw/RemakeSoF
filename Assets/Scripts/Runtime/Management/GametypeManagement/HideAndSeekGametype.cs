@@ -20,7 +20,7 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
     /// Hide-and-Seek Gametype-Implementierung.
     ///
     /// Ablauf:
-    /// 1. Spieler werden in Hider (Blau) und Seeker (Rot) aufgeteilt.
+    /// 1. Spieler werden in Hider (Rot) und Seeker (Blau) aufgeteilt.
     /// 2. Versteckphase: Hider haben X Sekunden zum Verstecken, Seeker sind eingefroren.
     /// 3. Suchphase: Seeker suchen und eliminieren Hider.
     /// 4. Suchzeit laeuft ab → Hider gewinnen, oder alle Hider gefunden → Seeker gewinnen.
@@ -189,14 +189,15 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
                 return GametypeEventResult.None;
             }
 
-            // Zeit abgelaufen → Hider gewinnen
+            // Zeit abgelaufen → Hider gewinnen, ueberlebende Hider bekommen +1 Kill
             CurrentPhase = HideAndSeekPhase.RoundOver;
             return new GametypeEventResult
             {
                 RedTeamScoreDelta = 1,
                 RestartRound = true,
                 RestartDelaySeconds = 5f,
-                BroadcastMessage = "Zeit abgelaufen! Hider gewinnen die Runde!"
+                BroadcastMessage = "Zeit abgelaufen! Hider gewinnen die Runde!",
+                AwardSurvivalKillsToTeam = GametypeTeam.Red
             };
         }
 
@@ -215,16 +216,20 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         }
 
         /// <inheritdoc />
+        public override float GetPhaseTimeRemaining()
+        {
+            return PhaseTimeRemaining;
+        }
+
+        /// <inheritdoc />
         public override void OnRoundEnd()
         {
             base.OnRoundEnd();
             CurrentPhase = HideAndSeekPhase.RoundOver;
         }
 
-        /// <summary>
-        /// Prueft ob das Rundenlimit erreicht ist.
-        /// </summary>
-        public bool IsRoundLimitReached()
+        /// <inheritdoc />
+        public override bool IsRoundLimitReached()
         {
             return RoundLimit > 0 && CurrentRound >= RoundLimit;
         }
@@ -291,6 +296,53 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         {
             // HideAndSeek benoetigt mindestens 1 Seeker (Blau) UND 1 Hider (Rot)
             return currentBlueCount >= 1 && currentRedCount >= 1;
+        }
+
+        /// <inheritdoc />
+        public override int GetRoundLimit()
+        {
+            return RoundLimit;
+        }
+
+        /// <summary>Stun-Dauer in Sekunden wenn ein Hider einen Seeker mit dem Messer trifft.</summary>
+        const float STUN_DURATION = 2f;
+
+        /// <inheritdoc />
+        public override GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName)
+        {
+            // Nur waehrend der Suchphase relevant
+            if (CurrentPhase != HideAndSeekPhase.Seeking)
+            {
+                return GametypeDamageResult.Default(0);
+            }
+
+            // Seeker (Blue) trifft Hider (Red) → Instant Kill (volle HP als Schaden)
+            if (attackerTeam == GametypeTeam.Blue && victimTeam == GametypeTeam.Red)
+            {
+                return new GametypeDamageResult
+                {
+                    ModifiedDamage = 1000,
+                    ApplyStun = false,
+                    StunDuration = 0f,
+                    AttackerMessage = "You killed {victimName}!",
+                    VictimMessage = "You got killed by {attackerName}"
+                };
+            }
+
+            // Hider (Red) trifft Seeker (Blue) → Kein Schaden, Stun stattdessen
+            if (attackerTeam == GametypeTeam.Red && victimTeam == GametypeTeam.Blue)
+            {
+                return new GametypeDamageResult
+                {
+                    ModifiedDamage = 0,
+                    ApplyStun = true,
+                    StunDuration = STUN_DURATION,
+                    AttackerMessage = "You stunned {victimName}",
+                    VictimMessage = "You got stunned by {attackerName}"
+                };
+            }
+
+            return GametypeDamageResult.Default(damage);
         }
     }
 }

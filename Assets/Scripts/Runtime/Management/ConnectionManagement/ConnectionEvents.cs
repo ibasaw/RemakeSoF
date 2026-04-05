@@ -50,6 +50,7 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
         public ConnectStatus status;
         public string serverAddress;
         public string serverName;
+        public string serverDescription;
     }
     
     public class ClientConnectedEvent: AppEvent { }

@@ -84,6 +84,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                 hasPassword = !string.IsNullOrEmpty(config.sv_password),
                 password = config.sv_password ?? string.Empty,
                 rconPassword = config.rconPassword ?? string.Empty,
+                description = config.sv_description ?? string.Empty,
                 version = Application.version
             };
 
@@ -232,6 +233,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                 currentPlayers = m_CurrentPlayers,
                 maxPlayers = m_ServerConfig.sv_maxclients,
                 hasPassword = !string.IsNullOrEmpty(m_ServerConfig.sv_password),
+                description = m_ServerConfig.sv_description ?? string.Empty,
                 version = Application.version
             };
 

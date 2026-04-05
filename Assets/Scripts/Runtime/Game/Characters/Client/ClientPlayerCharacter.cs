@@ -711,6 +711,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         // ===== Input State =====
 
+        /// <summary>
+        /// Ob die Bewegung komplett eingefroren ist (z.B. waehrend Countdown).
+        /// Wenn true, wird keine Physik-Simulation ausgefuehrt und keine Commands gesendet.
+        /// </summary>
+        private bool m_MovementFrozen;
+
         /// <summary>Buffered MoveInput (gelesen in Update, genutzt in Physik-Pipeline + LateUpdate).</summary>
         private Vector2 m_MoveInput;
 
@@ -1026,6 +1032,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
 
             if (!m_NetworkedPlayerCharacter.IsOwner)
+            {
+                return;
+            }
+
+            // Waehrend Freeze keine Physik ausfuehren und keine Commands senden
+            if (m_MovementFrozen)
             {
                 return;
             }
@@ -3050,6 +3062,26 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         {
             if (active)
             {
+                // Wenn Movement eingefroren ist (z.B. Countdown), Input NICHT freigeben.
+                // Nur Cursor/Kamera fuer Menu-Resume wiederherstellen.
+                if (m_MovementFrozen)
+                {
+                    // Kamera + Cursor restaurieren, aber Actions bleiben deaktiviert
+                    if (m_AimCameraController != null)
+                    {
+                        m_AimCameraController.enabled = false;
+                    }
+
+                    if (m_CameraSwitcher != null)
+                    {
+                        m_CameraSwitcher.enabled = false;
+                    }
+
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                    return;
+                }
+
                 m_PlayerActions.Enable();
             }
             else
@@ -3058,9 +3090,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 m_PlayerActions.Disable();
                 m_PlayerActions.TogglePauseMenu.Enable();
                 m_PlayerActions.ShowScoreboard.Enable();
+
+                // Eingabe-State zuruecksetzen damit keine Restbewegung nach dem Freeze passiert
+                m_MoveInput = Vector2.zero;
+                m_IsWalkingPressed = false;
+                m_IsCrouchPressed = false;
+                m_JumpRequested = false;
+                m_IsAttacking = false;
+                m_IsAltAttacking = false;
             }
 
-            // Kamera-Controller ein-/ausschalten (verhindert Mausbewegung im MenÃ¼)
+            // Kamera-Controller ein-/ausschalten (verhindert Mausbewegung im Menü)
             if (m_AimCameraController != null)
             {
                 m_AimCameraController.enabled = active;
@@ -3073,6 +3113,63 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             Cursor.lockState = active ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !active;
+        }
+
+        /// <summary>
+        /// Setzt den Movement-Freeze-State (z.B. waehrend Countdown).
+        /// Unabhaengig vom Menu-Toggle — SetInputsActive(true) wird ignoriert solange frozen.
+        /// </summary>
+        public void SetMovementFrozen(bool frozen)
+        {
+            m_MovementFrozen = frozen;
+
+            if (frozen)
+            {
+                // Actions deaktivieren, nur PauseMenu + Scoreboard bleiben
+                m_PlayerActions.Disable();
+                m_PlayerActions.TogglePauseMenu.Enable();
+                m_PlayerActions.ShowScoreboard.Enable();
+
+                // Eingabe-State zuruecksetzen
+                m_MoveInput = Vector2.zero;
+                m_IsWalkingPressed = false;
+                m_IsCrouchPressed = false;
+                m_JumpRequested = false;
+                m_IsAttacking = false;
+                m_IsAltAttacking = false;
+
+                // Kamera deaktivieren
+                if (m_AimCameraController != null)
+                {
+                    m_AimCameraController.enabled = false;
+                }
+
+                if (m_CameraSwitcher != null)
+                {
+                    m_CameraSwitcher.enabled = false;
+                }
+
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+            else
+            {
+                // Alles wieder freigeben
+                m_PlayerActions.Enable();
+
+                if (m_AimCameraController != null)
+                {
+                    m_AimCameraController.enabled = true;
+                }
+
+                if (m_CameraSwitcher != null)
+                {
+                    m_CameraSwitcher.enabled = true;
+                }
+
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
 
         /// <summary>

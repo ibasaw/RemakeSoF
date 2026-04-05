@@ -8,6 +8,7 @@ namespace Tolik.RemakeSoF.Runtime
         public float ElapsedTime { get; private set; }
         public string ServerAddress { get; private set; }
         public string ServerName { get; private set; }
+        public string ServerDescription { get; private set; }
 
         void Update()
         {
@@ -27,6 +28,11 @@ namespace Tolik.RemakeSoF.Runtime
         public void SetServerName(string serverName)
         {
             ServerName = serverName;
+        }
+
+        public void SetServerDescription(string serverDescription)
+        {
+            ServerDescription = serverDescription;
         }
     }
 }

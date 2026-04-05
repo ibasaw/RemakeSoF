@@ -84,7 +84,8 @@ namespace Tolik.RemakeSoF.Runtime
                 evt.port,
                 App.Model.PlayerData.PlayerName,
                 PlayerSkinManager.CurrentSkinName,
-                evt.serverName
+                evt.serverName,
+                evt.serverDescription
             );
         }
 

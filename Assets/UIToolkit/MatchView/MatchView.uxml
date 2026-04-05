@@ -16,6 +16,7 @@
                 <ui:Label text="0" name="hudBlueTeamScoreLabel" style="font-size: 22px; color: rgb(120, 160, 255); -unity-font-style: bold; min-width: 24px; -unity-text-align: middle-center;"/>
                 <ui:VisualElement name="hudBlueTeamLogo" style="width: 24px; height: 24px; -unity-background-scale-mode: scale-to-fit; margin-left: 6px;"/>
             </ui:VisualElement>
+            <ui:Label text="" name="roundLabel" style="-unity-text-align: middle-right; height: auto; width: auto; font-size: 18px; color: rgb(200, 200, 200);"/>
             <ui:Label text="FPS: 0" name="fpsLabel" style="width: auto; height: auto; font-size: 32px;"/>
         </ui:VisualElement>
         <ui:VisualElement name="DebugInfoBox" style="flex-grow: 0; align-items: flex-start; top: 30px; right: 30px; position: absolute; right: 30px; background-color: rgba(0, 0, 0, 0.5); padding-left: 10px; padding-right: 10px; padding-top: 6px; padding-bottom: 6px; border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;">
@@ -54,6 +55,7 @@
             <ui:Label text="" name="hitRegionLabel" style="font-size: 18px; color: rgb(255, 80, 80); -unity-font-style: bold; -unity-text-align: middle-center; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9); letter-spacing: 1px;"/>
             <ui:Label text="" name="hitDamageLabel" style="font-size: 14px; color: rgb(255, 200, 200); -unity-text-align: middle-center; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9); margin-top: 2px;"/>
         </ui:VisualElement>
+        <ui:VisualElement name="GametypeMessageContainer" picking-mode="Ignore" style="position: absolute; top: 20%; left: 0; right: 0; align-items: center; justify-content: center; display: none;"/>
         <ui:VisualElement name="WeaponHudContainer" style="position: absolute; bottom: 20px; right: 20px; align-items: flex-end; background-color: rgba(0, 0, 0, 0.6); padding-left: 14px; padding-right: 14px; padding-top: 8px; padding-bottom: 8px; border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;">
             <ui:VisualElement name="weaponIconImage" style="width: 64px; height: 32px; -unity-background-scale-mode: scale-to-fit; margin-bottom: 4px; align-self: flex-end;"/>
             <ui:Label text="KNIFE" name="weaponNameLabel" style="font-size: 16px; color: rgb(200, 200, 200); -unity-font-style: bold; -unity-text-align: middle-right; margin-bottom: 4px; letter-spacing: 2px;"/>

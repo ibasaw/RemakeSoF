@@ -307,6 +307,15 @@ public partial class @AvatarActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleSwitchTeamMenu"",
+                    ""type"": ""Button"",
+                    ""id"": ""47341e38-e500-46ce-9034-122ad1194680"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -868,6 +877,17 @@ public partial class @AvatarActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": "";Keyboard&Mouse"",
                     ""action"": ""ShowScoreboard"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a84b23f5-1bbe-4e07-b094-5661ce8eaa71"",
+                    ""path"": ""<Keyboard>/m"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleSwitchTeamMenu"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1489,6 +1509,7 @@ public partial class @AvatarActions: IInputActionCollection2, IDisposable
         m_Player_SecondAttack = m_Player.FindAction("SecondAttack", throwIfNotFound: true);
         m_Player_SwitchFireMode = m_Player.FindAction("SwitchFireMode", throwIfNotFound: true);
         m_Player_ShowScoreboard = m_Player.FindAction("ShowScoreboard", throwIfNotFound: true);
+        m_Player_ToggleSwitchTeamMenu = m_Player.FindAction("ToggleSwitchTeamMenu", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1606,6 +1627,7 @@ public partial class @AvatarActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_SecondAttack;
     private readonly InputAction m_Player_SwitchFireMode;
     private readonly InputAction m_Player_ShowScoreboard;
+    private readonly InputAction m_Player_ToggleSwitchTeamMenu;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -1714,6 +1736,10 @@ public partial class @AvatarActions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @ShowScoreboard => m_Wrapper.m_Player_ShowScoreboard;
         /// <summary>
+        /// Provides access to the underlying input action "Player/ToggleSwitchTeamMenu".
+        /// </summary>
+        public InputAction @ToggleSwitchTeamMenu => m_Wrapper.m_Player_ToggleSwitchTeamMenu;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Player; }
@@ -1811,6 +1837,9 @@ public partial class @AvatarActions: IInputActionCollection2, IDisposable
             @ShowScoreboard.started += instance.OnShowScoreboard;
             @ShowScoreboard.performed += instance.OnShowScoreboard;
             @ShowScoreboard.canceled += instance.OnShowScoreboard;
+            @ToggleSwitchTeamMenu.started += instance.OnToggleSwitchTeamMenu;
+            @ToggleSwitchTeamMenu.performed += instance.OnToggleSwitchTeamMenu;
+            @ToggleSwitchTeamMenu.canceled += instance.OnToggleSwitchTeamMenu;
         }
 
         /// <summary>
@@ -1894,6 +1923,9 @@ public partial class @AvatarActions: IInputActionCollection2, IDisposable
             @ShowScoreboard.started -= instance.OnShowScoreboard;
             @ShowScoreboard.performed -= instance.OnShowScoreboard;
             @ShowScoreboard.canceled -= instance.OnShowScoreboard;
+            @ToggleSwitchTeamMenu.started -= instance.OnToggleSwitchTeamMenu;
+            @ToggleSwitchTeamMenu.performed -= instance.OnToggleSwitchTeamMenu;
+            @ToggleSwitchTeamMenu.canceled -= instance.OnToggleSwitchTeamMenu;
         }
 
         /// <summary>
@@ -2362,6 +2394,13 @@ public partial class @AvatarActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnShowScoreboard(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ToggleSwitchTeamMenu" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnToggleSwitchTeamMenu(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.

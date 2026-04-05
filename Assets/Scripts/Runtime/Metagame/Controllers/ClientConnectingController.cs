@@ -35,6 +35,7 @@ namespace Tolik.RemakeSoF.Runtime
                     App.Model.ClientConnecting.InitializeTimer();
                     App.Model.ClientConnecting.SetServerAddress(evt.serverAddress);
                     App.Model.ClientConnecting.SetServerName(evt.serverName);
+                    App.Model.ClientConnecting.SetServerDescription(evt.serverDescription);
                     View.Show();
                     break;
                 case ConnectStatus.Success:

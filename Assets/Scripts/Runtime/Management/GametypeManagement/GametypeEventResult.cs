@@ -27,6 +27,12 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         /// <summary>Broadcast-Nachricht fuer alle Clients (leer = keine Nachricht).</summary>
         public string BroadcastMessage;
 
+        /// <summary>
+        /// Team dessen ueberlebende (alive) Spieler jeweils +1 Kill erhalten.
+        /// GametypeTeam.None = keine Survival-Kills vergeben.
+        /// </summary>
+        public GametypeTeam AwardSurvivalKillsToTeam;
+
         /// <summary>Erstellt ein leeres Ergebnis ohne Aktionen.</summary>
         public static GametypeEventResult None => new();
 

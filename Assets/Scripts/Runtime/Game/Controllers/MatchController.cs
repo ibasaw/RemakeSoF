@@ -98,6 +98,27 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         private const float k_HitConfirmDisplayDuration = 1.0f;
 
+        /// <summary>
+        /// Dauer in Sekunden, wie lange eine Gametype-Nachricht angezeigt wird.
+        /// </summary>
+        private const float k_GametypeMessageDisplayDuration = 3.0f;
+
+        /// <summary>
+        /// Laufende Coroutine fuer das kurzfristige Gametype-Nachrichten-Overlay.
+        /// </summary>
+        private Coroutine m_GametypeMessageCoroutine;
+
+        /// <summary>
+        /// Ob der lokale Spieler aktuell gestunnt ist (fuer Status-Anzeige).
+        /// </summary>
+        private bool m_IsStunned;
+
+        /// <summary>
+        /// Ob der lokale Spieler aktuell als Seeker in der Hiding-Phase eingefroren ist.
+        /// Wird bei OnMatchStarted gesetzt und bei Phase-Wechsel (Hiding→Seeking) aufgeloest.
+        /// </summary>
+        private bool m_SeekerFrozen;
+
         void Awake()
         {
             App.Model.Countdown.OnValueChanged += OnCountdownChanged;
@@ -110,6 +131,10 @@ namespace Tolik.RemakeSoF.Runtime
             App.Model.NetworkedGameState.warmupCountdown.OnValueChanged += OnWarmupCountdownChanged;
             App.Model.NetworkedGameState.redTeamScore.OnValueChanged += OnTeamScoreChanged;
             App.Model.NetworkedGameState.blueTeamScore.OnValueChanged += OnTeamScoreChanged;
+            App.Model.NetworkedGameState.gametypePhase.OnValueChanged += OnGametypePhaseChanged;
+            App.Model.NetworkedGameState.phaseTimeRemaining.OnValueChanged += OnPhaseTimeRemainingChanged;
+            App.Model.NetworkedGameState.currentRound.OnValueChanged += OnRoundChanged;
+            App.Model.NetworkedGameState.roundLimit.OnValueChanged += OnRoundChanged;
             AddListener<ScoreboardShowEvent>(OnScoreboardShow);
             AddListener<ScoreboardHideEvent>(OnScoreboardHide);
             View.OnViewEnabled += OnMatchViewEnabled;
@@ -136,6 +161,10 @@ namespace Tolik.RemakeSoF.Runtime
             App.Model.NetworkedGameState.warmupCountdown.OnValueChanged -= OnWarmupCountdownChanged;
             App.Model.NetworkedGameState.redTeamScore.OnValueChanged -= OnTeamScoreChanged;
             App.Model.NetworkedGameState.blueTeamScore.OnValueChanged -= OnTeamScoreChanged;
+            App.Model.NetworkedGameState.gametypePhase.OnValueChanged -= OnGametypePhaseChanged;
+            App.Model.NetworkedGameState.phaseTimeRemaining.OnValueChanged -= OnPhaseTimeRemainingChanged;
+            App.Model.NetworkedGameState.currentRound.OnValueChanged -= OnRoundChanged;
+            App.Model.NetworkedGameState.roundLimit.OnValueChanged -= OnRoundChanged;
             RemoveListener<ScoreboardShowEvent>(OnScoreboardShow);
             RemoveListener<ScoreboardHideEvent>(OnScoreboardHide);
         }
@@ -170,6 +199,8 @@ namespace Tolik.RemakeSoF.Runtime
             if (m_NetworkedPlayerCharacter != null)
             {
                 m_NetworkedPlayerCharacter.OnHitConfirmed += OnHitConfirmed;
+                m_NetworkedPlayerCharacter.OnGametypeMessage += OnGametypeMessage;
+                m_NetworkedPlayerCharacter.OnStunnedChanged += OnStunnedChanged;
             }
 
             // Sofort aus aktuellem State initialisieren (falls Werte schon da sind).
@@ -205,6 +236,8 @@ namespace Tolik.RemakeSoF.Runtime
             if (m_NetworkedPlayerCharacter != null)
             {
                 m_NetworkedPlayerCharacter.OnHitConfirmed -= OnHitConfirmed;
+                m_NetworkedPlayerCharacter.OnGametypeMessage -= OnGametypeMessage;
+                m_NetworkedPlayerCharacter.OnStunnedChanged -= OnStunnedChanged;
                 m_NetworkedPlayerCharacter = null;
             }
 
@@ -236,7 +269,7 @@ namespace Tolik.RemakeSoF.Runtime
         {
             if (App.Model.PlayerCharacter != null)
             {
-                App.Model.PlayerCharacter.SetInputsActive(false);
+                App.Model.PlayerCharacter.SetMovementFrozen(true);
             }
 
             uint countdownValue = App.Model.NetworkedGameState.roundStartCountdown.Value;
@@ -304,6 +337,27 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnMatchStarted()
         {
+            // HideAndSeek Seeker-Freeze: Waehrend der Hiding-Phase bleibt Input fuer Seeker deaktiviert
+            bool isSeekerInHideAndSeek = IsLocalPlayerSeekerInHideAndSeek();
+            int currentPhase = App.Model.NetworkedGameState.gametypePhase.Value;
+
+            if (isSeekerInHideAndSeek && currentPhase == (int)HideAndSeekPhase.Hiding)
+            {
+                // Seeker: Movement-Freeze explizit setzen (Safety — OnRoundStarting hat es bereits gesetzt,
+                // aber bei Timing-Problemen koennte es fehlen). Warmup-Countdown anzeigen statt "GO!".
+                m_SeekerFrozen = true;
+                if (App.Model.PlayerCharacter != null)
+                {
+                    App.Model.PlayerCharacter.SetMovementFrozen(true);
+                }
+                uint phaseTime = App.Model.NetworkedGameState.phaseTimeRemaining.Value;
+                View.ShowRoundStartCountdown(phaseTime);
+                Debug.Log($"[MatchController] Seeker frozen during Hiding phase. Warmup: {phaseTime}s");
+                return;
+            }
+
+            m_SeekerFrozen = false;
+
             // "GO!" anzeigen, dann nach kurzer Verzoegerung ausblenden
             View.ShowGoText();
             PlayUiSound(k_GoSound);
@@ -316,7 +370,7 @@ namespace Tolik.RemakeSoF.Runtime
 
             if (App.Model.PlayerCharacter != null)
             {
-                App.Model.PlayerCharacter.SetInputsActive(true);
+                App.Model.PlayerCharacter.SetMovementFrozen(false);
             }
 
             Broadcast(new StartMatchEvent());
@@ -331,6 +385,75 @@ namespace Tolik.RemakeSoF.Runtime
             yield return CoroutinesHelper.OneSecond;
             View.HideRoundStartCountdown();
             m_GoTextCoroutine = null;
+        }
+
+        /// <summary>
+        /// Reagiert auf Gametype-Phase-Wechsel (z.B. HideAndSeek: Hiding→Seeking).
+        /// Wenn Seeker eingefroren war und die Seeking-Phase beginnt: Input freigeben + "GO!" anzeigen.
+        /// </summary>
+        void OnGametypePhaseChanged(int previousValue, int newValue)
+        {
+            // Seeker-Freeze aufloesen wenn Hiding-Phase endet
+            if (m_SeekerFrozen && newValue == (int)HideAndSeekPhase.Seeking)
+            {
+                m_SeekerFrozen = false;
+
+                // "GO!" anzeigen + Sound
+                View.ShowGoText();
+                PlayUiSound(k_GoSound);
+
+                if (m_GoTextCoroutine != null)
+                {
+                    StopCoroutine(m_GoTextCoroutine);
+                }
+                m_GoTextCoroutine = StartCoroutine(HideGoTextAfterDelay());
+
+                // Input freigeben
+                if (App.Model.PlayerCharacter != null)
+                {
+                    App.Model.PlayerCharacter.SetMovementFrozen(false);
+                }
+
+                Broadcast(new StartMatchEvent());
+                Debug.Log("[MatchController] Seeker unfrozen — Seeking phase started!");
+            }
+        }
+
+        /// <summary>
+        /// Aktualisiert den Seeker-Warmup-Countdown in der UI waehrend der Hiding-Phase.
+        /// Nur relevant wenn der lokale Spieler als Seeker eingefroren ist.
+        /// </summary>
+        void OnPhaseTimeRemainingChanged(uint previousValue, uint newValue)
+        {
+            if (!m_SeekerFrozen)
+            {
+                return;
+            }
+
+            if (newValue > 0)
+            {
+                View.ShowRoundStartCountdown(newValue);
+            }
+        }
+
+        /// <summary>
+        /// Prueft ob der lokale Spieler ein Seeker (Blue) im HideAndSeek-Gametype ist.
+        /// </summary>
+        private bool IsLocalPlayerSeekerInHideAndSeek()
+        {
+            string gametypeId = App.Model.NetworkedGameState.activeGametypeId.Value.ToString();
+            if (gametypeId != "hideandseek")
+            {
+                return false;
+            }
+
+            ClientPlayerCharacter player = App.Model.PlayerCharacter;
+            if (player == null || player.CharacterState == null)
+            {
+                return false;
+            }
+
+            return (GametypeTeam)player.CharacterState.TeamId == GametypeTeam.Blue;
         }
 
         /// <summary>
@@ -382,6 +505,9 @@ namespace Tolik.RemakeSoF.Runtime
             // Team-Logo-Texturen laden und auf HUD anwenden.
             LoadTeamLogoTextures();
 
+            // Bigchars-Atlas fuer QuakeColorLabel-Nachrichten laden.
+            LoadBigcharsAtlas();
+
             // Falls CharacterState noch nicht verfuegbar, jetzt versuchen.
             if (m_CharacterState == null && App.Model.PlayerCharacter != null)
             {
@@ -397,6 +523,9 @@ namespace Tolik.RemakeSoF.Runtime
             // PlayersConnected aus aktuellem NetworkVariable-Wert initialisieren.
             int maxPlayers = App.Model.NetworkedGameState.MaxPlayers > 0 ? App.Model.NetworkedGameState.MaxPlayers : 16;
             View.OnPlayersConnectedChanged(App.Model.PlayersConnected.Value, maxPlayers);
+
+            // Runden-Anzeige aus aktuellem NetworkVariable-Wert initialisieren.
+            UpdateRoundDisplay();
         }
 
         /// <summary>
@@ -438,6 +567,55 @@ namespace Tolik.RemakeSoF.Runtime
             }
 
             View.ApplyTeamLogoTextures(redLogo, blueLogo);
+        }
+
+        /// <summary>
+        /// Laedt die Bigchars-Atlas-Textur fuer QuakeColorLabel-Darstellung von Gametype-Nachrichten.
+        /// </summary>
+        private void LoadBigcharsAtlas()
+        {
+            TextureManager textureManager = ServiceLocator.Get<TextureManager>();
+            if (textureManager == null)
+            {
+                return;
+            }
+
+            TextureConfiguration.ScoreboardTextures config = textureManager.Configuration?.scoreboard;
+            if (config == null || string.IsNullOrEmpty(config.bigcharsAtlas))
+            {
+                return;
+            }
+
+            TextureData atlasData = textureManager.GetTextureData(config.bigcharsAtlas);
+            if (atlasData?.Texture != null)
+            {
+                View.SetBigcharsAtlas(atlasData.Texture);
+            }
+        }
+
+        /// <summary>
+        /// Callback fuer Gametype-Nachrichten (z.B. Stun-Benachrichtigungen).
+        /// Zeigt die Nachricht als QuakeColorLabel im HUD an und blendet sie nach einer Verzoegerung aus.
+        /// </summary>
+        private void OnGametypeMessage(string message)
+        {
+            View.ShowGametypeMessage(message);
+
+            if (m_GametypeMessageCoroutine != null)
+            {
+                StopCoroutine(m_GametypeMessageCoroutine);
+            }
+            m_GametypeMessageCoroutine = StartCoroutine(HideGametypeMessageAfterDelay());
+        }
+
+        /// <summary>
+        /// Blendet die Gametype-Nachricht nach einer kurzen Verzoegerung aus.
+        /// </summary>
+        private IEnumerator HideGametypeMessageAfterDelay()
+        {
+            yield return new WaitForSeconds(k_GametypeMessageDisplayDuration);
+            View.HideGametypeMessage();
+            m_GametypeMessageCoroutine = null;
         }
 
         /// <summary>
@@ -784,7 +962,22 @@ namespace Tolik.RemakeSoF.Runtime
         /// </summary>
         private void OnIsAliveChanged(bool isAlive)
         {
-            View.UpdatePlayerStatus(isAlive);
+            if (isAlive)
+            {
+                m_IsStunned = false;
+            }
+
+            View.UpdatePlayerStatus(isAlive, m_IsStunned);
+        }
+
+        /// <summary>
+        /// Callback wenn sich der Stun-Status aendert.
+        /// </summary>
+        private void OnStunnedChanged(bool isStunned)
+        {
+            m_IsStunned = isStunned;
+            bool isAlive = m_CharacterState != null && m_CharacterState.IsAlive;
+            View.UpdatePlayerStatus(isAlive, m_IsStunned);
         }
 
         /// <summary>
@@ -807,6 +1000,28 @@ namespace Tolik.RemakeSoF.Runtime
             }
 
             View.UpdateTeamScore(gameState.redTeamScore.Value, gameState.blueTeamScore.Value);
+        }
+
+        /// <summary>
+        /// Callback wenn sich die aktuelle Runde oder das Rundenlimit aendert.
+        /// </summary>
+        private void OnRoundChanged(int oldValue, int newValue)
+        {
+            UpdateRoundDisplay();
+        }
+
+        /// <summary>
+        /// Aktualisiert die Runden-Anzeige basierend auf den aktuellen NetworkVariable-Werten.
+        /// </summary>
+        private void UpdateRoundDisplay()
+        {
+            NetworkedGameState gameState = App.Model.NetworkedGameState;
+            if (gameState == null)
+            {
+                return;
+            }
+
+            View.UpdateRoundDisplay(gameState.currentRound.Value, gameState.roundLimit.Value);
         }
 
         /// <summary>

@@ -111,6 +111,13 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         int GetCurrentPhase();
 
         /// <summary>
+        /// Gibt die verbleibende Zeit der aktuellen Phase in Sekunden zurueck.
+        /// Fuer HideAndSeek: Versteckzeit waehrend Hiding, Suchzeit waehrend Seeking.
+        /// Default: 0 (keine Phase-Timer).
+        /// </summary>
+        float GetPhaseTimeRemaining();
+
+        /// <summary>
         /// Initialisiert den Runden-State mit aktuellen Teamgroessen.
         /// Wird vor OnRoundStart aufgerufen (z.B. AliveHiderCount setzen).
         /// </summary>
@@ -132,5 +139,43 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         /// <param name="currentBlueCount">Aktuelle Anzahl Spieler in Team Blau.</param>
         /// <returns>True wenn genug Spieler in den benoetigten Teams sind.</returns>
         bool AreTeamsReady(int currentRedCount, int currentBlueCount);
+
+        /// <summary>
+        /// Gibt die aktuelle Rundennummer zurueck (1-basiert).
+        /// </summary>
+        int GetCurrentRound();
+
+        /// <summary>
+        /// Gibt das Rundenlimit zurueck.
+        /// 0 = unendlich viele Runden.
+        /// </summary>
+        int GetRoundLimit();
+
+        /// <summary>
+        /// Prueft ob das Rundenlimit erreicht ist.
+        /// Bei roundlimit == 0 wird false zurueckgegeben (unendlich viele Runden).
+        /// </summary>
+        /// <returns>True wenn die maximale Rundenzahl erreicht oder ueberschritten ist.</returns>
+        bool IsRoundLimitReached();
+
+        /// <summary>
+        /// Gibt das Match-Timelimit in Sekunden zurueck (fuer Map-Wechsel bei roundlimit == 0).
+        /// 0 = kein Timelimit (unendlich).
+        /// </summary>
+        int GetTimelimit();
+
+        /// <summary>
+        /// Wird aufgerufen bevor Schaden angewendet wird.
+        /// Ermoeglicht dem Gametype den Schaden zu modifizieren, zu blockieren
+        /// oder Zusatzeffekte (Stun, Nachrichten) auszuloesen.
+        /// </summary>
+        /// <param name="attackerClientId">Client-ID des Angreifers.</param>
+        /// <param name="victimClientId">Client-ID des Opfers.</param>
+        /// <param name="attackerTeam">Team des Angreifers.</param>
+        /// <param name="victimTeam">Team des Opfers.</param>
+        /// <param name="damage">Berechneter Schaden.</param>
+        /// <param name="weaponName">Name der verwendeten Waffe.</param>
+        /// <returns>GametypeDamageResult mit modifiziertem Schaden und optionalen Effekten.</returns>
+        GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName);
     }
 }

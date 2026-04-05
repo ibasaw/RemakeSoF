@@ -84,6 +84,7 @@ namespace Tolik.RemakeSoF.Runtime.Core
         string m_Text = "";
         float m_CharWidth = 24f;
         float m_CharHeight = 24f;
+        float m_MaxWidth;
         bool m_ShowCursor;
         VisualElement m_CursorElement;
         IVisualElementScheduledItem m_CursorBlink;
@@ -132,7 +133,7 @@ namespace Tolik.RemakeSoF.Runtime.Core
             set
             {
                 m_CharWidth = value;
-                style.width = m_Glyphs.Count * m_CharWidth;
+                RecalculateSize();
                 UpdateCursor();
                 MarkDirtyRepaint();
             }
@@ -145,7 +146,20 @@ namespace Tolik.RemakeSoF.Runtime.Core
             set
             {
                 m_CharHeight = value;
-                style.height = m_CharHeight;
+                RecalculateSize();
+                UpdateCursor();
+                MarkDirtyRepaint();
+            }
+        }
+
+        /// <summary>Maximum width in pixels. When set (greater than 0), glyphs wrap to the next line. 0 = no limit (single line).</summary>
+        public float MaxWidth
+        {
+            get => m_MaxWidth;
+            set
+            {
+                m_MaxWidth = value;
+                RecalculateSize();
                 UpdateCursor();
                 MarkDirtyRepaint();
             }
@@ -207,17 +221,49 @@ namespace Tolik.RemakeSoF.Runtime.Core
                 }
             }
 
-            // Set explicit size so generateVisualContent fires (no child elements to provide intrinsic size)
-            style.width = m_Glyphs.Count * m_CharWidth;
-            style.height = m_CharHeight;
-
+            RecalculateSize();
             UpdateCursor();
             MarkDirtyRepaint();
         }
 
         /// <summary>
+        /// Calculates the number of glyphs per line based on MaxWidth. Returns 0 if no limit.
+        /// </summary>
+        int GlyphsPerLine()
+        {
+            if (m_MaxWidth <= 0 || m_CharWidth <= 0)
+            {
+                return 0;
+            }
+
+            return Mathf.Max(1, Mathf.FloorToInt(m_MaxWidth / m_CharWidth));
+        }
+
+        /// <summary>
+        /// Recalculates element width and height based on glyph count, char size and MaxWidth.
+        /// </summary>
+        void RecalculateSize()
+        {
+            int count = m_Glyphs.Count;
+            int perLine = GlyphsPerLine();
+
+            if (perLine > 0 && count > 0)
+            {
+                int lines = Mathf.CeilToInt((float)count / perLine);
+                style.width = Mathf.Min(count, perLine) * m_CharWidth;
+                style.height = lines * m_CharHeight;
+            }
+            else
+            {
+                style.width = count * m_CharWidth;
+                style.height = m_CharHeight;
+            }
+        }
+
+        /// <summary>
         /// Generates a single textured mesh with one quad per glyph. All characters are
         /// rendered in one draw call instead of creating N child VisualElements.
+        /// Supports multi-line layout when MaxWidth is set.
         /// </summary>
         void OnGenerateVisualContent(MeshGenerationContext mgc)
         {
@@ -227,6 +273,7 @@ namespace Tolik.RemakeSoF.Runtime.Core
             }
 
             int count = m_Glyphs.Count;
+            int perLine = GlyphsPerLine();
             MeshWriteData mwd = mgc.Allocate(count * 4, count * 6, m_Atlas);
 
             float cellU = 1f / k_AtlasColumns;
@@ -238,9 +285,13 @@ namespace Tolik.RemakeSoF.Runtime.Core
                 int col = g.AsciiCode % k_AtlasColumns;
                 int row = g.AsciiCode / k_AtlasColumns;
 
-                float x0 = i * m_CharWidth;
+                int lineIndex = (perLine > 0) ? i % perLine : i;
+                int lineNumber = (perLine > 0) ? i / perLine : 0;
+
+                float x0 = lineIndex * m_CharWidth;
                 float x1 = x0 + m_CharWidth;
-                float y1 = m_CharHeight;
+                float y0 = lineNumber * m_CharHeight;
+                float y1 = y0 + m_CharHeight;
 
                 float u0 = col * cellU;
                 float u1 = u0 + cellU;
@@ -252,13 +303,13 @@ namespace Tolik.RemakeSoF.Runtime.Core
 
                 mwd.SetNextVertex(new Vertex
                 {
-                    position = new Vector3(x0, 0, Vertex.nearZ),
+                    position = new Vector3(x0, y0, Vertex.nearZ),
                     tint = g.Tint,
                     uv = new Vector2(u0, vTop)
                 });
                 mwd.SetNextVertex(new Vertex
                 {
-                    position = new Vector3(x1, 0, Vertex.nearZ),
+                    position = new Vector3(x1, y0, Vertex.nearZ),
                     tint = g.Tint,
                     uv = new Vector2(u1, vTop)
                 });

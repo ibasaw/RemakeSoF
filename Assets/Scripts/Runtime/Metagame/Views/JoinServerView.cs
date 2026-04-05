@@ -356,7 +356,8 @@ namespace Tolik.RemakeSoF.Runtime
             {
                 ipAddress = m_SelectedEntry.ip,
                 port = (ushort)m_SelectedEntry.port,
-                serverName = m_SelectedEntry.hostname
+                serverName = m_SelectedEntry.hostname,
+                serverDescription = m_SelectedEntry.description
             });
         }
 
@@ -625,7 +626,8 @@ namespace Tolik.RemakeSoF.Runtime
                     {
                         ipAddress = entry.ip,
                         port = (ushort)entry.port,
-                        serverName = entry.hostname
+                        serverName = entry.hostname,
+                        serverDescription = entry.description
                     });
                 }
             });

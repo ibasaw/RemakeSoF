@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+using Tolik.RemakeSoF.Runtime.GametypeManagement;
+using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -9,16 +12,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
     /// Server-seitige Komponente die AI-Bots spawnt und verwaltet.
     /// Wird am selben GameObject wie NetworkedGameState platziert.
     /// Spawnt Bots nach dem Map-Laden und verwaltet ihren Lebenszyklus.
+    /// Laedt das AI-Bot-Prefab ueber den PrefabManager (Cache-first, Addressables).
+    /// MonoBehaviour statt NetworkBehaviour, da per AddComponent dynamisch hinzugefuegt.
     /// </summary>
-    public class AIBotSpawner : NetworkBehaviour
+    public class AIBotSpawner : MonoBehaviour
     {
         /// <summary>
-        /// Prefab fuer AI-Bot-Characters. Muss ein NetworkObject mit
-        /// NetworkedAICharacter, ServerAICharacter, ClientAICharacter,
-        /// NetworkedCharacterState und ClientCharacterSkinHandler enthalten.
-        /// Muss in der NetworkManager NetworkPrefabs-Liste registriert sein.
+        /// Addressable-Key fuer das AI-Bot-Prefab.
         /// </summary>
-        [SerializeField]
+        private const string k_AIBotPrefabKey = "AICharacter";
+
+        /// <summary>
+        /// Geladenes AI-Bot-Prefab (ueber PrefabManager).
+        /// </summary>
         private GameObject m_AIBotPrefab;
 
         /// <summary>
@@ -42,7 +48,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         /// </summary>
         private static readonly string[] s_BotSkins = new string[]
         {
-            "col1_soldier1", "col1_soldier2", "col1_soldier3"
+            "mullins_jungle"
         };
 
         /// <summary>
@@ -56,20 +62,42 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         private int m_NextBotNameIndex;
 
         /// <summary>
+        /// Prueft ob dieser Prozess der Server ist.
+        /// </summary>
+        private bool IsServer => NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+
+        /// <summary>
         /// Spawnt die initiale Anzahl an AI-Bots.
         /// Wird vom RoundFlowStateMachine aufgerufen wenn die Map geladen ist.
+        /// Laedt das Prefab synchron ueber den PrefabManager (Cache-first).
         /// </summary>
         public void SpawnInitialBots()
         {
+            Debug.Log($"[AIBotSpawner] SpawnInitialBots aufgerufen. IsServer={IsServer}, NetworkManager.Singleton={(NetworkManager.Singleton != null ? "vorhanden" : "NULL")}");
+
             if (!IsServer)
             {
+                Debug.LogWarning("[AIBotSpawner] SpawnInitialBots abgebrochen: Nicht der Server.");
                 return;
             }
 
             if (m_AIBotPrefab == null)
             {
-                Debug.LogWarning("[AIBotSpawner] Kein AI-Bot-Prefab zugewiesen. Keine Bots gespawnt.");
-                return;
+                PrefabManager prefabManager = ServiceLocator.Get<PrefabManager>();
+                if (prefabManager == null)
+                {
+                    Debug.LogError("[AIBotSpawner] PrefabManager nicht im ServiceLocator registriert!");
+                    return;
+                }
+
+                m_AIBotPrefab = prefabManager.LoadPrefab<GameObject>(k_AIBotPrefabKey);
+                if (m_AIBotPrefab == null)
+                {
+                    Debug.LogError($"[AIBotSpawner] Konnte AI-Bot-Prefab '{k_AIBotPrefabKey}' nicht ueber PrefabManager laden!");
+                    return;
+                }
+
+                Debug.Log($"[AIBotSpawner] AI-Bot-Prefab '{k_AIBotPrefabKey}' geladen: {m_AIBotPrefab.name}");
             }
 
             Debug.Log($"[AIBotSpawner] Spawne {m_InitialBotCount} AI-Bots...");
@@ -78,6 +106,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             {
                 SpawnBot();
             }
+
+            OnInitialBotsSpawned?.Invoke();
         }
 
         /// <summary>
@@ -121,7 +151,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             // Bot initialisieren: Name, Skin, Team
             string botName = GetNextBotName();
             string botSkin = s_BotSkins[m_SpawnedBots.Count % s_BotSkins.Length];
-            uint teamId = (uint)(m_SpawnedBots.Count % 2); // Abwechselnd Team 0 und 1
+
+            // Team-Zuweisung ueber GametypeManager (respektiert Gametype-Regeln)
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            uint teamId;
+            if (gametypeManager != null)
+            {
+                // Aktuelle Team-Groessen zaehlen (inkl. Spieler und bereits gespawnte Bots)
+                NetworkedGameState gameState = NetworkedGameState.Singleton;
+                (int redCount, int blueCount) = gameState != null
+                    ? CountAllTeamMembers(gameState)
+                    : (0, 0);
+                GametypeTeam assignedTeam = gametypeManager.AssignTeam(redCount, blueCount);
+                teamId = (uint)assignedTeam;
+            }
+            else
+            {
+                teamId = (uint)(m_SpawnedBots.Count % 2 + 1);
+            }
 
             aiCharacter.InitializeBot(botName, botSkin, teamId);
 
@@ -180,6 +227,19 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         public int SpawnedBotCount => m_SpawnedBots.Count;
 
         /// <summary>
+        /// Readonly-Zugriff auf die gespawnten Bot-NetworkObjects.
+        /// Wird von RoundFlowStateMachine.CountTeams() benoetigt um AI-Bots in Team-Zaehlung einzubeziehen.
+        /// </summary>
+        public IReadOnlyList<NetworkObject> SpawnedBots => m_SpawnedBots;
+
+        /// <summary>
+        /// Callback der nach dem initialen Bot-Spawn aufgerufen wird.
+        /// Ermoeglicht der RoundFlowStateMachine nach dem async Addressable-Laden
+        /// erneut TryStartMatch aufzurufen.
+        /// </summary>
+        public event System.Action OnInitialBotsSpawned;
+
+        /// <summary>
         /// Gibt den naechsten Bot-Namen zurueck (Round-Robin).
         /// </summary>
         private string GetNextBotName()
@@ -189,10 +249,58 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             return name;
         }
 
-        public override void OnNetworkDespawn()
+        /// <summary>
+        /// Aufraeumen wenn die Komponente zerstoert wird.
+        /// </summary>
+        private void OnDestroy()
         {
-            base.OnNetworkDespawn();
             m_SpawnedBots.Clear();
+            m_AIBotPrefab = null;
+        }
+
+        /// <summary>
+        /// Zaehlt alle Team-Mitglieder (Spieler + Bots) fuer korrekte Team-Zuweisung.
+        /// </summary>
+        private (int redCount, int blueCount) CountAllTeamMembers(NetworkedGameState gameState)
+        {
+            int redCount = 0;
+            int blueCount = 0;
+
+            foreach (ulong clientId in gameState.NetworkManager.ConnectedClientsIds)
+            {
+                NetworkObject playerObject = gameState.NetworkManager.SpawnManager.GetPlayerNetworkObject(clientId);
+                if (playerObject != null && playerObject.TryGetComponent(out NetworkedCharacterState state))
+                {
+                    uint team = state.TeamId;
+                    if (team == (uint)GametypeTeam.Red)
+                    {
+                        redCount++;
+                    }
+                    else if (team == (uint)GametypeTeam.Blue)
+                    {
+                        blueCount++;
+                    }
+                }
+            }
+
+            // Bereits gespawnte Bots zaehlen
+            foreach (NetworkObject bot in m_SpawnedBots)
+            {
+                if (bot != null && bot.IsSpawned && bot.TryGetComponent(out NetworkedCharacterState botState))
+                {
+                    uint team = botState.TeamId;
+                    if (team == (uint)GametypeTeam.Red)
+                    {
+                        redCount++;
+                    }
+                    else if (team == (uint)GametypeTeam.Blue)
+                    {
+                        blueCount++;
+                    }
+                }
+            }
+
+            return (redCount, blueCount);
         }
     }
 }

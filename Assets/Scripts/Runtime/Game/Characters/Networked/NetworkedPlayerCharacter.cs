@@ -3,6 +3,7 @@ using System.Collections;
 using Newtonsoft.Json.Linq;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
+using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using Tolik.RemakeSoF.Runtime.GoreManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
@@ -345,7 +346,145 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         // ===== Movement Sync =====
 
+        /// <summary>
+        /// Server-seitig: Sperrt Bewegungs- und Action-Input fuer diesen Spieler.
+        /// Wenn true, werden eingehende PlayerCommands mit leerer Eingabe verarbeitet
+        /// (keine Bewegung, kein Springen, kein Angriff). Wird vom RoundFlow gesetzt
+        /// (z.B. waehrend 3,2,1-Countdown oder Seeker-Freeze in HideAndSeek).
+        /// </summary>
+        private bool m_MovementLocked;
 
+        /// <summary>
+        /// Server-seitig: Verbleibende Stun-Dauer in Sekunden.
+        /// Waehrend aktiv wird Bewegung gesperrt und Velocity auf 0 gesetzt.
+        /// </summary>
+        private float m_StunTimeRemaining;
+
+        /// <summary>
+        /// Server-seitig: Merkt ob der Stun von extern (Gametype) kommt,
+        /// damit beim Stun-Ende der MovementLock nicht faelschlicherweise aufgehoben wird
+        /// wenn er ohnehin extern gesetzt war (z.B. Hiding-Phase).
+        /// </summary>
+        private bool m_StunnedByGametype;
+
+        /// <summary>
+        /// Netzwerk-synchronisierter Stun-Status fuer UI-Anzeige auf dem Client.
+        /// True wenn der Spieler aktuell gestunnt ist.
+        /// </summary>
+        private NetworkVariable<bool> m_IsStunned = new(
+            false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+        /// <summary>
+        /// Event: Stun-Status hat sich geaendert.
+        /// </summary>
+        public event Action<bool> OnStunnedChanged;
+
+        /// <summary>
+        /// Sperrt oder entsperrt die Bewegung dieses Spielers auf dem Server.
+        /// Eingehende Commands werden bei Sperre mit leerem Input verarbeitet.
+        /// </summary>
+        public void SetMovementLocked(bool locked)
+        {
+            m_MovementLocked = locked;
+        }
+
+        /// <summary>
+        /// Server: Wendet einen Stun auf diesen Spieler an.
+        /// Sperrt Bewegung, setzt Velocity auf 0 und startet den Stun-Timer.
+        /// </summary>
+        /// <param name="duration">Stun-Dauer in Sekunden.</param>
+        public void ApplyStun(float duration)
+        {
+            m_StunTimeRemaining = duration;
+            m_StunnedByGametype = true;
+            m_MovementLocked = true;
+            m_IsStunned.Value = true;
+            m_ServerPlayerCharacter.ZeroVelocity();
+        }
+
+        /// <summary>
+        /// Server → spezifischer Client: Zeigt eine Gametype-Nachricht im HUD an.
+        /// Wird fuer gezielte Stun-/Kill-Meldungen verwendet.
+        /// </summary>
+        [Rpc(SendTo.SpecifiedInParams)]
+        private void GametypeMessageClientRpc(string message, RpcParams rpcParams = default)
+        {
+            OnGametypeMessage?.Invoke(message);
+        }
+
+        /// <summary>
+        /// Event: Gametype-Nachricht vom Server empfangen.
+        /// Wird nur auf dem Ziel-Client gefeuert.
+        /// </summary>
+        public event Action<string> OnGametypeMessage;
+
+        /// <summary>
+        /// Server: Fragt den aktiven Gametype ob der Schaden modifiziert werden soll.
+        /// Wendet Stun und gezielte Nachrichten an wenn der Gametype es verlangt.
+        /// Gibt den modifizierten Schaden zurueck (0 = kein Schaden anwenden).
+        /// </summary>
+        /// <param name="targetState">NetworkedCharacterState des Opfers.</param>
+        /// <param name="originalDamage">Berechneter Basis-Schaden.</param>
+        /// <returns>Modifizierter Schaden nach Gametype-Logik.</returns>
+        private int ApplyGametypeDamageModification(NetworkedCharacterState targetState, int originalDamage)
+        {
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            if (gametypeManager == null)
+            {
+                return originalDamage;
+            }
+
+            GametypeTeam attackerTeam = (GametypeTeam)m_CharacterState.TeamId;
+            GametypeTeam victimTeam = (GametypeTeam)targetState.TeamId;
+
+            GametypeDamageResult damageResult = gametypeManager.OnDamage(
+                OwnerClientId,
+                targetState.OwnerClientId,
+                attackerTeam,
+                victimTeam,
+                originalDamage,
+                m_CharacterState.CurrentWeaponName
+            );
+
+            // Stun auf das Opfer anwenden
+            if (damageResult.ApplyStun && damageResult.StunDuration > 0f)
+            {
+                NetworkedPlayerCharacter targetCharacter = targetState.GetComponent<NetworkedPlayerCharacter>();
+                if (targetCharacter != null)
+                {
+                    targetCharacter.ApplyStun(damageResult.StunDuration);
+                }
+            }
+
+            // Gezielte Nachrichten senden (Platzhalter ersetzen)
+            string attackerName = m_CharacterState.CharacterName;
+            string victimName = targetState.CharacterName;
+
+            if (!string.IsNullOrEmpty(damageResult.AttackerMessage))
+            {
+                string msg = damageResult.AttackerMessage
+                    .Replace("{attackerName}", attackerName)
+                    .Replace("{victimName}", victimName);
+                GametypeMessageClientRpc(msg, RpcTarget.Single(OwnerClientId, RpcTargetUse.Temp));
+            }
+
+            if (!string.IsNullOrEmpty(damageResult.VictimMessage))
+            {
+                string msg = damageResult.VictimMessage
+                    .Replace("{attackerName}", attackerName)
+                    .Replace("{victimName}", victimName);
+                NetworkedPlayerCharacter targetCharacter = targetState.GetComponent<NetworkedPlayerCharacter>();
+                if (targetCharacter != null)
+                {
+                    targetCharacter.GametypeMessageClientRpc(msg, RpcTarget.Single(targetState.OwnerClientId, RpcTargetUse.Temp));
+                }
+            }
+
+            return damageResult.ModifiedDamage;
+        }
 
         /// <summary>
         /// Wird auf dem Server aufgerufen: Spawn-Point zuweisen und Server-Position setzen.
@@ -479,6 +618,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Animator-Referenz nach Visual-Instanziierung setzen
             SubscribeToVisualInstantiated();
 
+            // Stun-Status-Aenderungen fuer HUD-Anzeige abonnieren
+            m_IsStunned.OnValueChanged += OnIsStunnedValueChanged;
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log("[NetworkedPlayerCharacter] Owner: Client-Side Prediction aktiv");
 #endif
@@ -503,6 +645,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             UnsubscribeFromVisualInstantiated();
 
+            if (IsOwner)
+            {
+                m_IsStunned.OnValueChanged -= OnIsStunnedValueChanged;
+            }
+
             if (IsServer)
             {
                 m_CharacterState.OnWeaponSwapRequested -= OnServerWeaponSwapRequested;
@@ -511,11 +658,38 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             base.OnNetworkDespawn();
         }
 
+        /// <summary>
+        /// Callback wenn sich der Stun-Status aendert. Feuert das OnStunnedChanged-Event.
+        /// </summary>
+        private void OnIsStunnedValueChanged(bool oldValue, bool newValue)
+        {
+            OnStunnedChanged?.Invoke(newValue);
+        }
+
         private void Update()
         {
             if (!IsSpawned)
             {
                 return;
+            }
+
+            // Server: Stun-Timer herunterzaehlen
+            if (IsServer && m_StunTimeRemaining > 0f)
+            {
+                m_StunTimeRemaining -= Time.deltaTime;
+                m_ServerPlayerCharacter.ZeroVelocity();
+
+                if (m_StunTimeRemaining <= 0f)
+                {
+                    m_StunTimeRemaining = 0f;
+
+                    if (m_StunnedByGametype)
+                    {
+                        m_StunnedByGametype = false;
+                        m_MovementLocked = false;
+                        m_IsStunned.Value = false;
+                    }
+                }
             }
 
             // Remote-Clients + Dedicated Server: Interpolation zur Server-Position + Animator treiben
@@ -547,10 +721,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             {
                 // Host-Mode: Physik läuft schon lokal, Server-Position direkt aktualisieren.
                 // Button-Inputs (Attack, Reload, Swap, Grenade) muessen trotzdem serverseitig verarbeitet werden.
+                // Bei Movement-Lock: nur Position syncen, keine Actions verarbeiten.
                 m_ServerPosition.Value = transform.position;
                 m_ServerRotation.Value = transform.rotation;
 
-                ProcessServerCommandLogic(cmd);
+                if (!m_MovementLocked)
+                {
+                    ProcessServerCommandLogic(cmd);
+                }
                 return;
             }
 
@@ -586,6 +764,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         [Rpc(SendTo.Server)]
         private void SubmitCommandServerRpc(PlayerCommand cmd)
         {
+            // Movement-Lock: Input strippen, nur Physik mit leerer Eingabe laufen lassen
+            // (Gravity etc. soll weiterhin korrekt simuliert werden).
+            if (m_MovementLocked)
+            {
+                cmd.MoveInput = Vector2.zero;
+                cmd.Buttons = 0;
+            }
+
             // Server-seitige Physik-Simulation ausführen
             ServerMovementAck ack = m_ServerPlayerCharacter.ProcessCommand(cmd);
 
@@ -594,7 +780,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_ServerRotation.Value = Quaternion.Euler(0f, cmd.MoveYawAngle, 0f);
 
             // Button-Inputs, Frame-Counting, Attack/Reload/Swap verarbeiten
-            ProcessServerCommandLogic(cmd);
+            if (!m_MovementLocked)
+            {
+                ProcessServerCommandLogic(cmd);
+            }
 
             // Acknowledgement an Owner-Client senden (für Reconciliation)
             MovementAckClientRpc(ack);
@@ -1060,21 +1249,33 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     NetworkedCharacterState targetState = boneHit.collider.GetComponentInParent<NetworkedCharacterState>();
                     if (targetState != null && targetState != m_CharacterState)
                     {
-                        int previousHealth = targetState.Health;
-                        int newHealth = Mathf.Max(0, previousHealth - finalDamage);
-                        targetState.SetHealth(newHealth);
+                        // Gametype-Hook: Schaden modifizieren, Stun/Nachrichten anwenden
+                        finalDamage = ApplyGametypeDamageModification(targetState, finalDamage);
 
-                        bool isKill = newHealth <= 0 && previousHealth > 0;
-                        HitConfirmRpc((int)resolvedRegion, finalDamage, isKill);
-
-                        if (attackDef.Gore)
+                        if (finalDamage > 0)
                         {
-                            TryProcessGoreHit(targetState.gameObject, resolvedRegion, aimDirection, boneHit.point, finalDamage, previousHealth, newHealth, m_CharacterState.CurrentWeaponName, false);
-                        }
+                            int previousHealth = targetState.Health;
+
+                            // Schaden ueber ServerCharacterController anwenden (Death-Pipeline inkl. Kill/Score/Respawn)
+                            ServerCharacterController targetController = targetState.GetComponent<ServerCharacterController>();
+                            if (targetController != null)
+                            {
+                                targetController.ApplyDamage(finalDamage, OwnerClientId);
+                            }
+
+                            int newHealth = targetState.Health;
+                            bool isKill = newHealth <= 0 && previousHealth > 0;
+                            HitConfirmRpc((int)resolvedRegion, finalDamage, isKill);
+
+                            if (attackDef.Gore)
+                            {
+                                TryProcessGoreHit(targetState.gameObject, resolvedRegion, aimDirection, boneHit.point, finalDamage, previousHealth, newHealth, m_CharacterState.CurrentWeaponName, false);
+                            }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                        Debug.Log($"[NetworkedPlayerCharacter] Server: HIT! Client {OwnerClientId} → {targetState.CharacterName} | Pellet={i + 1}/{pelletCount} | Region={resolvedRegion} | Damage={finalDamage} (Base={attackDef.Damage} × {resolvedMultiplier:F2}) | Health={newHealth}");
+                            Debug.Log($"[NetworkedPlayerCharacter] Server: HIT! Client {OwnerClientId} → {targetState.CharacterName} | Pellet={i + 1}/{pelletCount} | Region={resolvedRegion} | Damage={finalDamage} (Base={attackDef.Damage} × {resolvedMultiplier:F2}) | Health={newHealth}");
 #endif
+                        }
                     }
                 }
 
@@ -2344,21 +2545,33 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     NetworkedCharacterState targetState = boneHit.collider.GetComponentInParent<NetworkedCharacterState>();
                     if (targetState != null && targetState != m_CharacterState)
                     {
-                        int previousHealth = targetState.Health;
-                        int newHealth = Mathf.Max(0, previousHealth - finalDamage);
-                        targetState.SetHealth(newHealth);
+                        // Gametype-Hook: Schaden modifizieren, Stun/Nachrichten anwenden
+                        finalDamage = ApplyGametypeDamageModification(targetState, finalDamage);
 
-                        bool isKill = newHealth <= 0 && previousHealth > 0;
-                        HitConfirmRpc((int)resolvedRegion, finalDamage, isKill);
-
-                        if (altAttackDef.Gore)
+                        if (finalDamage > 0)
                         {
-                            TryProcessGoreHit(targetState.gameObject, resolvedRegion, aimDirection, boneHit.point, finalDamage, previousHealth, newHealth, m_CharacterState.CurrentWeaponName, true);
-                        }
+                            int previousHealth = targetState.Health;
+
+                            // Schaden ueber ServerCharacterController anwenden (Death-Pipeline inkl. Kill/Score/Respawn)
+                            ServerCharacterController targetController = targetState.GetComponent<ServerCharacterController>();
+                            if (targetController != null)
+                            {
+                                targetController.ApplyDamage(finalDamage, OwnerClientId);
+                            }
+
+                            int newHealth = targetState.Health;
+                            bool isKill = newHealth <= 0 && previousHealth > 0;
+                            HitConfirmRpc((int)resolvedRegion, finalDamage, isKill);
+
+                            if (altAttackDef.Gore)
+                            {
+                                TryProcessGoreHit(targetState.gameObject, resolvedRegion, aimDirection, boneHit.point, finalDamage, previousHealth, newHealth, m_CharacterState.CurrentWeaponName, true);
+                            }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                        Debug.Log($"[NetworkedPlayerCharacter] Server: AltAttack HIT! Client {OwnerClientId} → {targetState.CharacterName} | Region={resolvedRegion} | Damage={finalDamage} (Base={altAttackDef.Damage} × {resolvedMultiplier:F2}) | Health={newHealth}");
+                            Debug.Log($"[NetworkedPlayerCharacter] Server: AltAttack HIT! Client {OwnerClientId} → {targetState.CharacterName} | Region={resolvedRegion} | Damage={finalDamage} (Base={altAttackDef.Damage} × {resolvedMultiplier:F2}) | Health={newHealth}");
 #endif
+                        }
                     }
                 }
 

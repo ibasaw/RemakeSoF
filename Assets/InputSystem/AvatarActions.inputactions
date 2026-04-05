@@ -221,6 +221,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleSwitchTeamMenu",
+                    "type": "Button",
+                    "id": "47341e38-e500-46ce-9034-122ad1194680",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -782,6 +791,17 @@
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
                     "action": "ShowScoreboard",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a84b23f5-1bbe-4e07-b094-5661ce8eaa71",
+                    "path": "<Keyboard>/m",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleSwitchTeamMenu",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

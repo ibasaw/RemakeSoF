@@ -95,6 +95,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         );
 
         /// <summary>
+        /// Verbleibende Sekunden in der aktuellen Gametype-Phase, synchronisiert ueber das Netzwerk.
+        /// Fuer HideAndSeek: waehrend Hiding-Phase zeigt dies den Seeker-Warmup-Countdown an.
+        /// Server aktualisiert jede Sekunde, Clients nutzen den Wert fuer UI-Countdown.
+        /// </summary>
+        internal NetworkVariable<uint> phaseTimeRemaining = new(
+            default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+        /// <summary>
         /// Team-Score Rot, synchronisiert ueber das Netzwerk.
         /// Wird bei Scoring-Events (Kill, Rundenende, Zeitablauf) vom Server aktualisiert.
         /// </summary>
@@ -109,6 +120,26 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         /// Wird bei Scoring-Events (Kill, Rundenende, Zeitablauf) vom Server aktualisiert.
         /// </summary>
         internal NetworkVariable<int> blueTeamScore = new(
+            default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+        /// <summary>
+        /// Aktuelle Rundennummer (1-basiert), synchronisiert ueber das Netzwerk.
+        /// Wird vom Server bei jedem Rundenstart aktualisiert.
+        /// </summary>
+        internal NetworkVariable<int> currentRound = new(
+            default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+        /// <summary>
+        /// Rundenlimit des aktiven Gametypes, synchronisiert ueber das Netzwerk.
+        /// 0 = unendlich viele Runden.
+        /// </summary>
+        internal NetworkVariable<int> roundLimit = new(
             default,
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server
@@ -444,6 +475,62 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             if (result.BlueTeamScoreDelta != 0)
             {
                 blueTeamScore.Value += result.BlueTeamScoreDelta;
+            }
+
+            if (result.AwardSurvivalKillsToTeam != GametypeTeam.None)
+            {
+                AwardSurvivalKills(result.AwardSurvivalKillsToTeam);
+            }
+        }
+
+        /// <summary>
+        /// Vergibt +1 Kill an alle lebenden Spieler und Bots des angegebenen Teams.
+        /// Wird z.B. genutzt wenn Hider die Runde ueberleben.
+        /// </summary>
+        private void AwardSurvivalKills(GametypeTeam team)
+        {
+            uint teamId = (uint)team;
+
+            // Menschliche Spieler
+            foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
+            {
+                NetworkObject playerObj = NetworkManager.SpawnManager.GetPlayerNetworkObject(clientId);
+                if (playerObj == null)
+                {
+                    continue;
+                }
+
+                if (!playerObj.TryGetComponent(out NetworkedCharacterState characterState))
+                {
+                    continue;
+                }
+
+                if (characterState.TeamId == teamId && characterState.IsAlive)
+                {
+                    characterState.AddKill();
+                }
+            }
+
+            // AI-Bots
+            if (m_AIBotSpawner != null)
+            {
+                foreach (NetworkObject bot in m_AIBotSpawner.SpawnedBots)
+                {
+                    if (bot == null || !bot.IsSpawned)
+                    {
+                        continue;
+                    }
+
+                    if (!bot.TryGetComponent(out NetworkedCharacterState botState))
+                    {
+                        continue;
+                    }
+
+                    if (botState.TeamId == teamId && botState.IsAlive)
+                    {
+                        botState.AddKill();
+                    }
+                }
             }
         }
 

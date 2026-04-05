@@ -66,13 +66,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private const float k_MaxCapsuleRadius = 0.40f;
 
         /// <summary>SoF2 Standing-Hoehe: 89 Units (-46 bis 43) * 0.0254 m/unit.</summary>
-        private const float k_SoF2StandingHeight = 2.2606f;
+        internal const float k_SoF2StandingHeight = 2.2606f;
 
         /// <summary>SoF2 Crouching-Hoehe: 64 Units (-46 bis 18) * 0.0254 m/unit.</summary>
-        private const float k_SoF2CrouchingHeight = 1.6256f;
+        internal const float k_SoF2CrouchingHeight = 1.6256f;
 
         /// <summary>SoF2 Capsule-Radius: 15 Units * 0.0254 m/unit.</summary>
-        private const float k_SoF2Radius = 0.381f;
+        internal const float k_SoF2Radius = 0.381f;
 
         // Visual Collider GameObjects + Components
         private GameObject m_VisualColliderObject;

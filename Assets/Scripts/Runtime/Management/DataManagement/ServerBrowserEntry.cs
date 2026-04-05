@@ -39,6 +39,9 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// <summary>Ob der Server ein Passwort erfordert (sv_password gesetzt).</summary>
         public bool hasPassword;
 
+        /// <summary>Server-Beschreibung (sv_description).</summary>
+        public string description;
+
         /// <summary>Application-Version des Servers.</summary>
         public string version;
     }
@@ -104,6 +107,9 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
 
         /// <summary>Ob der Server ein Passwort erfordert.</summary>
         public bool hasPassword;
+
+        /// <summary>Server-Beschreibung (sv_description).</summary>
+        public string description;
 
         /// <summary>Server-Passwort (sv_password). Wird vom Auth-Server gespeichert, damit Clients es abgleichen koennen. Leer = kein Passwort.</summary>
         public string password;

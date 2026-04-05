@@ -13,6 +13,7 @@ namespace Tolik.RemakeSoF.Runtime
         Label m_TimerLabel;
         Label m_ServerAddressLabel;
         QuakeColorLabel m_ServerNameLabel;
+        QuakeColorLabel m_ServerDescriptionLabel;
         UIDocument m_UIDocument;
 
         void Awake()
@@ -40,6 +41,22 @@ namespace Tolik.RemakeSoF.Runtime
                     serverNamePlaceholder.parent.IndexOf(serverNamePlaceholder),
                     m_ServerNameLabel);
                 serverNamePlaceholder.RemoveFromHierarchy();
+            }
+
+            Label serverDescPlaceholder = root.Q<Label>("serverDescriptionLabel");
+            if (serverDescPlaceholder != null)
+            {
+                m_ServerDescriptionLabel = new QuakeColorLabel();
+                m_ServerDescriptionLabel.name = "serverDescriptionLabel";
+                m_ServerDescriptionLabel.CharWidth = 12f;
+                m_ServerDescriptionLabel.CharHeight = 18f;
+                m_ServerDescriptionLabel.MaxWidth = 430f;
+                m_ServerDescriptionLabel.style.alignSelf = Align.Center;
+                m_ServerDescriptionLabel.style.marginBottom = 6;
+                serverDescPlaceholder.parent.Insert(
+                    serverDescPlaceholder.parent.IndexOf(serverDescPlaceholder),
+                    m_ServerDescriptionLabel);
+                serverDescPlaceholder.RemoveFromHierarchy();
             }
 
             LoadBigcharsAtlas();
@@ -81,6 +98,20 @@ namespace Tolik.RemakeSoF.Runtime
                     m_ServerNameLabel.style.display = DisplayStyle.None;
                 }
             }
+
+            string serverDescription = App.Model.ClientConnecting.ServerDescription;
+            if (m_ServerDescriptionLabel != null)
+            {
+                if (!string.IsNullOrEmpty(serverDescription))
+                {
+                    m_ServerDescriptionLabel.Text = serverDescription;
+                    m_ServerDescriptionLabel.style.display = DisplayStyle.Flex;
+                }
+                else
+                {
+                    m_ServerDescriptionLabel.style.display = DisplayStyle.None;
+                }
+            }
         }
 
         /// <summary>
@@ -101,6 +132,11 @@ namespace Tolik.RemakeSoF.Runtime
             if (atlasData?.Texture != null && m_ServerNameLabel != null)
             {
                 m_ServerNameLabel.Atlas = atlasData.Texture;
+            }
+
+            if (atlasData?.Texture != null && m_ServerDescriptionLabel != null)
+            {
+                m_ServerDescriptionLabel.Atlas = atlasData.Texture;
             }
         }
 

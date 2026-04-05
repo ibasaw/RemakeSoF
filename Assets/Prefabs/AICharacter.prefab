@@ -1,0 +1,323 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3505606400130802503
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6530124805448496473}
+  - component: {fileID: 1499531715795847715}
+  - component: {fileID: 3929013567806312753}
+  - component: {fileID: 371786759833745410}
+  - component: {fileID: 1970364989444914759}
+  - component: {fileID: 8827472037324245302}
+  - component: {fileID: 1423621933050045539}
+  - component: {fileID: 923090352755588894}
+  - component: {fileID: 209944670976753633}
+  - component: {fileID: 5328490211640741795}
+  m_Layer: 7
+  m_Name: AICharacter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6530124805448496473
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3505606400130802503}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6267767890047352510}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1499531715795847715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3505606400130802503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3255946455
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &3929013567806312753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3505606400130802503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36d7da94b1914c0498332541be1b0aa3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Networked.NetworkedAICharacter
+  ShowTopMostFoldoutHeaderGroup: 1
+  m_CharacterId:
+    m_InternalValue: 0
+  m_ServerAICharacter: {fileID: 1970364989444914759}
+  m_SkinHandler: {fileID: 923090352755588894}
+  m_CharacterState: {fileID: 1423621933050045539}
+  m_ServerCharacterController: {fileID: 8827472037324245302}
+  m_HitboxSystem: {fileID: 209944670976753633}
+  m_ColliderSystem: {fileID: 5328490211640741795}
+--- !u!114 &371786759833745410
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3505606400130802503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db0709d7c17132a46aa31fde90270e69, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientAICharacter
+  m_NetworkedAICharacter: {fileID: 3929013567806312753}
+  m_CharacterState: {fileID: 1423621933050045539}
+--- !u!114 &1970364989444914759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3505606400130802503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7979b52ef724c5428cfca7e38aa4b1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Server.ServerAICharacter
+  m_Simulation:
+    PmAccelerate: 6
+    PmAirAccelerate: 1
+    PmFriction: 6
+    PmStopSpeed: 2.54
+    PmMaxSpeed: 7.112
+    PmGravity: 20.32
+    JumpVelocity: 6.858
+    PmMaxSteepness: 0.7
+    PmStepSize: 0.4572
+    PmMaxBarrier: 0.8128
+    PmDuckScale: 0.25
+    PmWalkScale: 0.5
+    StandingHeight: 2.2606
+    CrouchingHeight: 1.6256
+    JumpDebounceAfterMs: 0.25
+    GroundMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+  m_NetworkedAICharacter: {fileID: 3929013567806312753}
+--- !u!114 &8827472037324245302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3505606400130802503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4bd72942c382284c836f513ddfa2192, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Server.ServerCharacterController
+  m_CharacterState: {fileID: 1423621933050045539}
+  m_MaxHealth: 100
+  m_RespawnTime: 5
+--- !u!114 &1423621933050045539
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3505606400130802503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 658934a902067d94080b2fbd33d640d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Networked.NetworkedCharacterState
+  ShowTopMostFoldoutHeaderGroup: 1
+  m_CharacterName:
+    m_InternalValue:
+      utf8LengthInBytes: 0
+      bytes:
+        offset0000:
+          byte0000: 0
+          byte0001: 0
+          byte0002: 0
+          byte0003: 0
+          byte0004: 0
+          byte0005: 0
+          byte0006: 0
+          byte0007: 0
+          byte0008: 0
+          byte0009: 0
+          byte0010: 0
+          byte0011: 0
+          byte0012: 0
+          byte0013: 0
+          byte0014: 0
+          byte0015: 0
+        offset0016:
+          byte0000: 0
+          byte0001: 0
+          byte0002: 0
+          byte0003: 0
+          byte0004: 0
+          byte0005: 0
+          byte0006: 0
+          byte0007: 0
+          byte0008: 0
+          byte0009: 0
+          byte0010: 0
+          byte0011: 0
+          byte0012: 0
+          byte0013: 0
+          byte0014: 0
+          byte0015: 0
+        offset0032:
+          byte0000: 0
+          byte0001: 0
+          byte0002: 0
+          byte0003: 0
+          byte0004: 0
+          byte0005: 0
+          byte0006: 0
+          byte0007: 0
+          byte0008: 0
+          byte0009: 0
+          byte0010: 0
+          byte0011: 0
+          byte0012: 0
+          byte0013: 0
+          byte0014: 0
+          byte0015: 0
+        byte0048: 0
+        byte0049: 0
+        byte0050: 0
+        byte0051: 0
+        byte0052: 0
+        byte0053: 0
+        byte0054: 0
+        byte0055: 0
+        byte0056: 0
+        byte0057: 0
+        byte0058: 0
+        byte0059: 0
+        byte0060: 0
+        byte0061: 0
+  m_IsAlive:
+    m_InternalValue: 1
+  m_Health:
+    m_InternalValue: 100
+  m_TeamId:
+    m_InternalValue: 0
+  m_Kills:
+    m_InternalValue: 0
+  m_Deaths:
+    m_InternalValue: 0
+--- !u!114 &923090352755588894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3505606400130802503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0957ca474169b3141b8c7afb4ac9ff55, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientCharacterSkinHandler
+  m_CharacterState: {fileID: 1423621933050045539}
+  m_NetworkedCharacter: {fileID: 3929013567806312753}
+  m_VisualRoot: {fileID: 6267767890047352510}
+--- !u!114 &209944670976753633
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3505606400130802503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdc4f9747a1ba75418e5fc7800e8d322, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientHitboxSystem
+  m_ShowVisualHitboxes: 1
+  m_VisualAlpha: 0.3
+--- !u!114 &5328490211640741795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3505606400130802503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0269a4037a26e084eb821905bf8f8c5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientColliderSystem
+  m_CapsuleRadius: 0
+  m_CapsuleHeight: 0
+  m_CapsuleCenter: {x: 0, y: 0, z: 0}
+  m_AutoSizeCapsule: 1
+  m_DynamicCapsuleSizing: 1
+  m_UseFixedSoF2Size: 1
+  m_ShowVisualCollider: 0
+  m_ColliderColor: {r: 0, g: 1, b: 0, a: 0.3}
+  m_ColliderMaterial: {fileID: 0}
+--- !u!1 &7281561516230162784
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6267767890047352510}
+  m_Layer: 7
+  m_Name: VisualRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6267767890047352510
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7281561516230162784}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6530124805448496473}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

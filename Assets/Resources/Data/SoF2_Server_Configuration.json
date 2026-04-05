@@ -1,6 +1,6 @@
 {
     "sv_hostname": "SoF2 Remake Server",
-    "sv_description": "Ein SoF2 Remake Server. Viel Spaß beim Spielen!",
+    "sv_description": "Ein SoF2 Remake Server.\n ^1Viel ^3Spaß ^4beim Spielen!",
     "sv_motd": "Willkommen auf unserem SoF2 Remake Server! Viel Spaß beim Spielen und lasst es ordentlich krachen!",
     "sv_maxclients": 16,
     "sv_minclients": 1,
@@ -13,18 +13,15 @@
     "sv_privatePassword": "",
     "rconPassword": "",
     "sv_master": "http://localhost:8000",
-
     "g_gametype": "hideandseek",
     "g_mapname": "maps/mp_kam2",
     "g_friendlyfire": false,
-
     "timelimit": 300,
     "fraglimit": 0,
     "scorelimit": 50,
     "roundlimit": 0,
     "roundtimelimit": 180,
     "dmflags": 0,
-
     "g_gravity": 800,
     "g_speed": 320,
     "g_knockback": 1000,
@@ -35,13 +32,11 @@
     "g_allowvote": true,
     "g_teamAutoJoin": false,
     "g_teamForceBalance": true,
-
     "sv_mapRotation": [
         "maps/mp_kam2",
         "maps/mp_finca",
         "maps/mp_kam3"
     ],
-
     "hideandseek_hidetime": 30,
     "hideandseek_seektime": 120,
     "hideandseek_seekercount": 1,

@@ -21,11 +21,11 @@
             "range": 60,
             "fireMode": "auto",
             "gore": true,
-            "volume": 1
+            "volume": 1.0
         },
         "altAttack": {
             "damage": 80,
-            "gore": false,
+            "gore": true,
             "volume": 0.0,
             "projectile": {
                 "gravity": 0.5,
