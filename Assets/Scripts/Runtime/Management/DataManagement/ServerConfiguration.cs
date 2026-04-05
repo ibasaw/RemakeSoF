@@ -147,5 +147,16 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
 
         /// <summary>Runden-Limit fuer Hide and Seek (hideandseek_roundlimit).</summary>
         public int hideandseek_roundlimit;
+
+        // ── Bot-Konfiguration ─────────────────────────────────────────
+
+        /// <summary>Anzahl AI-Bots die beim Server-Start gespawnt werden (sv_botcount). 0 = keine Bots.</summary>
+        public int sv_botcount;
+
+        /// <summary>Bot-Namen (sv_botnames). Round-Robin-Zuweisung. Leer = Default-Namen.</summary>
+        public string[] sv_botnames;
+
+        /// <summary>Bot-Skins (sv_botskins). Round-Robin-Zuweisung. Leer = Default-Skin.</summary>
+        public string[] sv_botskins;
     }
 }

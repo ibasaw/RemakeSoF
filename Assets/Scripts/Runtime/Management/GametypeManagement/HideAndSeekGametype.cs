@@ -48,6 +48,9 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         /// <summary>Anzahl lebender Hider in der aktuellen Runde.</summary>
         public int AliveHiderCount { get; internal set; }
 
+        /// <summary>Ob Hider die Runde durch Zeitablauf ueberlebt haben (fuer Scoring in OnTimeExpired).</summary>
+        bool m_HidersSurvived;
+
         /// <summary>Konfigurierte Seeker-Anzahl.</summary>
         int SeekerCount => ServerConfig.hideandseek_seekercount > 0 ? ServerConfig.hideandseek_seekercount : 1;
 
@@ -76,6 +79,7 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             // Starte mit Versteckphase
             CurrentPhase = HideAndSeekPhase.Hiding;
             PhaseTimeRemaining = HideTime;
+            m_HidersSurvived = false;
 
             Debug.Log($"[HideAndSeek] Runde {CurrentRound}/{RoundLimit} — Versteckphase: {HideTime}s");
         }
@@ -111,8 +115,9 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
                     break;
 
                 case HideAndSeekPhase.Seeking:
-                    // Suchzeit vorbei → Hider gewinnen
+                    // Suchzeit vorbei → Hider gewinnen (Scoring passiert in OnTimeExpired)
                     Debug.Log("[HideAndSeek] Suchzeit abgelaufen! Hider haben ueberlebt!");
+                    m_HidersSurvived = true;
                     CurrentPhase = HideAndSeekPhase.RoundOver;
                     break;
             }
@@ -184,12 +189,33 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         /// <inheritdoc />
         public override GametypeEventResult OnTimeExpired()
         {
+            // Phase-Timer (OnRunFrame) lief vor dem Countdown ab → RoundOver bereits gesetzt.
+            // Scoring anhand m_HidersSurvived vergeben.
             if (CurrentPhase == HideAndSeekPhase.RoundOver)
             {
-                return GametypeEventResult.None;
+                if (m_HidersSurvived)
+                {
+                    m_HidersSurvived = false;
+                    return new GametypeEventResult
+                    {
+                        RedTeamScoreDelta = 1,
+                        RestartRound = true,
+                        RestartDelaySeconds = 5f,
+                        BroadcastMessage = "Zeit abgelaufen! Hider gewinnen die Runde!",
+                        AwardSurvivalKillsToTeam = GametypeTeam.Red
+                    };
+                }
+
+                // Runde endete durch Eliminierung → Score bereits vergeben, nur Restart
+                return new GametypeEventResult
+                {
+                    RestartRound = true,
+                    RestartDelaySeconds = 5f,
+                    BroadcastMessage = "Runde beendet!",
+                };
             }
 
-            // Zeit abgelaufen → Hider gewinnen, ueberlebende Hider bekommen +1 Kill
+            // Countdown lief vor Phase-Timer ab → direkt scoren
             CurrentPhase = HideAndSeekPhase.RoundOver;
             return new GametypeEventResult
             {

@@ -44,5 +44,15 @@
     "hideandseek_seekermodel": "",
     "hideandseek_hiderweapons": false,
     "hideandseek_seekerweapons": true,
-    "hideandseek_roundlimit": 5
+    "hideandseek_roundlimit": 5,
+
+    "sv_botcount": 1,
+    "sv_botnames": [
+        "Hawk", "Viper", "Ghost", "Snake", "Jackal",
+        "Wolf", "Raven", "Cobra", "Falcon", "Panther",
+        "Shadow", "Blade", "Storm", "Frost", "Thunder"
+    ],
+    "sv_botskins": [
+        "mullins_jungle"
+    ]
 }

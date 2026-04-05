@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
@@ -28,15 +29,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         private GameObject m_AIBotPrefab;
 
         /// <summary>
-        /// Anzahl der Bots die beim Spielstart gespawnt werden sollen.
+        /// Default Bot-Namen falls in Server-Config keine angegeben sind.
         /// </summary>
-        [SerializeField]
-        private int m_InitialBotCount = 1;
-
-        /// <summary>
-        /// Verfuegbare Bot-Namen (SoF2-authentisch).
-        /// </summary>
-        private static readonly string[] s_BotNames = new string[]
+        private static readonly string[] s_DefaultBotNames = new string[]
         {
             "Hawk", "Viper", "Ghost", "Snake", "Jackal",
             "Wolf", "Raven", "Cobra", "Falcon", "Panther",
@@ -44,12 +39,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         };
 
         /// <summary>
-        /// Verfuegbare Bot-Skins.
+        /// Default Bot-Skin falls in Server-Config keine angegeben sind.
         /// </summary>
-        private static readonly string[] s_BotSkins = new string[]
+        private static readonly string[] s_DefaultBotSkins = new string[]
         {
             "mullins_jungle"
         };
+
+        /// <summary>
+        /// Anzahl der Bots die beim Spielstart gespawnt werden sollen (aus Server-Config).
+        /// </summary>
+        private int m_InitialBotCount;
+
+        /// <summary>
+        /// Bot-Namen aus Server-Config (oder Defaults).
+        /// </summary>
+        private string[] m_BotNames;
+
+        /// <summary>
+        /// Bot-Skins aus Server-Config (oder Defaults).
+        /// </summary>
+        private string[] m_BotSkins;
 
         /// <summary>
         /// Liste aller aktuell gespawnten AI-Bot NetworkObjects.
@@ -71,9 +81,40 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         /// Wird vom RoundFlowStateMachine aufgerufen wenn die Map geladen ist.
         /// Laedt das Prefab synchron ueber den PrefabManager (Cache-first).
         /// </summary>
+        /// <summary>
+        /// Laedt Bot-Konfiguration aus ServerConfiguration.
+        /// Wird einmalig vor dem ersten Spawn aufgerufen.
+        /// </summary>
+        private void LoadBotConfiguration()
+        {
+            ServerConfigurationLoader configLoader = ServiceLocator.Get<ServerConfigurationLoader>();
+            if (configLoader?.Configuration != null)
+            {
+                ServerConfiguration config = configLoader.Configuration;
+                m_InitialBotCount = config.sv_botcount;
+                m_BotNames = config.sv_botnames is { Length: > 0 } ? config.sv_botnames : s_DefaultBotNames;
+                m_BotSkins = config.sv_botskins is { Length: > 0 } ? config.sv_botskins : s_DefaultBotSkins;
+            }
+            else
+            {
+                m_InitialBotCount = 0;
+                m_BotNames = s_DefaultBotNames;
+                m_BotSkins = s_DefaultBotSkins;
+            }
+
+            Debug.Log($"[AIBotSpawner] Bot-Config geladen: Count={m_InitialBotCount}, Names={m_BotNames.Length}, Skins={m_BotSkins.Length}");
+        }
+
+        /// <summary>
+        /// Spawnt die initiale Anzahl an AI-Bots.
+        /// Wird vom RoundFlowStateMachine aufgerufen wenn die Map geladen ist.
+        /// Laedt das Prefab synchron ueber den PrefabManager (Cache-first).
+        /// </summary>
         public void SpawnInitialBots()
         {
-            Debug.Log($"[AIBotSpawner] SpawnInitialBots aufgerufen. IsServer={IsServer}, NetworkManager.Singleton={(NetworkManager.Singleton != null ? "vorhanden" : "NULL")}");
+            LoadBotConfiguration();
+
+            Debug.Log($"[AIBotSpawner] SpawnInitialBots aufgerufen. IsServer={IsServer}, BotCount={m_InitialBotCount}");
 
             if (!IsServer)
             {
@@ -150,7 +191,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
             // Bot initialisieren: Name, Skin, Team
             string botName = GetNextBotName();
-            string botSkin = s_BotSkins[m_SpawnedBots.Count % s_BotSkins.Length];
+            string botSkin = m_BotSkins[m_SpawnedBots.Count % m_BotSkins.Length];
 
             // Team-Zuweisung ueber GametypeManager (respektiert Gametype-Regeln)
             GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
@@ -244,7 +285,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         /// </summary>
         private string GetNextBotName()
         {
-            string name = s_BotNames[m_NextBotNameIndex % s_BotNames.Length];
+            string name = m_BotNames[m_NextBotNameIndex % m_BotNames.Length];
             m_NextBotNameIndex++;
             return name;
         }
