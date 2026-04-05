@@ -43,6 +43,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private GameObject m_CurrentVisualInstance;
 
         /// <summary>
+        /// Zugriff auf das aktuell instanziierte Visual-GameObject.
+        /// Wird benoetigt damit spaete Subscriber pruefen koennen ob das Visual
+        /// bereits vor ihrer Subscription instanziiert wurde (Race-Condition-Guard).
+        /// </summary>
+        public GameObject CurrentVisualInstance => m_CurrentVisualInstance;
+
+        /// <summary>
         /// Zuletzt geladener Skin-Name (idempotent-Guard).
         /// </summary>
         private string m_LoadedSkinName;

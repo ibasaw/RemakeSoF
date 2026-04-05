@@ -88,12 +88,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                 k_DefaultCapsuleCenter
             );
 
-            // GroundMask: Player + Hitbox Layer ausschliessen.
-            // Player-Layer wuerde Self-Collision verursachen (eigener BoxCollider wird von
-            // OverlapBox/BoxCast erkannt → ResolvePenetration drueckt Spieler weg).
-            // Hitbox-Layer sind zwar Trigger (QueryTriggerInteraction.Ignore filtert),
-            // aber expliziter Ausschluss ist sicherer.
-            m_Simulation.GroundMask = ~LayerMask.GetMask("Player");
+            // GroundMask: Alle Layer inkl. Player-Layer (SoF2 MASK_PLAYERSOLID inkl. CONTENTS_BODY).
+            // Self-Collision wird verhindert, indem der eigene BoxCollider vor jedem
+            // BoxCast/OverlapBox deaktiviert und danach wieder aktiviert wird.
+            m_Simulation.GroundMask = ~0;
 
             // Physics BoxCollider fuer Player-Player Collision (SoF2 AABB)
             m_PhysicsCollider = gameObject.AddComponent<BoxCollider>();

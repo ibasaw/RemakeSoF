@@ -36,7 +36,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// <summary>Gecachte Referenzen fuer Performance.</summary>
         private SoundManager m_SoundManager;
         private SurfaceImpactDataLoader m_SurfaceLoader;
+        private EffectFactory m_EffectFactory;
         private AudioMixerGroup m_SfxGroup;
+
+        /// <summary>Alterniert links/rechts fuer Footstep-Decals.</summary>
+        private bool m_IsLeftFoot;
 
         /// <summary>Zuletzt getroffener Collider fuer Surface-Cache.</summary>
         private Collider m_LastSurfaceCollider;
@@ -77,6 +81,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         {
             m_SoundManager ??= ServiceLocator.Get<SoundManager>();
             m_SurfaceLoader ??= ServiceLocator.Get<SurfaceImpactDataLoader>();
+            m_EffectFactory ??= ServiceLocator.Get<EffectFactory>();
 
             if (m_SfxGroup == null && m_SoundManager != null)
             {
@@ -147,7 +152,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return;
             }
 
-            string surfaceType = DetectSurfaceBelow();
+            string surfaceType = DetectSurfaceBelow(out RaycastHit surfaceHit);
             string fieldName = isWalking ? "footstepStealth" : "footstep";
             string basePath = m_SurfaceLoader.GetSurfaceSoundPath(surfaceType, fieldName);
 
@@ -158,6 +163,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             AudioClip clip = m_SoundManager.GetNumberedClip(basePath);
             PlayClipAtFeet(clip);
+
+            // Footstep-Decal auf dem Boden spawnen
+            if (m_EffectFactory != null && surfaceHit.collider != null)
+            {
+                string decalPath = m_SurfaceLoader.GetSurfaceDecalPath(surfaceType, fieldName);
+                if (!string.IsNullOrEmpty(decalPath))
+                {
+                    float yaw = m_PlayerRoot != null ? m_PlayerRoot.eulerAngles.y : 0f;
+                    m_EffectFactory.SpawnFootstepDecal(surfaceHit.point, surfaceHit.normal, decalPath, yaw, m_IsLeftFoot);
+                    m_IsLeftFoot = !m_IsLeftFoot;
+                }
+            }
         }
 
         /// <summary>
@@ -172,7 +189,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 return;
             }
 
-            string surfaceType = DetectSurfaceBelow();
+            string surfaceType = DetectSurfaceBelow(out RaycastHit surfaceHit);
             string basePath = m_SurfaceLoader.GetSurfaceSoundPath(surfaceType, landType);
 
             if (string.IsNullOrEmpty(basePath))
@@ -182,23 +199,39 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             AudioClip clip = m_SoundManager.GetNumberedClip(basePath);
             PlayClipAtFeet(clip);
+
+            // Schwere Landung hinterlaesst ebenfalls ein Decal
+            if (m_EffectFactory != null && surfaceHit.collider != null)
+            {
+                string decalField = landType == "land_pain" || landType == "land_death" ? "footstep" : "";
+                string decalPath = !string.IsNullOrEmpty(decalField)
+                    ? m_SurfaceLoader.GetSurfaceDecalPath(surfaceType, decalField)
+                    : "";
+                if (!string.IsNullOrEmpty(decalPath))
+                {
+                    float yaw = m_PlayerRoot != null ? m_PlayerRoot.eulerAngles.y : 0f;
+                    m_EffectFactory.SpawnFootstepDecal(surfaceHit.point, surfaceHit.normal, decalPath, yaw, m_IsLeftFoot);
+                    m_IsLeftFoot = !m_IsLeftFoot;
+                }
+            }
         }
 
         /// <summary>
         /// Erkennt den Surface-Typ unter dem Spieler per Raycast vom Player-Root.
         /// Liest SurfaceTypeMarker vom getroffenen Collider.
+        /// Gibt zusaetzlich den RaycastHit fuer Decal-Platzierung zurueck.
         /// </summary>
-        private string DetectSurfaceBelow()
+        private string DetectSurfaceBelow(out RaycastHit surfaceHit)
         {
             Vector3 origin = m_PlayerRoot != null ? m_PlayerRoot.position : transform.position;
 
             if (Physics.Raycast(origin + Vector3.up * 0.1f, Vector3.down,
-                out RaycastHit hit, SURFACE_RAYCAST_DIST, m_GroundLayerMask))
+                out surfaceHit, SURFACE_RAYCAST_DIST, m_GroundLayerMask))
             {
-                if (hit.collider != m_LastSurfaceCollider)
+                if (surfaceHit.collider != m_LastSurfaceCollider)
                 {
-                    m_LastSurfaceCollider = hit.collider;
-                    m_LastSurfaceMarker = hit.collider.GetComponentInParent<SurfaceTypeMarker>();
+                    m_LastSurfaceCollider = surfaceHit.collider;
+                    m_LastSurfaceMarker = surfaceHit.collider.GetComponentInParent<SurfaceTypeMarker>();
                 }
 
                 if (m_LastSurfaceMarker != null)

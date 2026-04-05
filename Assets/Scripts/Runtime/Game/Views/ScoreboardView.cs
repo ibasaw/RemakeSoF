@@ -284,7 +284,8 @@ namespace Tolik.RemakeSoF.Runtime
 
         /// <summary>
         /// Baut die Spieler-Listen dynamisch auf, getrennt nach Team.
-        /// Iteriert alle verbundenen Clients und liest deren NetworkedCharacterState.
+        /// Iteriert alle gespawnten NetworkObjects und liest deren NetworkedCharacterState.
+        /// Nutzt SpawnedObjectsList statt GetPlayerNetworkObject (letzteres ist server-only).
         /// </summary>
         private void RefreshPlayerLists()
         {
@@ -300,17 +301,11 @@ namespace Tolik.RemakeSoF.Runtime
             List<NetworkedCharacterState> bluePlayers = new();
 
             NetworkManager networkManager = NetworkManager.Singleton;
-            if (networkManager != null)
+            if (networkManager != null && networkManager.SpawnManager != null)
             {
-                foreach (ulong clientId in networkManager.ConnectedClientsIds)
+                foreach (NetworkObject spawnedObj in networkManager.SpawnManager.SpawnedObjectsList)
                 {
-                    NetworkObject playerObj = networkManager.SpawnManager.GetPlayerNetworkObject(clientId);
-                    if (playerObj == null)
-                    {
-                        continue;
-                    }
-
-                    if (!playerObj.TryGetComponent(out NetworkedCharacterState characterState))
+                    if (!spawnedObj.TryGetComponent(out NetworkedCharacterState characterState))
                     {
                         continue;
                     }
@@ -357,9 +352,9 @@ namespace Tolik.RemakeSoF.Runtime
             }
 
 //Einkommentieren für Editor-Tests mit Mock-Spielern
-#if UNITY_EDITOR
-            PopulateMockPlayers(ref redCount, ref blueCount, maxVisibleRows, redVisible, blueVisible);
-#endif
+//#if UNITY_EDITOR
+//            PopulateMockPlayers(ref redCount, ref blueCount, maxVisibleRows, redVisible, blueVisible);
+//#endif
 
             m_RedTeamPlayersLabel.text = $"Players: {redCount}";
             m_BlueTeamPlayersLabel.text = $"Players: {blueCount}";

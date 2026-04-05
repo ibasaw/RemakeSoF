@@ -49,6 +49,12 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         private readonly Dictionary<string, Dictionary<string, string>> m_SurfaceSounds =
             new(StringComparer.OrdinalIgnoreCase);
 
+        /// <summary>
+        /// Surface → Sound-Feld → Decal-Textur-Pfad Mapping (footstep, footstepStealth).
+        /// </summary>
+        private readonly Dictionary<string, Dictionary<string, string>> m_SurfaceDecals =
+            new(StringComparer.OrdinalIgnoreCase);
+
         /// <summary>Sound-Felder die aus dem JSON geparst werden.</summary>
         private static readonly string[] s_SoundFields =
         {
@@ -88,6 +94,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
 
                     // Sound-Felder parsen (footstep, land, etc.)
                     Dictionary<string, string> sounds = new(StringComparer.OrdinalIgnoreCase);
+                    Dictionary<string, string> decals = new(StringComparer.OrdinalIgnoreCase);
                     foreach (string field in s_SoundFields)
                     {
                         string soundPath = surfaceData[field]?["sound"]?.ToString();
@@ -95,11 +102,22 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                         {
                             sounds[field] = soundPath;
                         }
+
+                        string decalPath = surfaceData[field]?["decal"]?.ToString();
+                        if (!string.IsNullOrEmpty(decalPath))
+                        {
+                            decals[field] = decalPath;
+                        }
                     }
 
                     if (sounds.Count > 0)
                     {
                         m_SurfaceSounds[surfaceName] = sounds;
+                    }
+
+                    if (decals.Count > 0)
+                    {
+                        m_SurfaceDecals[surfaceName] = decals;
                     }
 
                     // AmmoTypes parsen (effect, debris, shellsound)
@@ -321,6 +339,36 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         }
 
         /// <summary>
+        /// Ermittelt den Footstep-Decal-Texturpfad fuer einen Surface-Typ.
+        /// fieldName: "footstep" (Laufen), "footstepStealth" (Walk).
+        /// Fallback: default Surface → leer.
+        /// </summary>
+        public string GetSurfaceDecalPath(string surfaceType, string fieldName)
+        {
+            if (string.IsNullOrEmpty(fieldName))
+            {
+                return "";
+            }
+
+            // Versuch 1: Exakte Surface
+            if (!string.IsNullOrEmpty(surfaceType)
+                && m_SurfaceDecals.TryGetValue(surfaceType, out Dictionary<string, string> decals)
+                && decals.TryGetValue(fieldName, out string path))
+            {
+                return path;
+            }
+
+            // Versuch 2: Default-Surface
+            if (m_SurfaceDecals.TryGetValue(DEFAULT_SURFACE, out Dictionary<string, string> defaultDecals)
+                && defaultDecals.TryGetValue(fieldName, out string defaultPath))
+            {
+                return defaultPath;
+            }
+
+            return "";
+        }
+
+        /// <summary>
         /// Leert den internen Cache. Wird von ServiceLocator.ClearAll() per Reflection aufgerufen.
         /// </summary>
         public void ClearCache()
@@ -330,6 +378,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             m_SurfaceAmmoShellsounds.Clear();
             m_SurfaceAmmoImpactSounds.Clear();
             m_SurfaceSounds.Clear();
+            m_SurfaceDecals.Clear();
         }
     }
 }

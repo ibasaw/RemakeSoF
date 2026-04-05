@@ -839,9 +839,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         private void OnNetworkSpawn()
         {
             // Dedicated Server: keine Visuals, kein Input, keine Waffen-Modelle.
-            // Hitboxen werden vom ClientCharacterSkinHandler + ClientHitboxSystem verwaltet.
+            // Aber Hitboxen muessen trotzdem aufgebaut werden wenn das Skeleton geladen wird,
+            // damit Server-Raycasts (Hitscan/Melee) die Bone-Collider auf dem Hitbox-Layer finden.
             if (m_NetworkedPlayerCharacter.IsServer && !m_NetworkedPlayerCharacter.IsHost)
             {
+                m_IsRemoteMode = true;
+
+                if (m_SkinHandler != null)
+                {
+                    m_SkinHandler.OnVisualInstantiated += OnVisualInstantiated;
+
+                    // Race-Condition-Guard: Falls LoadServerSkeleton bereits vor dieser
+                    // Subscription gefeuert hat, Visual manuell verarbeiten.
+                    if (m_SkinHandler.CurrentVisualInstance != null)
+                    {
+                        OnVisualInstantiated(m_SkinHandler.CurrentVisualInstance);
+                    }
+                }
+
                 return;
             }
 
@@ -868,6 +883,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 if (m_SkinHandler != null)
                 {
                     m_SkinHandler.OnVisualInstantiated += OnVisualInstantiated;
+
+                    // Race-Condition-Guard: Falls ClientCharacterSkinHandler bereits vor dieser
+                    // Subscription das Visual geladen hat (Callback-Reihenfolge in OnNetworkSpawnHook),
+                    // OnVisualInstantiated manuell nachholen.
+                    if (m_SkinHandler.CurrentVisualInstance != null)
+                    {
+                        OnVisualInstantiated(m_SkinHandler.CurrentVisualInstance);
+                    }
                 }
 
                 return;
@@ -876,12 +899,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Owner: Player Action Map aktivieren
             m_PlayerActions.Enable();
 
-            // GroundMask: Player + Hitbox Layer ausschliessen.
-            // Player-Layer wuerde Self-Collision verursachen (eigener BoxCollider wird von
-            // OverlapBox/BoxCast erkannt → ResolvePenetration drueckt Spieler weg).
-            // Hitbox-Layer sind zwar Trigger (QueryTriggerInteraction.Ignore filtert),
-            // aber expliziter Ausschluss ist sicherer.
-            m_Simulation.GroundMask = ~LayerMask.GetMask("Player");
+            // GroundMask: Alle Layer inkl. Player-Layer (SoF2 MASK_PLAYERSOLID inkl. CONTENTS_BODY).
+            // Self-Collision wird verhindert, indem der eigene BoxCollider vor jedem
+            // BoxCast/OverlapBox deaktiviert und danach wieder aktiviert wird.
+            m_Simulation.GroundMask = ~0;
 
             // Jump per Callback (zuverlaessiger als WasPressedThisFrame in FixedUpdate)
             m_PlayerActions.Jump.performed += OnJumpPerformed;

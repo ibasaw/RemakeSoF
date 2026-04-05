@@ -1458,6 +1458,67 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
         }
 
         /// <summary>
+        /// Spawnt ein Footstep-Decal auf dem Boden unter dem Spieler.
+        /// Textur wird per SoF2-Pfad geladen (z.B. "gfx/decals/steps/footstep").
+        /// Alterniert links/rechts per negativer X-Scale (Spiegelung).
+        /// Rotation wird an die Laufrichtung des Spielers angepasst.
+        /// </summary>
+        public void SpawnFootstepDecal(Vector3 position, Vector3 normal, string texturePath, float yawDegrees, bool isLeftFoot)
+        {
+            if (string.IsNullOrEmpty(texturePath))
+            {
+                return;
+            }
+
+            const float FOOTSTEP_SIZE = 0.22f;
+            const float FOOTSTEP_ALPHA = 0.45f;
+            const float FOOTSTEP_LIFETIME = 15f;
+            const float SURFACE_OFFSET = 0.02f;
+
+            GameObject decalObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            decalObj.name = "FootstepDecal";
+
+            // Collider entfernen (nur visuell)
+            Collider col = decalObj.GetComponent<Collider>();
+            if (col != null)
+            {
+                Object.Destroy(col);
+            }
+
+            Vector3 decalPosition = position + normal * SURFACE_OFFSET;
+            decalObj.transform.position = decalPosition;
+
+            // Quad-Face (-Z) zur Oberflaeche ausrichten, dann Yaw-Rotation fuer Laufrichtung
+            Vector3 forward = -normal;
+            Vector3 up = Mathf.Abs(Vector3.Dot(forward, Vector3.up)) < 0.99f
+                ? Vector3.up
+                : Vector3.forward;
+            decalObj.transform.rotation = Quaternion.LookRotation(forward, up)
+                * Quaternion.Euler(0f, 0f, -yawDegrees);
+
+            // Links/Rechts-Alternierung per X-Spiegelung
+            float xScale = isLeftFoot ? -FOOTSTEP_SIZE : FOOTSTEP_SIZE;
+            decalObj.transform.localScale = new Vector3(xScale, FOOTSTEP_SIZE, 1f);
+
+            // Material: Alpha-Blending Decal
+            Renderer renderer = decalObj.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                Material mat = new(GetDecalMaterial(texturePath));
+                Color matColor = mat.HasProperty("_BaseColor")
+                    ? mat.GetColor("_BaseColor")
+                    : Color.white;
+                matColor.a = FOOTSTEP_ALPHA;
+                mat.SetColor("_BaseColor", matColor);
+                renderer.material = mat;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+            }
+
+            Object.Destroy(decalObj, FOOTSTEP_LIFETIME);
+        }
+
+        /// <summary>
         /// Spawnt ein Decal (Scorch-Mark / Einschussloch) auf der Oberflaeche.
         /// Verwendet ein flaches Quad mit Alpha-Blending.
         /// Unterstuetzt feste Groesse (Size) und Groessen-Bereiche (SizeMin/SizeMax).
