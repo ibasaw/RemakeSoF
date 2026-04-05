@@ -394,7 +394,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         private void AssignSpawnPosition()
         {
-            (Vector3 position, Quaternion rotation) = ServerPlayerSpawnPoints.Instance.ConsumeNextSpawnPoint();
+            TeamId spawnTeam = GetSpawnTeamId();
+            (Vector3 position, Quaternion rotation) = ServerPlayerSpawnPoints.Instance.ConsumeNextSpawnPoint(spawnTeam);
             transform.SetPositionAndRotation(position, rotation);
 
             m_ServerPosition.Value = position;
@@ -403,7 +404,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_ServerPlayerCharacter.ResetForRespawn();
             m_ServerPlayerCharacter.SetReady();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log($"[NetworkedPlayerCharacter] Server: Spieler gespawnt bei {position}");
+            Debug.Log($"[NetworkedPlayerCharacter] Server: Spieler gespawnt bei {position} (Team={spawnTeam})");
 #endif
         }
 
@@ -424,7 +425,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 return;
             }
 
-            (Vector3 position, Quaternion rotation) = ServerPlayerSpawnPoints.Instance.ConsumeNextSpawnPoint();
+            // Spieler wiederbeleben falls tot (z.B. nach HideAndSeek-Runde ohne Respawn)
+            if (m_CharacterState != null && !m_CharacterState.IsAlive)
+            {
+                m_CharacterState.SetHealth(100);
+                m_CharacterState.SetIsAlive(true);
+            }
+
+            (Vector3 position, Quaternion rotation) = ServerPlayerSpawnPoints.Instance.ConsumeNextSpawnPoint(GetSpawnTeamId());
             transform.SetPositionAndRotation(position, rotation);
 
             m_ServerPosition.Value = position;
@@ -438,6 +446,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedPlayerCharacter] Server: Spieler respawned bei {position}");
 #endif
+        }
+
+        /// <summary>
+        /// Ermittelt die TeamId fuer Spawn-Point-Auswahl basierend auf dem GametypeTeam des Spielers.
+        /// GametypeTeam.Red (Hider) → TeamId.TeamOne, GametypeTeam.Blue (Seeker) → TeamId.TeamTwo.
+        /// Fallback: TeamId.TeamOne.
+        /// </summary>
+        private TeamId GetSpawnTeamId()
+        {
+            if (m_CharacterState == null)
+            {
+                return TeamId.TeamOne;
+            }
+
+            uint teamId = m_CharacterState.TeamId;
+            // GametypeTeam.Red=1 → TeamOne (Hider), GametypeTeam.Blue=2 → TeamTwo (Seeker)
+            return teamId == 2 ? TeamId.TeamTwo : TeamId.TeamOne;
         }
 
         /// <summary>

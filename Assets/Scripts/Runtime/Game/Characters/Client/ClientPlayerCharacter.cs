@@ -822,6 +822,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // TogglePauseMenu Callback entfernen
             m_PlayerActions.TogglePauseMenu.performed -= OnMenuToggle;
 
+            // Scoreboard Callbacks entfernen
+            m_PlayerActions.ShowScoreboard.started -= OnScoreboardShow;
+            m_PlayerActions.ShowScoreboard.canceled -= OnScoreboardHide;
+
             // Input Actions aufraeumen
             m_AvatarActions?.Dispose();
             m_AvatarActions = null;
@@ -897,6 +901,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             // TogglePauseMenu per Callback statt PlayerInput-SendMessage
             m_PlayerActions.TogglePauseMenu.performed += OnMenuToggle;
+
+            // Scoreboard per Hold-Taste (Tab): started = zeigen, canceled = verstecken
+            m_PlayerActions.ShowScoreboard.started += OnScoreboardShow;
+            m_PlayerActions.ShowScoreboard.canceled += OnScoreboardHide;
 
             // Kamera-Setup nur fuer Owner aktivieren (verhindert doppelte Camera/AudioListener)
             m_CameraRoot.SetActive(true);
@@ -2997,6 +3005,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         }
 
         /// <summary>
+        /// Scoreboard anzeigen (AvatarActions ShowScoreboard started Callback).
+        /// </summary>
+        private void OnScoreboardShow(InputAction.CallbackContext context)
+        {
+            GameApplication.Instance.Broadcast(new ScoreboardShowEvent());
+        }
+
+        /// <summary>
+        /// Scoreboard verstecken (AvatarActions ShowScoreboard canceled Callback).
+        /// </summary>
+        private void OnScoreboardHide(InputAction.CallbackContext context)
+        {
+            GameApplication.Instance.Broadcast(new ScoreboardHideEvent());
+        }
+
+        /// <summary>
         /// Aktiviere oder deaktiviere Gameplay-Inputs und Kamera-Controller.
         /// Wird vom MenÃ¼-System aufgerufen (Pause/Resume).
         /// TogglePauseMenu bleibt immer aktiv, damit ESC auch im MenÃ¼ funktioniert.
@@ -3009,9 +3033,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             }
             else
             {
-                // Alle Actions deaktivieren, dann TogglePauseMenu gezielt re-aktivieren
+                // Alle Actions deaktivieren, dann TogglePauseMenu + ShowScoreboard gezielt re-aktivieren
                 m_PlayerActions.Disable();
                 m_PlayerActions.TogglePauseMenu.Enable();
+                m_PlayerActions.ShowScoreboard.Enable();
             }
 
             // Kamera-Controller ein-/ausschalten (verhindert Mausbewegung im MenÃ¼)

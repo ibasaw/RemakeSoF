@@ -105,6 +105,12 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// <summary>Ob der Server ein Passwort erfordert.</summary>
         public bool hasPassword;
 
+        /// <summary>Server-Passwort (sv_password). Wird vom Auth-Server gespeichert, damit Clients es abgleichen koennen. Leer = kein Passwort.</summary>
+        public string password;
+
+        /// <summary>RCON-Passwort (rconPassword). Wird fuer Deregistrierung benoetigt. Leer = Auth-Server generiert eines.</summary>
+        public string rconPassword;
+
         /// <summary>Application-Version.</summary>
         public string version;
     }
@@ -120,5 +126,8 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
 
         /// <summary>Status-Nachricht.</summary>
         public string message;
+
+        /// <summary>RCON-Passwort. Vom Auth-Server generiert falls keines mitgesendet wurde.</summary>
+        public string rconPassword;
     }
 }

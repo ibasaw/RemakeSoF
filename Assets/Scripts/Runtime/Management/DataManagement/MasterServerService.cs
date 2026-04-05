@@ -47,14 +47,19 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// <summary>Aktueller Spieler-Count (wird vom Server aktualisiert).</summary>
         int m_CurrentPlayers;
 
+        /// <summary>Aktives RCON-Passwort (aus Config oder vom Auth-Server generiert).</summary>
+        string m_RconPassword;
+
         /// <summary>Aktuelle Map (wird vom Server aktualisiert).</summary>
         string m_CurrentMapName;
 
         /// <summary>Ob der Server registriert ist.</summary>
         public bool IsRegistered => !string.IsNullOrEmpty(m_RegisteredServerId);
 
-        // â”€â”€ Server-Seite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        /// <summary>Aktives RCON-Passwort (aus Config oder vom Auth-Server generiert nach Registrierung).</summary>
+        public string RconPassword => m_RconPassword;
 
+  
         /// <summary>
         /// Registriert diesen Game-Server beim Master-Server.
         /// Startet automatisch den Heartbeat-Loop nach erfolgreicher Registrierung.
@@ -77,6 +82,8 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                 currentPlayers = currentPlayers,
                 maxPlayers = config.sv_maxclients,
                 hasPassword = !string.IsNullOrEmpty(config.sv_password),
+                password = config.sv_password ?? string.Empty,
+                rconPassword = config.rconPassword ?? string.Empty,
                 version = Application.version
             };
 
@@ -96,6 +103,9 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                 {
                     ServerRegistrationResponse response = JsonUtility.FromJson<ServerRegistrationResponse>(request.downloadHandler.text);
                     m_RegisteredServerId = response.serverId;
+                    m_RconPassword = !string.IsNullOrEmpty(response.rconPassword)
+                        ? response.rconPassword
+                        : config.rconPassword;
                     Debug.Log($"[MasterServerService] Server registriert: id={m_RegisteredServerId}, message={response.message}");
 
                     StartHeartbeat();
@@ -138,6 +148,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             {
                 using UnityWebRequest request = new($"{m_MasterServerUrl}/api/removeServer/{m_RegisteredServerId}", "DELETE");
                 request.downloadHandler = new DownloadHandlerBuffer();
+                request.SetRequestHeader("X-Rcon-Password", m_RconPassword ?? string.Empty);
 
                 await request.SendWebRequest();
 

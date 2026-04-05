@@ -35,6 +35,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
         /// <summary>Wird aufgerufen wenn ein Client sich trennt.</summary>
         internal virtual void OnClientDisconnected() { }
+
+        /// <summary>Wird aufgerufen wenn der Gametype einen Runden-Restart anfordert.</summary>
+        internal virtual void OnRoundRestartRequested(float delaySeconds) { }
     }
 
     /// <summary>
@@ -46,6 +49,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
     {
         internal readonly RoundFlowLoadingState LoadingState = new();
         internal readonly RoundFlowWaitingForReadyState WaitingForReadyState = new();
+        internal readonly RoundFlowWarmupState WarmupState = new();
         internal readonly RoundFlowStartingRoundState StartingRoundState = new();
         internal readonly RoundFlowRunningState RunningState = new();
         internal readonly RoundFlowSwitchingMapState SwitchingMapState = new();
@@ -81,6 +85,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 {
                     LoadingState,
                     WaitingForReadyState,
+                    WarmupState,
                     StartingRoundState,
                     RunningState,
                     SwitchingMapState
@@ -133,6 +138,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             m_CurrentState?.OnClientDisconnected();
         }
 
+        /// <summary>Delegiert eine Runden-Restart-Anforderung an den aktuellen State.</summary>
+        internal void OnRoundRestartRequested(float delaySeconds)
+        {
+            m_CurrentState?.OnRoundRestartRequested(delaySeconds);
+        }
+
         // ----- Hilfsmethoden fuer States -----
 
         /// <summary>
@@ -176,6 +187,36 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 }
             }
         }
+
+        /// <summary>
+        /// Zaehlt die aktuelle Teamverteilung aller verbundenen Spieler.
+        /// </summary>
+        internal (int redCount, int blueCount) CountTeams()
+        {
+            int red = 0;
+            int blue = 0;
+
+            foreach (ulong clientId in GameState.NetworkManager.ConnectedClientsIds)
+            {
+                NetworkObject obj = GameState.NetworkManager.SpawnManager.GetPlayerNetworkObject(clientId);
+                if (obj == null || !obj.TryGetComponent(out NetworkedCharacterState state))
+                {
+                    continue;
+                }
+
+                GametypeTeam team = (GametypeTeam)state.TeamId;
+                if (team == GametypeTeam.Red)
+                {
+                    red++;
+                }
+                else if (team == GametypeTeam.Blue)
+                {
+                    blue++;
+                }
+            }
+
+            return (red, blue);
+        }
     }
 
     // =====================================================================
@@ -215,7 +256,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
     /// <summary>
     /// State: Map ist geladen, es wird auf alle Client-Ready-Signale und MinPlayers gewartet.
-    /// Respawnt Spieler und AI-Bots beim Eintritt. Wechselt zu StartingRound sobald alles bereit.
+    /// Prueft zusaetzlich die gametype-spezifischen Team-Anforderungen (z.B. HideAndSeek: mind. 1 Seeker + 1 Hider).
+    /// Setzt waitingForPlayers-NetworkVariable fuer Client-UI ("Waiting for players...").
+    /// Wechselt zu WarmupState sobald alle Bedingungen erfuellt sind.
     /// </summary>
     internal sealed class RoundFlowWaitingForReadyState : RoundFlowState
     {
@@ -223,7 +266,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         {
             Debug.Log("[RoundFlow] Enter WaitingForReadyState");
 
-            Manager.RespawnAllConnectedPlayers();
+            GameState.waitingForPlayers.Value = true;
 
             // AI-Bots spawnen (erstmalig) oder respawnen (nach Rundenwechsel)
             if (GameState.AIBotSpawner != null)
@@ -247,7 +290,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             TryStartMatch();
         }
 
-        public override void Exit() { }
+        public override void Exit()
+        {
+            GameState.waitingForPlayers.Value = false;
+        }
 
         internal override void OnClientReadyForRound()
         {
@@ -275,6 +321,100 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             {
                 return;
             }
+
+            // Gametype-spezifische Team-Anforderungen pruefen (z.B. min. 1 Seeker + 1 Hider)
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            if (gametypeManager != null)
+            {
+                (int redCount, int blueCount) = Manager.CountTeams();
+                if (!gametypeManager.AreTeamsReady(redCount, blueCount))
+                {
+                    Debug.Log($"[RoundFlow] Teams nicht bereit: Rot={redCount}, Blau={blueCount}. Warte auf weitere Spieler...");
+                    return;
+                }
+            }
+
+            Manager.ChangeState(Manager.WarmupState);
+        }
+    }
+
+    /// <summary>
+    /// State: Genug Spieler vorhanden — Warmup-Countdown laeuft ("Round start in 10, 9, ...").
+    /// Liest g_warmup aus ServerConfiguration (Default 10s).
+    /// Beim Ablauf: Respawnt alle Spieler an Spawn-Points und wechselt zu StartingRoundState (3, 2, 1, GO).
+    /// Bei Spieler-Disconnect unter Team-Anforderungen zurueck zu WaitingForReady.
+    /// </summary>
+    internal sealed class RoundFlowWarmupState : RoundFlowState
+    {
+        Coroutine m_WarmupRoutine;
+
+        public override void Enter()
+        {
+            Debug.Log("[RoundFlow] Enter WarmupState");
+
+            ServerConfigurationLoader configLoader = ServiceLocator.Get<ServerConfigurationLoader>();
+            uint warmupSeconds = 10;
+            if (configLoader?.Configuration != null && configLoader.Configuration.g_warmup > 0)
+            {
+                warmupSeconds = (uint)configLoader.Configuration.g_warmup;
+            }
+
+            GameState.warmupCountdown.Value = warmupSeconds;
+            m_WarmupRoutine = Manager.StartCoroutine(WarmupCountdown());
+        }
+
+        public override void Exit()
+        {
+            if (m_WarmupRoutine != null)
+            {
+                Manager.StopCoroutine(m_WarmupRoutine);
+                m_WarmupRoutine = null;
+            }
+
+            GameState.warmupCountdown.Value = 0;
+        }
+
+        internal override void OnClientDisconnected()
+        {
+            // Team-Anforderungen erneut pruefen bei Disconnect
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            if (gametypeManager != null)
+            {
+                (int redCount, int blueCount) = Manager.CountTeams();
+                if (!gametypeManager.AreTeamsReady(redCount, blueCount))
+                {
+                    Debug.Log("[RoundFlow] Warmup abgebrochen: Team-Anforderungen nicht mehr erfuellt.");
+                    Manager.ChangeState(Manager.WaitingForReadyState);
+                    return;
+                }
+            }
+
+            if (!Manager.MinPlayersReached)
+            {
+                Manager.ChangeState(Manager.WaitingForReadyState);
+            }
+        }
+
+        IEnumerator WarmupCountdown()
+        {
+            while (GameState.warmupCountdown.Value > 0)
+            {
+                yield return CoroutinesHelper.OneSecond;
+
+                // Bedingungen waehrend Countdown erneut pruefen
+                if (!Manager.MinPlayersReached)
+                {
+                    Manager.ChangeState(Manager.WaitingForReadyState);
+                    yield break;
+                }
+
+                GameState.warmupCountdown.Value--;
+            }
+
+            m_WarmupRoutine = null;
+
+            // Alle Spieler an Spawn-Points teleportieren
+            Manager.RespawnAllConnectedPlayers();
 
             Manager.ChangeState(Manager.StartingRoundState);
         }
@@ -341,22 +481,42 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
     /// <summary>
     /// State: Match-Countdown laeuft, Runde aktiv.
     /// Startet den Countdown und broadcastet Match-Start an alle Clients.
-    /// Wechselt zu SwitchingMap wenn Countdown abgelaufen.
+    /// Ruft jeden Frame OnRunFrame auf dem GametypeManager auf und synchronisiert die Phase.
+    /// Wechselt zu SwitchingMap wenn Countdown abgelaufen oder Gametype RoundRestart anfordert.
     /// </summary>
     internal sealed class RoundFlowRunningState : RoundFlowState
     {
         Coroutine m_CountdownRoutine;
+        Coroutine m_GameLoopRoutine;
+        bool m_RoundRestartPending;
+        float m_RoundRestartDelay;
 
         public override void Enter()
         {
             Debug.Log("[RoundFlow] Enter RunningState");
+            m_RoundRestartPending = false;
+
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+
+            // Teamgroessen an Gametype melden (z.B. AliveHiderCount initialisieren)
+            if (gametypeManager != null)
+            {
+                (int redCount, int blueCount) = Manager.CountTeams();
+                gametypeManager.InitializeRoundState(redCount, blueCount);
+            }
 
             // GametypeManager ueber Rundenstart informieren
-            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
             gametypeManager?.OnRoundStart();
+
+            // Initiale Phase synchronisieren
+            if (gametypeManager != null)
+            {
+                GameState.gametypePhase.Value = gametypeManager.GetCurrentPhase();
+            }
 
             GameState.BroadcastMatchStarted();
             m_CountdownRoutine = Manager.StartCoroutine(RunCountdown());
+            m_GameLoopRoutine = Manager.StartCoroutine(GameLoop());
         }
 
         public override void Exit()
@@ -367,9 +527,68 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 m_CountdownRoutine = null;
             }
 
+            if (m_GameLoopRoutine != null)
+            {
+                Manager.StopCoroutine(m_GameLoopRoutine);
+                m_GameLoopRoutine = null;
+            }
+
             // GametypeManager ueber Rundenende informieren
             GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
             gametypeManager?.OnRoundEnd();
+
+            // Phase zuruecksetzen
+            GameState.gametypePhase.Value = 0;
+        }
+
+        internal override void OnRoundRestartRequested(float delaySeconds)
+        {
+            if (m_RoundRestartPending)
+            {
+                return;
+            }
+
+            m_RoundRestartPending = true;
+            m_RoundRestartDelay = delaySeconds;
+            Debug.Log($"[RoundFlow] Round restart requested, delay={delaySeconds}s");
+        }
+
+        /// <summary>
+        /// Game-Loop: Ruft jeden Frame OnRunFrame auf dem GametypeManager auf,
+        /// synchronisiert die gametype-spezifische Phase und reagiert auf Restart-Anforderungen.
+        /// </summary>
+        IEnumerator GameLoop()
+        {
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            int lastPhase = gametypeManager?.GetCurrentPhase() ?? 0;
+
+            while (true)
+            {
+                yield return null;
+
+                if (gametypeManager != null)
+                {
+                    gametypeManager.OnRunFrame(Time.deltaTime);
+
+                    // Phase synchronisieren wenn geaendert
+                    int currentPhase = gametypeManager.GetCurrentPhase();
+                    if (currentPhase != lastPhase)
+                    {
+                        GameState.gametypePhase.Value = currentPhase;
+                        lastPhase = currentPhase;
+                        Debug.Log($"[RoundFlow] Gametype phase changed to {currentPhase}");
+                    }
+                }
+
+                // Gametype hat Runden-Restart angefordert (z.B. alle Hider eliminiert)
+                if (m_RoundRestartPending)
+                {
+                    yield return new WaitForSeconds(m_RoundRestartDelay);
+                    m_GameLoopRoutine = null;
+                    Manager.ChangeState(Manager.WaitingForReadyState);
+                    yield break;
+                }
+            }
         }
 
         IEnumerator RunCountdown()
@@ -389,6 +608,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             }
 
             m_CountdownRoutine = null;
+
+            // Zeit abgelaufen: Gametype fragen was passiert
+            if (gametypeManager != null)
+            {
+                GametypeEventResult result = gametypeManager.OnTimeExpired();
+
+                // Team-Score-Deltas auf NetworkedGameState anwenden
+                GameState.ApplyGametypeResult(result);
+
+                if (result.RestartRound)
+                {
+                    // Naechste Runde auf gleicher Map
+                    Debug.Log($"[RoundFlow] Time expired → restart round: {result.BroadcastMessage}");
+                    yield return new WaitForSeconds(result.RestartDelaySeconds);
+                    Manager.ChangeState(Manager.WaitingForReadyState);
+                    yield break;
+                }
+            }
+
             Manager.ChangeState(Manager.SwitchingMapState);
         }
     }

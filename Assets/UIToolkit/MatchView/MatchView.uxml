@@ -2,9 +2,20 @@
     <ui:VisualElement name="match" style="flex-grow: 1; width: 100%; height: 100%;">
         <ui:VisualElement name="CrosshairContainer" picking-mode="Ignore" style="position: absolute; left: 50%; top: 50%; translate: -50% -50%; align-items: center; justify-content: center;"/>
         <ui:Label text="" name="roundStartLabel" picking-mode="Ignore" style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; -unity-text-align: middle-center; font-size: 120px; color: rgb(255, 255, 255); -unity-font-style: bold; text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9); display: none;"/>
-        <ui:VisualElement name="GroupBox" style="flex-grow: 0; align-items: flex-start; top: 30px; left: 30px; position: absolute;">
-            <ui:Label text="00:60" display-tooltip-when-elided="true" name="timerLabel" style="-unity-text-align: middle-center; height: auto; width: auto; font-size: 32px; left: auto; top: auto;"/>
-            <ui:Label text="Players connected: 0" display-tooltip-when-elided="true" name="playersConnectedLabel" style="-unity-text-align: middle-center; height: auto; width: auto; font-size: 24px; left: auto; top: auto;"/>
+        <ui:Label text="" name="waitingLabel" picking-mode="Ignore" style="position: absolute; left: 0; right: 0; top: 5%; -unity-text-align: middle-center; font-size: 36px; color: rgb(220, 220, 220); -unity-font-style: bold; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9); display: none;"/>
+        <ui:VisualElement name="GroupBox" style="flex-grow: 0; align-items: flex-end; top: 30px; right: 30px; position: absolute;">
+            <ui:Label text="00:60" display-tooltip-when-elided="true" name="timerLabel" style="-unity-text-align: middle-right; height: auto; width: auto; font-size: 32px;"/>
+            <ui:Label text="Connected: 0" display-tooltip-when-elided="true" name="playersConnectedLabel" style="-unity-text-align: middle-right; height: auto; width: auto; font-size: 24px;"/>
+            <ui:Label text="" name="yourTeamLabel" style="-unity-text-align: middle-right; height: auto; width: auto; font-size: 24px; -unity-font-style: bold;"/>
+            <ui:Label text="" name="playerStatsLabel" style="-unity-text-align: middle-right; height: auto; width: auto; font-size: 20px; color: rgb(220, 220, 220);"/>
+            <ui:Label text="" name="playerStatusLabel" style="-unity-text-align: middle-right; height: auto; width: auto; font-size: 18px; -unity-font-style: bold;"/>
+            <ui:VisualElement name="TeamScoreRow" style="flex-direction: row; align-items: center; justify-content: flex-end; margin-top: 4px;">
+                <ui:VisualElement name="hudRedTeamLogo" style="width: 24px; height: 24px; -unity-background-scale-mode: scale-to-fit; margin-right: 6px;"/>
+                <ui:Label text="0" name="hudRedTeamScoreLabel" style="font-size: 22px; color: rgb(255, 120, 120); -unity-font-style: bold; min-width: 24px; -unity-text-align: middle-center;"/>
+                <ui:Label text=" - " style="font-size: 20px; color: rgb(200, 200, 200);"/>
+                <ui:Label text="0" name="hudBlueTeamScoreLabel" style="font-size: 22px; color: rgb(120, 160, 255); -unity-font-style: bold; min-width: 24px; -unity-text-align: middle-center;"/>
+                <ui:VisualElement name="hudBlueTeamLogo" style="width: 24px; height: 24px; -unity-background-scale-mode: scale-to-fit; margin-left: 6px;"/>
+            </ui:VisualElement>
             <ui:Label text="FPS: 0" name="fpsLabel" style="width: auto; height: auto; font-size: 32px;"/>
         </ui:VisualElement>
         <ui:VisualElement name="DebugInfoBox" style="flex-grow: 0; align-items: flex-start; top: 30px; right: 30px; position: absolute; right: 30px; background-color: rgba(0, 0, 0, 0.5); padding-left: 10px; padding-right: 10px; padding-top: 6px; padding-bottom: 6px; border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;">

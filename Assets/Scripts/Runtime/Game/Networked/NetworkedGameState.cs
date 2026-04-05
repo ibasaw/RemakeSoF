@@ -1,11 +1,14 @@
 using System;
+using System.Collections;
 using Unity.Collections;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
 using Tolik.RemakeSoF.Runtime.DataManagement;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using Tolik.RemakeSoF.Runtime.Management.MapManagement;
 using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Networked
@@ -26,6 +29,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
         internal NetworkVariable<uint> matchCountdown = new();
         internal NetworkVariable<int> playersConnected = new();
+
+        /// <summary>
+        /// Warmup-Countdown (in Sekunden), synchronisiert uebers Netzwerk.
+        /// 0 = kein Warmup aktiv. Clients zeigen "Round start in X..." Overlay.
+        /// </summary>
+        internal NetworkVariable<uint> warmupCountdown = new();
+
+        /// <summary>
+        /// Ob der Server auf genug Spieler wartet, synchronisiert uebers Netzwerk.
+        /// Clients zeigen "Waiting for players..." Overlay wenn true.
+        /// </summary>
+        internal NetworkVariable<bool> waitingForPlayers = new();
 
         /// <summary>
         /// Countdown vor Rundenbeginn (3, 2, 1, 0), synchronisiert uebers Netzwerk.
@@ -68,6 +83,37 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             NetworkVariableWritePermission.Server
         );
 
+        /// <summary>
+        /// Gametype-spezifische Phase, synchronisiert ueber das Netzwerk.
+        /// Fuer HideAndSeek: 0=Hiding, 1=Seeking, 2=RoundOver.
+        /// Clients nutzen diesen Wert fuer phasenabhaengige Logik (z.B. Seeker-Freeze).
+        /// </summary>
+        internal NetworkVariable<int> gametypePhase = new(
+            default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+        /// <summary>
+        /// Team-Score Rot, synchronisiert ueber das Netzwerk.
+        /// Wird bei Scoring-Events (Kill, Rundenende, Zeitablauf) vom Server aktualisiert.
+        /// </summary>
+        internal NetworkVariable<int> redTeamScore = new(
+            default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+        /// <summary>
+        /// Team-Score Blau, synchronisiert ueber das Netzwerk.
+        /// Wird bei Scoring-Events (Kill, Rundenende, Zeitablauf) vom Server aktualisiert.
+        /// </summary>
+        internal NetworkVariable<int> blueTeamScore = new(
+            default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
         internal event Action OnMatchStarted;
         internal event Action OnMatchEnded;
 
@@ -92,6 +138,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         ServerConfigurationLoader m_ServerConfigLoader;
 
         RoundFlowStateMachine m_RoundFlowStateMachine;
+
+        /// <summary>Server-seitige Coroutine die den Ping jedes Clients periodisch synchronisiert.</summary>
+        Coroutine m_PingSyncCoroutine;
 
         /// <summary>
         /// Server-seitiger AI-Bot-Spawner. Wird wie die RoundFlowStateMachine am selben GameObject verwaltet.
@@ -187,7 +236,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 // Server lädt Map für SpawnPoints, Kollision, etc.
                 Debug.Log($"[NetworkedGameState] Server loading map: {startMap} (gametype={activeGametypeId.Value})");
                 _ = m_MapLoader.LoadMapAsync(startMap);
-            }
+                // Ping-Sync starten: aktualisiert RTT jedes Clients periodisch
+                m_PingSyncCoroutine = StartCoroutine(SyncClientPings());            }
 
             if (!IsServer)
             {
@@ -213,6 +263,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             if (Singleton == this)
             {
                 Singleton = null;
+            }
+
+            if (m_PingSyncCoroutine != null)
+            {
+                StopCoroutine(m_PingSyncCoroutine);
+                m_PingSyncCoroutine = null;
             }
 
             currentMapName.OnValueChanged -= OnMapNameChanged;
@@ -352,6 +408,75 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         void OnServerClientDisconnected(ClientDisconnectedEvent evt)
         {
             m_RoundFlowStateMachine.OnClientDisconnected();
+        }
+
+        /// <summary>
+        /// Signalisiert der RoundFlowStateMachine, dass der aktive Gametype einen Runden-Restart anfordert.
+        /// Wird von ServerCharacterController bei Gametype-Events aufgerufen.
+        /// </summary>
+        /// <param name="delaySeconds">Verzoegerung vor dem Restart.</param>
+        internal void RequestRoundRestart(float delaySeconds)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            m_RoundFlowStateMachine.OnRoundRestartRequested(delaySeconds);
+        }
+
+        /// <summary>
+        /// Wendet Team-Score-Deltas aus einem GametypeEventResult auf die NetworkVariables an.
+        /// Nur auf dem Server aufrufbar. Wird nach OnClientDeath/OnTimeExpired aufgerufen.
+        /// </summary>
+        internal void ApplyGametypeResult(GametypeEventResult result)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            if (result.RedTeamScoreDelta != 0)
+            {
+                redTeamScore.Value += result.RedTeamScoreDelta;
+            }
+
+            if (result.BlueTeamScoreDelta != 0)
+            {
+                blueTeamScore.Value += result.BlueTeamScoreDelta;
+            }
+        }
+
+        /// <summary>
+        /// Server-seitige Coroutine: Liest alle 2 Sekunden den RTT jedes Clients
+        /// vom UnityTransport und schreibt ihn in die jeweilige NetworkedCharacterState.
+        /// </summary>
+        IEnumerator SyncClientPings()
+        {
+            WaitForSeconds interval = new(2f);
+            UnityTransport transport = (UnityTransport)NetworkManager.NetworkConfig.NetworkTransport;
+
+            while (true)
+            {
+                yield return interval;
+
+                foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
+                {
+                    NetworkObject playerObj = NetworkManager.SpawnManager.GetPlayerNetworkObject(clientId);
+                    if (playerObj == null)
+                    {
+                        continue;
+                    }
+
+                    if (!playerObj.TryGetComponent(out NetworkedCharacterState characterState))
+                    {
+                        continue;
+                    }
+
+                    ulong rtt = transport.GetCurrentRtt(clientId);
+                    characterState.UpdatePing((ushort)Math.Min(rtt, ushort.MaxValue));
+                }
+            }
         }
 
         /// <summary>

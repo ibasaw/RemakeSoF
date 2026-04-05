@@ -73,6 +73,13 @@ namespace Tolik.RemakeSoF.Runtime.Core
         /// <summary>Cursor blink interval in milliseconds.</summary>
         const long k_CursorBlinkMs = 530;
 
+        /// <summary>Parsed glyph info for single-mesh rendering.</summary>
+        struct GlyphInfo
+        {
+            public int AsciiCode;
+            public Color32 Tint;
+        }
+
         Texture2D m_Atlas;
         string m_Text = "";
         float m_CharWidth = 24f;
@@ -82,6 +89,9 @@ namespace Tolik.RemakeSoF.Runtime.Core
         IVisualElementScheduledItem m_CursorBlink;
         bool m_CursorVisible;
 
+        /// <summary>Cached parsed glyphs for mesh generation. Rebuilt only when text or atlas changes.</summary>
+        readonly List<GlyphInfo> m_Glyphs = new();
+
         /// <summary>Bigchars atlas texture (16x16 grid of ASCII glyphs, white on transparent).</summary>
         public Texture2D Atlas
         {
@@ -89,7 +99,7 @@ namespace Tolik.RemakeSoF.Runtime.Core
             set
             {
                 m_Atlas = value;
-                Rebuild();
+                RebuildGlyphCache();
             }
         }
 
@@ -100,7 +110,7 @@ namespace Tolik.RemakeSoF.Runtime.Core
             set
             {
                 m_Text = value ?? "";
-                Rebuild();
+                RebuildGlyphCache();
             }
         }
 
@@ -111,7 +121,7 @@ namespace Tolik.RemakeSoF.Runtime.Core
             set
             {
                 m_ShowCursor = value;
-                Rebuild();
+                UpdateCursor();
             }
         }
 
@@ -122,7 +132,9 @@ namespace Tolik.RemakeSoF.Runtime.Core
             set
             {
                 m_CharWidth = value;
-                Rebuild();
+                style.width = m_Glyphs.Count * m_CharWidth;
+                UpdateCursor();
+                MarkDirtyRepaint();
             }
         }
 
@@ -133,124 +145,179 @@ namespace Tolik.RemakeSoF.Runtime.Core
             set
             {
                 m_CharHeight = value;
-                Rebuild();
+                style.height = m_CharHeight;
+                UpdateCursor();
+                MarkDirtyRepaint();
             }
         }
 
         /// <summary>
-        /// Initializes the label with horizontal layout for character elements.
+        /// Initializes the label with overflow clipping and registers custom mesh rendering.
         /// </summary>
         public QuakeColorLabel()
         {
-            style.flexDirection = FlexDirection.Row;
             style.overflow = Overflow.Hidden;
-            style.alignItems = Align.Center;
+            generateVisualContent += OnGenerateVisualContent;
         }
 
         /// <summary>
-        /// Rebuilds all child character elements from the current text and atlas.
-        /// Each visible character becomes a VisualElement with the atlas as background,
-        /// positioned via background-position to show the correct glyph, tinted with the active color.
+        /// Parses the text into a cached list of GlyphInfo entries and triggers a repaint.
+        /// Called when text or atlas changes. Does not create child VisualElements.
         /// </summary>
-        void Rebuild()
+        void RebuildGlyphCache()
         {
-            Clear();
-            m_CursorElement = null;
+            m_Glyphs.Clear();
 
-            if (m_Atlas == null || string.IsNullOrEmpty(m_Text))
+            if (m_Atlas != null && !string.IsNullOrEmpty(m_Text))
             {
-                if (m_ShowCursor && m_Atlas != null)
-                {
-                    AppendCursor();
-                }
+                Color currentColor = s_DefaultColor;
 
+                for (int i = 0; i < m_Text.Length; i++)
+                {
+                    // ^^ = literal ^ character
+                    if (i + 1 < m_Text.Length && m_Text[i] == k_ColorEscape && m_Text[i + 1] == k_ColorEscape)
+                    {
+                        i++;
+                        // fall through to add '^' glyph
+                    }
+                    else if (IsColorCode(m_Text, i))
+                    {
+                        char key = char.ToLowerInvariant(m_Text[i + 1]);
+                        currentColor = s_ColorMap[key];
+                        i++;
+                        continue;
+                    }
+                    // \\ = literal backslash
+                    else if (i + 1 < m_Text.Length && m_Text[i] == '\\' && m_Text[i + 1] == '\\')
+                    {
+                        i++;
+                        // fall through to add '\\' glyph
+                    }
+                    // \XX = hex escape for bigchars atlas symbol (00-FF)
+                    else if (TryParseHexEscape(m_Text, i, out int hexChar))
+                    {
+                        m_Glyphs.Add(new GlyphInfo { AsciiCode = hexChar, Tint = currentColor });
+                        i += 2;
+                        continue;
+                    }
+
+                    char c = m_Text[i];
+                    int asciiCode = c & 0xFF;
+                    m_Glyphs.Add(new GlyphInfo { AsciiCode = asciiCode, Tint = currentColor });
+                }
+            }
+
+            // Set explicit size so generateVisualContent fires (no child elements to provide intrinsic size)
+            style.width = m_Glyphs.Count * m_CharWidth;
+            style.height = m_CharHeight;
+
+            UpdateCursor();
+            MarkDirtyRepaint();
+        }
+
+        /// <summary>
+        /// Generates a single textured mesh with one quad per glyph. All characters are
+        /// rendered in one draw call instead of creating N child VisualElements.
+        /// </summary>
+        void OnGenerateVisualContent(MeshGenerationContext mgc)
+        {
+            if (m_Atlas == null || m_Glyphs.Count == 0)
+            {
                 return;
             }
 
-            // background-size: scale atlas so one cell = m_CharWidth x m_CharHeight
-            float bgW = m_CharWidth * k_AtlasColumns;
-            float bgH = m_CharHeight * k_AtlasRows;
+            int count = m_Glyphs.Count;
+            MeshWriteData mwd = mgc.Allocate(count * 4, count * 6, m_Atlas);
 
-            Color currentColor = s_DefaultColor;
+            float cellU = 1f / k_AtlasColumns;
+            float cellV = 1f / k_AtlasRows;
 
-            for (int i = 0; i < m_Text.Length; i++)
+            for (int i = 0; i < count; i++)
             {
-                // ^^ = literal ^ character
-                if (i + 1 < m_Text.Length && m_Text[i] == k_ColorEscape && m_Text[i + 1] == k_ColorEscape)
-                {
-                    i++;
-                    // fall through to render '^' as glyph
-                }
-                else if (IsColorCode(m_Text, i))
-                {
-                    char key = char.ToLowerInvariant(m_Text[i + 1]);
-                    currentColor = s_ColorMap[key];
-                    i++;
-                    continue;
-                }
-                // \\ = literal backslash
-                else if (i + 1 < m_Text.Length && m_Text[i] == '\\' && m_Text[i + 1] == '\\')
-                {
-                    i++;
-                    // fall through to render '\' as glyph
-                }
-                // \XX = hex escape for bigchars atlas symbol (00-FF)
-                else if (TryParseHexEscape(m_Text, i, out int hexChar))
-                {
-                    AddGlyph(hexChar, currentColor, bgW, bgH);
-                    i += 2; // skip the two hex digits
-                    continue;
-                }
+                GlyphInfo g = m_Glyphs[i];
+                int col = g.AsciiCode % k_AtlasColumns;
+                int row = g.AsciiCode / k_AtlasColumns;
 
-                char c = m_Text[i];
-                int asciiCode = c & 0xFF;
-                AddGlyph(asciiCode, currentColor, bgW, bgH);
+                float x0 = i * m_CharWidth;
+                float x1 = x0 + m_CharWidth;
+                float y1 = m_CharHeight;
+
+                float u0 = col * cellU;
+                float u1 = u0 + cellU;
+                // Standard Unity UV: (0,0) = bottom-left; atlas row 0 = top of texture image
+                float vTop = 1f - row * cellV;
+                float vBot = vTop - cellV;
+
+                ushort vi = (ushort)(i * 4);
+
+                mwd.SetNextVertex(new Vertex
+                {
+                    position = new Vector3(x0, 0, Vertex.nearZ),
+                    tint = g.Tint,
+                    uv = new Vector2(u0, vTop)
+                });
+                mwd.SetNextVertex(new Vertex
+                {
+                    position = new Vector3(x1, 0, Vertex.nearZ),
+                    tint = g.Tint,
+                    uv = new Vector2(u1, vTop)
+                });
+                mwd.SetNextVertex(new Vertex
+                {
+                    position = new Vector3(x1, y1, Vertex.nearZ),
+                    tint = g.Tint,
+                    uv = new Vector2(u1, vBot)
+                });
+                mwd.SetNextVertex(new Vertex
+                {
+                    position = new Vector3(x0, y1, Vertex.nearZ),
+                    tint = g.Tint,
+                    uv = new Vector2(u0, vBot)
+                });
+
+                mwd.SetNextIndex(vi);
+                mwd.SetNextIndex((ushort)(vi + 1));
+                mwd.SetNextIndex((ushort)(vi + 2));
+                mwd.SetNextIndex(vi);
+                mwd.SetNextIndex((ushort)(vi + 2));
+                mwd.SetNextIndex((ushort)(vi + 3));
+            }
+        }
+
+        /// <summary>
+        /// Removes and re-creates the cursor element based on current state.
+        /// </summary>
+        void UpdateCursor()
+        {
+            if (m_CursorElement != null && m_CursorElement.parent == this)
+            {
+                Remove(m_CursorElement);
             }
 
-            if (m_ShowCursor)
+            m_CursorElement = null;
+            m_CursorBlink?.Pause();
+
+            if (m_ShowCursor && m_Atlas != null)
             {
                 AppendCursor();
             }
         }
 
         /// <summary>
-        /// Adds a single atlas glyph VisualElement for the given character code.
-        /// </summary>
-        void AddGlyph(int asciiCode, Color color, float bgW, float bgH)
-        {
-            int col = asciiCode % k_AtlasColumns;
-            int row = asciiCode / k_AtlasColumns;
-
-            VisualElement glyph = new();
-            glyph.style.width = m_CharWidth;
-            glyph.style.height = m_CharHeight;
-            glyph.style.marginBottom = 0;
-            glyph.style.paddingBottom = 0;
-            glyph.style.flexShrink = 0;
-            glyph.style.backgroundImage = new StyleBackground(m_Atlas);
-            glyph.style.backgroundRepeat = new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat);
-            glyph.style.backgroundPositionX = new BackgroundPosition(BackgroundPositionKeyword.Left, new Length(-col * m_CharWidth, LengthUnit.Pixel));
-            glyph.style.backgroundPositionY = new BackgroundPosition(BackgroundPositionKeyword.Top, new Length(-row * m_CharHeight, LengthUnit.Pixel));
-            glyph.style.backgroundSize = new BackgroundSize(new Length(bgW, LengthUnit.Pixel), new Length(bgH, LengthUnit.Pixel));
-            glyph.style.unityBackgroundImageTintColor = new StyleColor(color);
-            Add(glyph);
-        }
-
-        /// <summary>
-        /// Appends a blinking cursor element at the end of the label.
+        /// Appends a blinking cursor element positioned after the last glyph.
         /// </summary>
         void AppendCursor()
         {
             m_CursorElement = new VisualElement();
+            m_CursorElement.style.position = Position.Absolute;
+            m_CursorElement.style.left = m_Glyphs.Count * m_CharWidth;
+            m_CursorElement.style.top = 0;
             m_CursorElement.style.width = 2;
             m_CursorElement.style.height = m_CharHeight;
-            m_CursorElement.style.flexShrink = 0;
             m_CursorElement.style.backgroundColor = new StyleColor(s_DefaultColor);
-            m_CursorElement.style.marginLeft = 1;
             Add(m_CursorElement);
 
             m_CursorVisible = true;
-            m_CursorBlink?.Pause();
             m_CursorBlink = schedule.Execute(() =>
             {
                 if (m_CursorElement == null) return;

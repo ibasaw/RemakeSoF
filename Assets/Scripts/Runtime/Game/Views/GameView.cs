@@ -26,5 +26,10 @@ namespace Tolik.RemakeSoF.Runtime
 
         [SerializeField]
         MapLoadingView m_MapLoadingView;
+
+        internal ScoreboardView Scoreboard => m_ScoreboardView;
+
+        [SerializeField]
+        ScoreboardView m_ScoreboardView;
     }
 }

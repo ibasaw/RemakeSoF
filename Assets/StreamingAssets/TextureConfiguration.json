@@ -67,5 +67,17 @@
         "background": "ui/console/console",
         "glowline": "ui/console/glowline",
         "glowlineWide": "ui/console/glowline2"
+    },
+    "scoreboard": {
+        "background": "gfx/menus/backdrop/requestor",
+        "titleBar": "gfx/menus/ingame/ingame",
+        "scoreHeader": "gfx/menus/scoreboard/scoreboard",
+        "scorelineHeader": "gfx/menus/scoreboard/scorelineheader",
+        "scoreline": "gfx/menus/scoreboard/scoreline",
+        "scorelineFooter": "gfx/menus/scoreboard/scorelinefooter",
+        "teamRedLogo": "gfx/menus/hud/team_red",
+        "teamBlueLogo": "gfx/menus/hud/team_blue",
+        "deadIcon": "gfx/menus/hud/dead",
+        "bigcharsAtlas": "gfx/2d/bigchars"
     }
 }

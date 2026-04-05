@@ -153,10 +153,45 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             return m_ActiveGametype?.AllowRespawn() ?? true;
         }
 
+        /// <summary>Delegiert Team-Zuweisung an den aktiven Gametype.</summary>
+        public GametypeTeam AssignTeam(int currentRedCount, int currentBlueCount)
+        {
+            if (m_ActiveGametype == null)
+            {
+                return currentRedCount <= currentBlueCount ? GametypeTeam.Red : GametypeTeam.Blue;
+            }
+
+            return m_ActiveGametype.AssignTeam(currentRedCount, currentBlueCount);
+        }
+
+        /// <summary>Gibt die Start-Waffen fuer ein Team zurueck. Null = Default.</summary>
+        public string[] GetStartWeapons(GametypeTeam team)
+        {
+            return m_ActiveGametype?.GetStartWeapons(team);
+        }
+
+        /// <summary>Gibt die aktuelle gametype-spezifische Phase zurueck.</summary>
+        public int GetCurrentPhase()
+        {
+            return m_ActiveGametype?.GetCurrentPhase() ?? 0;
+        }
+
+        /// <summary>Initialisiert den Runden-State mit aktuellen Teamgroessen.</summary>
+        public void InitializeRoundState(int redCount, int blueCount)
+        {
+            m_ActiveGametype?.InitializeRoundState(redCount, blueCount);
+        }
+
         /// <summary>Delegiert Rundenende an den aktiven Gametype.</summary>
         public void OnRoundEnd()
         {
             m_ActiveGametype?.OnRoundEnd();
+        }
+
+        /// <summary>Prueft ob die Team-Anforderungen fuer den Rundenstart erfuellt sind.</summary>
+        public bool AreTeamsReady(int currentRedCount, int currentBlueCount)
+        {
+            return m_ActiveGametype?.AreTeamsReady(currentRedCount, currentBlueCount) ?? true;
         }
     }
 }

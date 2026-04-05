@@ -6,8 +6,10 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+using Tolik.RemakeSoF.Runtime.Game.Networked;
 using Tolik.RemakeSoF.Runtime.CrosshairManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
+using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using Tolik.RemakeSoF.Runtime.SoundManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
 using Tolik.RemakeSoF.Runtime.WeaponManagement;
@@ -17,6 +19,7 @@ namespace Tolik.RemakeSoF.Runtime
     internal class MatchController : Controller<GameApplication>
     {
         MatchView View => App.View.Match;
+        ScoreboardView ScoreboardView => App.View.Scoreboard;
 
         /// <summary>
         /// Intervall in Sekunden zwischen FPS-Updates in der View.
@@ -103,6 +106,12 @@ namespace Tolik.RemakeSoF.Runtime
             App.Model.NetworkedGameState.OnMatchEnded += OnMatchEnded;
             App.Model.NetworkedGameState.OnRoundStarting += OnRoundStarting;
             App.Model.NetworkedGameState.roundStartCountdown.OnValueChanged += OnRoundStartCountdownChanged;
+            App.Model.NetworkedGameState.waitingForPlayers.OnValueChanged += OnWaitingForPlayersChanged;
+            App.Model.NetworkedGameState.warmupCountdown.OnValueChanged += OnWarmupCountdownChanged;
+            App.Model.NetworkedGameState.redTeamScore.OnValueChanged += OnTeamScoreChanged;
+            App.Model.NetworkedGameState.blueTeamScore.OnValueChanged += OnTeamScoreChanged;
+            AddListener<ScoreboardShowEvent>(OnScoreboardShow);
+            AddListener<ScoreboardHideEvent>(OnScoreboardHide);
             View.OnViewEnabled += OnMatchViewEnabled;
             Debug.Log("MatchController Awake: Listeners added to NetworkedGameState events.");
         }
@@ -123,6 +132,12 @@ namespace Tolik.RemakeSoF.Runtime
             App.Model.NetworkedGameState.OnMatchEnded -= OnMatchEnded;
             App.Model.NetworkedGameState.OnRoundStarting -= OnRoundStarting;
             App.Model.NetworkedGameState.roundStartCountdown.OnValueChanged -= OnRoundStartCountdownChanged;
+            App.Model.NetworkedGameState.waitingForPlayers.OnValueChanged -= OnWaitingForPlayersChanged;
+            App.Model.NetworkedGameState.warmupCountdown.OnValueChanged -= OnWarmupCountdownChanged;
+            App.Model.NetworkedGameState.redTeamScore.OnValueChanged -= OnTeamScoreChanged;
+            App.Model.NetworkedGameState.blueTeamScore.OnValueChanged -= OnTeamScoreChanged;
+            RemoveListener<ScoreboardShowEvent>(OnScoreboardShow);
+            RemoveListener<ScoreboardHideEvent>(OnScoreboardHide);
         }
 
         /// <summary>
@@ -143,6 +158,9 @@ namespace Tolik.RemakeSoF.Runtime
             m_CharacterState.OnAltAmmoChanged += OnAltAmmoChanged;
             m_CharacterState.OnWeaponChanged += OnWeaponChangedHud;
             m_CharacterState.OnHealthChanged += OnHealthChanged;
+            m_CharacterState.OnKillsChanged += OnKillsChanged;
+            m_CharacterState.OnDeathsChanged += OnDeathsChanged;
+            m_CharacterState.OnIsAliveChanged += OnIsAliveChanged;
             m_PlayerCharacter.OnWeaponSwapRaiseStarted += OnWeaponSwapRaiseStarted;
             m_PlayerCharacter.OnWeaponSwapTargetChanged += OnWeaponSwapTargetChanged;
             m_PlayerCharacter.OnFireModeChanged += OnFireModeChanged;
@@ -172,6 +190,9 @@ namespace Tolik.RemakeSoF.Runtime
             m_CharacterState.OnAltAmmoChanged -= OnAltAmmoChanged;
             m_CharacterState.OnWeaponChanged -= OnWeaponChangedHud;
             m_CharacterState.OnHealthChanged -= OnHealthChanged;
+            m_CharacterState.OnKillsChanged -= OnKillsChanged;
+            m_CharacterState.OnDeathsChanged -= OnDeathsChanged;
+            m_CharacterState.OnIsAliveChanged -= OnIsAliveChanged;
 
             if (m_PlayerCharacter != null)
             {
@@ -197,7 +218,8 @@ namespace Tolik.RemakeSoF.Runtime
 
         void OnPlayersConnectedChanged(int previousValue, int newValue)
         {
-            View.OnPlayersConnectedChanged(newValue);
+            int maxPlayers = App.Model.NetworkedGameState.MaxPlayers > 0 ? App.Model.NetworkedGameState.MaxPlayers : 16;
+            View.OnPlayersConnectedChanged(newValue, maxPlayers);
         }
 
         void OnMatchEnded()
@@ -232,6 +254,52 @@ namespace Tolik.RemakeSoF.Runtime
                 View.ShowRoundStartCountdown(newValue);
                 PlayUiSound(k_CountdownBeepSound);
             }
+        }
+
+        /// <summary>
+        /// Zeigt oder versteckt die "Waiting for players..." Meldung.
+        /// </summary>
+        void OnWaitingForPlayersChanged(bool previousValue, bool newValue)
+        {
+            if (newValue)
+            {
+                View.ShowWaitingMessage("Waiting for more Players to start round...");
+            }
+            else
+            {
+                View.HideWaitingMessage();
+            }
+        }
+
+        /// <summary>
+        /// Zeigt den Warmup-Countdown ("Round starts in X...") oder versteckt die Meldung.
+        /// </summary>
+        void OnWarmupCountdownChanged(uint previousValue, uint newValue)
+        {
+            if (newValue > 0)
+            {
+                View.ShowWaitingMessage($"Round starts in {newValue}...");
+            }
+            else
+            {
+                View.HideWaitingMessage();
+            }
+        }
+
+        /// <summary>
+        /// Zeigt das Scoreboard an (Tab-Taste gedrueckt).
+        /// </summary>
+        void OnScoreboardShow(ScoreboardShowEvent evt)
+        {
+            ScoreboardView?.ShowScoreboard();
+        }
+
+        /// <summary>
+        /// Versteckt das Scoreboard (Tab-Taste losgelassen).
+        /// </summary>
+        void OnScoreboardHide(ScoreboardHideEvent evt)
+        {
+            ScoreboardView?.HideScoreboard();
         }
 
         void OnMatchStarted()
@@ -311,6 +379,9 @@ namespace Tolik.RemakeSoF.Runtime
             // Crosshair aus Default-Definition aufbauen.
             InitializeCrosshair();
 
+            // Team-Logo-Texturen laden und auf HUD anwenden.
+            LoadTeamLogoTextures();
+
             // Falls CharacterState noch nicht verfuegbar, jetzt versuchen.
             if (m_CharacterState == null && App.Model.PlayerCharacter != null)
             {
@@ -318,6 +389,80 @@ namespace Tolik.RemakeSoF.Runtime
             }
 
             TryInitializeHudFromCurrentState();
+
+            // Waiting/Warmup-Status aus aktuellem NetworkVariable-Wert initialisieren,
+            // da OnValueChanged nicht fuer den initialen Wert feuert.
+            InitializeWaitingState();
+
+            // PlayersConnected aus aktuellem NetworkVariable-Wert initialisieren.
+            int maxPlayers = App.Model.NetworkedGameState.MaxPlayers > 0 ? App.Model.NetworkedGameState.MaxPlayers : 16;
+            View.OnPlayersConnectedChanged(App.Model.PlayersConnected.Value, maxPlayers);
+        }
+
+        /// <summary>
+        /// Laedt die Team-Logo-Texturen und wendet sie auf die HUD-Score-Icons an.
+        /// </summary>
+        private void LoadTeamLogoTextures()
+        {
+            TextureManager textureManager = ServiceLocator.Get<TextureManager>();
+            if (textureManager == null)
+            {
+                return;
+            }
+
+            TextureConfiguration.ScoreboardTextures config = textureManager.Configuration?.scoreboard;
+            if (config == null)
+            {
+                return;
+            }
+
+            Texture2D redLogo = null;
+            Texture2D blueLogo = null;
+
+            if (!string.IsNullOrEmpty(config.teamRedLogo))
+            {
+                TextureData redData = textureManager.GetTextureData(config.teamRedLogo);
+                if (redData?.Texture != null)
+                {
+                    redLogo = redData.Texture;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(config.teamBlueLogo))
+            {
+                TextureData blueData = textureManager.GetTextureData(config.teamBlueLogo);
+                if (blueData?.Texture != null)
+                {
+                    blueLogo = blueData.Texture;
+                }
+            }
+
+            View.ApplyTeamLogoTextures(redLogo, blueLogo);
+        }
+
+        /// <summary>
+        /// Initialisiert die Waiting/Warmup-Anzeige aus den aktuellen NetworkVariable-Werten.
+        /// Behebt Race-Condition wenn Server den Wert setzt bevor der Client subscribed.
+        /// </summary>
+        private void InitializeWaitingState()
+        {
+            NetworkedGameState gameState = App.Model.NetworkedGameState;
+
+            uint warmup = gameState.warmupCountdown.Value;
+            if (warmup > 0)
+            {
+                View.ShowWaitingMessage($"Round starts in {warmup}...");
+                return;
+            }
+
+            bool waiting = gameState.waitingForPlayers.Value;
+            if (waiting)
+            {
+                View.ShowWaitingMessage("Waiting for more Players to start round...");
+                return;
+            }
+
+            View.HideWaitingMessage();
         }
 
         /// <summary>
@@ -339,6 +484,17 @@ namespace Tolik.RemakeSoF.Runtime
             }
 
             OnHealthChanged(m_CharacterState.Health);
+
+            // Team-Anzeige initialisieren
+            GametypeTeam team = (GametypeTeam)m_CharacterState.TeamId;
+            View.SetYourTeam(team);
+
+            // Kills/Deaths/Status initialisieren
+            View.UpdatePlayerStats(m_CharacterState.Kills, m_CharacterState.Deaths);
+            View.UpdatePlayerStatus(m_CharacterState.IsAlive);
+
+            // Team-Score initialisieren
+            UpdateTeamScoreDisplay();
         }
 
         /// <summary>
@@ -599,6 +755,58 @@ namespace Tolik.RemakeSoF.Runtime
         private void OnHealthChanged(int health)
         {
             View.UpdateHealthHud(health);
+        }
+
+        /// <summary>
+        /// Callback wenn sich Kills aendern.
+        /// </summary>
+        private void OnKillsChanged(int kills)
+        {
+            if (m_CharacterState != null)
+            {
+                View.UpdatePlayerStats(kills, m_CharacterState.Deaths);
+            }
+        }
+
+        /// <summary>
+        /// Callback wenn sich Deaths aendern.
+        /// </summary>
+        private void OnDeathsChanged(int deaths)
+        {
+            if (m_CharacterState != null)
+            {
+                View.UpdatePlayerStats(m_CharacterState.Kills, deaths);
+            }
+        }
+
+        /// <summary>
+        /// Callback wenn sich der Alive-Status aendert.
+        /// </summary>
+        private void OnIsAliveChanged(bool isAlive)
+        {
+            View.UpdatePlayerStatus(isAlive);
+        }
+
+        /// <summary>
+        /// Callback wenn sich ein Team-Score aendert.
+        /// </summary>
+        private void OnTeamScoreChanged(int oldValue, int newValue)
+        {
+            UpdateTeamScoreDisplay();
+        }
+
+        /// <summary>
+        /// Aktualisiert die Team-Score-Anzeige basierend auf dem eigenen Team.
+        /// </summary>
+        private void UpdateTeamScoreDisplay()
+        {
+            NetworkedGameState gameState = App.Model.NetworkedGameState;
+            if (gameState == null)
+            {
+                return;
+            }
+
+            View.UpdateTeamScore(gameState.redTeamScore.Value, gameState.blueTeamScore.Value);
         }
 
         /// <summary>

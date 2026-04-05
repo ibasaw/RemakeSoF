@@ -49,6 +49,12 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// <summary>Rundenbasierter Modus (mit Restart-Logik).</summary>
         public bool roundBased;
 
+        /// <summary>Anzeigename fuer Team 1 / Rot (z.B. "Hider").</summary>
+        public string team1Name;
+
+        /// <summary>Anzeigename fuer Team 2 / Blau (z.B. "Seeker").</summary>
+        public string team2Name;
+
         /// <summary>
         /// Parsed den respawnType-String in ein RespawnType-Enum.
         /// </summary>

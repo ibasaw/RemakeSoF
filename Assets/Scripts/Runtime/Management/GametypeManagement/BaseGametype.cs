@@ -86,9 +86,42 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         }
 
         /// <inheritdoc />
+        public virtual GametypeTeam AssignTeam(int currentRedCount, int currentBlueCount)
+        {
+            // Default: Balance-Zuweisung (kleineres Team bevorzugen)
+            return currentRedCount <= currentBlueCount ? GametypeTeam.Red : GametypeTeam.Blue;
+        }
+
+        /// <inheritdoc />
+        public virtual string[] GetStartWeapons(GametypeTeam team)
+        {
+            // Null = Default-Waffenset (alle Waffen) in ServerListeningState verwenden
+            return null;
+        }
+
+        /// <inheritdoc />
+        public virtual int GetCurrentPhase()
+        {
+            return 0;
+        }
+
+        /// <inheritdoc />
+        public virtual void InitializeRoundState(int redCount, int blueCount)
+        {
+            // Default: keine Aktion
+        }
+
+        /// <inheritdoc />
         public virtual void OnRoundEnd()
         {
             Debug.Log($"[{GametypeId}] Runde {CurrentRound} beendet. Score: Rot={RedTeamScore} Blau={BlueTeamScore}");
+        }
+
+        /// <inheritdoc />
+        public virtual bool AreTeamsReady(int currentRedCount, int currentBlueCount)
+        {
+            // Default: Keine Team-Anforderungen, jeder Spieler reicht.
+            return true;
         }
     }
 }

@@ -74,6 +74,8 @@
         "respawnType": "none",
         "pickupsDisabled": true,
         "showKills": false,
-        "roundBased": true
+        "roundBased": true,
+        "team1Name": "Hider",
+        "team2Name": "Seeker"
     }
 ]

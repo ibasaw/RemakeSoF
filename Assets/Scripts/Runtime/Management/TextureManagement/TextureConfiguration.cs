@@ -105,9 +105,25 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             public string glowlineWide;
         }
 
+        [Serializable]
+        public class ScoreboardTextures
+        {
+            public string background;
+            public string titleBar;
+            public string scoreHeader;
+            public string scorelineHeader;
+            public string scoreline;
+            public string scorelineFooter;
+            public string teamRedLogo;
+            public string teamBlueLogo;
+            public string deadIcon;
+            public string bigcharsAtlas;
+        }
+
         public MetagameConfiguration metagame;
         public GameplayConfiguration gameplay;
         public ConsoleTextures console;
+        public ScoreboardTextures scoreboard;
 
         /// <summary>
         /// Lädt die TextureConfiguration aus StreamingAssets/TextureConfiguration.json
@@ -124,6 +140,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             metagame = loadedConfig.metagame;
             gameplay = loadedConfig.gameplay;
             console = loadedConfig.console;
+            scoreboard = loadedConfig.scoreboard;
         }
 
     }

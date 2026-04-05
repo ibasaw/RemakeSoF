@@ -212,6 +212,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ShowScoreboard",
+                    "type": "Button",
+                    "id": "56240e5f-7480-4807-a4f2-f9b00f74f9d7",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -762,6 +771,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "SwitchFireMode",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "062a09ed-46ce-464f-a27e-7ebf3204ea5a",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "ShowScoreboard",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -82,6 +82,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             NetworkVariableWritePermission.Server
         );
 
+        /// <summary>
+        /// Aktueller Ping/RTT in Millisekunden (vom Server gemessen).
+        /// </summary>
+        private NetworkVariable<ushort> m_Ping = new(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
         // ===== Skin / Visual =====
 
         /// <summary>
@@ -181,7 +190,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public int Health => m_Health.Value;
         public uint TeamId => m_TeamId.Value;
         public int Kills => m_Kills.Value;
+
+        /// <summary>
+        /// Server: Aktualisiert den Ping-Wert fuer diesen Client.
+        /// </summary>
+        internal void UpdatePing(ushort pingMs)
+        {
+            m_Ping.Value = pingMs;
+        }
         public int Deaths => m_Deaths.Value;
+        public ushort Ping => m_Ping.Value;
         public string CurrentSkinName => m_CurrentSkinName.Value.ToString();
         public string CurrentWeaponName => m_CurrentWeaponName.Value.ToString();
         public int CurrentClipAmmo => m_CurrentClipAmmo.Value;
@@ -206,6 +224,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Event: Character ist respawned.
         /// </summary>
         public event System.Action OnCharacterRespawned;
+
+        /// <summary>
+        /// Event: Kills haben sich geändert.
+        /// </summary>
+        public event System.Action<int> OnKillsChanged;
+
+        /// <summary>
+        /// Event: Deaths haben sich geändert.
+        /// </summary>
+        public event System.Action<int> OnDeathsChanged;
+
+        /// <summary>
+        /// Event: IsAlive hat sich geändert.
+        /// </summary>
+        public event System.Action<bool> OnIsAliveChanged;
 
         /// <summary>
         /// Event: Character-Name hat sich geändert.
@@ -261,6 +294,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_CharacterName.OnValueChanged += OnCharacterNameValueChanged;
             m_Health.OnValueChanged += OnHealthValueChanged;
             m_IsAlive.OnValueChanged += OnIsAliveValueChanged;
+            m_Kills.OnValueChanged += OnKillsValueChanged;
+            m_Deaths.OnValueChanged += OnDeathsValueChanged;
             m_CurrentSkinName.OnValueChanged += OnSkinNameValueChanged;
             m_CurrentWeaponName.OnValueChanged += OnWeaponNameValueChanged;
             m_CurrentClipAmmo.OnValueChanged += OnClipAmmoValueChanged;
@@ -310,6 +345,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
 
             OnHealthChanged?.Invoke(Health);
+            OnKillsChanged?.Invoke(Kills);
+            OnDeathsChanged?.Invoke(Deaths);
+            OnIsAliveChanged?.Invoke(IsAlive);
         }
 
         public override void OnNetworkDespawn()
@@ -319,6 +357,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_CharacterName.OnValueChanged -= OnCharacterNameValueChanged;
             m_Health.OnValueChanged -= OnHealthValueChanged;
             m_IsAlive.OnValueChanged -= OnIsAliveValueChanged;
+            m_Kills.OnValueChanged -= OnKillsValueChanged;
+            m_Deaths.OnValueChanged -= OnDeathsValueChanged;
             m_CurrentSkinName.OnValueChanged -= OnSkinNameValueChanged;
             m_CurrentWeaponName.OnValueChanged -= OnWeaponNameValueChanged;
             m_CurrentClipAmmo.OnValueChanged -= OnClipAmmoValueChanged;
@@ -490,6 +530,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 #endif
                 OnCharacterRespawned?.Invoke();
             }
+
+            OnIsAliveChanged?.Invoke(newValue);
+        }
+
+        private void OnKillsValueChanged(int oldValue, int newValue)
+        {
+            OnKillsChanged?.Invoke(newValue);
+        }
+
+        private void OnDeathsValueChanged(int oldValue, int newValue)
+        {
+            OnDeathsChanged?.Invoke(newValue);
         }
 
         private void OnSkinNameValueChanged(FixedString128Bytes oldValue, FixedString128Bytes newValue)

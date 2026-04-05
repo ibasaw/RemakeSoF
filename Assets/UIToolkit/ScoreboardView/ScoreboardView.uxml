@@ -1,0 +1,223 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements"
+         editor="UnityEditor.UIElements"
+         noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+         editor-extension-mode="False">
+
+    <!-- Scoreboard: SoF2-Style Team Scoreboard (Redesign with authentic textures) -->
+
+    <ui:VisualElement name="ScoreboardRoot" style="
+        position: absolute;
+        left: 0; top: 0; right: 0; bottom: 0;
+        align-items: center;
+        justify-content: flex-start;
+        display: none;">
+
+        <!-- Scoreboard Container -->
+        <ui:VisualElement name="ScoreboardContainer" style="
+            width: 90%;
+            align-self: center;
+            padding-bottom: 40px;
+            padding-left: 54px;
+            padding-right: 54px;
+            opacity: 0.7;
+            background-color: rgba(20, 22, 18, 0.92);
+            border-left-width: 2px;
+            border-right-width: 2px;
+            border-top-width: 2px;
+            border-bottom-width: 2px;
+            border-left-color: rgba(120, 115, 90, 0.6);
+            border-right-color: rgba(120, 115, 90, 0.6);
+            border-top-color: rgba(140, 135, 105, 0.7);
+            border-bottom-color: rgba(80, 78, 60, 0.5);">
+
+            <!-- Score Header Bar: ingame.png olive/green bar -->
+            <ui:VisualElement name="ScoreHeaderBar">
+                <ui:Label name="scoreHeaderLabel" text="Game Tied at 0" style="
+                    -unity-text-align: upper-center;
+                    font-size: 22px;
+                    color: rgb(255, 255, 255);
+                    -unity-font-style: bold;" />
+            </ui:VisualElement>
+
+            <!-- Sub Header Row: Gametype Name + Game Time -->
+            <ui:VisualElement name="SubHeaderRow" style="
+                flex-direction: row;
+                justify-content: space-between;
+                padding-left: 4px;
+                padding-right: 4px;
+                margin-bottom: 4px;">
+
+                <ui:Label name="gametypeLabel" text="Hide and Seek" style="
+                    font-size: 18px;
+                    padding-left: 32px;
+                    color: rgba(255, 255, 255, 0.85);" />
+
+                <ui:Label name="gameTimeLabel" text="Game Time: 0:00" style="
+                    font-size: 18px;
+                    padding-right: 32px;
+                    color: rgba(255, 255, 255, 0.85);" />
+            </ui:VisualElement>
+
+            <!-- Teams Row -->
+            <ui:VisualElement name="TeamsRow" style="
+                flex-direction: row;
+                justify-content: center;">
+
+                <!-- Red Team Column -->
+                <ui:VisualElement name="RedTeamColumn" style="
+                    width: 50%;
+                    padding-left: 32px;
+                    padding-right: 8px;">
+
+                    <!-- Red Team Header: scoreboard.png + team logo + red accent -->
+                    <ui:VisualElement name="RedTeamHeader" style="
+                        flex-direction: row;
+                        align-items: center;
+                        padding-top: 6px;
+                        padding-bottom: 6px;
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        margin-bottom: 2px;
+                        border-left-width: 3px;
+                        border-left-color: rgb(220, 50, 50);
+                        -unity-background-scale-mode: stretch-to-fill;">
+
+                        <ui:VisualElement name="RedTeamLogo" style="
+                            width: 44px;
+                            height: 44px;
+                            margin-right: 8px;
+                            margin-left: 20px;
+                            -unity-background-scale-mode: scale-to-fit;" />
+
+                        <ui:VisualElement style="flex-grow: 1;">
+                            <ui:VisualElement style="flex-direction: row; justify-content: space-between; align-items: center;">
+                                <ui:Label name="redTeamNameLabel" text="RED TEAM" style="
+                                    font-size: 20px;
+                                    color: rgb(255, 180, 180);
+                                    -unity-font-style: bold;" />
+
+                                <ui:Label name="redTeamScoreLabel" text="0" style="
+                                    font-size: 28px;
+                                    color: rgb(255, 255, 255);
+                                    -unity-font-style: bold;
+                                    padding-right: 12px;" />
+                            </ui:VisualElement>
+
+                            <ui:Label name="redTeamPlayersLabel" text="Players: 0" style="
+                                font-size: 16px;
+                                color: rgba(255, 255, 255, 0.6);
+                                margin-top: 0px;" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Red Team Column Headers: scorelineheader.png dark grid -->
+                    <ui:VisualElement name="RedTeamColumnHeaders" style="
+                        flex-direction: row;
+                        align-items: center;
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        padding-top: 3px;
+                        padding-bottom: 3px;
+                        -unity-background-scale-mode: stretch-to-fill;">
+
+                        <ui:Label text="Name" style="font-size: 18px; color: rgba(255, 255, 255, 0.6); width: 44%; flex-shrink: 0;" />
+                        <ui:Label text="" style="font-size: 18px; color: rgba(255, 255, 255, 0.6); width: 6%; -unity-text-align: upper-center; flex-shrink: 0;" />
+                        <ui:Label text="K" style="font-size: 18px; color: rgba(255, 255, 255, 0.6); width: 14%; -unity-text-align: upper-center; flex-shrink: 0;" />
+                        <ui:Label text="D" style="font-size: 18px; color: rgba(255, 255, 255, 0.6); width: 14%; -unity-text-align: upper-center; flex-shrink: 0;" />
+                        <ui:Label text="Ping" style="font-size: 18px; color: rgba(255, 255, 255, 0.6); width: 16%; -unity-text-align: upper-center; flex-shrink: 0;" />
+                    </ui:VisualElement>
+
+                    <!-- Red Player List (populated dynamically with scoreline.png rows) -->
+                    <ui:VisualElement name="RedPlayersList" style="
+                        flex-grow: 1;
+                        overflow: hidden;" />
+
+                    <!-- Red Team Footer: scorelinefooter.png -->
+                    <ui:VisualElement name="RedTeamFooter" style="
+                        height: 4px;
+                        -unity-background-scale-mode: stretch-to-fill;" />
+                </ui:VisualElement>
+
+                <!-- Blue Team Column -->
+                <ui:VisualElement name="BlueTeamColumn" style="
+                    width: 50%;
+                    padding-right: 32px;
+                    padding-left: 8px;">
+
+                    <!-- Blue Team Header: scoreboard.png + team logo + blue accent -->
+                    <ui:VisualElement name="BlueTeamHeader" style="
+                        flex-direction: row;
+                        align-items: center;
+                        padding-top: 6px;
+                        padding-bottom: 6px;
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        margin-bottom: 2px;
+                        border-right-width: 3px;
+                        border-right-color: rgb(50, 100, 220);
+                        -unity-background-scale-mode: stretch-to-fill;">
+
+                        <ui:VisualElement name="BlueTeamLogo" style="
+                            width: 44px;
+                            height: 44px;
+                            margin-right: 8px;
+                            margin-left: 20px;
+                            -unity-background-scale-mode: scale-to-fit;" />
+
+                        <ui:VisualElement style="flex-grow: 1;">
+                            <ui:VisualElement style="flex-direction: row; justify-content: space-between; align-items: center;">
+                                <ui:Label name="blueTeamNameLabel" text="BLUE TEAM" style="
+                                    font-size: 20px;
+                                    color: rgb(180, 200, 255);
+                                    -unity-font-style: bold;" />
+
+                                <ui:Label name="blueTeamScoreLabel" text="0" style="
+                                    font-size: 28px;
+                                    color: rgb(255, 255, 255);
+                                    -unity-font-style: bold;
+                                    padding-right: 12px;" />
+                            </ui:VisualElement>
+
+                            <ui:Label name="blueTeamPlayersLabel" text="Players: 0" style="
+                                font-size: 16px;
+                                color: rgba(255, 255, 255, 0.6);
+                                margin-top: 0px;" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Blue Team Column Headers: scorelineheader.png dark grid -->
+                    <ui:VisualElement name="BlueTeamColumnHeaders" style="
+                        flex-direction: row;
+                        align-items: center;
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        padding-top: 3px;
+                        padding-bottom: 3px;
+                        -unity-background-scale-mode: stretch-to-fill;">
+
+                        <ui:Label text="Name" style="font-size: 18px; color: rgba(255, 255, 255, 0.6); width: 44%; flex-shrink: 0;" />
+                        <ui:Label text="" style="font-size: 18px; color: rgba(255, 255, 255, 0.6); width: 6%; -unity-text-align: upper-center; flex-shrink: 0;" />
+                        <ui:Label text="K" style="font-size: 18px; color: rgba(255, 255, 255, 0.6); width: 14%; -unity-text-align: upper-center; flex-shrink: 0;" />
+                        <ui:Label text="D" style="font-size: 18px; color: rgba(255, 255, 255, 0.6); width: 14%; -unity-text-align: upper-center; flex-shrink: 0;" />
+                        <ui:Label text="Ping" style="font-size: 18px; color: rgba(255, 255, 255, 0.6); width: 16%; -unity-text-align: upper-center; flex-shrink: 0;" />
+                    </ui:VisualElement>
+
+                    <!-- Blue Player List (populated dynamically with scoreline.png rows) -->
+                    <ui:VisualElement name="BluePlayersList" style="
+                        flex-grow: 1;
+                        overflow: hidden;" />
+
+                    <!-- Blue Team Footer: scorelinefooter.png -->
+                    <ui:VisualElement name="BlueTeamFooter" style="
+                        height: 4px;
+                        -unity-background-scale-mode: stretch-to-fill;" />
+                </ui:VisualElement>
+
+            </ui:VisualElement>
+
+        </ui:VisualElement>
+    </ui:VisualElement>
+
+</ui:UXML>

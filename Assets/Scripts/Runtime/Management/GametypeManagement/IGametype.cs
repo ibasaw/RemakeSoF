@@ -9,9 +9,9 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
     {
         /// <summary>Kein Team / Spectator.</summary>
         None = 0,
-        /// <summary>Team Rot (Verteidiger / Seeker).</summary>
+        /// <summary>Team Rot (Hider).</summary>
         Red = 1,
-        /// <summary>Team Blau (Angreifer / Hider).</summary>
+        /// <summary>Team Blau (Seeker).</summary>
         Blue = 2
     }
 
@@ -88,8 +88,49 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         bool AllowRespawn();
 
         /// <summary>
+        /// Weist einem neuen Spieler ein Team zu basierend auf aktueller Teambalance.
+        /// </summary>
+        /// <param name="currentRedCount">Aktuelle Anzahl Spieler in Team Rot.</param>
+        /// <param name="currentBlueCount">Aktuelle Anzahl Spieler in Team Blau.</param>
+        /// <returns>Das zugewiesene Team.</returns>
+        GametypeTeam AssignTeam(int currentRedCount, int currentBlueCount);
+
+        /// <summary>
+        /// Gibt die Start-Waffen fuer ein Team zurueck.
+        /// Null = Default-Waffenset verwenden (alle Waffen).
+        /// </summary>
+        /// <param name="team">Das Team des Spielers.</param>
+        /// <returns>Array von Waffennamen oder null fuer Default.</returns>
+        string[] GetStartWeapons(GametypeTeam team);
+
+        /// <summary>
+        /// Gibt die aktuelle gametype-spezifische Phase als int zurueck.
+        /// Wird als NetworkVariable an Clients synchronisiert.
+        /// 0 = keine Phase / Standard.
+        /// </summary>
+        int GetCurrentPhase();
+
+        /// <summary>
+        /// Initialisiert den Runden-State mit aktuellen Teamgroessen.
+        /// Wird vor OnRoundStart aufgerufen (z.B. AliveHiderCount setzen).
+        /// </summary>
+        /// <param name="redCount">Anzahl Spieler in Team Rot.</param>
+        /// <param name="blueCount">Anzahl Spieler in Team Blau.</param>
+        void InitializeRoundState(int redCount, int blueCount);
+
+        /// <summary>
         /// Wird beim Rundenende aufgerufen fuer Cleanup.
         /// </summary>
         void OnRoundEnd();
+
+        /// <summary>
+        /// Prueft ob die Team-Anforderungen fuer den Rundenstart erfuellt sind.
+        /// Fuer team-basierte Gametypes (z.B. HideAndSeek): Beide Teams muessen besetzt sein.
+        /// Fuer FFA-Gametypes: Default true.
+        /// </summary>
+        /// <param name="currentRedCount">Aktuelle Anzahl Spieler in Team Rot.</param>
+        /// <param name="currentBlueCount">Aktuelle Anzahl Spieler in Team Blau.</param>
+        /// <returns>True wenn genug Spieler in den benoetigten Teams sind.</returns>
+        bool AreTeamsReady(int currentRedCount, int currentBlueCount);
     }
 }

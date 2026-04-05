@@ -3,6 +3,7 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.Game.Networked;
+using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -46,32 +47,38 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
                 {
                     characterState.SetCharacterName(payload.playerName);
                     characterState.SetCurrentSkinName(payload.skinName);
-                    characterState.AddWeapon("knife");
-                    characterState.AddWeapon("rpg7");
-                    characterState.AddWeapon("ak74");
-                    characterState.AddWeapon("mm1");
-                    characterState.AddWeapon("m4");
-                    characterState.AddWeapon("m590");
-                    characterState.AddWeapon("usas12");
-                    characterState.AddWeapon("msg90a1");
-                    characterState.AddWeapon("m60");
-                    characterState.AddWeapon("m1911a1");
-                    characterState.AddWeapon("f1");
-                    characterState.AddWeapon("ussocom");
-                    characterState.AddWeapon("m67");
-                    characterState.AddWeapon("microuzi");
-                    characterState.AddWeapon("oicw");
-                    characterState.AddWeapon("m3a1");
-                    characterState.AddWeapon("m84");
-                    characterState.AddWeapon("anm14");
-                    characterState.AddWeapon("l2a2");
-                    characterState.AddWeapon("m15");
-                    characterState.AddWeapon("mdn11");
-                    characterState.AddWeapon("smohg92");
-                    characterState.AddWeapon("mp5");
-                    characterState.AddWeapon("silver_talon");
-                    characterState.SetCurrentWeaponName("knife");
-                    Debug.Log($"[ServerListeningState] Set CharacterName='{payload.playerName}', SkinName='{payload.skinName}', Weapon='knife', Inventory=[knife, rpg7] for client {clientId}");
+
+                    // Team-Zuweisung via GametypeManager
+                    GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+                    if (gametypeManager != null)
+                    {
+                        (int redCount, int blueCount) = CountTeams();
+                        GametypeTeam assignedTeam = gametypeManager.AssignTeam(redCount, blueCount);
+                        characterState.SetTeam((uint)assignedTeam);
+
+                        // Gametype-spezifische Waffen
+                        string[] weapons = gametypeManager.GetStartWeapons(assignedTeam);
+                        if (weapons != null)
+                        {
+                            foreach (string weapon in weapons)
+                            {
+                                characterState.AddWeapon(weapon);
+                            }
+                        }
+                        else
+                        {
+                            AssignDefaultWeapons(characterState);
+                        }
+
+                        characterState.SetCurrentWeaponName("knife");
+                        Debug.Log($"[ServerListeningState] Client {clientId}: Name='{payload.playerName}', Skin='{payload.skinName}', Team={assignedTeam}, Weapons={weapons?.Length ?? 24}");
+                    }
+                    else
+                    {
+                        AssignDefaultWeapons(characterState);
+                        characterState.SetCurrentWeaponName("knife");
+                        Debug.Log($"[ServerListeningState] Client {clientId}: Name='{payload.playerName}', Skin='{payload.skinName}', Weapon='knife' (no GametypeManager)");
+                    }
                 }
                 else
                 {
@@ -200,6 +207,67 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
                 ? NetworkedGameState.Singleton.currentMapName.Value.ToString()
                 : "";
             masterService.UpdateServerInfo(playerCount, currentMap);
+        }
+
+        /// <summary>
+        /// Zaehlt die aktuelle Teamverteilung aller verbundenen Spieler.
+        /// </summary>
+        (int redCount, int blueCount) CountTeams()
+        {
+            int red = 0;
+            int blue = 0;
+
+            foreach (ulong cid in Manager.NetworkManager.ConnectedClientsIds)
+            {
+                NetworkObject obj = Manager.NetworkManager.SpawnManager.GetPlayerNetworkObject(cid);
+                if (obj == null || !obj.TryGetComponent(out NetworkedCharacterState state))
+                {
+                    continue;
+                }
+
+                GametypeTeam team = (GametypeTeam)state.TeamId;
+                if (team == GametypeTeam.Red)
+                {
+                    red++;
+                }
+                else if (team == GametypeTeam.Blue)
+                {
+                    blue++;
+                }
+            }
+
+            return (red, blue);
+        }
+
+        /// <summary>
+        /// Weist das Standard-Waffenset (alle Waffen) zu. Fallback wenn kein Gametype aktiv.
+        /// </summary>
+        static void AssignDefaultWeapons(NetworkedCharacterState characterState)
+        {
+            characterState.AddWeapon("knife");
+            characterState.AddWeapon("rpg7");
+            characterState.AddWeapon("ak74");
+            characterState.AddWeapon("mm1");
+            characterState.AddWeapon("m4");
+            characterState.AddWeapon("m590");
+            characterState.AddWeapon("usas12");
+            characterState.AddWeapon("msg90a1");
+            characterState.AddWeapon("m60");
+            characterState.AddWeapon("m1911a1");
+            characterState.AddWeapon("f1");
+            characterState.AddWeapon("ussocom");
+            characterState.AddWeapon("m67");
+            characterState.AddWeapon("microuzi");
+            characterState.AddWeapon("oicw");
+            characterState.AddWeapon("m3a1");
+            characterState.AddWeapon("m84");
+            characterState.AddWeapon("anm14");
+            characterState.AddWeapon("l2a2");
+            characterState.AddWeapon("m15");
+            characterState.AddWeapon("mdn11");
+            characterState.AddWeapon("smohg92");
+            characterState.AddWeapon("mp5");
+            characterState.AddWeapon("silver_talon");
         }
     }
 }

@@ -48,6 +48,9 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         /// <summary>Anzahl lebender Hider in der aktuellen Runde.</summary>
         public int AliveHiderCount { get; internal set; }
 
+        /// <summary>Konfigurierte Seeker-Anzahl.</summary>
+        int SeekerCount => ServerConfig.hideandseek_seekercount > 0 ? ServerConfig.hideandseek_seekercount : 1;
+
         /// <summary>Konfigurierte Versteckzeit.</summary>
         int HideTime => ServerConfig.hideandseek_hidetime > 0 ? ServerConfig.hideandseek_hidetime : 30;
 
@@ -123,8 +126,8 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
                 return GametypeEventResult.None;
             }
 
-            // Nur Hider (Blue) Tode zaehlen
-            if (victimTeam != GametypeTeam.Blue)
+            // Nur Hider (Red) Tode zaehlen
+            if (victimTeam != GametypeTeam.Red)
             {
                 return GametypeEventResult.None;
             }
@@ -143,7 +146,7 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             // Alle Hider gefunden → Seeker gewinnen
             if (AliveHiderCount <= 0)
             {
-                result.RedTeamScoreDelta = 1;
+                result.BlueTeamScoreDelta = 1;
                 result.RestartRound = true;
                 result.RestartDelaySeconds = 5f;
                 result.BroadcastMessage = "Alle Hider gefunden! Seeker gewinnen die Runde!";
@@ -163,12 +166,12 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             }
 
             // Hider-Team komplett eliminiert → Seeker gewinnen
-            if (eliminatedTeam == GametypeTeam.Blue)
+            if (eliminatedTeam == GametypeTeam.Red)
             {
                 CurrentPhase = HideAndSeekPhase.RoundOver;
                 return new GametypeEventResult
                 {
-                    RedTeamScoreDelta = 1,
+                    BlueTeamScoreDelta = 1,
                     RestartRound = true,
                     RestartDelaySeconds = 5f,
                     BroadcastMessage = "Alle Hider eliminiert! Seeker gewinnen!"
@@ -190,7 +193,7 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             CurrentPhase = HideAndSeekPhase.RoundOver;
             return new GametypeEventResult
             {
-                BlueTeamScoreDelta = 1,
+                RedTeamScoreDelta = 1,
                 RestartRound = true,
                 RestartDelaySeconds = 5f,
                 BroadcastMessage = "Zeit abgelaufen! Hider gewinnen die Runde!"
@@ -249,6 +252,45 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         public bool SeekersHaveWeapons()
         {
             return ServerConfig.hideandseek_seekerweapons;
+        }
+
+        /// <inheritdoc />
+        public override GametypeTeam AssignTeam(int currentRedCount, int currentBlueCount)
+        {
+            // Seeker (Blau) zuerst bis SeekerCount erreicht, dann Hider (Rot)
+            if (currentBlueCount < SeekerCount)
+            {
+                return GametypeTeam.Blue;
+            }
+
+            return GametypeTeam.Red;
+        }
+
+        /// <inheritdoc />
+        public override string[] GetStartWeapons(GametypeTeam team)
+        {
+            // Alle Spieler starten nur mit Knife
+            return new[] { "knife" };
+        }
+
+        /// <inheritdoc />
+        public override int GetCurrentPhase()
+        {
+            return (int)CurrentPhase;
+        }
+
+        /// <inheritdoc />
+        public override void InitializeRoundState(int redCount, int blueCount)
+        {
+            AliveHiderCount = redCount;
+            Debug.Log($"[HideAndSeek] InitializeRoundState: {blueCount} Seeker, {redCount} Hider (AliveHiderCount={AliveHiderCount})");
+        }
+
+        /// <inheritdoc />
+        public override bool AreTeamsReady(int currentRedCount, int currentBlueCount)
+        {
+            // HideAndSeek benoetigt mindestens 1 Seeker (Blau) UND 1 Hider (Rot)
+            return currentBlueCount >= 1 && currentRedCount >= 1;
         }
     }
 }

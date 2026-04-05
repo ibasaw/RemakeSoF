@@ -1,5 +1,6 @@
 using System;
 using Tolik.RemakeSoF.Runtime.CrosshairManagement;
+using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -12,6 +13,13 @@ namespace Tolik.RemakeSoF.Runtime
         UIDocument m_UIDocument;
         Label m_TimerLabel;
         Label m_PlayersConnectedLabel;
+        Label m_YourTeamLabel;
+        Label m_PlayerStatsLabel;
+        Label m_PlayerStatusLabel;
+        Label m_HudRedTeamScoreLabel;
+        Label m_HudBlueTeamScoreLabel;
+        VisualElement m_HudRedTeamLogo;
+        VisualElement m_HudBlueTeamLogo;
         Label m_FpsLabel;
 
         // Debug HUD Container
@@ -65,6 +73,9 @@ namespace Tolik.RemakeSoF.Runtime
         // Round Start Countdown
         Label m_RoundStartLabel;
 
+        // Waiting / Warmup Label
+        Label m_WaitingLabel;
+
         // Hit Confirmation HUD
         VisualElement m_HitConfirmContainer;
         Label m_HitRegionLabel;
@@ -96,6 +107,13 @@ namespace Tolik.RemakeSoF.Runtime
             VisualElement root = m_UIDocument.rootVisualElement;
             m_TimerLabel = root.Query<Label>("timerLabel");
             m_PlayersConnectedLabel = root.Query<Label>("playersConnectedLabel");
+            m_YourTeamLabel = root.Query<Label>("yourTeamLabel");
+            m_PlayerStatsLabel = root.Query<Label>("playerStatsLabel");
+            m_PlayerStatusLabel = root.Query<Label>("playerStatusLabel");
+            m_HudRedTeamScoreLabel = root.Query<Label>("hudRedTeamScoreLabel");
+            m_HudBlueTeamScoreLabel = root.Query<Label>("hudBlueTeamScoreLabel");
+            m_HudRedTeamLogo = root.Query<VisualElement>("hudRedTeamLogo");
+            m_HudBlueTeamLogo = root.Query<VisualElement>("hudBlueTeamLogo");
             m_FpsLabel = root.Query<Label>("fpsLabel");
 
             // Debug HUD
@@ -147,6 +165,9 @@ namespace Tolik.RemakeSoF.Runtime
             // Round Start Countdown
             m_RoundStartLabel = root.Query<Label>("roundStartLabel");
 
+            // Waiting / Warmup Label
+            m_WaitingLabel = root.Query<Label>("waitingLabel");
+
             // Hit Confirmation HUD
             m_HitConfirmContainer = root.Query<VisualElement>("HitConfirmContainer");
             m_HitRegionLabel = root.Query<Label>("hitRegionLabel");
@@ -167,9 +188,100 @@ namespace Tolik.RemakeSoF.Runtime
             m_TimerLabel.text = string.Format("{0:D2}:{1:D2}", newValue / 60, newValue % 60);
         }
 
-        internal void OnPlayersConnectedChanged(int newValue)
+        internal void OnPlayersConnectedChanged(int newValue, int maxPlayers)
         {
-            m_PlayersConnectedLabel.text = $"Players connected: {newValue}";
+            m_PlayersConnectedLabel.text = $"Connected: {newValue}/{maxPlayers}";
+        }
+
+        /// <summary>
+        /// Setzt die Team-Anzeige des lokalen Spielers in der HUD.
+        /// </summary>
+        internal void SetYourTeam(GametypeTeam team)
+        {
+            if (m_YourTeamLabel == null)
+            {
+                return;
+            }
+
+            if (team == GametypeTeam.Red)
+            {
+                m_YourTeamLabel.text = "Your Team: RED";
+                m_YourTeamLabel.style.color = new Color(1f, 0.4f, 0.4f, 1f);
+            }
+            else if (team == GametypeTeam.Blue)
+            {
+                m_YourTeamLabel.text = "Your Team: BLUE";
+                m_YourTeamLabel.style.color = new Color(0.4f, 0.6f, 1f, 1f);
+            }
+            else
+            {
+                m_YourTeamLabel.text = "";
+            }
+        }
+
+        /// <summary>
+        /// Aktualisiert die Kills/Deaths-Anzeige des lokalen Spielers.
+        /// </summary>
+        internal void UpdatePlayerStats(int kills, int deaths)
+        {
+            if (m_PlayerStatsLabel != null)
+            {
+                m_PlayerStatsLabel.text = $"K: {kills}  D: {deaths}";
+            }
+        }
+
+        /// <summary>
+        /// Aktualisiert den Status (Alive/Dead) des lokalen Spielers.
+        /// </summary>
+        internal void UpdatePlayerStatus(bool isAlive)
+        {
+            if (m_PlayerStatusLabel == null)
+            {
+                return;
+            }
+
+            if (isAlive)
+            {
+                m_PlayerStatusLabel.text = "ALIVE";
+                m_PlayerStatusLabel.style.color = new Color(0.4f, 1f, 0.4f, 1f);
+            }
+            else
+            {
+                m_PlayerStatusLabel.text = "DEAD";
+                m_PlayerStatusLabel.style.color = new Color(1f, 0.3f, 0.3f, 1f);
+            }
+        }
+
+        /// <summary>
+        /// Aktualisiert die Team-Score-Anzeige mit separaten Team-Scores.
+        /// </summary>
+        internal void UpdateTeamScore(int redScore, int blueScore)
+        {
+            if (m_HudRedTeamScoreLabel != null)
+            {
+                m_HudRedTeamScoreLabel.text = redScore.ToString();
+            }
+
+            if (m_HudBlueTeamScoreLabel != null)
+            {
+                m_HudBlueTeamScoreLabel.text = blueScore.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Wendet die Team-Logo-Texturen auf die HUD-Score-Icons an.
+        /// </summary>
+        internal void ApplyTeamLogoTextures(Texture2D redLogo, Texture2D blueLogo)
+        {
+            if (m_HudRedTeamLogo != null && redLogo != null)
+            {
+                m_HudRedTeamLogo.style.backgroundImage = new StyleBackground(redLogo);
+            }
+
+            if (m_HudBlueTeamLogo != null && blueLogo != null)
+            {
+                m_HudBlueTeamLogo.style.backgroundImage = new StyleBackground(blueLogo);
+            }
         }
 
         internal void OnFpsChanged(float newValue)
@@ -408,6 +520,23 @@ namespace Tolik.RemakeSoF.Runtime
         internal void HideRoundStartCountdown()
         {
             m_RoundStartLabel.style.display = DisplayStyle.None;
+        }
+
+        /// <summary>
+        /// Zeigt die Warte-/Warmup-Meldung als zentriertes Overlay an.
+        /// </summary>
+        internal void ShowWaitingMessage(string message)
+        {
+            m_WaitingLabel.text = message;
+            m_WaitingLabel.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// Versteckt die Warte-/Warmup-Meldung.
+        /// </summary>
+        internal void HideWaitingMessage()
+        {
+            m_WaitingLabel.style.display = DisplayStyle.None;
         }
 
         /// <summary>
