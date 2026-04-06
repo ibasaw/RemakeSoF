@@ -407,3 +407,143 @@ Server-Raycast → BoxCollider Hit
                     └── Optional: Hit-Position → Kopf-Subzone
                                    für detailliertes Head-Gore
 ```
+
+---
+
+## 8. Gore-Decal-System (PGoreWeaponDispatch + PGoreDecalApplier)
+
+### 8.1 Überblick
+
+Zusätzlich zum Dismemberment-System (Extremitäten abtrennen) gibt es ein **Decal-basiertes Gore-System**,
+das Blut-/Wund-Texturen direkt auf den Charakter projiziert. Dieses System arbeitet **unabhängig** vom
+Dismemberment und wird bei **jedem Treffer** ausgelöst (nicht nur bei Tod/Abtrennung).
+
+```
+Server: Waffen-Treffer erkannt
+  └─ PGoreWeaponDispatch.CreateGoreEntries(weaponId, isAlt, hitLocation, hitDirection)
+       └─ List<PGoreData> (1-5 Einträge je nach Waffe + GoreDetailLevel)
+            └─ Per ClientRpc an alle Clients gesendet
+                 └─ PGoreDecalApplier.ApplyGoreDecals(entries, characterRoot)
+                      └─ Für jeden Eintrag: Quad-Decal am nächsten Bone
+```
+
+### 8.2 PGoreWeaponDispatch
+
+**Datei**: `Assets/Scripts/Runtime/Management/GoreManagement/PGoreWeaponDispatch.cs`
+
+Erzeugt waffen-spezifische Gore-Decal-Listen basierend auf Waffentyp und Trefferpunkt.
+
+**Konstanten**:
+
+| Konstante | Wert | Beschreibung |
+|-----------|------|-------------|
+| `SOF2_UNIT_SCALE` | 0.0254 | SoF2 Units → Unity Meter |
+| `DEFAULT_GROW_DURATION` | 15000 ms | Blutlachen-Wachstumsdauer |
+| `DEFAULT_GROW_START_FRACTION` | 0.1 (10%) | Startgröße beim Wachsen |
+
+**GoreDetailLevel** (statische Property):
+
+| Level | Beschreibung |
+|-------|-------------|
+| 0 | Nur Hauptwunde (minimales Gore) |
+| 1 | + wachsende Blutlache (Standard) |
+| 2 | + Pellet-Markierungen (Schrotflinten-Detail) |
+
+**Haupt-Methode**:
+```csharp
+public static List<PGoreData> CreateGoreEntries(
+    string weaponId,        // Waffen-ID (z.B. "m4", "knife", "m590")
+    bool isAltAttack,       // Alt-Fire Modus
+    Vector3 hitLocation,    // Trefferpunkt (World-Space)
+    Vector3 hitDirection    // Schussrichtung
+)
+```
+
+**Unterstützte Waffen** (20+):
+
+| Kategorie | Waffen | Gore-Typ |
+|-----------|--------|----------|
+| Messer | knife | Punktur + 3 Slashes + Soak |
+| Pistolen | m1911a1, silvertalon, ussocom | Kleines Einschussloch + Soak |
+| SMGs | microuzi | Kleines Einschussloch + Soak |
+| Gewehre | m3a1, mp5, sig551, m4, ak74 | Mittleres Einschussloch + Soak |
+| Schrotflinten | m590, usas12 | Mehrere Pellet-Markierungen + großer Soak |
+| Großkaliber | msg90a1, m60 | Großes Einschussloch + großer Soak |
+| Explosiv | mm1, rpg7, smohg92, f1, m67, l2a2 | Großer Blast-Gore |
+| Stun/Blend | m84, m15 | Minimaler Gore / kein Gore |
+| Brand | anm14 | Brand-Gore |
+| Sonstige | mdn11, default | Mittlerer Standard-Gore |
+
+**Interne Helfer-Methoden**:
+
+| Methode | Beschreibung |
+|---------|-------------|
+| `AddBulletGore()` | Einschussloch + wachsende Blutlache (bei Level ≥ 1) |
+| `AddShotgunGore()` | Mehrere Pellet-Markierungen (bei Level ≥ 2) |
+| `AddGore()` | Einfacher Gore-Eintrag (Typ + Größe + Position + Richtung) |
+| `AddGrowGore()` | Wachsender Gore-Eintrag (Blutlache, animierte Größe) |
+| `AddSlashGore()` | Schnittwunde mit Winkel + S/T-Größe (Messer) |
+| `AddSlashGrowGore()` | Wachsende Schnittwunde |
+| `AddTimedGore()` | Zeitlich begrenzter Gore-Eintrag (verschwindet nach Lifetime) |
+
+### 8.3 PGoreDecalApplier
+
+**Datei**: `Assets/Scripts/Runtime/Management/GoreManagement/PGoreDecalApplier.cs`
+
+Wendet die von `PGoreWeaponDispatch` erzeugten `PGoreData`-Einträge als visuelle Decals
+auf dem Charakter-Modell an.
+
+**Konstanten**:
+
+| Konstante | Wert | Beschreibung |
+|-----------|------|-------------|
+| `DECAL_SURFACE_OFFSET` | 0.002 m | Z-Fighting-Prävention |
+| `DEFAULT_LIFETIME_SECONDS` | 120 s | Standard-Decal-Lebensdauer |
+| `SOF2_DECAL_SHADER` | `"SoF2/Decal"` | Primärer Custom-Shader |
+| `FALLBACK_SHADER` | `"SoF2/EffectParticle"` | Fallback-Shader #1 |
+| `URP_FALLBACK_SHADER` | `"Universal Render Pipeline/Particles/Unlit"` | URP-Fallback |
+
+**Methoden**:
+
+| Methode | Beschreibung |
+|---------|-------------|
+| `ApplyGoreDecals(List<PGoreData>, GameObject)` | Wendet Gore-Decal-Liste auf Character an |
+| `SpawnGoreDecal(PGoreData, GameObject, Transform[])` | Einzelnes Decal: nächsten Bone finden, Quad erstellen, Material konfigurieren, Growth-Behaviour + Lifetime setzen |
+| `FindNearestBone(Vector3, Transform[])` | Findet nächsten Bone per Squared-Magnitude |
+| `GetOrCreateMaterial(string)` | Material-Cache mit Shader-Fallback-Kette |
+| `ClearCache()` | Zerstört gecachte Materialien |
+
+**Decal-Mechanik**:
+- Jedes Gore-Decal ist ein **Quad** (wie Footstep-Decals, aber an Bones statt am Boden)
+- Quad wird am **nächsten Bone** des Charakters positioniert (via `FindNearestBone`)
+- Wachsende Decals (Blutlachen) skalieren über `growDuration` von `startFraction` auf volle Größe
+- Material-Cache verhindert redundante Material-Erstellung
+- Default Lifetime: 120s (quasi-permanent für die Dauer eines Spiels)
+
+### 8.4 PGoreType Enum
+
+23+ Gore-Typen mit je eigener Textur:
+
+| Typ | Beschreibung | Waffen-Bezug |
+|-----|-------------|-------------|
+| Puncture | Stichstelle | Knife |
+| SlashHorizontal | Horizontaler Schnitt | Knife |
+| SlashVertical | Vertikaler Schnitt | Knife |
+| SlashDiagonal | Diagonaler Schnitt | Knife |
+| BulletSmall | Kleines Einschussloch | Pistolen, SMGs |
+| BulletMedium | Mittleres Einschussloch | Gewehre |
+| BulletLarge | Großes Einschussloch | Scharfschützen, MGs |
+| BloodSoak | Blutlache (wachsend) | Alle Kugelwaffen |
+| ShotgunPellet | Schrot-Pellet-Markierung | Schrotflinten |
+| BlastBurn | Explosions-Brandmarkierung | Explosivwaffen |
+| ... | (weitere typenspezifische Texturen) | Diverse |
+
+### 8.5 3-Layer Decal-Architektur (Gesamtübersicht)
+
+Das Spiel verwendet **drei unabhängige Decal-Systeme**:
+
+| Layer | Datei | Ziel | Größe | Lifetime | Beschreibung |
+|-------|-------|------|-------|----------|-------------|
+| **Footstep** | EffectFactory.cs | Boden (World) | 0.22m | 15s | Fußabdrücke auf Oberflächen |
+| **Gore** | PGoreDecalApplier.cs | Charakter (Bones) | variabel | 120s | Blut/Wunden auf Spielern |
+| **Impact** | EffectFactory.cs | Boden/Wand (World) | aus JSON | aus JSON | Einschusslöcher auf Geometry |

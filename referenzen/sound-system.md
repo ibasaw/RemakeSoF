@@ -117,6 +117,36 @@ der Shellsound spielt separat den Klang des Metalls auf dem Boden.
 **SoF2-Referenz**: `PM_CrashLand` + `PM_Footsteps` in `bg_pmove.c` —
 Step-Events pro Animations-Frame, je nach Surface (`groundEntityShaderNum` → Material-Lookup).
 
+#### Footstep-Decals (Fußabdrücke)
+
+Zusätzlich zum Sound spawnt `ClientFootstepHandler` bei jedem Schritt ein visuelles Fußabdruck-Decal
+über `EffectFactory.SpawnFootstepDecal()`:
+
+```csharp
+public void SpawnFootstepDecal(
+    Vector3 position,      // Füße-Position (Raycast-Hit)
+    Vector3 normal,        // Oberflächen-Normale
+    string texturePath,    // SoF2-Textur-Pfad aus SurfaceImpactDataLoader
+    float yawDegrees,      // Laufrichtung (Y-Rotation des Spielers)
+    bool isLeftFoot        // Links/Rechts-Alternierung
+)
+```
+
+| Konstante | Wert | Beschreibung |
+|-----------|------|-------------|
+| `FOOTSTEP_SIZE` | 0.22 m | Quad-Größe (Breite × Höhe) |
+| `FOOTSTEP_ALPHA` | 0.45 | Transparenz (Alpha-Blending) |
+| `FOOTSTEP_LIFETIME` | 15 s | Auto-Destroy nach 15 Sekunden |
+| `SURFACE_OFFSET` | 0.02 m | Z-Fighting-Prävention über Boden |
+
+**Mechanik**:
+- Projected Quad wird an der Oberflächen-Normale ausgerichtet, dann per Yaw in Laufrichtung rotiert
+- Links/Rechts-Alternierung per X-Scale-Spiegelung (`isLeftFoot ? -SIZE : SIZE`)
+- Material: `GetDecalMaterial(texturePath)` → Alpha-Blending, `_BaseColor.a = 0.45`
+- `shadowCastingMode = Off`, `receiveShadows = false`
+
+**Textur-Pfad**: Kommt aus `SoF2_data_per_surface.json` → `footstep.decal` Feld pro Surface-Typ.
+
 ---
 
 ### 4. Landing Sounds (Landung nach Sprung/Fall)

@@ -204,3 +204,94 @@ Waffen-Modelle (WeaponLoader → Shader.Find → Material) auf dem Dedicated Ser
 **Dateien**:
 - `Assets/Scripts/Runtime/Game/Characters/Networked/NetworkedPlayerCharacter.cs`
 - `Assets/Scripts/Runtime/Game/Characters/Client/ClientPlayerCharacter.cs`
+
+---
+
+## Bug #11: Bot zählt nicht als Spieler (Runde startet nicht)
+
+**Symptom**: Mit `sv_minclients=1` und 1 Bot startet die Runde nicht, weil `MinPlayersReached` false bleibt.
+
+**Ursache**: `playersConnected.Value` und `MinPlayersReached` zählten nur `ConnectedClientsIds` (menschliche Spieler). Bots sind server-owned NetworkObjects ohne ClientId.
+
+**Fix**: 
+- `GetTotalPlayerCount()` zählt `ConnectedClientsIds.Count + AIBotSpawner.SpawnedBotCount`
+- `UpdatePlayerCounts()` setzt `playersConnected.Value` und `MinPlayersReached` mit Bot-Counts
+- Alle Event-Handler (`OnClientConnected`, `OnClientDisconnected`, `OnBotsSpawned`) nutzen `UpdatePlayerCounts()`
+
+**Dateien**:
+- `Assets/Scripts/Runtime/Game/Networked/RoundFlowStateMachine.cs`
+
+---
+
+## Bug #12: Bot im falschen Team (gleiche Team wie Spieler)
+
+**Symptom**: Spieler und Bot werden ins gleiche Team eingeteilt. HideAndSeek braucht mindestens 1 pro Team.
+
+**Ursache**: `CountTeams()` in `ServerListeningState.cs` iterierte nur `ConnectedClientsIds`, nicht `AIBotSpawner.SpawnedBots`.
+
+**Fix**: `CountTeams()` erweitert um `AIBotSpawner.SpawnedBots` Iteration via `NetworkedGameState.Singleton?.AIBotSpawner`.
+
+**Dateien**:
+- `Assets/Scripts/Runtime/Management/ConnectionManagement/ConnectionStates/ServerListeningState.cs`
+
+---
+
+## Bug #13: Bot schwebt in der Luft (keine Physik)
+
+**Symptom**: Bot spawnt und schwebt an der Spawn-Position, fällt nicht auf den Boden.
+
+**Ursache**: `ServerAICharacter` hatte keine Physik-Simulation. Nur ein statischer Transform ohne Gravity.
+
+**Fix**: `PlayerPhysicsSimulation` (dieselbe wie für Spieler) zu `ServerAICharacter` hinzugefügt. Simuliert jeden Frame mit leerem `PlayerCommand` (MoveInput=zero → Bot steht still, fällt aber mit Gravity).
+
+**Dateien**:
+- `Assets/Scripts/Runtime/Game/Characters/Server/ServerAICharacter.cs`
+
+---
+
+## Bug #14: Server-Player-Collider hat falsche Dimensionen
+
+**Symptom**: Server-seitige Capsule-Dimensionen (1.8m/0.25m) weichen von Client-seitigen SoF2-Werten (2.2606m/0.381m) ab. Inkonsistente Kollision zwischen Server und Client.
+
+**Ursache**: `ServerPlayerCharacter` hatte eigene Defaults (`k_DefaultCapsuleHeight = 1.8f`, `k_DefaultCapsuleRadius = 0.25f`) die nicht mit `ClientColliderSystem` SoF2-Werten übereinstimmten.
+
+**Fix (2-stufig)**:
+1. Konstanten in `ClientColliderSystem` von `private` auf `internal` geändert
+2. `ServerPlayerCharacter` Defaults entfernt, referenziert jetzt direkt `ClientColliderSystem.k_SoF2StandingHeight` und `ClientColliderSystem.k_SoF2Radius` → **Single Source of Truth**
+
+**Dateien**:
+- `Assets/Scripts/Runtime/Game/Characters/Client/ClientColliderSystem.cs`
+- `Assets/Scripts/Runtime/Game/Characters/Server/ServerPlayerCharacter.cs`
+
+---
+
+## Bug #15: Map-Wechsel statt nächste Runde (Race Condition)
+
+**Symptom**: Nach Rundenende wechselt die Map sofort statt die nächste Runde zu starten, obwohl `hideandseek_roundlimit=5` und erst 1 Runde gespielt.
+
+**Ursache**: Race Condition zwischen zwei Timern in `RoundFlowRunningState`:
+1. `OnRunFrame` → `OnPhaseTimeExpired()` setzt `CurrentPhase = RoundOver` (Frame-genau)
+2. `RunCountdown` → `OnTimeExpired()` sieht `RoundOver` → gab `GametypeEventResult.None` zurück
+3. `result.RestartRound == false` → Fallthrough zu `SwitchingMapState`
+
+**Fix**: `OnTimeExpired()` gibt jetzt immer `RestartRound = true` zurück, auch wenn Phase bereits `RoundOver`.
+
+**Dateien**:
+- `Assets/Scripts/Runtime/Management/GametypeManagement/HideAndSeekGametype.cs`
+
+---
+
+## Bug #16: Hider-Überlebens-Score nicht vergeben (Race Condition)
+
+**Symptom**: Wenn Hider die Runde überleben, bekommen sie keinen +1 Kill und das Hider-Team keinen +1 TeamScore.
+
+**Ursache**: Gleiche Race Condition wie Bug #15. `OnPhaseTimeExpired()` (Seeking) setzte nur `CurrentPhase = RoundOver` ohne Scoring. `OnTimeExpired()` sah `RoundOver` → kein Score.
+
+**Fix**: `m_HidersSurvived` Flag:
+- `OnPhaseTimeExpired()` (Seeking) setzt `m_HidersSurvived = true`
+- `OnTimeExpired()` prüft Flag:
+  - `m_HidersSurvived = true` → Red +1 TeamScore + AwardSurvivalKills
+  - `m_HidersSurvived = false` (Eliminierung) → nur Restart (Score bereits bei OnClientDeath)
+
+**Dateien**:
+- `Assets/Scripts/Runtime/Management/GametypeManagement/HideAndSeekGametype.cs`
