@@ -416,6 +416,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
+        /// Server: Sendet eine Gametype-Nachricht an den Client dieses Spielers.
+        /// Wird von externen Systemen (z.B. Bot-Angriff) aufgerufen.
+        /// </summary>
+        /// <param name="message">Die angezeigte Nachricht.</param>
+        public void SendGametypeMessage(string message)
+        {
+            GametypeMessageClientRpc(message, RpcTarget.Single(OwnerClientId, RpcTargetUse.Temp));
+        }
+
+        /// <summary>
         /// Event: Gametype-Nachricht vom Server empfangen.
         /// Wird nur auf dem Ziel-Client gefeuert.
         /// </summary>

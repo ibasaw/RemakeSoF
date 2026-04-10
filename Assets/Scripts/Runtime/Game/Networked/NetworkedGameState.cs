@@ -1,3 +1,4 @@
+using Tolik.RemakeSoF.Runtime.AI;
 using System;
 using System.Collections;
 using Unity.Collections;
@@ -184,6 +185,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         internal AIBotSpawner AIBotSpawner => m_AIBotSpawner;
 
         /// <summary>
+        /// Server-seitiger GOAP-Setup. Konfiguriert Seeker- und Hider-AgentTypes fuer die AI-Bots.
+        /// </summary>
+        AI.GOAP.AIGoapSetup m_AIGoapSetup;
+
+        /// <summary>
+        /// Oeffentlicher Zugriff auf den AIGoapSetup fuer die RoundFlowStateMachine.
+        /// </summary>
+        internal AI.GOAP.AIGoapSetup AIGoapSetup => m_AIGoapSetup;
+
+        /// <summary>
         /// MapLoader wird auf Server UND Client verwendet.
         /// Server: Braucht SpawnPoints, Kollision, Trigger-Zonen.
         /// Client: Braucht Visuals + Struktur.
@@ -226,6 +237,28 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             }
         }
 
+        /// <summary>
+        /// Stellt sicher, dass das GOAP-System am selben GameObject vorhanden ist (nur Server).
+        /// Erstellt GoapBehaviour + ReactiveControllerBehaviour und registriert Seeker/Hider AgentTypes.
+        /// </summary>
+        void EnsureGoapSetup()
+        {
+            if (m_AIGoapSetup != null)
+            {
+                return;
+            }
+
+            CrashKonijn.Goap.Runtime.GoapBehaviour goapBehaviour = GetComponent<CrashKonijn.Goap.Runtime.GoapBehaviour>();
+            if (goapBehaviour == null)
+            {
+                gameObject.AddComponent<CrashKonijn.Goap.Runtime.ReactiveControllerBehaviour>();
+                goapBehaviour = gameObject.AddComponent<CrashKonijn.Goap.Runtime.GoapBehaviour>();
+            }
+
+            m_AIGoapSetup = new AI.GOAP.AIGoapSetup();
+            m_AIGoapSetup.Initialize(goapBehaviour);
+        }
+
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
@@ -253,6 +286,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 }
 
                 ServerConfiguration config = m_ServerConfigLoader.Configuration;
+
+                // GOAP-System fuer AI-Bots initialisieren (Seeker/Hider AgentTypes)
+                EnsureGoapSetup();
                 string startMap = config.g_mapname;
                 MinPlayers = config.sv_minclients;
                 MaxPlayers = config.sv_maxclients;

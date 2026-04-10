@@ -1,14 +1,19 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Tolik.RemakeSoF.Runtime.AI;
+using Tolik.RemakeSoF.Runtime.AI.GOAP;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.Core;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using Tolik.RemakeSoF.Runtime.Management.MapManagement;
+using Unity.AI.Navigation;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Networked
 {
@@ -73,6 +78,145 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         internal string CurrentStateName => m_CurrentState?.GetType().Name ?? "None";
 
         bool m_Initialized;
+
+        /// <summary>
+        /// Aktiviert GOAP-Ziele fuer gespawnte Bots.
+        /// Fuegt fehlende AgentBehaviour/GoapActionProvider-Komponenten hinzu,
+        /// setzt den AgentType (Seeker/Hider) und fordert das entsprechende Ziel an.
+        /// Optionaler Team-Filter: nur Bots eines bestimmten Teams aktivieren.
+        /// Wird erst in RunningState aufgerufen, damit die GOAP-Planung erst mit Rundenstart beginnt.
+        /// </summary>
+        /// <param name="teamFilter">Wenn gesetzt, werden nur Bots dieses Teams aktiviert.</param>
+        internal void ActivateBotGoals(GametypeTeam? teamFilter = null)
+        {
+            AIGoapSetup goapSetup = GameState.AIGoapSetup;
+            if (goapSetup == null || GameState.AIBotSpawner == null)
+            {
+                return;
+            }
+
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            int activated = 0;
+
+            foreach (NetworkObject bot in GameState.AIBotSpawner.SpawnedBots)
+            {
+                if (bot == null || !bot.IsSpawned)
+                {
+                    continue;
+                }
+
+                NetworkedCharacterState characterState = bot.GetComponent<NetworkedCharacterState>();
+                if (characterState == null)
+                {
+                    continue;
+                }
+
+                bool isSeeker = gametypeManager != null
+                    && characterState.TeamId == (uint)GametypeTeam.Blue;
+
+                // Team-Filter anwenden
+                if (teamFilter.HasValue)
+                {
+                    GametypeTeam botTeam = isSeeker ? GametypeTeam.Blue : GametypeTeam.Red;
+                    if (botTeam != teamFilter.Value)
+                    {
+                        continue;
+                    }
+                }
+
+                Game.Characters.Server.ServerAICharacter serverAI =
+                    bot.GetComponent<Game.Characters.Server.ServerAICharacter>();
+                if (serverAI?.AIController == null)
+                {
+                    continue;
+                }
+
+                // Rolle am Controller setzen
+                serverAI.AIController.SetRole(isSeeker);
+
+                // GOAP-Komponenten hinzufuegen (nur beim ersten Mal)
+                CrashKonijn.Goap.Runtime.GoapActionProvider provider =
+                    bot.GetComponent<CrashKonijn.Goap.Runtime.GoapActionProvider>();
+                if (provider == null)
+                {
+                    // Provider zuerst hinzufuegen, dann AgentBehaviour.
+                    // AgentBehaviour.Awake() ruft Initialize() auf — ActionProviderBase
+                    // muss aber VOR Awake gesetzt sein, was bei AddComponent nicht moeglich
+                    // ist. Deshalb setzen wir ActionProvider direkt nach AddComponent.
+                    provider = bot.gameObject.AddComponent<CrashKonijn.Goap.Runtime.GoapActionProvider>();
+                    CrashKonijn.Agent.Runtime.AgentBehaviour agent =
+                        bot.gameObject.AddComponent<CrashKonijn.Agent.Runtime.AgentBehaviour>();
+
+                    // Bidirektionales Wiring: agent.ActionProvider-Setter setzt auch
+                    // provider.Receiver = agent, was den ValidateSetup()-Check befriedigt.
+                    agent.ActionProvider = provider;
+                }
+
+                // AgentType setzen (kann sich bei Teamwechsel aendern)
+                provider.AgentType = isSeeker ? goapSetup.SeekerAgentType : goapSetup.HiderAgentType;
+
+                // Ziel anfordern — nur das Goal das im jeweiligen AgentType registriert ist
+                if (isSeeker)
+                {
+                    provider.RequestGoal<HuntPlayerGoal>();
+                }
+                else
+                {
+                    provider.RequestGoal<SurviveGoal>();
+                }
+
+                activated++;
+            }
+
+            string filterStr = teamFilter.HasValue ? $" (Filter={teamFilter.Value})" : "";
+            Debug.Log($"[RoundFlow] {activated} Bots GOAP-Ziele aktiviert{filterStr}.");
+        }
+
+        /// <summary>
+        /// Deaktiviert GOAP-Ziele auf allen gespawnten Bots.
+        /// Stoppt die laufende Aktion und loescht das aktuelle Ziel,
+        /// damit Bots zwischen den Runden idle bleiben.
+        /// Setzt ausserdem den Checkpoint-Fortschritt zurueck.
+        /// </summary>
+        internal void DeactivateBotGoals()
+        {
+            if (GameState.AIBotSpawner == null)
+            {
+                return;
+            }
+
+            int deactivated = 0;
+            foreach (NetworkObject bot in GameState.AIBotSpawner.SpawnedBots)
+            {
+                if (bot == null || !bot.IsSpawned)
+                {
+                    continue;
+                }
+
+                CrashKonijn.Goap.Runtime.GoapActionProvider provider =
+                    bot.GetComponent<CrashKonijn.Goap.Runtime.GoapActionProvider>();
+                CrashKonijn.Agent.Runtime.AgentBehaviour agent =
+                    bot.GetComponent<CrashKonijn.Agent.Runtime.AgentBehaviour>();
+
+                if (agent != null)
+                {
+                    agent.StopAction(false);
+                }
+
+                if (provider != null)
+                {
+                    provider.ClearGoal();
+                    deactivated++;
+                }
+
+                // Checkpoint-Fortschritt zuruecksetzen fuer neue Runde
+                Game.Characters.Server.ServerAICharacter serverAI =
+                    bot.GetComponent<Game.Characters.Server.ServerAICharacter>();
+                serverAI?.AIController?.ResetCheckpointProgress();
+            }
+
+            Debug.Log($"[RoundFlow] {deactivated} Bots GOAP-Ziele deaktiviert.");
+        }
 
         /// <summary>
         /// Gibt die Gesamtzahl aller Spieler zurueck (menschliche Clients + AI-Bots).
@@ -397,6 +541,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
 
             GameState.waitingForPlayers.Value = true;
 
+            // Checkpoints aus geladener Map an AIBotController uebergeben (statisch, fuer alle Bots)
+            Vector3[] checkpoints = ExtractCheckpointsFromMap();
+            AIBotController.SetCheckpoints(checkpoints);
+
+            // NavMesh zur Laufzeit baken (Map-Geometrie mit Collidern ist zu diesem Zeitpunkt geladen)
+            BakeRuntimeNavMesh();
+
+            // Checkpoint-Erreichbarkeit auf dem NavMesh validieren
+            AIBotController.ValidateCheckpointsOnNavMesh();
+
             // AI-Bots spawnen (erstmalig) oder respawnen (nach Rundenwechsel)
             if (GameState.AIBotSpawner != null)
             {
@@ -446,6 +600,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         {
             Debug.Log("[RoundFlow] AI-Bots gespawnt — aktualisiere Spielerzahlen und pruefe Match-Start...");
             Manager.UpdatePlayerCounts();
+
             TryStartMatch();
         }
 
@@ -489,6 +644,64 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
             }
 
             Manager.ChangeState(Manager.WarmupState);
+        }
+
+        /// <summary>
+        /// Baked ein NavMesh zur Laufzeit basierend auf der geladenen Map-Geometrie.
+        /// Erstellt ein temporaeres GameObject mit NavMeshSurface, baked, und zerstoert es wieder.
+        /// Das NavMeshData bleibt im Speicher und wird von NavMesh.CalculatePath() genutzt.
+        /// </summary>
+        static void BakeRuntimeNavMesh()
+        {
+            GameObject navMeshGO = new("RuntimeNavMesh");
+            NavMeshSurface surface = navMeshGO.AddComponent<NavMeshSurface>();
+
+            // Alle aktiven Objekte erfassen, Physik-Collider als Quelle nutzen
+            surface.collectObjects = CollectObjects.All;
+            surface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
+
+            surface.BuildNavMesh();
+
+            Debug.Log("[AI·NavMesh] Runtime NavMesh gebaked.");
+        }
+
+        /// <summary>
+        /// Durchsucht die aktive Szene nach GameObjects die als Navigations-Checkpoints dienen.
+        /// Erkennt Objekte anhand des Namens-Praefixes: target_.
+        /// Sortiert alphabetisch nach Name.
+        /// </summary>
+        static Vector3[] ExtractCheckpointsFromMap()
+        {
+            List<(string name, Vector3 position)> entries = new();
+            Transform[] allTransforms = UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+
+            for (int i = 0; i < allTransforms.Length; i++)
+            {
+                string name = allTransforms[i].name;
+                if (name.StartsWith("target_"))
+                {
+                    entries.Add((name, allTransforms[i].position));
+                }
+            }
+
+            if (entries.Count == 0)
+            {
+                Debug.Log("[RoundFlow] 0 Checkpoints aus Map extrahiert.");
+                return null;
+            }
+
+            // Sortierung: alphabetisch nach Name.
+            entries.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.Ordinal));
+
+            Vector3[] sorted = new Vector3[entries.Count];
+            for (int i = 0; i < entries.Count; i++)
+            {
+                sorted[i] = entries[i].position;
+            }
+
+            Debug.Log($"[RoundFlow] {sorted.Length} Checkpoints aus Map extrahiert (target_location_ only). " +
+                      $"Erste: {entries[0].name}, Letzte: {entries[entries.Count - 1].name}");
+            return sorted;
         }
     }
 
@@ -695,6 +908,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 // Seeker (Blue) bleiben gesperrt bis Seeking-Phase beginnt
                 Manager.SetTeamMovementLocked((uint)GametypeTeam.Blue, true);
                 Debug.Log("[RoundFlow] HideAndSeek: Seeker movement locked during Hiding phase");
+
+                // Nur Hider-Bots aktivieren (Seeker-Bots starten erst in Seeking-Phase)
+                Manager.ActivateBotGoals(GametypeTeam.Red);
+            }
+            else
+            {
+                // Kein HideAndSeek oder keine Hiding-Phase: alle Bots sofort aktivieren
+                Manager.ActivateBotGoals();
             }
 
             m_CountdownRoutine = Manager.StartCoroutine(RunCountdown());
@@ -714,6 +935,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                 Manager.StopCoroutine(m_GameLoopRoutine);
                 m_GameLoopRoutine = null;
             }
+
+            // GOAP-Ziele deaktivieren — Bots sollen zwischen den Runden idle sein
+            Manager.DeactivateBotGoals();
 
             // GametypeManager ueber Rundenende informieren
             GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
@@ -766,6 +990,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                         {
                             Manager.SetTeamMovementLocked((uint)GametypeTeam.Blue, false);
                             Debug.Log("[RoundFlow] HideAndSeek: Seeker movement unlocked — Seeking phase");
+
+                            // Seeker-Bots jetzt aktivieren (GOAP-Planung startet erst jetzt)
+                            Manager.ActivateBotGoals(GametypeTeam.Blue);
                         }
 
                         lastPhase = currentPhase;

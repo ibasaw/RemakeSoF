@@ -16,7 +16,12 @@
         "Unity.ResourceManager",
         "Unity.Collections",
         "Unity.Multiplayer.Tools.NetStatsMonitor.Component",
-        "Unity.RenderPipelines.Universal.Runtime"
+        "Unity.RenderPipelines.Universal.Runtime",
+        "CrashKonijn.Goap.Runtime",
+        "CrashKonijn.Goap.Core",
+        "CrashKonijn.Agent.Core",
+        "CrashKonijn.Agent.Runtime",
+        "Unity.AI.Navigation"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

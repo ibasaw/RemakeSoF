@@ -1,3 +1,4 @@
+using Tolik.RemakeSoF.Runtime.AI;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.Game.Networked;
@@ -51,9 +52,87 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
             m_CharacterState.SetHealth(newHealth);
             Debug.Log($"[ServerCharacterController] Character took {damageAmount} damage. Health: {newHealth}");
 
+            // AI-Bot ueber Schaden informieren (fuer Damage-Reaction)
+            NotifyAIBotDamage(damageAmount, attackerId);
+
             if (newHealth <= 0)
             {
                 KillCharacter(attackerId);
+            }
+        }
+
+        /// <summary>
+        /// Server: Schaden anwenden mit direkter Attacker-State-Referenz.
+        /// Fuer AI-Bots die keine eigene ClientId haben (server-owned).
+        /// Kill-Attribution erfolgt direkt ueber den uebergebenen State.
+        /// </summary>
+        /// <param name="damageAmount">Schaden-Menge.</param>
+        /// <param name="attackerState">NetworkedCharacterState des Angreifers (Bot oder Spieler).</param>
+        public void ApplyDamage(int damageAmount, NetworkedCharacterState attackerState)
+        {
+            if (!m_CharacterState.IsAlive)
+            {
+                return;
+            }
+
+            int newHealth = Mathf.Max(0, m_CharacterState.Health - damageAmount);
+            m_CharacterState.SetHealth(newHealth);
+            Debug.Log($"[ServerCharacterController] Character took {damageAmount} damage from '{attackerState?.CharacterName}'. Health: {newHealth}");
+
+            // AI-Bot ueber Schaden informieren (fuer Damage-Reaction)
+            if (attackerState != null)
+            {
+                NotifyAIBotDamage(damageAmount, attackerState.transform.position);
+            }
+
+            if (newHealth <= 0)
+            {
+                KillCharacterByState(attackerState);
+            }
+        }
+
+        /// <summary>
+        /// Benachrichtigt einen AI-Bot wenn er Schaden erhaelt (fuer Damage-Reaction).
+        /// Uebergibt die Angreifer-Position an den AIBotController per NotifyDamageTaken.
+        /// Nur wirksam wenn dieses GameObject einen AIBotController hat.
+        /// </summary>
+        /// <param name="damageAmount">Erlittener Schaden.</param>
+        /// <param name="attackerPosition">Weltposition des Angreifers.</param>
+        private void NotifyAIBotDamage(int damageAmount, Vector3 attackerPosition)
+        {
+            AIBotController botController = GetComponent<AIBotController>();
+            if (botController != null)
+            {
+                botController.NotifyDamageTaken(attackerPosition, damageAmount);
+            }
+        }
+
+        /// <summary>
+        /// Benachrichtigt einen AI-Bot (Angreifer per ClientId aufgeloest).
+        /// Versucht die Angreifer-Position ueber NetworkManager.ConnectedClients zu ermitteln.
+        /// </summary>
+        /// <param name="damageAmount">Erlittener Schaden.</param>
+        /// <param name="attackerId">Client-ID des Angreifers.</param>
+        private void NotifyAIBotDamage(int damageAmount, ulong attackerId)
+        {
+            AIBotController botController = GetComponent<AIBotController>();
+            if (botController == null)
+            {
+                return;
+            }
+
+            // Angreifer-Position ueber NetworkManager ermitteln
+            if (attackerId != ulong.MaxValue
+                && NetworkManager.Singleton != null
+                && NetworkManager.Singleton.ConnectedClients.TryGetValue(attackerId, out NetworkClient client)
+                && client.PlayerObject != null)
+            {
+                botController.NotifyDamageTaken(client.PlayerObject.transform.position, damageAmount);
+            }
+            else
+            {
+                // Fallback: Angreifer-Position unbekannt, Richtung nicht bestimmbar
+                botController.NotifyDamageTaken(transform.position + transform.forward * 5f, damageAmount);
             }
         }
 
@@ -114,6 +193,57 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
             else
             {
                 // Kein GametypeManager → Default-Respawn
+                Invoke(nameof(RespawnCharacter), m_RespawnTime);
+            }
+        }
+
+        /// <summary>
+        /// Server: Character toeten mit direkter Attacker-State-Referenz.
+        /// Fuer AI-Bots die keine eigene ClientId haben.
+        /// Kill-Attribution und Gametype-Integration direkt ueber den State.
+        /// </summary>
+        /// <param name="attackerState">NetworkedCharacterState des Angreifers.</param>
+        private void KillCharacterByState(NetworkedCharacterState attackerState)
+        {
+            m_CharacterState.SetIsAlive(false);
+            m_CharacterState.AddDeath();
+
+            ulong victimClientId = m_CharacterState.OwnerClientId;
+            GametypeTeam victimTeam = (GametypeTeam)m_CharacterState.TeamId;
+            Debug.Log($"[ServerCharacterController] Character {m_CharacterState.CharacterName} died. Killed by '{attackerState?.CharacterName}'");
+
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            if (gametypeManager != null)
+            {
+                GametypeTeam killerTeam = GametypeTeam.None;
+                ulong killerClientId = ulong.MaxValue;
+
+                if (attackerState != null && attackerState != m_CharacterState)
+                {
+                    killerTeam = (GametypeTeam)attackerState.TeamId;
+                    killerClientId = attackerState.OwnerClientId;
+                    attackerState.AddKill();
+                }
+
+                GametypeEventResult result = gametypeManager.OnClientDeath(victimClientId, killerClientId, victimTeam, killerTeam);
+
+                if (NetworkedGameState.Singleton != null)
+                {
+                    NetworkedGameState.Singleton.ApplyGametypeResult(result);
+                }
+
+                if (result.RestartRound && NetworkedGameState.Singleton != null)
+                {
+                    NetworkedGameState.Singleton.RequestRoundRestart(result.RestartDelaySeconds);
+                }
+
+                if (gametypeManager.AllowRespawn())
+                {
+                    Invoke(nameof(RespawnCharacter), m_RespawnTime);
+                }
+            }
+            else
+            {
                 Invoke(nameof(RespawnCharacter), m_RespawnTime);
             }
         }
