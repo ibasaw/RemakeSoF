@@ -16,6 +16,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         private const int k_MaxTextureSlots = 32;
         private const string k_MappedTexturePrefix = "mapped_texture_";
         private const string k_CullPrefix = "cull_";
+        private const string k_TransparentPrefix = "is_transparent_";
         private const string k_ShaderName = "SoF2/MapSurface";
 
         /// <summary>
@@ -41,10 +42,10 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             {
                 if (renderer.TryGetComponent(out Ghoul2Meta meta))
                 {
-                    List<string> textureKeys = CollectTextureKeys(meta);
-                    if (textureKeys.Count > 0)
+                    List<(int slotIndex, string key)> textureSlots = CollectTextureKeys(meta);
+                    if (textureSlots.Count > 0)
                     {
-                        ApplyMaterialsFromGhoul2(renderer, textureKeys, meta, textureManager);
+                        ApplyMaterialsFromGhoul2(renderer, textureSlots, meta, textureManager);
                     }
                 }
             }
@@ -52,10 +53,12 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
         /// <summary>
         /// Sammelt alle Textur-Keys (mapped_texture_0..N) aus den Ghoul2Meta-Properties.
+        /// Gibt Tuples (Original-Slot-Index, Textur-Key) zurueck, damit cull_N und
+        /// is_transparent_N den korrekten Slot referenzieren — auch bei Luecken.
         /// </summary>
-        private static List<string> CollectTextureKeys(Ghoul2Meta meta)
+        private static List<(int slotIndex, string key)> CollectTextureKeys(Ghoul2Meta meta)
         {
-            List<string> keys = new();
+            List<(int slotIndex, string key)> keys = new();
 
             for (int i = 0; i < k_MaxTextureSlots; i++)
             {
@@ -68,7 +71,7 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 string value = meta.GetString(propertyName);
                 if (!string.IsNullOrEmpty(value))
                 {
-                    keys.Add(value);
+                    keys.Add((i, value));
                 }
             }
 
@@ -77,18 +80,31 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
         /// <summary>
         /// Erzeugt und setzt Materialien basierend auf Ghoul2Meta Textur-Keys.
-        /// Wendet Cull-Properties an (cull_0..N).
+        /// Wendet Cull- und Transparenz-Properties an (cull_N, is_transparent_N).
+        /// Nutzt den Original-Slot-Index fuer korrekte Meta-Property-Zuordnung.
         /// </summary>
-        private static void ApplyMaterialsFromGhoul2(Renderer renderer, List<string> textureKeys, Ghoul2Meta meta, TextureManager textureManager)
+        private static void ApplyMaterialsFromGhoul2(Renderer renderer, List<(int slotIndex, string key)> textureSlots, Ghoul2Meta meta, TextureManager textureManager)
         {
-            Material[] materials = new Material[textureKeys.Count];
+            Material[] materials = new Material[textureSlots.Count];
 
-            for (int i = 0; i < textureKeys.Count; i++)
+            for (int i = 0; i < textureSlots.Count; i++)
             {
-                Material material = ResolveMaterial(textureKeys[i], textureManager);
+                int slotIndex = textureSlots[i].slotIndex;
+                string key = textureSlots[i].key;
+                bool isTransparent = HasTransparency(meta, slotIndex);
 
-                if (material != null)
+                Material baseMaterial = ResolveMaterial(key, textureManager);
+
+                if (baseMaterial != null)
                 {
+                    // Bei Transparenz: Klon erzeugen, damit das Original nicht mutiert wird.
+                    Material material = isTransparent ? new Material(baseMaterial) { name = baseMaterial.name } : baseMaterial;
+
+                    if (isTransparent)
+                    {
+                        ApplyAlphaCutout(material);
+                    }
+
                     materials[i] = material;
                 }
                 else
@@ -110,11 +126,11 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
             renderer.materials = materials;
 
-            // Per-Slot Cull anwenden
+            // Per-Slot Cull anwenden (mit Original-Slot-Index)
             Material[] assigned = renderer.materials;
             for (int i = 0; i < assigned.Length; i++)
             {
-                ApplyCullProperty(assigned[i], meta, i);
+                ApplyCullProperty(assigned[i], meta, textureSlots[i].slotIndex);
             }
             renderer.materials = assigned;
         }
@@ -173,6 +189,14 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 material.SetFloat("_LightBlend", 0.35f);
             }
 
+            // SoF2/idTech3-Default: kein Backface-Culling (doppelseitig)
+            material.SetFloat("_Cull", 0f);
+            if (material.HasProperty("_CullMode"))
+            {
+                material.SetFloat("_CullMode", 0f);
+            }
+            material.doubleSidedGI = true;
+
             return material;
         }
 
@@ -199,6 +223,65 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 }
                 material.doubleSidedGI = true;
             }
+        }
+
+        /// <summary>
+        /// Prueft ob der Slot als transparent markiert ist (is_transparent_N).
+        /// </summary>
+        private static bool HasTransparency(Ghoul2Meta meta, int slotIndex)
+        {
+            string transparentKey = k_TransparentPrefix + slotIndex;
+            if (!meta.HasProperty(transparentKey))
+            {
+                return false;
+            }
+
+            string transparentValue = meta.GetString(transparentKey);
+            return transparentValue != "0" && !string.Equals(transparentValue, "false", System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Wendet Alpha-Cutout-Rendering auf ein Material an.
+        /// Identisch zu MapTextureApplier.ApplyAlphaCutout().
+        /// </summary>
+        private static void ApplyAlphaCutout(Material material)
+        {
+            if (material.HasProperty("_Surface"))
+            {
+                material.SetFloat("_Surface", 0f);
+            }
+
+            if (material.HasProperty("_SrcBlend"))
+            {
+                material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.One);
+            }
+
+            if (material.HasProperty("_DstBlend"))
+            {
+                material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.Zero);
+            }
+
+            if (material.HasProperty("_ZWrite"))
+            {
+                material.SetFloat("_ZWrite", 1f);
+            }
+
+            if (material.HasProperty("_AlphaClip"))
+            {
+                material.SetFloat("_AlphaClip", 1f);
+                material.EnableKeyword("_ALPHATEST_ON");
+            }
+
+            if (material.HasProperty("_Cutoff"))
+            {
+                material.SetFloat("_Cutoff", 0.5f);
+            }
+
+            material.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.EnableKeyword("_SURFACE_TYPE_OPAQUE");
+
+            material.SetOverrideTag("RenderType", "TransparentCutout");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
         }
     }
 }

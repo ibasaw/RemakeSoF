@@ -1,3 +1,4 @@
+using Tolik.RemakeSoF.Runtime.TextureManagement;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
@@ -27,13 +28,35 @@ namespace Tolik.RemakeSoF.Runtime.Game.Environment
         /// <summary>Ob die Barriere initialisiert wurde.</summary>
         private bool m_Initialized;
 
+        /// <inheritdoc />
+        public override void OnNetworkSpawn()
+        {
+            base.OnNetworkSpawn();
+
+            // SoF2 SURF_SLICK: Spieler gleiten ueber die Barriere (keine Friction).
+            // Marker auf Root → GetComponentInParent findet ihn fuer alle Child-Collider.
+            if (gameObject.GetComponent<SlickSurface>() == null)
+            {
+                gameObject.AddComponent<SlickSurface>();
+            }
+
+            // Collider auf Server UND Client erstellen — Client braucht sie fuer
+            // Client-Side Prediction (BoxCast), sonst mismatch mit Server → Jitter.
+            ApplyCollidersLikeMap();
+
+            // COL_/clip Renderer ausblenden (Server + Client).
+            HideBrushRenderers();
+
+            // Texturen via Ghoul2Meta anwenden — nur auf Client/Host (Server hat kein TextureManager).
+            if (IsClient)
+            {
+                PrefabTextureApplier.ApplyTextures(gameObject);
+            }
+        }
+
         /// <summary>
-        /// Server: Initialisiert die Barriere mit Lebensdauer.
-        /// Erstellt Collider identisch zu MapColliderApplier:
-        /// COL_* → MeshCollider auf BrushCollision-Layer (ShadowsOnly),
-        /// COL_*N_clip → MeshCollider auf BrushCollision-Layer (unsichtbar),
-        /// visuelle Surfaces → MeshCollider auf Default-Layer.
-        /// NavMeshObstacle fuer Bot-Pathfinding.
+        /// Server: Initialisiert die Barriere mit Lebensdauer und NavMeshObstacle.
+        /// Collider werden bereits in OnNetworkSpawn (beide Seiten) erstellt.
         /// </summary>
         /// <param name="duration">Lebensdauer in Sekunden.</param>
         public void Initialize(float duration)
@@ -41,7 +64,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Environment
             m_TimeRemaining = duration;
             m_Initialized = true;
 
-            ApplyCollidersLikeMap();
             EnsureNavMeshObstacle();
         }
 
@@ -179,6 +201,32 @@ namespace Tolik.RemakeSoF.Runtime.Game.Environment
             obstacle.carveOnlyStationary = false;
             obstacle.center = transform.InverseTransformPoint(bounds.center);
             obstacle.size = bounds.size;
+        }
+
+        /// <summary>
+        /// Blendet alle COL_/clip Renderer aus (ShadowsOnly bzw. disabled).
+        /// Identisch zu MapColliderApplier: Brush-Volumes werden unsichtbar,
+        /// damit nur die visuellen Surfaces sichtbar bleiben.
+        /// Wird auf Server UND Client in OnNetworkSpawn aufgerufen.
+        /// </summary>
+        private void HideBrushRenderers()
+        {
+            Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+
+            foreach (Renderer rend in renderers)
+            {
+                GameObject child = rend.gameObject;
+
+                if (IsClipVolume(child))
+                {
+                    rend.enabled = false;
+                }
+                else if (IsBrushVolume(child))
+                {
+                    rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
+                    rend.sharedMaterials = System.Array.Empty<Material>();
+                }
+            }
         }
 
         /// <summary>

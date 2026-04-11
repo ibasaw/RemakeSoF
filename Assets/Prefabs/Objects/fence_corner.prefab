@@ -59,6 +59,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: da9b7fd453b5bd7478dab4af9be02ca9, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4674033184706752057}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: da9b7fd453b5bd7478dab4af9be02ca9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5289134067821345689}
   m_SourcePrefab: {fileID: 100100000, guid: da9b7fd453b5bd7478dab4af9be02ca9, type: 3}
 --- !u!1 &6356386596062662928 stripped
 GameObject:
@@ -90,3 +93,15 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &5289134067821345689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6356386596062662928}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28f5b7415672f284cb7b5209a010395a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Environment.FenceBarrier

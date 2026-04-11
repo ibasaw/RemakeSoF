@@ -430,7 +430,7 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             return weaponName switch
             {
                 "knife" => (1, 3, 0, 0),
-                "m4" => (3, 0, 2, 0),
+                "m4" => (3, 0, 12, 0),
                 _ => (3, 0, 0, 0),
             };
         }
@@ -473,9 +473,20 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
                 return GametypeDamageResult.Default(0);
             }
 
-            // M4 macht in HideAndSeek keinen Schaden, nur Stun (egal welches Team)
+            // M4 Primary macht in HideAndSeek keinen Schaden, nur Stun (egal welches Team).
+            // M4 Alt-Attack spawnt Kaefig — kein Stun, kein Schaden.
             if (weaponName == "m4")
             {
+                if (isAltAttack)
+                {
+                    return new GametypeDamageResult
+                    {
+                        ModifiedDamage = 0,
+                        ApplyStun = false,
+                        StunDuration = 0f,
+                    };
+                }
+
                 return new GametypeDamageResult
                 {
                     ModifiedDamage = 0,
@@ -528,26 +539,14 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             return GametypeDamageResult.Default(damage);
         }
 
-        /// <summary>Addressable-Key fuer gerade Fence-Segmente.</summary>
-        private const string FENCE_PREFAB_KEY = "objects/fence";
-
-        /// <summary>Addressable-Key fuer Eckstuecke.</summary>
+        /// <summary>Addressable-Key fuer Eckstuecke (fungieren gleichzeitig als Zaun-Segment).</summary>
         private const string CORNER_PREFAB_KEY = "objects/fence_corner";
 
         /// <summary>Halbe Kaefig-Seitenlaenge in Metern (Aussenrand).</summary>
         private const float CAGE_HALF_SIZE = 5f;
 
-        /// <summary>Fallback-Breite eines Segments falls keine Mesh-Bounds ermittelt werden koennen.</summary>
-        private const float FENCE_WIDTH_FALLBACK = 1f;
-
         /// <summary>Lebensdauer des Kaefigs in Sekunden.</summary>
         private const float FENCE_DURATION = 15f;
-
-        /// <summary>
-        /// Y-Rotations-Offset fuer gerade Fence-Segmente (SoF2→Unity Koordinaten-Korrektur).
-        /// Anpassen falls Meshes nach Import anders orientiert sind.
-        /// </summary>
-        private const float FENCE_Y_ROTATION_OFFSET = -90f;
 
         /// <summary>
         /// Y-Rotations-Offset fuer Corner-Segmente (SoF2→Unity Koordinaten-Korrektur).
@@ -571,9 +570,9 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         }
 
         /// <summary>
-        /// Spawnt einen rechteckigen Fence-Kaefig um die angegebene Position.
-        /// Besteht aus 4 Eckstuecken und geraden Segmenten dazwischen.
-        /// Alle Teile sind NetworkObjects mit FenceBarrier-Komponente.
+        /// Spawnt einen Fence-Kaefig aus 4 Corner-Stuecken um die angegebene Position.
+        /// Corner-Prefabs muessen FenceBarrier + NetworkObject Komponenten im Prefab haben,
+        /// damit NGO sie korrekt auf den Client repliziert.
         /// </summary>
         /// <param name="center">Mittelpunkt des Kaefigs.</param>
         private void SpawnFenceCage(Vector3 center)
@@ -585,20 +584,17 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
                 return;
             }
 
-            GameObject fencePrefab = prefabManager.LoadPrefab<GameObject>(FENCE_PREFAB_KEY);
             GameObject cornerPrefab = prefabManager.LoadPrefab<GameObject>(CORNER_PREFAB_KEY);
 
-            if (fencePrefab == null || cornerPrefab == null)
+            if (cornerPrefab == null)
             {
-                Debug.LogWarning($"[HideAndSeek] Fence-Prefabs nicht gefunden (fence={fencePrefab != null}, corner={cornerPrefab != null}).");
+                Debug.LogWarning("[HideAndSeek] Corner-Prefab nicht gefunden.");
                 return;
             }
 
-            // Segmentbreite dynamisch aus Mesh-Bounds ermitteln
-            float segmentWidth = GetSegmentWidth(fencePrefab);
-
-            // co = Offset der Segment-Mittelpunkte vom Kaefig-Zentrum
-            float co = CAGE_HALF_SIZE - segmentWidth * 0.5f;
+            // co = Offset der Eckstueck-Mittelpunkte vom Kaefig-Zentrum
+            float cornerWidth = GetSegmentWidth(cornerPrefab);
+            float co = CAGE_HALF_SIZE - cornerWidth * 0.5f;
 
             // 4 Eckstuecke — Basis-Rotation + Offset fuer SoF2→Unity Korrektur
             float cOff = CORNER_Y_ROTATION_OFFSET;
@@ -607,34 +603,16 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             SpawnCagePiece(cornerPrefab, center + new Vector3(+co, 0f, -co), 90f + cOff);   // SE
             SpawnCagePiece(cornerPrefab, center + new Vector3(-co, 0f, -co), 180f + cOff);  // SW
 
-            // Gerade Segmente zwischen den Ecken
-            float fOff = FENCE_Y_ROTATION_OFFSET;
-            int piecesPerSide = Mathf.RoundToInt(CAGE_HALF_SIZE * 2f / segmentWidth);
-            int fillCount = piecesPerSide - 2;
-
-            for (int i = 0; i < fillCount; i++)
-            {
-                // Gleichmaessige Verteilung zwischen den Eckstueck-Mittelpunkten
-                float offset = Mathf.Lerp(-co, co, (i + 1f) / (fillCount + 1f));
-
-                // Nord (z=+co, entlang X)
-                SpawnCagePiece(fencePrefab, center + new Vector3(offset, 0f, +co), 0f + fOff);
-                // Sued (z=-co, entlang X)
-                SpawnCagePiece(fencePrefab, center + new Vector3(offset, 0f, -co), 180f + fOff);
-                // Ost (x=+co, entlang Z)
-                SpawnCagePiece(fencePrefab, center + new Vector3(+co, 0f, offset), 90f + fOff);
-                // West (x=-co, entlang Z)
-                SpawnCagePiece(fencePrefab, center + new Vector3(-co, 0f, offset), 270f + fOff);
-            }
-
-            int totalPieces = 4 + fillCount * 4;
-            Debug.Log($"[HideAndSeek] Fence-Kaefig gespawnt bei {center} | {totalPieces} Teile | Dauer={FENCE_DURATION}s");
+            Debug.Log($"[HideAndSeek] Fence-Kaefig gespawnt bei {center} | 4 Corners | Dauer={FENCE_DURATION}s");
         }
 
         /// <summary>
-        /// Spawnt ein einzelnes Fence-/Corner-Segment als NetworkObject mit FenceBarrier.
+        /// Spawnt ein einzelnes Fence-/Corner-Segment als NetworkObject.
+        /// WICHTIG: Das Prefab MUSS FenceBarrier + NetworkObject Komponenten haben,
+        /// damit NGO sie auf dem Client repliziert (dynamisch hinzugefuegte
+        /// Komponenten werden NICHT repliziert).
         /// </summary>
-        /// <param name="prefab">Prefab fuer dieses Segment (fence oder corner).</param>
+        /// <param name="prefab">Prefab fuer dieses Segment.</param>
         /// <param name="position">Weltposition des Segments.</param>
         /// <param name="yRotation">Y-Rotation in Grad.</param>
         private void SpawnCagePiece(GameObject prefab, Vector3 position, float yRotation)
@@ -652,7 +630,10 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             FenceBarrier barrier = instance.GetComponent<FenceBarrier>();
             if (barrier == null)
             {
-                barrier = instance.AddComponent<FenceBarrier>();
+                Debug.LogError("[HideAndSeek] Fence-Prefab hat kein FenceBarrier-Component! " +
+                               "FenceBarrier muss auf dem Prefab sein, damit NGO es auf den Client repliziert.");
+                Object.Destroy(instance);
+                return;
             }
 
             networkObject.Spawn();
@@ -709,8 +690,8 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
                 }
             }
 
-            Debug.LogWarning($"[HideAndSeek] Keine Bounds ermittelbar — verwende Fallback-Breite {FENCE_WIDTH_FALLBACK}m.");
-            return FENCE_WIDTH_FALLBACK;
+            Debug.LogWarning("[HideAndSeek] Keine Bounds ermittelbar — verwende Fallback-Breite 1m.");
+            return 1f;
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using Tolik.RemakeSoF.Runtime.Game.Environment;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
@@ -160,6 +161,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
         /// <summary>SoF2 pml.groundTrace — Ground-Trace-Ergebnis (frame-local).</summary>
         private RaycastHit m_GroundTrace;
+
+        /// <summary>SoF2 SURF_SLICK — Boden-Oberflaeche hat keine Friction (frame-local).</summary>
+        private bool m_GroundSlick;
 
         /// <summary>SoF2 pml.previous_velocity — Velocity vor diesem Frame (für CrashLand).</summary>
         private Vector3 m_PreviousVelocity;
@@ -709,6 +713,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 }
             }
 
+            // SoF2 SURF_SLICK: Pruefen ob Boden-Surface keine Friction hat.
+            m_GroundSlick = hit.collider != null &&
+                            hit.collider.GetComponentInParent<SlickSurface>() != null;
+
             // Position auf Boden korrigieren (Einsinken verhindern)
             CorrectGroundPosition(ref position, hit);
         }
@@ -799,7 +807,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             // Friction nur am Boden (SoF2: pml.walking && !SURF_SLICK)
             // SoF2: if (!(pm->ps->pm_flags & PMF_TIME_KNOCKBACK)) — skip friction during knockback
-            if (m_Walking && KnockbackTime <= 0f)
+            if (m_Walking && !m_GroundSlick && KnockbackTime <= 0f)
             {
                 float friction = StunTime > 0f ? PmFriction * STUN_FRICTION_MULTIPLIER : PmFriction;
                 float control = speed < PmStopSpeed ? PmStopSpeed : speed;
