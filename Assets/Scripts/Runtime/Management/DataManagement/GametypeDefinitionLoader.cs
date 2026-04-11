@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.DataManagement
@@ -9,8 +10,8 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
     /// </summary>
     public class GametypeDefinitionLoader
     {
-        /// <summary>Pfad zur JSON-Datei relativ zu Resources/.</summary>
-        const string k_ResourcePath = "Data/SoF2_Gametypes";
+        /// <summary>Pfad zur JSON-Datei relativ zu StreamingAssets/.</summary>
+        const string k_DataPath = "Data/SoF2_Gametypes.json";
 
         /// <summary>Lookup: Gametype-ID → GametypeDefinition.</summary>
         readonly Dictionary<string, GametypeDefinition> m_Gametypes = new();
@@ -52,15 +53,17 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// </summary>
         void LoadFromResources()
         {
-            TextAsset textAsset = Resources.Load<TextAsset>(k_ResourcePath);
-            if (textAsset == null)
+            string filePath = Path.Combine(Application.streamingAssetsPath, k_DataPath);
+            if (!File.Exists(filePath))
             {
-                Debug.LogError($"[GametypeDefinitionLoader] Gametypes nicht gefunden: {k_ResourcePath}");
+                Debug.LogError($"[GametypeDefinitionLoader] Gametypes nicht gefunden: {filePath}");
                 return;
             }
 
+            string text = File.ReadAllText(filePath);
+
             // JsonUtility kann keine Top-Level-Arrays deserialisieren, daher Wrapper
-            string wrappedJson = "{\"items\":" + textAsset.text + "}";
+            string wrappedJson = "{\"items\":" + text + "}";
             GametypeDefinitionArray wrapper = JsonUtility.FromJson<GametypeDefinitionArray>(wrappedJson);
 
             if (wrapper?.items == null)

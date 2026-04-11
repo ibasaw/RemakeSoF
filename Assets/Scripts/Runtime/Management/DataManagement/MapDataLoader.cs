@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.DataManagement
@@ -10,8 +11,8 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
     /// </summary>
     public class MapDataLoader
     {
-        /// <summary>Pfad zur JSON-Datei relativ zu Resources/.</summary>
-        private const string k_ResourcePath = "Data/SoF2_Maps";
+        /// <summary>Pfad zur JSON-Datei relativ zu StreamingAssets/.</summary>
+        private const string k_DataPath = "Data/SoF2_Maps.json";
 
         /// <summary>Lookup: Map-ID → MapDefinition.</summary>
         private readonly Dictionary<string, MapDefinition> m_Maps = new();
@@ -101,14 +102,14 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// </summary>
         private void LoadFromResources()
         {
-            TextAsset textAsset = Resources.Load<TextAsset>(k_ResourcePath);
-            if (textAsset == null)
+            string filePath = Path.Combine(Application.streamingAssetsPath, k_DataPath);
+            if (!File.Exists(filePath))
             {
-                Debug.LogError($"[MapDataLoader] Konnte '{k_ResourcePath}' nicht aus Resources laden!");
+                Debug.LogError($"[MapDataLoader] Konnte '{filePath}' nicht laden!");
                 return;
             }
 
-            string json = textAsset.text.Trim();
+            string json = File.ReadAllText(filePath).Trim();
 
             // JSON kann ein einzelnes Objekt oder ein Array sein
             if (json.StartsWith("["))

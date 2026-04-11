@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json;
 using Tolik.RemakeSoF.Runtime.WeaponManagement;
 using UnityEngine;
@@ -13,7 +14,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
     /// </summary>
     public class WeaponDataLoader
     {
-        private const string RESOURCE_PATH = "Data/SoF2_Weapons_New";
+        private const string DATA_PATH = "Data/SoF2_Weapons_New.json";
 
         private readonly Dictionary<string, WeaponDefinition> m_WeaponsById = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<int, WeaponDefinition> m_WeaponsByAnimatorIndex = new();
@@ -34,17 +35,18 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             m_WeaponsById.Clear();
             m_WeaponsByAnimatorIndex.Clear();
 
-            TextAsset weaponsFile = Resources.Load<TextAsset>(RESOURCE_PATH);
+            string filePath = Path.Combine(Application.streamingAssetsPath, DATA_PATH);
 
-            if (weaponsFile == null)
+            if (!File.Exists(filePath))
             {
-                Debug.LogWarning($"[WeaponDataLoader] Could not load weapons file at {RESOURCE_PATH}");
+                Debug.LogWarning($"[WeaponDataLoader] Could not load weapons file at {filePath}");
                 return;
             }
 
             try
             {
-                List<WeaponDefinition> weapons = JsonConvert.DeserializeObject<List<WeaponDefinition>>(weaponsFile.text);
+                string json = File.ReadAllText(filePath);
+                List<WeaponDefinition> weapons = JsonConvert.DeserializeObject<List<WeaponDefinition>>(json);
 
                 if (weapons == null)
                 {
@@ -63,7 +65,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                     m_WeaponsByAnimatorIndex[weapon.AnimatorIndex] = weapon;
                 }
 
-                Debug.Log($"[WeaponDataLoader] Loaded {m_WeaponsById.Count} weapons from {RESOURCE_PATH}");
+                Debug.Log($"[WeaponDataLoader] Loaded {m_WeaponsById.Count} weapons from {filePath}");
             }
             catch (Exception ex)
             {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
@@ -25,21 +26,22 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// <summary>
         /// Loads all available items from SoF2_Items.json (weapons are ignored)
         /// </summary>
-        private void LoadFromResources(string resourcePath = "Data/SoF2_Items")
+        private void LoadFromResources(string dataPath = "Data/SoF2_Items.json")
         {
             m_ItemsByName.Clear();
 
-            TextAsset itemsFile = Resources.Load<TextAsset>(resourcePath);
+            string filePath = Path.Combine(Application.streamingAssetsPath, dataPath);
 
-            if (itemsFile == null)
+            if (!File.Exists(filePath))
             {
-                Debug.LogWarning($"[ItemDefinitionLoader] Could not load items file at {resourcePath}");
+                Debug.LogWarning($"[ItemDefinitionLoader] Could not load items file at {filePath}");
                 return;
             }
 
             try
             {
-                ItemsContainer container = JsonConvert.DeserializeObject<ItemsContainer>(itemsFile.text);
+                string json = File.ReadAllText(filePath);
+                ItemsContainer container = JsonConvert.DeserializeObject<ItemsContainer>(json);
 
                 if (container?.items == null)
                 {
@@ -55,7 +57,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                     }
                 }
 
-                Debug.Log($"[ItemDefinitionLoader] Loaded {m_ItemsByName.Count} items from {resourcePath}");
+                Debug.Log($"[ItemDefinitionLoader] Loaded {m_ItemsByName.Count} items from {filePath}");
             }
             catch (Exception ex)
             {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
@@ -25,16 +26,17 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// <summary>
         /// Loads and parses NPC_definition.json from Resources/Data.
         /// </summary>
-        private void LoadFromResources(string resourcePath = "Data/NPC_definition")
+        private void LoadFromResources(string dataPath = "Data/NPC_definition.json")
         {
-            TextAsset asset = Resources.Load<TextAsset>(resourcePath);
-            if (asset == null)
+            string filePath = Path.Combine(Application.streamingAssetsPath, dataPath);
+            if (!File.Exists(filePath))
             {
-                Debug.LogWarning($"[SurfaceDefinitionLoader] Surface definition not found at Resources/{resourcePath}.json");
+                Debug.LogWarning($"[SurfaceDefinitionLoader] Surface definition not found at {filePath}");
                 return;
             }
 
-            ParseSurfaceDefinition(asset.text);
+            string json = File.ReadAllText(filePath);
+            ParseSurfaceDefinition(json);
         }
 
         /// <summary>

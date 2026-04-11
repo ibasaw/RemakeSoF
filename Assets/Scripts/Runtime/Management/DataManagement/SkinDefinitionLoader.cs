@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
@@ -27,19 +28,28 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// <summary>
         /// Loads all available skin data from Resources folder
         /// </summary>
-        private void LoadAllFromResources(string resourcePath = "Data/skin_data")
+        private void LoadAllFromResources(string dataFolder = "Data/skin_data")
         {
             m_SkinDefinitionsByModelName.Clear();
             m_SkinDefinitionByName.Clear();
 
-            TextAsset[] allSkinFiles = Resources.LoadAll<TextAsset>(resourcePath);
+            string folderPath = Path.Combine(Application.streamingAssetsPath, dataFolder);
 
-            foreach (TextAsset skinFile in allSkinFiles)
+            if (!Directory.Exists(folderPath))
+            {
+                Debug.LogWarning($"[SkinDefinitionLoader] Skin data folder not found at {folderPath}");
+                return;
+            }
+
+            string[] skinFiles = Directory.GetFiles(folderPath, "*.json", SearchOption.TopDirectoryOnly);
+
+            foreach (string skinFilePath in skinFiles)
             {
                 try
                 {
-                    string fileName = skinFile.name;
-                    SkinDefinition skinDefinition = JsonConvert.DeserializeObject<SkinDefinition>(skinFile.text);
+                    string fileName = Path.GetFileNameWithoutExtension(skinFilePath);
+                    string json = File.ReadAllText(skinFilePath);
+                    SkinDefinition skinDefinition = JsonConvert.DeserializeObject<SkinDefinition>(json);
 
                     if (skinDefinition?.prefs?.models != null &&
                         skinDefinition.prefs.models.TryGetValue("1", out string model))
@@ -51,16 +61,15 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                         }
                         m_SkinDefinitionsByModelName[model].Add(skinDefinition);
 
-                        // Add to name-based dictionary for quick lookup
-                        if (!string.IsNullOrEmpty(skinFile.name))
+                        if (!string.IsNullOrEmpty(fileName))
                         {
-                            m_SkinDefinitionByName[skinFile.name] = skinDefinition;
+                            m_SkinDefinitionByName[fileName] = skinDefinition;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[SkinDefinitionLoader] Error parsing skin file {skinFile.name}: {ex.Message}");
+                    Debug.LogWarning($"[SkinDefinitionLoader] Error parsing skin file {Path.GetFileName(skinFilePath)}: {ex.Message}");
                 }
             }
 

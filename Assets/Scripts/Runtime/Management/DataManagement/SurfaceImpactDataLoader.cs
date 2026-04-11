@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -15,7 +16,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
     /// </summary>
     public class SurfaceImpactDataLoader
     {
-        private const string RESOURCE_PATH = "Data/SoF2_data_per_surface";
+        private const string DATA_PATH = "Data/SoF2_data_per_surface.json";
         private const string DEFAULT_SURFACE = "default";
         private const string DEFAULT_EFFECT = "effects/impact_default";
 
@@ -76,16 +77,17 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// </summary>
         private void LoadFromResources()
         {
-            TextAsset asset = Resources.Load<TextAsset>(RESOURCE_PATH);
-            if (asset == null)
+            string filePath = Path.Combine(Application.streamingAssetsPath, DATA_PATH);
+            if (!File.Exists(filePath))
             {
-                Debug.LogWarning($"[SurfaceImpactDataLoader] Could not load {RESOURCE_PATH}");
+                Debug.LogWarning($"[SurfaceImpactDataLoader] Could not load {filePath}");
                 return;
             }
 
             try
             {
-                JObject root = JObject.Parse(asset.text);
+                string json = File.ReadAllText(filePath);
+                JObject root = JObject.Parse(json);
 
                 foreach (KeyValuePair<string, JToken> surfaceEntry in root)
                 {

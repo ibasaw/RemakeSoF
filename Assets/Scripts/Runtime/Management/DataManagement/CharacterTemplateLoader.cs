@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json;
 using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using UnityEngine;
@@ -26,21 +27,22 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// <summary>
         /// Loads all character templates from Resources/Data/SoF2_NPCs.json
         /// </summary>
-        private void LoadFromResources(string resourcePath = "Data/SoF2_NPCs")
+        private void LoadFromResources(string dataPath = "Data/SoF2_NPCs.json")
         {
             m_CharacterTemplatesByName.Clear();
             m_CharacterTemplatesBySkinName.Clear();
 
-            TextAsset dataRaw = Resources.Load<TextAsset>(resourcePath);
-            if (dataRaw == null)
+            string filePath = Path.Combine(Application.streamingAssetsPath, dataPath);
+            if (!File.Exists(filePath))
             {
-                Debug.LogWarning($"[CharacterTemplateLoader] Character templates file not found at Resources/{resourcePath}.json");
+                Debug.LogWarning($"[CharacterTemplateLoader] Character templates file not found at {filePath}");
                 return;
             }
 
             try
             {
-                List<CharacterTemplate> parsed = ParseCharacterTemplatesJson(dataRaw.text);
+                string json = File.ReadAllText(filePath);
+                List<CharacterTemplate> parsed = ParseCharacterTemplatesJson(json);
                 foreach (CharacterTemplate template in parsed)
                 {
                     if (!string.IsNullOrEmpty(template.Name))

@@ -26,11 +26,11 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// <summary>
         /// Laedt alle .g2shader Dateien aus dem Data/shaders/ Ordner.
         /// </summary>
-        private void LoadAllFromResources(string resourcePath = "Data/shaders")
+        private void LoadAllFromResources(string dataFolder = "Data/shaders")
         {
             m_LegacyShaderEntriesByModel.Clear();
 
-            string fullPath = Path.Combine(Application.dataPath, "Resources", resourcePath);
+            string fullPath = Path.Combine(Application.streamingAssetsPath, dataFolder);
             
             if (!Directory.Exists(fullPath))
             {

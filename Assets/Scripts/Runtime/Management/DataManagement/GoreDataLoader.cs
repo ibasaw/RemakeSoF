@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json;
 using Tolik.RemakeSoF.Runtime.GoreManagement;
 using UnityEngine;
@@ -11,7 +12,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
     /// </summary>
     public class GoreDataLoader
     {
-        private const string RESOURCE_PATH = "Data/SoF2_DATA";
+        private const string DATA_PATH = "Data/SoF2_DATA.json";
 
         private readonly Dictionary<string, GoreArea> m_GoreAreasByLocation = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, GorePiece> m_GorePiecesByName = new(StringComparer.OrdinalIgnoreCase);
@@ -110,27 +111,28 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             m_GorePiecesByName.Clear();
             m_GoreEffectsByName.Clear();
 
-            TextAsset asset = Resources.Load<TextAsset>(RESOURCE_PATH);
-            if (asset == null)
+            string filePath = Path.Combine(Application.streamingAssetsPath, DATA_PATH);
+            if (!File.Exists(filePath))
             {
-                Debug.LogWarning($"[GoreDataLoader] JSON file not found at Resources/{RESOURCE_PATH}");
+                Debug.LogWarning($"[GoreDataLoader] JSON file not found at {filePath}");
                 return;
             }
 
             SoF2DataRoot dataRoot;
             try
             {
-                dataRoot = JsonConvert.DeserializeObject<SoF2DataRoot>(asset.text);
+                string json = File.ReadAllText(filePath);
+                dataRoot = JsonConvert.DeserializeObject<SoF2DataRoot>(json);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[GoreDataLoader] Failed to parse {RESOURCE_PATH}: {ex.Message}");
+                Debug.LogError($"[GoreDataLoader] Failed to parse {filePath}: {ex.Message}");
                 return;
             }
 
             if (dataRoot?.Gore == null)
             {
-                Debug.LogWarning($"[GoreDataLoader] Gore section missing in {RESOURCE_PATH}");
+                Debug.LogWarning($"[GoreDataLoader] Gore section missing in {filePath}");
                 return;
             }
 

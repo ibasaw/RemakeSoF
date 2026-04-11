@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json;
 using Tolik.RemakeSoF.Runtime.EffectManagement;
 using UnityEngine;
@@ -33,24 +34,32 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         {
             m_EffectsById.Clear();
 
-            // Alle JSON-Dateien im Effects/-Unterordner laden
-            TextAsset[] effectFiles = Resources.LoadAll<TextAsset>(EFFECTS_FOLDER);
-            foreach (TextAsset file in effectFiles)
+            string folderPath = Path.Combine(Application.streamingAssetsPath, EFFECTS_FOLDER);
+
+            if (!Directory.Exists(folderPath))
             {
-                LoadJsonAsset(file);
+                Debug.LogWarning($"[EffectDataLoader] Effects folder not found at {folderPath}");
+                return;
+            }
+
+            string[] effectFiles = Directory.GetFiles(folderPath, "*.json", SearchOption.TopDirectoryOnly);
+            foreach (string effectFilePath in effectFiles)
+            {
+                LoadJsonFile(effectFilePath);
             }
 
             Debug.Log($"[EffectDataLoader] Loaded {m_EffectsById.Count} effects total");
         }
 
         /// <summary>
-        /// Parst ein TextAsset als JSON-Array von EffectDefinitions und registriert sie.
+        /// Parst eine JSON-Datei als Array von EffectDefinitions und registriert sie.
         /// </summary>
-        private void LoadJsonAsset(TextAsset asset)
+        private void LoadJsonFile(string filePath)
         {
             try
             {
-                List<EffectDefinition> effects = JsonConvert.DeserializeObject<List<EffectDefinition>>(asset.text);
+                string json = File.ReadAllText(filePath);
+                List<EffectDefinition> effects = JsonConvert.DeserializeObject<List<EffectDefinition>>(json);
 
                 if (effects == null)
                 {
@@ -69,7 +78,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[EffectDataLoader] Error parsing {asset.name}: {ex.Message}");
+                Debug.LogError($"[EffectDataLoader] Error parsing {Path.GetFileName(filePath)}: {ex.Message}");
             }
         }
 

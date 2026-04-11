@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json;
 using Tolik.RemakeSoF.Runtime.CrosshairManagement;
 using UnityEngine;
@@ -12,7 +13,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
     /// </summary>
     public class CrosshairDataLoader
     {
-        private const string RESOURCE_PATH = "Data/SoF2_Crosshair";
+        private const string DATA_PATH = "Data/SoF2_Crosshair.json";
 
         private readonly Dictionary<string, CrosshairDefinition> m_CrosshairsById = new(StringComparer.OrdinalIgnoreCase);
         private readonly List<CrosshairDefinition> m_AllCrosshairs = new();
@@ -33,17 +34,18 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
             m_CrosshairsById.Clear();
             m_AllCrosshairs.Clear();
 
-            TextAsset crosshairFile = Resources.Load<TextAsset>(RESOURCE_PATH);
+            string filePath = Path.Combine(Application.streamingAssetsPath, DATA_PATH);
 
-            if (crosshairFile == null)
+            if (!File.Exists(filePath))
             {
-                Debug.LogWarning($"[CrosshairDataLoader] Could not load crosshair file at {RESOURCE_PATH}");
+                Debug.LogWarning($"[CrosshairDataLoader] Could not load crosshair file at {filePath}");
                 return;
             }
 
             try
             {
-                List<CrosshairDefinition> crosshairs = JsonConvert.DeserializeObject<List<CrosshairDefinition>>(crosshairFile.text);
+                string json = File.ReadAllText(filePath);
+                List<CrosshairDefinition> crosshairs = JsonConvert.DeserializeObject<List<CrosshairDefinition>>(json);
 
                 if (crosshairs == null)
                 {
@@ -62,7 +64,7 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                     m_AllCrosshairs.Add(crosshair);
                 }
 
-                Debug.Log($"[CrosshairDataLoader] Loaded {m_CrosshairsById.Count} crosshairs from {RESOURCE_PATH}");
+                Debug.Log($"[CrosshairDataLoader] Loaded {m_CrosshairsById.Count} crosshairs from {filePath}");
             }
             catch (Exception ex)
             {

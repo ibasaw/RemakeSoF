@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.DataManagement
@@ -8,8 +9,8 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
     /// </summary>
     public class ServerConfigurationLoader
     {
-        /// <summary>Pfad zur JSON-Datei relativ zu Resources/.</summary>
-        const string k_ResourcePath = "Data/SoF2_Server_Configuration";
+        /// <summary>Pfad zur JSON-Datei relativ zu StreamingAssets/.</summary>
+        const string k_DataPath = "Data/SoF2_Server_Configuration.json";
 
         /// <summary>Die geladene Server-Konfiguration.</summary>
         ServerConfiguration m_Configuration;
@@ -32,15 +33,16 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// </summary>
         void LoadFromResources()
         {
-            TextAsset textAsset = Resources.Load<TextAsset>(k_ResourcePath);
-            if (textAsset == null)
+            string filePath = Path.Combine(Application.streamingAssetsPath, k_DataPath);
+            if (!File.Exists(filePath))
             {
-                Debug.LogError($"[ServerConfigurationLoader] Konfiguration nicht gefunden: {k_ResourcePath}");
+                Debug.LogError($"[ServerConfigurationLoader] Konfiguration nicht gefunden: {filePath}");
                 m_Configuration = new ServerConfiguration();
                 return;
             }
 
-            m_Configuration = JsonUtility.FromJson<ServerConfiguration>(textAsset.text);
+            string json = File.ReadAllText(filePath);
+            m_Configuration = JsonUtility.FromJson<ServerConfiguration>(json);
             Debug.Log($"[ServerConfigurationLoader] Konfiguration geladen: sv_hostname={m_Configuration.sv_hostname}, g_gametype={m_Configuration.g_gametype}, g_mapname={m_Configuration.g_mapname}");
         }
     }
