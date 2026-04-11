@@ -356,7 +356,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>
         /// Server-seitig: Verbleibende Stun-Dauer in Sekunden.
-        /// Waehrend aktiv wird Bewegung gesperrt und Velocity auf 0 gesetzt.
+        /// Nur fuer UI-Tracking (m_IsStunned NetworkVariable).
+        /// Die Physik-Verlangsamung wird direkt von PlayerPhysicsSimulation.StunTime gesteuert.
         /// </summary>
         private float m_StunTimeRemaining;
 
@@ -393,16 +394,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>
         /// Server: Wendet einen Stun auf diesen Spieler an.
-        /// Sperrt Bewegung, setzt Velocity auf 0 und startet den Stun-Timer.
+        /// Setzt den StunTime-Timer der Physik-Simulation (massive Friction, keine Beschleunigung).
+        /// Buttons (Angriff/Reload/Swap) werden waehrend Stun serverseitig blockiert.
         /// </summary>
         /// <param name="duration">Stun-Dauer in Sekunden.</param>
         public void ApplyStun(float duration)
         {
             m_StunTimeRemaining = duration;
             m_StunnedByGametype = true;
-            m_MovementLocked = true;
             m_IsStunned.Value = true;
-            m_ServerPlayerCharacter.ZeroVelocity();
+            m_ServerPlayerCharacter.SetStunTime(duration);
         }
 
         /// <summary>
@@ -438,8 +439,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// </summary>
         /// <param name="targetState">NetworkedCharacterState des Opfers.</param>
         /// <param name="originalDamage">Berechneter Basis-Schaden.</param>
+        /// <param name="isAltAttack">Ob der Schaden von einem Alt-Angriff stammt.</param>
         /// <returns>Modifizierter Schaden nach Gametype-Logik.</returns>
-        private int ApplyGametypeDamageModification(NetworkedCharacterState targetState, int originalDamage)
+        private int ApplyGametypeDamageModification(NetworkedCharacterState targetState, int originalDamage, bool isAltAttack = false)
         {
             GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
             if (gametypeManager == null)
@@ -456,7 +458,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 attackerTeam,
                 victimTeam,
                 originalDamage,
-                m_CharacterState.CurrentWeaponName
+                m_CharacterState.CurrentWeaponName,
+                isAltAttack
             );
 
             // Stun auf das Opfer anwenden
@@ -466,6 +469,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 if (targetCharacter != null)
                 {
                     targetCharacter.ApplyStun(damageResult.StunDuration);
+                }
+                else
+                {
+                    ServerAICharacter targetBot = targetState.GetComponent<ServerAICharacter>();
+                    if (targetBot != null)
+                    {
+                        targetBot.ApplyStun(damageResult.StunDuration);
+                    }
                 }
             }
 
@@ -590,11 +601,59 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Owner sofort hart korrigieren, damit keine alte Prediction-Position sichtbar bleibt.
             CorrectionClientRpc(position, rotation);
 
+            // Stun zuruecksetzen
+            m_StunTimeRemaining = 0f;
+            m_StunnedByGametype = false;
+            m_MovementLocked = false;
+            m_IsStunned.Value = false;
+            m_ServerPlayerCharacter.SetStunTime(0f);
+
+            // Waffen/Ammo zuruecksetzen und Gametype-Startwaffen neu zuweisen
+            ResetWeaponsForRound();
+
             m_ServerPlayerCharacter.ResetForRespawn();
             m_ServerPlayerCharacter.SetReady();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedPlayerCharacter] Server: Spieler respawned bei {position}");
 #endif
+        }
+
+        /// <summary>
+        /// Server: Setzt Waffen und Ammo auf Gametype-Startwerte zurueck.
+        /// Wird bei jedem Runden-Respawn aufgerufen.
+        /// </summary>
+        private void ResetWeaponsForRound()
+        {
+            if (m_CharacterState == null)
+            {
+                return;
+            }
+
+            m_CharacterState.ClearWeaponsAndAmmo();
+
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            GametypeTeam team = (GametypeTeam)m_CharacterState.TeamId;
+            string[] weapons = gametypeManager?.GetStartWeapons(team);
+
+            if (weapons != null)
+            {
+                foreach (string weapon in weapons)
+                {
+                    (int clip, int reserve, int altClip, int altReserve)? ammoOverride = gametypeManager.GetStartAmmo(weapon);
+                    if (ammoOverride.HasValue)
+                    {
+                        m_CharacterState.PreloadWeaponAmmo(weapon, ammoOverride.Value.clip, ammoOverride.Value.reserve, ammoOverride.Value.altClip, ammoOverride.Value.altReserve);
+                    }
+
+                    m_CharacterState.AddWeapon(weapon);
+                }
+            }
+            else
+            {
+                m_CharacterState.AddWeapon("knife");
+            }
+
+            m_CharacterState.SetCurrentWeaponName("knife");
         }
 
         /// <summary>
@@ -687,7 +746,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             if (IsServer && m_StunTimeRemaining > 0f)
             {
                 m_StunTimeRemaining -= Time.deltaTime;
-                m_ServerPlayerCharacter.ZeroVelocity();
 
                 if (m_StunTimeRemaining <= 0f)
                 {
@@ -696,7 +754,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     if (m_StunnedByGametype)
                     {
                         m_StunnedByGametype = false;
-                        m_MovementLocked = false;
                         m_IsStunned.Value = false;
                     }
                 }
@@ -735,7 +792,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_ServerPosition.Value = transform.position;
                 m_ServerRotation.Value = transform.rotation;
 
-                if (!m_MovementLocked)
+                if (!m_MovementLocked && !m_StunnedByGametype)
                 {
                     ProcessServerCommandLogic(cmd);
                 }
@@ -782,6 +839,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 cmd.Buttons = 0;
             }
 
+            // Stun: Buttons (Angriff/Reload/Swap) blockieren, Bewegungsinput bleibt
+            // (Physik-Simulation ignoriert Beschleunigung waehrend StunTime > 0).
+            if (m_StunnedByGametype)
+            {
+                cmd.Buttons = 0;
+            }
+
             // Server-seitige Physik-Simulation ausführen
             ServerMovementAck ack = m_ServerPlayerCharacter.ProcessCommand(cmd);
 
@@ -790,7 +854,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_ServerRotation.Value = Quaternion.Euler(0f, cmd.MoveYawAngle, 0f);
 
             // Button-Inputs, Frame-Counting, Attack/Reload/Swap verarbeiten
-            if (!m_MovementLocked)
+            if (!m_MovementLocked && !m_StunnedByGametype)
             {
                 ProcessServerCommandLogic(cmd);
             }
@@ -1560,7 +1624,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 attackDef.Volume > 0f ? attackDef.Volume : 1f
             );
 
-            SpawnProjectile(spawnPos, aimDirection, attackDef, projDef);
+            SpawnProjectile(spawnPos, aimDirection, attackDef, projDef, isAlt);
 
             // KickAngles: Rueckstoss an Owner-Client senden
             // SoF2 Skalierung: ×0.5 (kickPitch += value*500, extract /1000)
@@ -1580,7 +1644,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// Server: Spawnt ein ServerProjectile-GameObject mit den angegebenen Parametern.
         /// Das Projektil simuliert sich selbst (Flugbahn, Kollision, Detonation, Explosions-Damage).
         /// </summary>
-        private void SpawnProjectile(Vector3 spawnPosition, Vector3 direction, WeaponAttackDefinition attackDef, WeaponProjectileDefinition projDef)
+        private void SpawnProjectile(Vector3 spawnPosition, Vector3 direction, WeaponAttackDefinition attackDef, WeaponProjectileDefinition projDef, bool isAlt = false)
         {
             uint projectileId = m_NextProjectileId++;
             GameObject projectileObj = new($"Projectile_{m_CharacterState.CurrentWeaponName}_{OwnerClientId}");
@@ -1604,7 +1668,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 OwnerClientId,
                 m_CharacterState.CurrentWeaponName,
                 projectileId,
-                projDef.ExplosionEffect ?? ""
+                projDef.ExplosionEffect ?? "",
+                isAlt
             );
 
             // Sticky-Pickup: Callback registrieren fuer Visual-Cleanup
@@ -1738,7 +1803,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 OwnerClientId,
                 m_CharacterState.CurrentWeaponName,
                 projectileId,
-                projDef.ExplosionEffect ?? ""
+                projDef.ExplosionEffect ?? "",
+                m_ServerGrenadeIsAlt
             );
 
             // Visual-RPC an alle Clients
@@ -2556,7 +2622,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     if (targetState != null && targetState != m_CharacterState)
                     {
                         // Gametype-Hook: Schaden modifizieren, Stun/Nachrichten anwenden
-                        finalDamage = ApplyGametypeDamageModification(targetState, finalDamage);
+                        finalDamage = ApplyGametypeDamageModification(targetState, finalDamage, true);
 
                         if (finalDamage > 0)
                         {

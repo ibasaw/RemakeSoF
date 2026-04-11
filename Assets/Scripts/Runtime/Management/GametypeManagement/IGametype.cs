@@ -1,3 +1,4 @@
+using UnityEngine;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 
 namespace Tolik.RemakeSoF.Runtime.GametypeManagement
@@ -104,6 +105,15 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         string[] GetStartWeapons(GametypeTeam team);
 
         /// <summary>
+        /// Gibt gametype-spezifische Ammo-Overrides fuer eine Waffe zurueck.
+        /// Null = Standard-Ammo aus den Waffendaten verwenden.
+        /// Ermoeglicht Gametypes die Start-Munition pro Waffe zu limitieren.
+        /// </summary>
+        /// <param name="weaponName">ID der Waffe (z.B. "knife", "m4").</param>
+        /// <returns>Tuple (clip, reserve, altClip, altReserve) oder null fuer Default.</returns>
+        (int clip, int reserve, int altClip, int altReserve)? GetStartAmmo(string weaponName);
+
+        /// <summary>
         /// Gibt die aktuelle gametype-spezifische Phase als int zurueck.
         /// Wird als NetworkVariable an Clients synchronisiert.
         /// 0 = keine Phase / Standard.
@@ -175,7 +185,19 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         /// <param name="victimTeam">Team des Opfers.</param>
         /// <param name="damage">Berechneter Schaden.</param>
         /// <param name="weaponName">Name der verwendeten Waffe.</param>
+        /// <param name="isAltAttack">Ob der Schaden von einem Alt-Angriff stammt (z.B. Messer-Wurf).</param>
         /// <returns>GametypeDamageResult mit modifiziertem Schaden und optionalen Effekten.</returns>
-        GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName);
+        GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName, bool isAltAttack = false);
+
+        /// <summary>
+        /// Wird nach Projektil-Detonation aufgerufen.
+        /// Ermoeglicht dem Gametype, Post-Detonation-Aktionen auszufuehren
+        /// (z.B. Barrier-Spawn statt Explosion in HideAndSeek).
+        /// </summary>
+        /// <param name="weaponName">Name der Waffe die das Projektil abgefeuert hat.</param>
+        /// <param name="isAltAttack">Ob das Projektil von einem Alt-Angriff stammt.</param>
+        /// <param name="position">Detonationspunkt in Weltkoordinaten.</param>
+        /// <param name="normal">Oberflaechennormale am Auftreffpunkt.</param>
+        void OnProjectileDetonated(string weaponName, bool isAltAttack, Vector3 position, Vector3 normal);
     }
 }

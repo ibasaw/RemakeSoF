@@ -64,6 +64,12 @@ namespace Tolik.RemakeSoF.Runtime.AI
         /// <summary>Name der zuletzt gecachten Waffe (fuer Waffenwechsel-Erkennung).</summary>
         private string m_CachedWeaponName;
 
+        /// <summary>Zeitpunkt der letzten Waffen-Evaluierung (fuer periodische Checks).</summary>
+        private float m_LastWeaponEvalTime;
+
+        /// <summary>Intervall zwischen Waffen-Evaluierungen in Sekunden.</summary>
+        private const float k_WeaponEvalInterval = 1.5f;
+
         /// <summary>Ob dieser Bot ein Seeker ist.</summary>
         public bool IsSeeker { get; private set; }
 
@@ -102,13 +108,13 @@ namespace Tolik.RemakeSoF.Runtime.AI
         private static int s_BreadcrumbCount;
 
         /// <summary>Maximale Anzahl gespeicherter Breadcrumbs.</summary>
-        private const int k_MaxBreadcrumbs = 64;
+        private const int k_MaxBreadcrumbs = 128;
 
         /// <summary>Intervall in Sekunden zwischen Breadcrumb-Aufnahmen.</summary>
-        private const float k_BreadcrumbInterval = 3f;
+        private const float k_BreadcrumbInterval = 2f;
 
-        /// <summary>Mindestdistanz zur letzten Breadcrumb damit eine neue aufgenommen wird (Meter).</summary>
-        private const float k_BreadcrumbMinDistance = 5f;
+        /// <summary>Mindestdistanz zwischen Breadcrumbs beim Waehlen eines Ziels (Meter).</summary>
+        private const float k_BreadcrumbMinPickDistance = 8f;
 
         /// <summary>Timer fuer Breadcrumb-Aufnahme (statisch, ein Scan fuer alle Bots).</summary>
         private static float s_BreadcrumbTimer;
@@ -117,7 +123,7 @@ namespace Tolik.RemakeSoF.Runtime.AI
         private static bool s_BreadcrumbsInitialized;
 
         /// <summary>Wahrscheinlichkeit (0-1) dass ein Breadcrumb-Ziel statt eines statischen Checkpoints gewaehlt wird.</summary>
-        private const float k_BreadcrumbChance = 0.3f;
+        private const float k_BreadcrumbChance = 0.5f;
 
         /// <summary>Aktuelle Breadcrumb-Zielposition (null = nutze statischen Checkpoint).</summary>
         private Vector3? m_BreadcrumbTarget;
@@ -775,33 +781,19 @@ namespace Tolik.RemakeSoF.Runtime.AI
 
                 Vector3 playerPos = col.transform.position;
 
-                // Pruefen ob die Position weit genug von der letzten Breadcrumb entfernt ist
-                bool tooClose = false;
-                if (s_BreadcrumbCount > 0)
+                s_Breadcrumbs[s_BreadcrumbWriteIdx] = playerPos;
+                s_BreadcrumbWriteIdx = (s_BreadcrumbWriteIdx + 1) % k_MaxBreadcrumbs;
+                if (s_BreadcrumbCount < k_MaxBreadcrumbs)
                 {
-                    // Letzte geschriebene Breadcrumb pruefen
-                    int lastIdx = (s_BreadcrumbWriteIdx - 1 + k_MaxBreadcrumbs) % k_MaxBreadcrumbs;
-                    if (HorizontalDistance(playerPos, s_Breadcrumbs[lastIdx]) < k_BreadcrumbMinDistance)
-                    {
-                        tooClose = true;
-                    }
-                }
-
-                if (!tooClose)
-                {
-                    s_Breadcrumbs[s_BreadcrumbWriteIdx] = playerPos;
-                    s_BreadcrumbWriteIdx = (s_BreadcrumbWriteIdx + 1) % k_MaxBreadcrumbs;
-                    if (s_BreadcrumbCount < k_MaxBreadcrumbs)
-                    {
-                        s_BreadcrumbCount++;
-                    }
+                    s_BreadcrumbCount++;
                 }
             }
         }
 
         /// <summary>
-        /// Waehlt eine zufaellige Breadcrumb-Position als Patrol-Ziel.
-        /// Bevorzugt Breadcrumbs die weiter vom Bot entfernt sind (min 8m).
+        /// Waehlt eine Breadcrumb-Position als Patrol-Ziel mit Recency-Gewichtung.
+        /// Neuere Breadcrumbs werden stark bevorzugt (Spieler war dort kuerzlich).
+        /// Mindestdistanz zum Bot wird eingehalten.
         /// Gibt null zurueck wenn keine geeignete Breadcrumb vorhanden.
         /// </summary>
         private Vector3? PickRandomBreadcrumb(Vector3 fromPosition)
@@ -811,14 +803,25 @@ namespace Tolik.RemakeSoF.Runtime.AI
                 return null;
             }
 
-            // Aus den vorhandenen Breadcrumbs eine zufaellige waehlen (max 10 Versuche)
-            for (int attempt = 0; attempt < 10; attempt++)
+            // Gewichtete Auswahl: neuere Breadcrumbs haben hoehere Gewichtung.
+            // Index 0 = aelteste, s_BreadcrumbCount-1 = neueste im logischen Ring.
+            // Gewicht = (logicalIndex + 1)^2 → neueste ~128x wahrscheinlicher als aelteste.
+            for (int attempt = 0; attempt < 15; attempt++)
             {
-                int idx = Random.Range(0, s_BreadcrumbCount);
-                Vector3 bc = s_Breadcrumbs[idx];
+                // Quadratische Verteilung: sqrt(uniform) erzeugt Bias zu hohen Werten
+                float t = Mathf.Sqrt(Random.value);
+                int logicalIdx = Mathf.FloorToInt(t * s_BreadcrumbCount);
+                if (logicalIdx >= s_BreadcrumbCount)
+                {
+                    logicalIdx = s_BreadcrumbCount - 1;
+                }
+
+                // Logischen Index in Ring-Index umrechnen (0 = aelteste → neueste zuerst)
+                int ringIdx = (s_BreadcrumbWriteIdx - s_BreadcrumbCount + logicalIdx + k_MaxBreadcrumbs) % k_MaxBreadcrumbs;
+                Vector3 bc = s_Breadcrumbs[ringIdx];
 
                 // Zu nah am Bot → ueberspringen (sonst laeuft er im Kreis)
-                if (HorizontalDistance(fromPosition, bc) < 8f)
+                if (HorizontalDistance(fromPosition, bc) < k_BreadcrumbMinPickDistance)
                 {
                     continue;
                 }
@@ -826,7 +829,8 @@ namespace Tolik.RemakeSoF.Runtime.AI
                 // Pruefen ob die Position auf dem NavMesh liegt
                 if (NavMesh.SamplePosition(bc, out NavMeshHit _, k_NavMeshSampleHeight, NavMesh.AllAreas))
                 {
-                    Debug.Log($"[AI·CP] Breadcrumb gewaehlt ({bc.x:F1},{bc.y:F1},{bc.z:F1}) d={HorizontalDistance(fromPosition, bc):F1}m | Pool={s_BreadcrumbCount}");
+                    int age = s_BreadcrumbCount - 1 - logicalIdx;
+                    Debug.Log($"[AI·CP] Breadcrumb gewaehlt ({bc.x:F1},{bc.y:F1},{bc.z:F1}) d={HorizontalDistance(fromPosition, bc):F1}m age={age} | Pool={s_BreadcrumbCount}");
                     return bc;
                 }
             }
@@ -2007,6 +2011,9 @@ namespace Tolik.RemakeSoF.Runtime.AI
             // Waffenreichweite aktualisieren (lazy bei Waffenwechsel)
             UpdateWeaponRange();
 
+            // Waffenstatus evaluieren (Reload, Wechsel, Praeferenz)
+            EvaluateWeaponState();
+
             PlayerCommand cmd = BuildCommand();
 
             // Periodisches Tick-Log (alle 300 Ticks ~ 5 Sekunden bei 60fps)
@@ -2176,6 +2183,12 @@ namespace Tolik.RemakeSoF.Runtime.AI
                 }
             }
 
+            // Auto-Reload: Magazin leer aber Reserve vorhanden → nachladen
+            if (m_CharacterState != null && m_CharacterState.CurrentClipAmmo <= 0 && m_CharacterState.ReserveAmmo > 0)
+            {
+                buttons |= CommandButtons.Reload;
+            }
+
             // Action-Buttons
             if (m_ShouldAttack)
             {
@@ -2211,6 +2224,54 @@ namespace Tolik.RemakeSoF.Runtime.AI
             };
 
             return cmd;
+        }
+
+        /// <summary>
+        /// Evaluiert den aktuellen Waffenstatus und wechselt bei Bedarf.
+        /// Periodisch im Tick aufgerufen (alle k_WeaponEvalInterval Sekunden).
+        /// Auto-Switch bei trockener Waffe, Praeferenz fuer Fernkampf in Kampfsituationen.
+        /// </summary>
+        private void EvaluateWeaponState()
+        {
+            if (m_CharacterState == null || m_CharacterState.WeaponCount <= 1)
+            {
+                return;
+            }
+
+            if (Time.time - m_LastWeaponEvalTime < k_WeaponEvalInterval)
+            {
+                return;
+            }
+
+            m_LastWeaponEvalTime = Time.time;
+
+            int clipAmmo = m_CharacterState.CurrentClipAmmo;
+            int reserveAmmo = m_CharacterState.ReserveAmmo;
+            string currentWeaponName = m_CharacterState.CurrentWeaponName;
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                return;
+            }
+
+            WeaponDefinition currentWeapon = loader.GetById(currentWeaponName);
+            bool isInfinite = currentWeapon?.Ammo?.Infinite ?? false;
+
+            // Waffe komplett trocken (clip=0, reserve=0, nicht infinite) → naechste Waffe
+            if (clipAmmo <= 0 && reserveAmmo <= 0 && !isInfinite)
+            {
+                m_CharacterState.ServerCycleWeapon(1);
+                Debug.Log($"[AI·Weapon] {m_CharacterState.CharacterName}: Waffe '{currentWeaponName}' trocken, wechsle zur naechsten.");
+                return;
+            }
+
+            // Im Kampf: Fernkampfwaffe bevorzugen wenn aktuell Nahkampf gehalten wird
+            if (PlayerSensorDetected && currentWeapon != null && currentWeapon.IsMelee)
+            {
+                m_CharacterState.ServerCycleWeapon(1);
+                Debug.Log($"[AI·Weapon] {m_CharacterState.CharacterName}: Nahkampfwaffe im Kampf, wechsle zu Fernkampf.");
+            }
         }
 
         /// <summary>

@@ -1,3 +1,5 @@
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
@@ -76,6 +78,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Guard-Flag: Verhindert mehrfaches Pickup durch mehrere Collider im selben Frame.</summary>
         private bool m_IsPickedUp;
 
+        /// <summary>Ob der Schaden von einem Alt-Angriff stammt (z.B. Messer-Wurf).</summary>
+        private bool m_IsAltAttack;
+
         /// <summary>Explosion-Effect-ID fuer Feuer/Phosphorus-Erkennung (z.B. "effects/explosions/incendiary_explosion_mp").</summary>
         private string m_ExplosionEffectId;
 
@@ -106,6 +111,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
         /// <summary>Root-Transform des Owners (fuer Raycast-Filterung: eigene Collider ignorieren).</summary>
         private Transform m_OwnerRoot;
 
+        /// <summary>Letzte Auftreff-Normale (fuer Gametype-Hooks wie Fence-Spawn).</summary>
+        private Vector3 m_LastHitNormal = Vector3.up;
+
         /// <summary>
         /// Initialisiert das Projektil mit Waffen-Daten.
         /// Wird vom Server nach Instantiate aufgerufen.
@@ -124,7 +132,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             ulong ownerClientId,
             string weaponName = "",
             uint projectileId = 0,
-            string explosionEffectId = "")
+            string explosionEffectId = "",
+            bool isAltAttack = false)
         {
             m_ProjectileId = projectileId;
             m_ExplosionEffectId = explosionEffectId ?? "";
@@ -139,6 +148,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             m_Knockback = knockback > 0 ? knockback : 700;
             m_OwnerClientId = ownerClientId;
             m_WeaponName = weaponName;
+            m_IsAltAttack = isAltAttack;
             m_Lifetime = 0f;
             m_HasDetonated = false;
             m_IsStuck = false;
@@ -254,6 +264,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             if (hasWorldHit)
             {
                 transform.position = worldHit.point + worldHit.normal * 0.01f;
+                m_LastHitNormal = worldHit.normal;
 
                 if (m_Detonation == "impact")
                 {
@@ -307,6 +318,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             }
             if (hasHitboxHit)
             {
+                m_LastHitNormal = hitboxHit.normal;
                 if (m_Detonation == "impact")
                 {
                     Detonate(hitboxHit.point);
@@ -387,6 +399,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
             }
 
             // Damage + Knockback anwenden
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            NetworkedCharacterState ownerState = FindOwnerState();
+            GametypeTeam attackerTeam = ownerState != null ? (GametypeTeam)ownerState.TeamId : GametypeTeam.None;
+
             foreach (System.Collections.Generic.KeyValuePair<NetworkedCharacterState, (float damage, Vector3 hitPos)> kvp in damagePerTarget)
             {
                 float baseDamage = kvp.Value.damage;
@@ -401,9 +417,86 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                     continue;
                 }
 
+                // Gametype-Hook: Schaden modifizieren, Stun/Nachrichten anwenden
+                if (gametypeManager != null)
+                {
+                    GametypeTeam victimTeam = (GametypeTeam)kvp.Key.TeamId;
+
+                    GametypeDamageResult damageResult = gametypeManager.OnDamage(
+                        m_OwnerClientId,
+                        kvp.Key.OwnerClientId,
+                        attackerTeam,
+                        victimTeam,
+                        finalDamage,
+                        m_WeaponName,
+                        m_IsAltAttack
+                    );
+
+                    finalDamage = damageResult.ModifiedDamage;
+
+                    // Stun auf das Opfer anwenden
+                    if (damageResult.ApplyStun && damageResult.StunDuration > 0f)
+                    {
+                        NetworkedPlayerCharacter targetCharacter = kvp.Key.GetComponent<NetworkedPlayerCharacter>();
+                        if (targetCharacter != null)
+                        {
+                            targetCharacter.ApplyStun(damageResult.StunDuration);
+                        }
+                        else
+                        {
+                            ServerAICharacter targetBot = kvp.Key.GetComponent<ServerAICharacter>();
+                            if (targetBot != null)
+                            {
+                                targetBot.ApplyStun(damageResult.StunDuration);
+                            }
+                        }
+                    }
+
+                    // Gezielte Nachrichten senden
+                    string attackerName = ownerState != null ? ownerState.CharacterName : "Unknown";
+                    string victimName = kvp.Key.CharacterName;
+
+                    if (!string.IsNullOrEmpty(damageResult.AttackerMessage))
+                    {
+                        string msg = damageResult.AttackerMessage
+                            .Replace("{attackerName}", attackerName)
+                            .Replace("{victimName}", victimName);
+                        NetworkedPlayerCharacter ownerCharacter = ownerState != null ? ownerState.GetComponent<NetworkedPlayerCharacter>() : null;
+                        if (ownerCharacter != null)
+                        {
+                            ownerCharacter.SendGametypeMessage(msg);
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(damageResult.VictimMessage))
+                    {
+                        string msg = damageResult.VictimMessage
+                            .Replace("{attackerName}", attackerName)
+                            .Replace("{victimName}", victimName);
+                        NetworkedPlayerCharacter targetCharacter = kvp.Key.GetComponent<NetworkedPlayerCharacter>();
+                        if (targetCharacter != null)
+                        {
+                            targetCharacter.SendGametypeMessage(msg);
+                        }
+                    }
+
+                    if (finalDamage <= 0)
+                    {
+                        continue;
+                    }
+                }
+
                 // Damage anwenden
-                int newHealth = Mathf.Max(0, kvp.Key.Health - finalDamage);
-                kvp.Key.SetHealth(newHealth);
+                ServerCharacterController targetController = kvp.Key.GetComponent<ServerCharacterController>();
+                if (targetController != null)
+                {
+                    targetController.ApplyDamage(finalDamage, m_OwnerClientId);
+                }
+                else
+                {
+                    int newHealth = Mathf.Max(0, kvp.Key.Health - finalDamage);
+                    kvp.Key.SetHealth(newHealth);
+                }
 
                 // SoF2 Knockback (g_combat.c:844): knockback = min(baseDamage, 200), NICHT take
                 float knockback = Mathf.Min(baseDamage, MAX_KNOCKBACK);
@@ -433,6 +526,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
             // Event fuer Visual-RPC
             OnDetonated?.Invoke(explosionPoint);
+
+            // Gametype-Hook: Post-Detonation-Aktion (z.B. Fence-Spawn in HideAndSeek)
+            if (gametypeManager != null)
+            {
+                gametypeManager.OnProjectileDetonated(m_WeaponName, m_IsAltAttack, explosionPoint, m_LastHitNormal);
+            }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[ServerProjectile] Detonated at {explosionPoint} | Radius={radiusMeters:F1}m | Targets={damagePerTarget.Count}");
@@ -531,11 +630,91 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
                 return;
             }
 
-            int newHealth = Mathf.Max(0, targetState.Health - m_Damage);
-            targetState.SetHealth(newHealth);
+            int finalDamage = m_Damage;
+
+            // Gametype-Hook: Schaden modifizieren, Stun/Nachrichten anwenden
+            GametypeManager gametypeManager = ServiceLocator.Get<GametypeManager>();
+            if (gametypeManager != null)
+            {
+                NetworkedCharacterState ownerState = FindOwnerState();
+                GametypeTeam attackerTeam = ownerState != null ? (GametypeTeam)ownerState.TeamId : GametypeTeam.None;
+                GametypeTeam victimTeam = (GametypeTeam)targetState.TeamId;
+
+                GametypeDamageResult damageResult = gametypeManager.OnDamage(
+                    m_OwnerClientId,
+                    targetState.OwnerClientId,
+                    attackerTeam,
+                    victimTeam,
+                    finalDamage,
+                    m_WeaponName,
+                    m_IsAltAttack
+                );
+
+                finalDamage = damageResult.ModifiedDamage;
+
+                // Stun auf das Opfer anwenden
+                if (damageResult.ApplyStun && damageResult.StunDuration > 0f)
+                {
+                    NetworkedPlayerCharacter targetCharacter = targetState.GetComponent<NetworkedPlayerCharacter>();
+                    if (targetCharacter != null)
+                    {
+                        targetCharacter.ApplyStun(damageResult.StunDuration);
+                    }
+                    else
+                    {
+                        ServerAICharacter targetBot = targetState.GetComponent<ServerAICharacter>();
+                        if (targetBot != null)
+                        {
+                            targetBot.ApplyStun(damageResult.StunDuration);
+                        }
+                    }
+                }
+
+                // Gezielte Nachrichten senden
+                string attackerName = ownerState != null ? ownerState.CharacterName : "Unknown";
+                string victimName = targetState.CharacterName;
+
+                if (!string.IsNullOrEmpty(damageResult.AttackerMessage))
+                {
+                    string msg = damageResult.AttackerMessage
+                        .Replace("{attackerName}", attackerName)
+                        .Replace("{victimName}", victimName);
+                    NetworkedPlayerCharacter ownerCharacter = ownerState != null ? ownerState.GetComponent<NetworkedPlayerCharacter>() : null;
+                    if (ownerCharacter != null)
+                    {
+                        ownerCharacter.SendGametypeMessage(msg);
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(damageResult.VictimMessage))
+                {
+                    string msg = damageResult.VictimMessage
+                        .Replace("{attackerName}", attackerName)
+                        .Replace("{victimName}", victimName);
+                    NetworkedPlayerCharacter targetCharacter = targetState.GetComponent<NetworkedPlayerCharacter>();
+                    if (targetCharacter != null)
+                    {
+                        targetCharacter.SendGametypeMessage(msg);
+                    }
+                }
+            }
+
+            if (finalDamage > 0)
+            {
+                ServerCharacterController targetController = targetState.GetComponent<ServerCharacterController>();
+                if (targetController != null)
+                {
+                    targetController.ApplyDamage(finalDamage, m_OwnerClientId);
+                }
+                else
+                {
+                    int newHealth = Mathf.Max(0, targetState.Health - finalDamage);
+                    targetState.SetHealth(newHealth);
+                }
+            }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log($"[ServerProjectile] Sticky direct hit {targetState.CharacterName} | Region={hitboxCollider.HitRegion} | Damage={m_Damage} | Health={newHealth}");
+            Debug.Log($"[ServerProjectile] Sticky direct hit {targetState.CharacterName} | Region={hitboxCollider.HitRegion} | Damage={finalDamage} | Health={targetState.Health}");
 #endif
         }
 
@@ -572,6 +751,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Projectiles
 
             OnPickedUp?.Invoke(m_ProjectileId);
             Destroy(gameObject);
+        }
+
+        /// <summary>
+        /// Findet den NetworkedCharacterState des Projektil-Owners anhand der ClientId.
+        /// </summary>
+        private NetworkedCharacterState FindOwnerState()
+        {
+            foreach (Unity.Netcode.NetworkClient client in Unity.Netcode.NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (client.ClientId == m_OwnerClientId && client.PlayerObject != null)
+                {
+                    return client.PlayerObject.GetComponent<NetworkedCharacterState>();
+                }
+            }
+
+            return null;
         }
     }
 }

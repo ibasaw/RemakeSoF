@@ -32,11 +32,13 @@
     "g_allowvote": true,
     "g_teamAutoJoin": false,
     "g_teamForceBalance": true,
+
     "sv_mapRotation": [
         "maps/mp_kam2",
         "maps/mp_finca",
         "maps/mp_kam3"
     ],
+
     "hideandseek_hidetime": 30,
     "hideandseek_seektime": 120,
     "hideandseek_seekercount": 1,

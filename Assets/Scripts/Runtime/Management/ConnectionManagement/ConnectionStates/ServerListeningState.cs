@@ -62,6 +62,13 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
                         {
                             foreach (string weapon in weapons)
                             {
+                                // Ammo-Override VOR AddWeapon/SetCurrentWeaponName im Cache hinterlegen
+                                (int clip, int reserve, int altClip, int altReserve)? ammoOverride = gametypeManager.GetStartAmmo(weapon);
+                                if (ammoOverride.HasValue)
+                                {
+                                    characterState.PreloadWeaponAmmo(weapon, ammoOverride.Value.clip, ammoOverride.Value.reserve, ammoOverride.Value.altClip, ammoOverride.Value.altReserve);
+                                }
+
                                 characterState.AddWeapon(weapon);
                             }
                         }

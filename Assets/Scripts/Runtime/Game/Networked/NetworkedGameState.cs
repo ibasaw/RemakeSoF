@@ -156,6 +156,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         internal event Action OnRoundStarting;
 
         /// <summary>
+        /// Wird gefeuert wenn eine Gametype-Broadcast-Nachricht empfangen wird.
+        /// Alle Clients zeigen die Nachricht im HUD an.
+        /// </summary>
+        internal event Action<string> OnGametypeBroadcast;
+
+        /// <summary>
         /// Event das bei jeder Map-Ladephase gefeuert wird (für UI-Fortschrittsanzeige).
         /// </summary>
         internal event Action<MapLoadPhase> OnMapLoadProgress;
@@ -647,6 +653,27 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
         void ClientEndMatchRpc()
         {
             OnMatchEnded?.Invoke();
+        }
+
+        /// <summary>
+        /// Broadcastet eine Gametype-Nachricht an alle Clients (z.B. "XY got a lucky m4").
+        /// Kann von beliebigen Server-Systemen aufgerufen werden.
+        /// </summary>
+        /// <param name="message">Die Nachricht die allen Clients angezeigt wird.</param>
+        internal void BroadcastGametypeMessage(string message)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            GametypeBroadcastClientRpc(message);
+        }
+
+        [Rpc(SendTo.ClientsAndHost)]
+        void GametypeBroadcastClientRpc(string message)
+        {
+            OnGametypeBroadcast?.Invoke(message);
         }
     }
 }

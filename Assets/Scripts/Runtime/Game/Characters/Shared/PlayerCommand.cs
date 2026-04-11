@@ -118,6 +118,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>SoF2 PMF_TIME_KNOCKBACK Timer (Sekunden). Verhindert Friction waehrend Knockback.</summary>
         public float KnockbackTime;
 
+        /// <summary>Stun-Timer (Sekunden). Gametype-Modifier: massive Friction, keine Beschleunigung.</summary>
+        public float StunTime;
+
         /// <summary>
         /// Serialisiert das Acknowledgement für Netcode RPC-Transport.
         /// </summary>
@@ -130,6 +133,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             serializer.SerializeValue(ref IsJumping);
             serializer.SerializeValue(ref IsCrouching);
             serializer.SerializeValue(ref KnockbackTime);
+            serializer.SerializeValue(ref StunTime);
         }
     }
 }

@@ -991,6 +991,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         // ===== Weapon Inventory =====
 
         /// <summary>
+        /// Server: Setzt Ammo-Override fuer eine Waffe im Cache (vor erstem Equip).
+        /// Wird beim Spawn fuer gametype-spezifische Ammo-Limits genutzt.
+        /// </summary>
+        /// <param name="weaponName">ID der Waffe.</param>
+        /// <param name="clip">Clip-Munition.</param>
+        /// <param name="reserve">Reserve-Munition.</param>
+        /// <param name="altClip">Alt-Fire Clip-Munition.</param>
+        /// <param name="altReserve">Alt-Fire Reserve-Munition.</param>
+        public void PreloadWeaponAmmo(string weaponName, int clip, int reserve, int altClip, int altReserve)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            m_AmmoCache[weaponName] = (clip, reserve, altClip, altReserve);
+        }
+
+        /// <summary>
         /// Server: Fuegt eine Waffe zum Inventar hinzu (Duplikate werden ignoriert).
         /// </summary>
         public void AddWeapon(string weaponName)
@@ -1015,6 +1034,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedCharacterState] Server added weapon '{weaponName}' for client {OwnerClientId}. Inventory count: {m_WeaponInventory.Count}");
 #endif
+        }
+
+        /// <summary>
+        /// Server: Entfernt alle Waffen und leert den Ammo-Cache.
+        /// Wird beim Runden-Reset aufgerufen um Spieler/Bots auf Gametype-Startwaffen zurueckzusetzen.
+        /// </summary>
+        public void ClearWeaponsAndAmmo()
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            m_WeaponInventory.Clear();
+            m_AmmoCache.Clear();
         }
 
         /// <summary>
@@ -1061,6 +1095,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public void RequestPreviousWeaponServerRpc()
         {
             CycleWeapon(-1);
+        }
+
+        /// <summary>
+        /// Server: Wechselt die Waffe um den angegebenen Offset (fuer AI-Bot-Steuerung).
+        /// Direkter Aufruf ohne RPC-Overhead.
+        /// </summary>
+        /// <param name="direction">1 = naechste, -1 = vorherige Waffe.</param>
+        public void ServerCycleWeapon(int direction)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            CycleWeapon(direction);
         }
 
         /// <summary>

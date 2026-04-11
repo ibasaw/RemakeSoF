@@ -100,6 +100,13 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         }
 
         /// <inheritdoc />
+        public virtual (int clip, int reserve, int altClip, int altReserve)? GetStartAmmo(string weaponName)
+        {
+            // Null = Standard-Ammo aus Waffendaten verwenden
+            return null;
+        }
+
+        /// <inheritdoc />
         public virtual int GetCurrentPhase()
         {
             return 0;
@@ -156,10 +163,16 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         }
 
         /// <inheritdoc />
-        public virtual GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName)
+        public virtual GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName, bool isAltAttack = false)
         {
             // Default: Schaden unveraendert durchlassen.
             return GametypeDamageResult.Default(damage);
+        }
+
+        /// <inheritdoc />
+        public virtual void OnProjectileDetonated(string weaponName, bool isAltAttack, Vector3 position, Vector3 normal)
+        {
+            // Default: keine Post-Detonation-Aktion.
         }
     }
 }

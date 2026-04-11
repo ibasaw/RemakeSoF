@@ -168,6 +168,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                 IsJumping = m_Simulation.IsJumping,
                 IsCrouching = m_Simulation.IsCrouching,
                 KnockbackTime = m_Simulation.KnockbackTime,
+                StunTime = m_Simulation.StunTime,
             };
         }
 
@@ -228,6 +229,24 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         public void ZeroVelocity()
         {
             m_Simulation.Velocity = Vector3.zero;
+        }
+
+        /// <summary>
+        /// Setzt den Stun-Timer der Physik-Simulation (Gametype-Modifier).
+        /// Waehrend StunTime > 0: massive Friction, keine Beschleunigung, kein Springen.
+        /// </summary>
+        /// <param name="duration">Stun-Dauer in Sekunden.</param>
+        public void SetStunTime(float duration)
+        {
+            m_Simulation.StunTime = duration;
+        }
+
+        /// <summary>
+        /// Gibt die verbleibende Stun-Zeit der Physik-Simulation zurueck.
+        /// </summary>
+        public float GetStunTime()
+        {
+            return m_Simulation.StunTime;
         }
 
         /// <summary>

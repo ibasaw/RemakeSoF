@@ -170,6 +170,12 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             return m_ActiveGametype?.GetStartWeapons(team);
         }
 
+        /// <summary>Gibt gametype-spezifische Ammo-Overrides fuer eine Waffe zurueck. Null = Default.</summary>
+        public (int clip, int reserve, int altClip, int altReserve)? GetStartAmmo(string weaponName)
+        {
+            return m_ActiveGametype?.GetStartAmmo(weaponName);
+        }
+
         /// <summary>Gibt die aktuelle gametype-spezifische Phase zurueck.</summary>
         public int GetCurrentPhase()
         {
@@ -225,14 +231,20 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         }
 
         /// <summary>Delegiert Damage-Modifikation an den aktiven Gametype.</summary>
-        public GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName)
+        public GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName, bool isAltAttack = false)
         {
             if (m_ActiveGametype == null)
             {
                 return GametypeDamageResult.Default(damage);
             }
 
-            return m_ActiveGametype.OnDamage(attackerClientId, victimClientId, attackerTeam, victimTeam, damage, weaponName);
+            return m_ActiveGametype.OnDamage(attackerClientId, victimClientId, attackerTeam, victimTeam, damage, weaponName, isAltAttack);
+        }
+
+        /// <summary>Delegiert Post-Detonation-Aktion an den aktiven Gametype.</summary>
+        public void OnProjectileDetonated(string weaponName, bool isAltAttack, Vector3 position, Vector3 normal)
+        {
+            m_ActiveGametype?.OnProjectileDetonated(weaponName, isAltAttack, position, normal);
         }
     }
 }

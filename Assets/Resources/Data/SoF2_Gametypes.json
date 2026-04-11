@@ -19,7 +19,9 @@
         "respawnType": "normal",
         "pickupsDisabled": false,
         "showKills": true,
-        "roundBased": false
+        "roundBased": false,
+        "team1Name": "Red",
+        "team2Name": "Blue"
     },
     {
         "gametype": "ctf",

@@ -135,6 +135,7 @@ namespace Tolik.RemakeSoF.Runtime
             App.Model.NetworkedGameState.phaseTimeRemaining.OnValueChanged += OnPhaseTimeRemainingChanged;
             App.Model.NetworkedGameState.currentRound.OnValueChanged += OnRoundChanged;
             App.Model.NetworkedGameState.roundLimit.OnValueChanged += OnRoundChanged;
+            App.Model.NetworkedGameState.OnGametypeBroadcast += OnGametypeBroadcast;
             AddListener<ScoreboardShowEvent>(OnScoreboardShow);
             AddListener<ScoreboardHideEvent>(OnScoreboardHide);
             View.OnViewEnabled += OnMatchViewEnabled;
@@ -165,6 +166,7 @@ namespace Tolik.RemakeSoF.Runtime
             App.Model.NetworkedGameState.phaseTimeRemaining.OnValueChanged -= OnPhaseTimeRemainingChanged;
             App.Model.NetworkedGameState.currentRound.OnValueChanged -= OnRoundChanged;
             App.Model.NetworkedGameState.roundLimit.OnValueChanged -= OnRoundChanged;
+            App.Model.NetworkedGameState.OnGametypeBroadcast -= OnGametypeBroadcast;
             RemoveListener<ScoreboardShowEvent>(OnScoreboardShow);
             RemoveListener<ScoreboardHideEvent>(OnScoreboardHide);
         }
@@ -598,6 +600,21 @@ namespace Tolik.RemakeSoF.Runtime
         /// Zeigt die Nachricht als QuakeColorLabel im HUD an und blendet sie nach einer Verzoegerung aus.
         /// </summary>
         private void OnGametypeMessage(string message)
+        {
+            View.ShowGametypeMessage(message);
+
+            if (m_GametypeMessageCoroutine != null)
+            {
+                StopCoroutine(m_GametypeMessageCoroutine);
+            }
+            m_GametypeMessageCoroutine = StartCoroutine(HideGametypeMessageAfterDelay());
+        }
+
+        /// <summary>
+        /// Callback fuer Gametype-Broadcast-Nachrichten (z.B. "XY got a lucky m4").
+        /// Zeigt die Nachricht allen Clients gleichzeitig im HUD an.
+        /// </summary>
+        private void OnGametypeBroadcast(string message)
         {
             View.ShowGametypeMessage(message);
 

@@ -91,6 +91,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// <summary>Max Clip-Planes für PM_SlideMove (SoF2: MAX_CLIP_PLANES = 5).</summary>
         private const int MAX_CLIP_PLANES = 5;
 
+        /// <summary>Friction-Multiplikator waehrend Stun (Gametype-Modifier). Rapide Abbremsung.</summary>
+        private const float STUN_FRICTION_MULTIPLIER = 10f;
+
         /// <summary>SoF2 Ground-Trace Distanz: 0.25 Quake-Units × 0.0254 = 0.00635m.
         /// Erhöht auf 0.04m weil Unity BoxCast auf Slopes bei kleineren Werten
         /// den Bodenkontakt verliert. CorrectGroundPosition gleicht das Schweben aus.</summary>
@@ -122,6 +125,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// Verhindert dass der Spieler Knockback-Momentum sofort canceln kann.
         /// </summary>
         [NonSerialized] public float KnockbackTime;
+
+        /// <summary>
+        /// Stun-Timer (Sekunden, countdown). Gametype-Modifier.
+        /// Wenn > 0: Friction wird massiv erhoeht, Beschleunigung auf 0 gesetzt.
+        /// Spieler/Bot verlangsamt sich rapide, kann sich aber nicht neu beschleunigen.
+        /// </summary>
+        [NonSerialized] public float StunTime;
 
         /// <summary>Gespeicherter Ground-Hit für externe Abfragen.</summary>
         [NonSerialized] public RaycastHit LastGroundHit;
@@ -281,13 +291,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
         /// automatisch durch PM_CheckDuck gesetzt (kein Teleport noetig).
         /// </summary>
         public void SetState(Vector3 velocity, bool isGrounded, bool isJumping, bool isCrouching,
-                             float knockbackTime = 0f)
+                             float knockbackTime = 0f, float stunTime = 0f)
         {
             Velocity = velocity;
             IsGrounded = isGrounded;
             IsJumping = isJumping;
             IsCrouching = isCrouching;
             KnockbackTime = knockbackTime;
+            StunTime = stunTime;
 
             // Crouch-Jump State ableiten: aktiv wenn in der Luft + springend + geduckt.
             // PM_CheckDuck liest m_CrouchJumping und setzt CapsuleCenter entsprechend.
@@ -364,6 +375,16 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 if (KnockbackTime < 0f)
                 {
                     KnockbackTime = 0f;
+                }
+            }
+
+            // Stun-Timer countdown (Gametype-Modifier: massive Friction, keine Beschleunigung)
+            if (StunTime > 0f)
+            {
+                StunTime -= m_DeltaTime;
+                if (StunTime < 0f)
+                {
+                    StunTime = 0f;
                 }
             }
 
@@ -715,6 +736,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
                 return false;
             }
 
+            // Stun: kein Springen moeglich
+            if (StunTime > 0f)
+            {
+                return false;
+            }
+
             // Not pressing jump
             if (!cmd.HasButton(CommandButtons.Jump))
             {
@@ -774,8 +801,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             // SoF2: if (!(pm->ps->pm_flags & PMF_TIME_KNOCKBACK)) — skip friction during knockback
             if (m_Walking && KnockbackTime <= 0f)
             {
+                float friction = StunTime > 0f ? PmFriction * STUN_FRICTION_MULTIPLIER : PmFriction;
                 float control = speed < PmStopSpeed ? PmStopSpeed : speed;
-                drop += control * PmFriction * m_DeltaTime;
+                drop += control * friction * m_DeltaTime;
             }
 
             float newspeed = speed - drop;
@@ -938,8 +966,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
 
             // SoF2: accelerate faster when ducked (bg_pmove.c: accelerate *= 2)
             // SoF2: PMF_TIME_KNOCKBACK → use air-accelerate on ground (bg_pmove.c:780)
+            // Stun: Beschleunigung komplett deaktiviert — nur Friction bremst den Spieler.
             float accelerate;
-            if (KnockbackTime > 0f)
+            if (StunTime > 0f)
+            {
+                accelerate = 0f;
+            }
+            else if (KnockbackTime > 0f)
             {
                 accelerate = PmAirAccelerate;
             }
@@ -1018,7 +1051,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Shared
             float scale = PM_CmdScale(cmd.MoveInput);
             wishspeed = scale * PmMaxSpeed;
 
-            PM_Accelerate(wishdir, wishspeed, PmAirAccelerate);
+            // Stun: keine Luft-Beschleunigung, nur Gravity wirkt weiter.
+            float airAccel = StunTime > 0f ? 0f : PmAirAccelerate;
+            PM_Accelerate(wishdir, wishspeed, airAccel);
 
             // SoF2: clip against steep ground plane if present
             if (m_GroundPlane)

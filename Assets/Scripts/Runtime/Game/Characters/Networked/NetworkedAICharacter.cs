@@ -499,11 +499,59 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_ServerPosition.Value = position;
             m_ServerRotation.Value = rotation;
 
+            // Bot wiederbeleben falls tot
+            if (m_CharacterState != null && !m_CharacterState.IsAlive)
+            {
+                m_CharacterState.SetHealth(100);
+                m_CharacterState.SetIsAlive(true);
+            }
+
+            // Waffen/Ammo zuruecksetzen und Gametype-Startwaffen neu zuweisen
+            ResetWeaponsForRound();
+
             m_ServerAICharacter.SetReady();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[AI·Spawn] Server: Bot respawned bei {position}");
 #endif
+        }
+
+        /// <summary>
+        /// Server: Setzt Waffen und Ammo auf Gametype-Startwerte zurueck.
+        /// Wird bei jedem Runden-Respawn aufgerufen.
+        /// </summary>
+        private void ResetWeaponsForRound()
+        {
+            if (m_CharacterState == null)
+            {
+                return;
+            }
+
+            m_CharacterState.ClearWeaponsAndAmmo();
+
+            GametypeManagement.GametypeManager gametypeManager = ServiceLocator.Get<GametypeManagement.GametypeManager>();
+            GametypeManagement.GametypeTeam team = (GametypeManagement.GametypeTeam)m_CharacterState.TeamId;
+            string[] weapons = gametypeManager?.GetStartWeapons(team);
+
+            if (weapons != null)
+            {
+                foreach (string weapon in weapons)
+                {
+                    (int clip, int reserve, int altClip, int altReserve)? ammoOverride = gametypeManager.GetStartAmmo(weapon);
+                    if (ammoOverride.HasValue)
+                    {
+                        m_CharacterState.PreloadWeaponAmmo(weapon, ammoOverride.Value.clip, ammoOverride.Value.reserve, ammoOverride.Value.altClip, ammoOverride.Value.altReserve);
+                    }
+
+                    m_CharacterState.AddWeapon(weapon);
+                }
+            }
+            else
+            {
+                m_CharacterState.AddWeapon("knife");
+            }
+
+            m_CharacterState.SetCurrentWeaponName("knife");
         }
 
         /// <summary>
@@ -860,6 +908,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <summary>
         /// Setzt Name, Skin, Team und Waffen auf dem NetworkedCharacterState.
         /// Wird vom AIBotSpawner nach dem Spawn aufgerufen.
+        /// Gametype-spezifische Waffen und Ammo-Overrides werden automatisch angewendet.
         /// </summary>
         /// <param name="botName">Name des Bots.</param>
         /// <param name="skinName">Skin-Name (Addressable-Key).</param>
@@ -874,10 +923,34 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_CharacterState.SetCharacterName(botName);
             m_CharacterState.SetCurrentSkinName(skinName);
             m_CharacterState.SetTeam(teamId);
-            m_CharacterState.AddWeapon("knife");
+
+            // Gametype-spezifische Waffen zuweisen
+            GametypeManagement.GametypeManager gametypeManager = ServiceLocator.Get<GametypeManagement.GametypeManager>();
+            GametypeManagement.GametypeTeam team = (GametypeManagement.GametypeTeam)teamId;
+            string[] weapons = gametypeManager?.GetStartWeapons(team);
+
+            if (weapons != null)
+            {
+                foreach (string weapon in weapons)
+                {
+                    // Ammo-Override VOR AddWeapon im Cache hinterlegen
+                    (int clip, int reserve, int altClip, int altReserve)? ammoOverride = gametypeManager.GetStartAmmo(weapon);
+                    if (ammoOverride.HasValue)
+                    {
+                        m_CharacterState.PreloadWeaponAmmo(weapon, ammoOverride.Value.clip, ammoOverride.Value.reserve, ammoOverride.Value.altClip, ammoOverride.Value.altReserve);
+                    }
+
+                    m_CharacterState.AddWeapon(weapon);
+                }
+            }
+            else
+            {
+                m_CharacterState.AddWeapon("knife");
+            }
+
             m_CharacterState.SetCurrentWeaponName("knife");
 
-            Debug.Log($"[AI·Init] Bot: Name='{botName}' | Skin='{skinName}' | Team={teamId}");
+            Debug.Log($"[AI·Init] Bot: Name='{botName}' | Skin='{skinName}' | Team={teamId} | Weapons={weapons?.Length ?? 1}");
         }
 
         // ──────────────────────────────────────────────────────────

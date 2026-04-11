@@ -1,4 +1,11 @@
+using System.Collections.Generic;
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
+using Tolik.RemakeSoF.Runtime.Game.Environment;
+using Tolik.RemakeSoF.Runtime.Game.Networked;
+using Tolik.RemakeSoF.Runtime.PrefabManagement;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace Tolik.RemakeSoF.Runtime.GametypeManagement
@@ -51,6 +58,9 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         /// <summary>Ob Hider die Runde durch Zeitablauf ueberlebt haben (fuer Scoring in OnTimeExpired).</summary>
         bool m_HidersSurvived;
 
+        /// <summary>Vergangene Zeit seit Rundenstart (fuer Lucky-M4-Delay).</summary>
+        float m_RoundElapsed;
+
         /// <summary>Konfigurierte Seeker-Anzahl.</summary>
         int SeekerCount => ServerConfig.hideandseek_seekercount > 0 ? ServerConfig.hideandseek_seekercount : 1;
 
@@ -80,6 +90,7 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             CurrentPhase = HideAndSeekPhase.Hiding;
             PhaseTimeRemaining = HideTime;
             m_HidersSurvived = false;
+            m_RoundElapsed = 0f;
 
             Debug.Log($"[HideAndSeek] Runde {CurrentRound}/{RoundLimit} — Versteckphase: {HideTime}s");
         }
@@ -98,6 +109,111 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             {
                 OnPhaseTimeExpired();
             }
+
+            // Lucky M4: 3 Sekunden nach Rundenstart vergeben
+            if (m_RoundElapsed >= 0f)
+            {
+                m_RoundElapsed += deltaTime;
+                if (m_RoundElapsed >= 3f)
+                {
+                    m_RoundElapsed = -1f;
+                    AwardLuckyM4();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Vergibt die Lucky M4 an den Hider mit dem zweithöchsten persoenlichen Kill-Score.
+        /// Bei Gleichstand wird zufaellig ein Hider gewaehlt.
+        /// Broadcastet "XY got a lucky m4" an alle Clients.
+        /// </summary>
+        void AwardLuckyM4()
+        {
+            if (NetworkManager.Singleton == null || NetworkedGameState.Singleton == null)
+            {
+                return;
+            }
+
+            // Alle lebenden Hider (Red) sammeln mit ihrem Kill-Score
+            System.Collections.Generic.List<NetworkedCharacterState> hiders = new();
+
+            // Menschliche Spieler
+            foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+            {
+                NetworkObject playerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
+                if (playerObj != null && playerObj.TryGetComponent(out NetworkedCharacterState state))
+                {
+                    if ((GametypeTeam)state.TeamId == GametypeTeam.Red && state.IsAlive)
+                    {
+                        hiders.Add(state);
+                    }
+                }
+            }
+
+            // AI-Bots
+            AIBotSpawner botSpawner = NetworkedGameState.Singleton.AIBotSpawner;
+            if (botSpawner != null)
+            {
+                foreach (NetworkObject bot in botSpawner.SpawnedBots)
+                {
+                    if (bot != null && bot.TryGetComponent(out NetworkedCharacterState state))
+                    {
+                        if ((GametypeTeam)state.TeamId == GametypeTeam.Red && state.IsAlive)
+                        {
+                            hiders.Add(state);
+                        }
+                    }
+                }
+            }
+
+            if (hiders.Count == 0)
+            {
+                Debug.Log("[HideAndSeek] Keine Hider vorhanden fuer Lucky M4.");
+                return;
+            }
+
+            NetworkedCharacterState winner;
+
+            if (hiders.Count == 1)
+            {
+                // Einziger Hider bekommt die M4 direkt
+                winner = hiders[0];
+            }
+            else
+            {
+                // Nach Kills absteigend sortieren
+                hiders.Sort((a, b) => b.Kills.CompareTo(a.Kills));
+
+                // Zweithöchsten Kill-Score finden
+                int secondHighestKills = hiders[1].Kills;
+
+                // Alle Hider mit diesem Score sammeln (fuer Random-Auswahl bei Gleichstand)
+                System.Collections.Generic.List<NetworkedCharacterState> candidates = new();
+                for (int i = 1; i < hiders.Count; i++)
+                {
+                    if (hiders[i].Kills == secondHighestKills)
+                    {
+                        candidates.Add(hiders[i]);
+                    }
+                }
+
+                // Zufaellig einen Kandidaten waehlen
+                winner = candidates[Random.Range(0, candidates.Count)];
+            }
+
+            // M4 mit gametype-spezifischer Ammo vergeben
+            (int clip, int reserve, int altClip, int altReserve)? ammoOverride = GetStartAmmo("m4");
+            if (ammoOverride.HasValue)
+            {
+                winner.PreloadWeaponAmmo("m4", ammoOverride.Value.clip, ammoOverride.Value.reserve, ammoOverride.Value.altClip, ammoOverride.Value.altReserve);
+            }
+            winner.AddWeapon("m4");
+
+            // Broadcast an alle Clients
+            string playerName = winner.CharacterName;
+            NetworkedGameState.Singleton.BroadcastGametypeMessage($"{playerName} got a lucky m4");
+
+            Debug.Log($"[HideAndSeek] Lucky M4 vergeben an '{playerName}' (Kills: {winner.Kills}).");
         }
 
         /// <summary>
@@ -252,6 +368,7 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         {
             base.OnRoundEnd();
             CurrentPhase = HideAndSeekPhase.RoundOver;
+            CleanupFences();
         }
 
         /// <inheritdoc />
@@ -305,6 +422,20 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         }
 
         /// <inheritdoc />
+        public override (int clip, int reserve, int altClip, int altReserve)? GetStartAmmo(string weaponName)
+        {
+            // HideAndSeek: Stark limitierte Munition fuer alle Waffen
+            // knife: 3 Alt-Ammo (Wurfmesser), kein Primary
+            // m4: 3 Primary Clip + 2 Alt-Ammo (Granatwerfer)
+            return weaponName switch
+            {
+                "knife" => (1, 3, 0, 0),
+                "m4" => (3, 0, 2, 0),
+                _ => (3, 0, 0, 0),
+            };
+        }
+
+        /// <inheritdoc />
         public override int GetCurrentPhase()
         {
             return (int)CurrentPhase;
@@ -334,12 +465,38 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         const float STUN_DURATION = 2f;
 
         /// <inheritdoc />
-        public override GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName)
+        public override GametypeDamageResult OnDamage(ulong attackerClientId, ulong victimClientId, GametypeTeam attackerTeam, GametypeTeam victimTeam, int damage, string weaponName, bool isAltAttack = false)
         {
             // Nur waehrend der Suchphase relevant
             if (CurrentPhase != HideAndSeekPhase.Seeking)
             {
                 return GametypeDamageResult.Default(0);
+            }
+
+            // M4 macht in HideAndSeek keinen Schaden, nur Stun (egal welches Team)
+            if (weaponName == "m4")
+            {
+                return new GametypeDamageResult
+                {
+                    ModifiedDamage = 0,
+                    ApplyStun = true,
+                    StunDuration = STUN_DURATION,
+                    AttackerMessage = "You stunned {victimName}",
+                    VictimMessage = "You got stunned by {attackerName}"
+                };
+            }
+
+            // Knife Alt-Attack (Wurf) macht keinen Schaden, nur Stun (egal welches Team)
+            if (weaponName == "knife" && isAltAttack)
+            {
+                return new GametypeDamageResult
+                {
+                    ModifiedDamage = 0,
+                    ApplyStun = true,
+                    StunDuration = STUN_DURATION,
+                    AttackerMessage = "You stunned {victimName}",
+                    VictimMessage = "You got stunned by {attackerName}"
+                };
             }
 
             // Seeker (Blue) trifft Hider (Red) → Instant Kill (volle HP als Schaden)
@@ -369,6 +526,207 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
             }
 
             return GametypeDamageResult.Default(damage);
+        }
+
+        /// <summary>Addressable-Key fuer gerade Fence-Segmente.</summary>
+        private const string FENCE_PREFAB_KEY = "objects/fence";
+
+        /// <summary>Addressable-Key fuer Eckstuecke.</summary>
+        private const string CORNER_PREFAB_KEY = "objects/fence_corner";
+
+        /// <summary>Halbe Kaefig-Seitenlaenge in Metern (Aussenrand).</summary>
+        private const float CAGE_HALF_SIZE = 5f;
+
+        /// <summary>Fallback-Breite eines Segments falls keine Mesh-Bounds ermittelt werden koennen.</summary>
+        private const float FENCE_WIDTH_FALLBACK = 1f;
+
+        /// <summary>Lebensdauer des Kaefigs in Sekunden.</summary>
+        private const float FENCE_DURATION = 15f;
+
+        /// <summary>
+        /// Y-Rotations-Offset fuer gerade Fence-Segmente (SoF2→Unity Koordinaten-Korrektur).
+        /// Anpassen falls Meshes nach Import anders orientiert sind.
+        /// </summary>
+        private const float FENCE_Y_ROTATION_OFFSET = -90f;
+
+        /// <summary>
+        /// Y-Rotations-Offset fuer Corner-Segmente (SoF2→Unity Koordinaten-Korrektur).
+        /// Anpassen falls Meshes nach Import anders orientiert sind.
+        /// </summary>
+        private const float CORNER_Y_ROTATION_OFFSET = -90f;
+
+        /// <summary>Alle gespawnten Fence-NetworkObjects fuer Cleanup bei Rundenende.</summary>
+        private readonly List<NetworkObject> m_SpawnedFences = new();
+
+        /// <inheritdoc />
+        public override void OnProjectileDetonated(string weaponName, bool isAltAttack, Vector3 position, Vector3 normal)
+        {
+            // Nur M4 Alt-Attack spawnt einen Kaefig
+            if (weaponName != "m4" || !isAltAttack)
+            {
+                return;
+            }
+
+            SpawnFenceCage(position);
+        }
+
+        /// <summary>
+        /// Spawnt einen rechteckigen Fence-Kaefig um die angegebene Position.
+        /// Besteht aus 4 Eckstuecken und geraden Segmenten dazwischen.
+        /// Alle Teile sind NetworkObjects mit FenceBarrier-Komponente.
+        /// </summary>
+        /// <param name="center">Mittelpunkt des Kaefigs.</param>
+        private void SpawnFenceCage(Vector3 center)
+        {
+            PrefabManager prefabManager = ServiceLocator.Get<PrefabManager>();
+            if (prefabManager == null)
+            {
+                Debug.LogWarning("[HideAndSeek] PrefabManager nicht verfuegbar — Kaefig-Spawn uebersprungen.");
+                return;
+            }
+
+            GameObject fencePrefab = prefabManager.LoadPrefab<GameObject>(FENCE_PREFAB_KEY);
+            GameObject cornerPrefab = prefabManager.LoadPrefab<GameObject>(CORNER_PREFAB_KEY);
+
+            if (fencePrefab == null || cornerPrefab == null)
+            {
+                Debug.LogWarning($"[HideAndSeek] Fence-Prefabs nicht gefunden (fence={fencePrefab != null}, corner={cornerPrefab != null}).");
+                return;
+            }
+
+            // Segmentbreite dynamisch aus Mesh-Bounds ermitteln
+            float segmentWidth = GetSegmentWidth(fencePrefab);
+
+            // co = Offset der Segment-Mittelpunkte vom Kaefig-Zentrum
+            float co = CAGE_HALF_SIZE - segmentWidth * 0.5f;
+
+            // 4 Eckstuecke — Basis-Rotation + Offset fuer SoF2→Unity Korrektur
+            float cOff = CORNER_Y_ROTATION_OFFSET;
+            SpawnCagePiece(cornerPrefab, center + new Vector3(-co, 0f, +co), 270f + cOff);  // NW
+            SpawnCagePiece(cornerPrefab, center + new Vector3(+co, 0f, +co), 0f + cOff);    // NE
+            SpawnCagePiece(cornerPrefab, center + new Vector3(+co, 0f, -co), 90f + cOff);   // SE
+            SpawnCagePiece(cornerPrefab, center + new Vector3(-co, 0f, -co), 180f + cOff);  // SW
+
+            // Gerade Segmente zwischen den Ecken
+            float fOff = FENCE_Y_ROTATION_OFFSET;
+            int piecesPerSide = Mathf.RoundToInt(CAGE_HALF_SIZE * 2f / segmentWidth);
+            int fillCount = piecesPerSide - 2;
+
+            for (int i = 0; i < fillCount; i++)
+            {
+                // Gleichmaessige Verteilung zwischen den Eckstueck-Mittelpunkten
+                float offset = Mathf.Lerp(-co, co, (i + 1f) / (fillCount + 1f));
+
+                // Nord (z=+co, entlang X)
+                SpawnCagePiece(fencePrefab, center + new Vector3(offset, 0f, +co), 0f + fOff);
+                // Sued (z=-co, entlang X)
+                SpawnCagePiece(fencePrefab, center + new Vector3(offset, 0f, -co), 180f + fOff);
+                // Ost (x=+co, entlang Z)
+                SpawnCagePiece(fencePrefab, center + new Vector3(+co, 0f, offset), 90f + fOff);
+                // West (x=-co, entlang Z)
+                SpawnCagePiece(fencePrefab, center + new Vector3(-co, 0f, offset), 270f + fOff);
+            }
+
+            int totalPieces = 4 + fillCount * 4;
+            Debug.Log($"[HideAndSeek] Fence-Kaefig gespawnt bei {center} | {totalPieces} Teile | Dauer={FENCE_DURATION}s");
+        }
+
+        /// <summary>
+        /// Spawnt ein einzelnes Fence-/Corner-Segment als NetworkObject mit FenceBarrier.
+        /// </summary>
+        /// <param name="prefab">Prefab fuer dieses Segment (fence oder corner).</param>
+        /// <param name="position">Weltposition des Segments.</param>
+        /// <param name="yRotation">Y-Rotation in Grad.</param>
+        private void SpawnCagePiece(GameObject prefab, Vector3 position, float yRotation)
+        {
+            GameObject instance = Object.Instantiate(prefab, position, Quaternion.Euler(0f, yRotation, 0f));
+
+            NetworkObject networkObject = instance.GetComponent<NetworkObject>();
+            if (networkObject == null)
+            {
+                Debug.LogWarning("[HideAndSeek] Fence-Prefab hat kein NetworkObject — Segment uebersprungen.");
+                Object.Destroy(instance);
+                return;
+            }
+
+            FenceBarrier barrier = instance.GetComponent<FenceBarrier>();
+            if (barrier == null)
+            {
+                barrier = instance.AddComponent<FenceBarrier>();
+            }
+
+            networkObject.Spawn();
+            barrier.Initialize(FENCE_DURATION);
+            m_SpawnedFences.Add(networkObject);
+        }
+
+        /// <summary>
+        /// Ermittelt die Breite eines Fence-Segments anhand der kombinierten Renderer-Bounds
+        /// aller Kinder im Prefab. Das Prefab kann aus vielen Einzelteilen bestehen
+        /// (COL_, _clip, worldspawn_textures_* etc.) — alle werden zusammengefasst.
+        /// Verwendet die groesste horizontale Ausdehnung (X oder Z).
+        /// </summary>
+        /// <param name="prefab">Das Fence-Prefab.</param>
+        /// <returns>Segmentbreite in Metern.</returns>
+        private float GetSegmentWidth(GameObject prefab)
+        {
+            Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
+
+            if (renderers.Length > 0)
+            {
+                Bounds combinedBounds = renderers[0].bounds;
+                for (int i = 1; i < renderers.Length; i++)
+                {
+                    combinedBounds.Encapsulate(renderers[i].bounds);
+                }
+
+                float width = Mathf.Max(combinedBounds.size.x, combinedBounds.size.z);
+                if (width > 0.01f)
+                {
+                    Debug.Log($"[HideAndSeek] Fence-Segmentbreite aus {renderers.Length} Renderern ermittelt: {width}m (Bounds: {combinedBounds.size})");
+                    return width;
+                }
+            }
+
+            // Fallback: MeshFilter-Bounds (z.B. fuer COL_ Objekte ohne Renderer)
+            MeshFilter[] meshFilters = prefab.GetComponentsInChildren<MeshFilter>(true);
+            if (meshFilters.Length > 0)
+            {
+                Bounds combinedBounds = meshFilters[0].sharedMesh.bounds;
+                for (int i = 1; i < meshFilters.Length; i++)
+                {
+                    if (meshFilters[i].sharedMesh != null)
+                    {
+                        combinedBounds.Encapsulate(meshFilters[i].sharedMesh.bounds);
+                    }
+                }
+
+                float width = Mathf.Max(combinedBounds.size.x, combinedBounds.size.z);
+                if (width > 0.01f)
+                {
+                    Debug.Log($"[HideAndSeek] Fence-Segmentbreite aus {meshFilters.Length} MeshFiltern ermittelt: {width}m (Bounds: {combinedBounds.size})");
+                    return width;
+                }
+            }
+
+            Debug.LogWarning($"[HideAndSeek] Keine Bounds ermittelbar — verwende Fallback-Breite {FENCE_WIDTH_FALLBACK}m.");
+            return FENCE_WIDTH_FALLBACK;
+        }
+
+        /// <summary>
+        /// Despawnt alle noch existierenden Fence-Segmente (Cleanup bei Rundenende).
+        /// </summary>
+        private void CleanupFences()
+        {
+            foreach (NetworkObject fence in m_SpawnedFences)
+            {
+                if (fence != null && fence.IsSpawned)
+                {
+                    fence.Despawn();
+                }
+            }
+
+            m_SpawnedFences.Clear();
         }
     }
 }

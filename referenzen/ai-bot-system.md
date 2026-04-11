@@ -1,132 +1,40 @@
-# AI Bot System
+# AI Bot System — Infrastructure & Spawning
 
-Server-seitige AI-Bot-Verwaltung mit identischer Physik, Hitboxes und Collidern wie menschliche Spieler.
-Bots werden über die Server-Konfiguration (JSON) konfiguriert und beim Match-Start automatisch gespawnt.
+## Key Files
+- **AIBotSpawner**: `Assets/Scripts/Runtime/Game/Networked/AIBotSpawner.cs` — spawn/despawn/respawn, reads sv_botcount/names/skins from ServerConfig
+- **NetworkedAICharacter**: `Assets/Scripts/Runtime/Game/Characters/Networked/NetworkedAICharacter.cs` — networked, position sync, visual load, hitbox/collider init, client path sync via `SyncDebugPathClientRpc`
+- **ServerAICharacter**: `Assets/Scripts/Runtime/Game/Characters/Server/ServerAICharacter.cs` — PlayerPhysicsSimulation (identical to player), calls `AIBotController.Tick()` every frame
+- **AIBotController**: `Assets/Scripts/Runtime/AI/AIBotController.cs` — Bridge zwischen GOAP-Planner und ServerAICharacter
 
----
+## Config CVARs (SoF2_Server_Configuration.json)
+- sv_botcount (int) — number of bots
+- sv_botnames (string[]) — bot names, round-robin
+- sv_botskins (string[]) — bot skins, round-robin
 
-## Architektur-Überblick
+## Architecture
+- AIBotSpawner is MonoBehaviour (not NetworkBehaviour)
+- Bots use PrefabManager.LoadPrefab("AICharacter") — sync, cache-first
+- Collider from ClientColliderSystem (SoF2 AABB, shared server+client)
+- Physics from shared PlayerPhysicsSimulation (same Quake3/SoF2 physics as player)
+- Hitboxes from ClientHitboxSystem.BuildHitboxes() after visual load
+- Bots counted in GetTotalPlayerCount(), CountTeams(), AwardSurvivalKills()
 
-```
-Server-Start
-  └─ ApplicationEntryPoint.Awake()
-       └─ ServiceLocator.Register(ServerConfigurationLoader)
-            └─ SoF2_Server_Configuration.json geladen
-                 └─ sv_botcount, sv_botnames, sv_botskins
+## Prefab Components
+NetworkObject, NetworkedAICharacter, ServerAICharacter, NetworkedCharacterState, ServerCharacterController, ClientHitboxSystem, ClientColliderSystem, AICharacterSkinHandler
 
-Map geladen
-  └─ RoundFlowStateMachine → WaitingForReadyState.Enter()
-       └─ AIBotSpawner.SpawnInitialBots()
-            ├─ LoadBotConfiguration() ← liest sv_botcount/names/skins aus ServerConfig
-            ├─ PrefabManager.LoadPrefab("AICharacter") ← sync, cache-first
-            └─ SpawnBot() × N
-                 ├─ Instantiate(prefab) + NetworkObject.Spawn() (server-owned)
-                 ├─ GametypeManager.AssignTeam() → TeamId
-                 └─ NetworkedAICharacter.InitializeBot(name, skin, teamId)
-```
+## SoF2 Dimensions (Single Source of Truth: ClientColliderSystem)
+- k_SoF2StandingHeight = 2.2606f (89 QU)
+- k_SoF2CrouchingHeight = 1.6256f (64 QU)
+- k_SoF2Radius = 0.381f (15 QU)
 
----
+## AI Decision Architecture: GOAP (crashkonijn v3.1.2)
+- Replaced EANN (neural network) with Goal-Oriented Action Planning
+- Package: `com.crashkonijn.goap@229986caf265`
+- Setup: `AIGoapSetup.cs` builds AgentTypes per code, registers with GoapBehaviour
+- See `seeker-bot-complete.md` for full Seeker-Bot feature reference
+- See `goap-system-reference.md` for GOAP file structure and plan chains
 
-## Beteiligte Dateien
-
-| Datei | Pfad | Rolle |
-|-------|------|-------|
-| **AIBotSpawner** | `Assets/Scripts/Runtime/Game/Networked/AIBotSpawner.cs` | Server-seitiges Spawn/Despawn/Respawn, liest Config |
-| **NetworkedAICharacter** | `Assets/Scripts/Runtime/Game/Characters/Networked/NetworkedAICharacter.cs` | Networked AI, Position-Sync, Visual-Load, Hitbox/Collider Init |
-| **ServerAICharacter** | `Assets/Scripts/Runtime/Game/Characters/Server/ServerAICharacter.cs` | Server-Physik (PlayerPhysicsSimulation), GOAP/EANN Platzhalter |
-| **ServerCharacterController** | `Assets/Scripts/Runtime/Game/Characters/Server/ServerCharacterController.cs` | Damage/Death/Respawn (shared mit Spieler) |
-| **ClientHitboxSystem** | `Assets/Scripts/Runtime/Game/Characters/Client/ClientHitboxSystem.cs` | 29 Bone-basierte BoxCollider-Trigger |
-| **ClientColliderSystem** | `Assets/Scripts/Runtime/Game/Characters/Client/ClientColliderSystem.cs` | SoF2 AABB BoxCollider (Single Source of Truth) |
-| **PlayerPhysicsSimulation** | `Assets/Scripts/Runtime/Game/Characters/Shared/PlayerPhysicsSimulation.cs` | SoF2/Quake3 Physik-Engine |
-
----
-
-## Server-Konfiguration (SoF2_Server_Configuration.json)
-
-```json
-{
-    "sv_botcount": 1,
-    "sv_botnames": ["Hawk", "Viper", "Ghost", "Snake", "Jackal", ...],
-    "sv_botskins": ["mullins_jungle"]
-}
-```
-
-| CVAR | Typ | Default | Beschreibung |
-|------|-----|---------|-------------|
-| `sv_botcount` | `int` | `0` | Anzahl Bots beim Server-Start (0 = keine) |
-| `sv_botnames` | `string[]` | 15 SoF2-Namen | Bot-Namen, Round-Robin-Zuweisung |
-| `sv_botskins` | `string[]` | `["mullins_jungle"]` | Bot-Skins, Round-Robin-Zuweisung |
-
-Fallback auf Default-Arrays wenn Config leer/null.
-
----
-
-## Prefab-Struktur (AICharacter)
-
-Das AICharacter-Prefab benötigt folgende Komponenten:
-
-| Komponente | Serialisierte Referenz |
-|------------|----------------------|
-| `NetworkObject` | — |
-| `NetworkedAICharacter` | → m_ServerAICharacter, m_SkinHandler, m_CharacterState, m_ServerCharacterController, m_HitboxSystem, m_ColliderSystem |
-| `ServerAICharacter` | → m_NetworkedAICharacter |
-| `NetworkedCharacterState` | — |
-| `ServerCharacterController` | → m_CharacterState |
-| `ClientHitboxSystem` | — |
-| `ClientColliderSystem` | — |
-| `AICharacterSkinHandler` | — |
-
----
-
-## Physik-System (identisch mit Spieler)
-
-`ServerAICharacter` nutzt dieselbe `PlayerPhysicsSimulation` wie `ServerPlayerCharacter`:
-
-- **SoF2/Quake3 Physik**: Gravity, Ground-Trace, Friction, Air Control, Knockback
-- **Capsule-Dimensionen**: Kommen von `ClientColliderSystem` via `SetColliderSystem()`
-- **GroundMask**: `~0` (alle Layer, Self-Collision via Collider-Toggle verhindert)
-- **PhysicsCollider**: `ClientColliderSystem.PhysicsCollider` (shared BoxCollider)
-- **Aktuell**: Leerer `PlayerCommand` (MoveInput = zero) → Bot steht still
-
-```
-ClientColliderSystem (SoF2 Authentic)
-  ├─ k_SoF2StandingHeight = 2.2606f  (89 QU)
-  ├─ k_SoF2CrouchingHeight = 1.6256f (64 QU)
-  └─ k_SoF2Radius = 0.381f           (15 QU)
-```
-
-Diese Konstanten sind `internal` und werden auch von `ServerPlayerCharacter` referenziert → **Single Source of Truth**.
-
----
-
-## Hitbox-System
-
-`NetworkedAICharacter.OnVisualInstantiated()` wird nach dem Skin-Load aufgerufen:
-
-1. **BuildHitboxes**: `ClientHitboxSystem.BuildHitboxes(visualRoot)` → 29 Bone-basierte BoxCollider
-2. **InitCollider**: `ClientColliderSystem.CalculateAutoCapsuleSize(bones, isCrouching=false)` → SoF2 AABB
-3. **Server-Sync**: `ServerAICharacter.SetColliderSystem(colliderSystem)` → Physik übernimmt Dimensionen
-
-Dies passiert auf **allen Seiten** (Server + Client), damit Hitboxes und Collider überall konsistent sind.
-
----
-
-## Bot als "Spieler" für Runden-Logik
-
-Bots werden in der Runden-Logik als vollwertige Spieler gezählt:
-
-| System | Wie Bots gezählt werden |
-|--------|------------------------|
-| `RoundFlowStateMachine.GetTotalPlayerCount()` | Humans + `AIBotSpawner.SpawnedBotCount` |
-| `RoundFlowStateMachine.UpdatePlayerCounts()` | Setzt `playersConnected` und `MinPlayersReached` inkl. Bots |
-| `ServerListeningState.CountTeams()` | Iteriert `AIBotSpawner.SpawnedBots` für Team-Zählung |
-| `NetworkedGameState.AwardSurvivalKills()` | Iteriert humans + `AIBotSpawner.SpawnedBots` |
-| `GametypeManager.AssignTeam()` | `CountAllTeamMembers()` zählt humans + bots |
-
----
-
-## Spawn-Flow
-
+## Spawn Flow
 ```
 WaitingForReadyState.Enter()
   └─ AIBotSpawner.SpawnInitialBots()
@@ -136,44 +44,17 @@ WaitingForReadyState.Enter()
        │    ├─ InitializeBot(name, skin, teamId)
        │    └─ m_SpawnedBots.Add(networkObject)
        └─ OnInitialBotsSpawned?.Invoke()
-            └─ WaitingForReadyState.OnBotsSpawned()
-                 ├─ UpdatePlayerCounts()
-                 └─ TryStartMatch()
 ```
 
----
-
-## Respawn-Flow
-
+## Data Flow (per Frame)
 ```
-RoundFlowStateMachine (Warmup-Ende)
-  └─ AIBotSpawner.RespawnAllBots()
-       └─ foreach bot: NetworkedAICharacter.RespawnAtNextSpawnPoint()
+GOAP Planner → Actions (Patrol/Chase/Shoot)
+  └─ AIBotController (Intent Fields: MoveTarget, LookTarget, Attack, Jump, Crouch)
+       └─ Tick() → BuildCommand() → PlayerCommand
+            └─ ServerAICharacter → PlayerPhysicsSimulation.Simulate()
 ```
 
----
-
-## Cleanup
-
-```
-Map-Wechsel / OnDestroy:
-  └─ AIBotSpawner.DespawnAllBots()
-       └─ foreach bot: NetworkObject.Despawn()
-       └─ m_SpawnedBots.Clear()
-```
-
----
-
-## Zukunft: AI-Verhalten (GOAP/EANN)
-
-`ServerAICharacter.Update()` hat TODO für AI-Logik (aktuell idle).
-Geplante Architektur (siehe AGENTS.md):
-
-```
-EANN (Neuronales Netz) → Entscheidet Ziele + Parameter
-  └─ GOAP (Goal-Oriented Action Planning) → Dynamische Aktionsplanung
-       └─ Boids / Steering → Physische Bewegung
-            └─ PlayerCommand.MoveInput + Buttons → PlayerPhysicsSimulation
-```
-
-Wenn AI aktiv: `PlayerCommand` wird mit echten Werten gefüllt statt leerer Input.
+## Debug Visualization
+- 3 LineRenderers on NetworkedAICharacter (path, steer, target)
+- Client-side path sync via `SyncDebugPathClientRpc`
+- Shader: "Unlit/Color" (cached as `s_CachedLineShader`)

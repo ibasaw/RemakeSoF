@@ -69,6 +69,17 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         private const float EYE_HEIGHT_RATIO = 72f / 89f;
 
         /// <summary>
+        /// Server: Wendet einen Stun auf diesen Bot an.
+        /// Setzt den StunTime-Timer der Physik-Simulation (massive Friction, keine Beschleunigung).
+        /// Buttons (Angriff) werden waehrend Stun blockiert (leerer Command).
+        /// </summary>
+        /// <param name="duration">Stun-Dauer in Sekunden.</param>
+        public void ApplyStun(float duration)
+        {
+            m_Simulation.StunTime = duration;
+        }
+
+        /// <summary>
         /// Referenz auf das ClientColliderSystem, das den Physics-BoxCollider verwaltet.
         /// Wird von NetworkedAICharacter nach Visual-Load gesetzt.
         /// </summary>
@@ -176,7 +187,22 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
 
             PlayerCommand cmd;
 
-            if (m_AIController != null && m_AIController.IsReady)
+            // Waehrend Stun: leerer Command (keine Bewegung, kein Angriff).
+            // Velocity wird NICHT auf 0 gesetzt — Physik-Simulation bremst per Friction.
+            if (m_Simulation.StunTime > 0f)
+            {
+                cmd = new PlayerCommand
+                {
+                    MoveInput = Vector2.zero,
+                    YawAngle = transform.eulerAngles.y,
+                    PitchAngle = 0f,
+                    MoveYawAngle = transform.eulerAngles.y,
+                    Buttons = 0,
+                    DeltaTime = Time.deltaTime,
+                    SequenceNumber = 0,
+                };
+            }
+            else if (m_AIController != null && m_AIController.IsReady)
             {
                 cmd = m_AIController.Tick(transform.eulerAngles.y);
             }
@@ -324,10 +350,29 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                                 attackerTeam,
                                 victimTeam,
                                 finalDamage,
-                                weaponName
+                                weaponName,
+                                false
                             );
 
                             modifiedDamage = damageResult.ModifiedDamage;
+
+                            // Stun auf das Opfer anwenden
+                            if (damageResult.ApplyStun && damageResult.StunDuration > 0f)
+                            {
+                                NetworkedPlayerCharacter targetCharacter = targetState.GetComponent<NetworkedPlayerCharacter>();
+                                if (targetCharacter != null)
+                                {
+                                    targetCharacter.ApplyStun(damageResult.StunDuration);
+                                }
+                                else
+                                {
+                                    ServerAICharacter targetBot = targetState.GetComponent<ServerAICharacter>();
+                                    if (targetBot != null)
+                                    {
+                                        targetBot.ApplyStun(damageResult.StunDuration);
+                                    }
+                                }
+                            }
 
                             // Kill-Nachricht an das Opfer senden (falls vorhanden)
                             if (!string.IsNullOrEmpty(damageResult.VictimMessage))

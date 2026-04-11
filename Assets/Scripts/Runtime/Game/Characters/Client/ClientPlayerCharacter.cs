@@ -969,7 +969,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         private void OnNextWeaponPerformed(InputAction.CallbackContext context)
         {
-            if (m_IsAttacking || m_IsAltAttacking || m_IsReloading || m_IsSwapping)
+            if (m_IsAttacking || m_IsAltAttacking || m_IsReloading || m_IsSwapping || m_CharacterState.WeaponCount <= 1)
             {
                 return;
             }
@@ -986,7 +986,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         /// </summary>
         private void OnPreviousWeaponPerformed(InputAction.CallbackContext context)
         {
-            if (m_IsAttacking || m_IsAltAttacking || m_IsReloading || m_IsSwapping)
+            if (m_IsAttacking || m_IsAltAttacking || m_IsReloading || m_IsSwapping || m_CharacterState.WeaponCount <= 1)
             {
                 return;
             }
@@ -1304,7 +1304,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
             // Reconciliation: Server-State uebernehmen
             m_Simulation.SetState(ack.Velocity, ack.IsGrounded, ack.IsJumping, ack.IsCrouching,
-                                  ack.KnockbackTime);
+                                  ack.KnockbackTime, ack.StunTime);
             Vector3 replayPosition = ack.Position;
 
             // Eigenen Collider deaktivieren damit ResolvePenetration's OverlapBox
