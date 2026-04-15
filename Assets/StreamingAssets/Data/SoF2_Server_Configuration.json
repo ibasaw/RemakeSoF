@@ -1,7 +1,7 @@
 {
     "sv_hostname": "SoF2 Remake Server",
     "sv_description": "Ein SoF2 Remake Server.\n ^1Viel ^3Spaß ^4beim Spielen!",
-    "sv_motd": "Willkommen auf unserem SoF2 Remake Server! Viel Spaß beim Spielen und lasst es ordentlich krachen!",
+    "sv_motd": "^3=== ^7Welcome to ^1SoF2 Remake ^3=== ^5Have fun and ^9frag ^khard!",
     "sv_maxclients": 16,
     "sv_minclients": 1,
     "sv_port": 7777,

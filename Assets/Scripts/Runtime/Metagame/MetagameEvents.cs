@@ -89,6 +89,15 @@ namespace Tolik.RemakeSoF.Runtime
         public string senderName;
         public string message;
     }
+
+    /// <summary>
+    /// Called when the server MOTD is received after connecting.
+    /// Displayed as a system message with Quake color codes.
+    /// </summary>
+    internal class MotdReceivedEvent : AppEvent
+    {
+        public string message;
+    }
     
     /// <summary>
     /// Called when the user clicks the "Register" button on the registration view

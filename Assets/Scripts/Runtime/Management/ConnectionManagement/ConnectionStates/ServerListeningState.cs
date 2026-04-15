@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.ChatManagement;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.Game.Networked;
@@ -97,6 +98,13 @@ namespace Tolik.RemakeSoF.Runtime.ConnectionManagement
             {
                 m_MinPlayerConnected = true;
                 Manager.EventManager.Broadcast(new MinNumberPlayersConnectedEvent());
+            }
+
+            // MOTD an den neuen Client senden
+            NetworkedChatBridge chatBridge = NetworkedChatBridge.Instance;
+            if (chatBridge != null)
+            {
+                chatBridge.SendMotdToClient(clientId);
             }
 
             UpdateMasterServerPlayerCount();

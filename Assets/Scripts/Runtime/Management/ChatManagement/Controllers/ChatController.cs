@@ -22,6 +22,7 @@ namespace Tolik.RemakeSoF.Runtime.ChatManagement
             AddListener<SubmitChatMessageEvent>(OnSubmitChatMessage);
             AddListener<ChatMessageReceivedEvent>(OnChatMessageReceived);
             AddListener<KillFeedReceivedEvent>(OnKillFeedReceived);
+            AddListener<MotdReceivedEvent>(OnMotdReceived);
         }
 
         void OnEnable()
@@ -50,6 +51,7 @@ namespace Tolik.RemakeSoF.Runtime.ChatManagement
             RemoveListener<SubmitChatMessageEvent>(OnSubmitChatMessage);
             RemoveListener<ChatMessageReceivedEvent>(OnChatMessageReceived);
             RemoveListener<KillFeedReceivedEvent>(OnKillFeedReceived);
+            RemoveListener<MotdReceivedEvent>(OnMotdReceived);
         }
 
         /// <summary>
@@ -98,6 +100,14 @@ namespace Tolik.RemakeSoF.Runtime.ChatManagement
             }
 
             View.AddSystemMessage(killMessage);
+        }
+
+        /// <summary>
+        /// Handles the MOTD from the server. Displayed as a system message with full color code support.
+        /// </summary>
+        void OnMotdReceived(MotdReceivedEvent evt)
+        {
+            View.AddSystemMessage(evt.message);
         }
     }
 }

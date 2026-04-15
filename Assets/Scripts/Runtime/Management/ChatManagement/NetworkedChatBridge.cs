@@ -1,3 +1,5 @@
+using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Unity.Collections;
 using Unity.Netcode;
@@ -134,6 +136,49 @@ namespace Tolik.RemakeSoF.Runtime.ChatManagement
             }
 
             return $"Player {clientId}";
+        }
+
+        /// <summary>
+        /// Server: Sends the MOTD to a specific client as a system chat message.
+        /// Called from ServerListeningState when a client connects.
+        /// </summary>
+        /// <param name="clientId">The client to send the MOTD to.</param>
+        public void SendMotdToClient(ulong clientId)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            ServerConfigurationLoader configLoader = ServiceLocator.Get<ServerConfigurationLoader>();
+            if (configLoader?.Configuration == null)
+            {
+                return;
+            }
+
+            string motd = configLoader.Configuration.sv_motd;
+            if (string.IsNullOrWhiteSpace(motd))
+            {
+                return;
+            }
+
+            MotdClientRpc(motd, RpcTarget.Single(clientId, RpcTargetUse.Temp));
+        }
+
+        /// <summary>
+        /// Server → specific Client: delivers the MOTD as a system message.
+        /// </summary>
+        [Rpc(SendTo.SpecifiedInParams)]
+        void MotdClientRpc(string motd, RpcParams rpcParams = default)
+        {
+            ChatManager chatManager = ChatManager.Instance;
+            if (chatManager != null)
+            {
+                chatManager.Broadcast(new MotdReceivedEvent
+                {
+                    message = motd
+                });
+            }
         }
 
         /// <summary>
