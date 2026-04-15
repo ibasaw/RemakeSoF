@@ -358,6 +358,13 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         }
 
         /// <inheritdoc />
+        public override bool ShouldBotUseCombatAI(GametypeTeam team)
+        {
+            // Nur Seeker (Blue) kaempfen. Hider (Red) verwenden Survive/Flee-KI.
+            return team == GametypeTeam.Blue;
+        }
+
+        /// <inheritdoc />
         public override float GetPhaseTimeRemaining()
         {
             return PhaseTimeRemaining;

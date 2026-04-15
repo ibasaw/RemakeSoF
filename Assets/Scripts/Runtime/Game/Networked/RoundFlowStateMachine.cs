@@ -111,13 +111,14 @@ namespace Tolik.RemakeSoF.Runtime.Game.Networked
                     continue;
                 }
 
-                bool isSeeker = gametypeManager != null
-                    && characterState.TeamId == (uint)GametypeTeam.Blue;
+                // Gametype entscheidet ob der Bot Kampf-KI oder Survive-KI bekommt.
+                // TDM/DM: alle Bots kaempfen. HideAndSeek: nur Seeker (Blue) kaempfen.
+                GametypeTeam botTeam = (GametypeTeam)characterState.TeamId;
+                bool isSeeker = gametypeManager?.ActiveGametype?.ShouldBotUseCombatAI(botTeam) ?? true;
 
                 // Team-Filter anwenden
                 if (teamFilter.HasValue)
                 {
-                    GametypeTeam botTeam = isSeeker ? GametypeTeam.Blue : GametypeTeam.Red;
                     if (botTeam != teamFilter.Value)
                     {
                         continue;

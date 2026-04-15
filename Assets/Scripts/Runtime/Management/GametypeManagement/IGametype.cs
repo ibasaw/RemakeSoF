@@ -199,5 +199,14 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         /// <param name="position">Detonationspunkt in Weltkoordinaten.</param>
         /// <param name="normal">Oberflaechennormale am Auftreffpunkt.</param>
         void OnProjectileDetonated(string weaponName, bool isAltAttack, Vector3 position, Vector3 normal);
+
+        /// <summary>
+        /// Gibt zurueck ob Bots eines bestimmten Teams die Kampf-KI (Seeker/Hunt) verwenden sollen.
+        /// Default: true fuer alle Teams (normales Kampfverhalten).
+        /// HideAndSeek ueberschreibt dies: Red/Hider bekommt Survive-KI.
+        /// </summary>
+        /// <param name="team">Das Team des Bots.</param>
+        /// <returns>True wenn der Bot die Kampf-KI verwenden soll, False fuer Survive/Flee-KI.</returns>
+        bool ShouldBotUseCombatAI(GametypeTeam team);
     }
 }

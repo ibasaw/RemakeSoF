@@ -33,10 +33,10 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
         /// <summary>Texturpfad fuer den Ladescreen-Hintergrund (z.B. "gfx/menus/levelshots/cem1").</summary>
         public string levelShotBackgroundTexturePath;
 
-        /// <summary>Spawn-Positionen fuer Team 1.</summary>
-        public SpawnPointData[] team1SpawnPoints;
+        /// <summary>Spawn-Positionen fuer Team Rot.</summary>
+        public SpawnPointData[] redTeamSpawnPoints;
 
-        /// <summary>Spawn-Positionen fuer Team 2.</summary>
-        public SpawnPointData[] team2SpawnPoints;
+        /// <summary>Spawn-Positionen fuer Team Blau.</summary>
+        public SpawnPointData[] blueTeamSpawnPoints;
     }
 }

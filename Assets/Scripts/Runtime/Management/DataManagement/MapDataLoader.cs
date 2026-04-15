@@ -71,8 +71,8 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                 return (new(), new());
             }
 
-            List<Vector3> teamOne = ConvertSpawnPoints(definition.team1SpawnPoints);
-            List<Vector3> teamTwo = ConvertSpawnPoints(definition.team2SpawnPoints);
+            List<Vector3> teamOne = ConvertSpawnPoints(definition.redTeamSpawnPoints);
+            List<Vector3> teamTwo = ConvertSpawnPoints(definition.blueTeamSpawnPoints);
 
             return (teamOne, teamTwo);
         }

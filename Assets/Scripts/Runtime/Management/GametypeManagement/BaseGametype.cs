@@ -95,8 +95,28 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         /// <inheritdoc />
         public virtual string[] GetStartWeapons(GametypeTeam team)
         {
-            // Null = Default-Waffenset (alle Waffen) in ServerListeningState verwenden
-            return null;
+            // Team-spezifische Waffen aus Server-Config lesen
+            string[] configured = team == GametypeTeam.Red
+                ? ServerConfig?.g_redTeamStartWeapons
+                : ServerConfig?.g_blueTeamStartWeapons;
+
+            // Leer oder null = nur Knife
+            if (configured == null || configured.Length == 0)
+            {
+                return new[] { "knife" };
+            }
+
+            // Knife ist immer dabei, deduplizieren falls bereits enthalten
+            bool hasKnife = System.Array.Exists(configured, w => w == "knife");
+            if (hasKnife)
+            {
+                return configured;
+            }
+
+            string[] withKnife = new string[configured.Length + 1];
+            withKnife[0] = "knife";
+            System.Array.Copy(configured, 0, withKnife, 1, configured.Length);
+            return withKnife;
         }
 
         /// <inheritdoc />
@@ -160,6 +180,13 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         public virtual int GetTimelimit()
         {
             return ServerConfig.timelimit;
+        }
+
+        /// <inheritdoc />
+        public virtual bool ShouldBotUseCombatAI(GametypeTeam team)
+        {
+            // Default: Alle Bots verwenden Kampf-KI (Patrol/Chase/Shoot).
+            return true;
         }
 
         /// <inheritdoc />

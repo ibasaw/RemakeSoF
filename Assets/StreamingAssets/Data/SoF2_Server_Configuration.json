@@ -13,7 +13,7 @@
     "sv_privatePassword": "",
     "rconPassword": "",
     "sv_master": "http://localhost:8000",
-    "g_gametype": "hideandseek",
+    "g_gametype": "tdm",
     "g_mapname": "maps/mp_kam2",
     "g_friendlyfire": false,
     "timelimit": 300,
@@ -48,11 +48,15 @@
     "hideandseek_seekerweapons": true,
     "hideandseek_roundlimit": 5,
 
+    "g_redTeamStartWeapons": [],
+    "g_blueTeamStartWeapons": [],
+
     "sv_botcount": 1,
     "sv_botnames": [
-        "Hawk", "Viper", "Ghost", "Snake", "Jackal",
-        "Wolf", "Raven", "Cobra", "Falcon", "Panther",
-        "Shadow", "Blade", "Storm", "Frost", "Thunder"
+        "[RMK]^1Hawk", "^4{ELiTE}^7Viper", "^3>>^7Ghost^3<<", "[SOF]^5Snake",
+        "^1|^7DsK^1|^7Jackal", "^6[WoLf]^7Pack", "^2-=^7Raven^2=-", "^1C^7obra^1X",
+        "^3[FaL]^7con", "^5P^7anther^5X", "^4Sh^7ad^4ow", "^1BL^7ade^1z",
+        "^6St^7orm^6y", "^4[iCe]^7Frost", "^1T^7hunder^1B^7olt"
     ],
     "sv_botskins": [
         "mullins_jungle"

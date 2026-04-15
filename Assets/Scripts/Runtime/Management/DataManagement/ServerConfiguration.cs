@@ -150,6 +150,14 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
 
         // ── Bot-Konfiguration ─────────────────────────────────────────
 
+        /// <summary>Start-Waffen fuer Team Rot (g_redTeamStartWeapons). Leer/null = Default (alle Waffen). Knife ist immer enthalten.</summary>
+        public string[] g_redTeamStartWeapons;
+
+        /// <summary>Start-Waffen fuer Team Blau (g_blueTeamStartWeapons). Leer/null = Default (alle Waffen). Knife ist immer enthalten.</summary>
+        public string[] g_blueTeamStartWeapons;
+
+        // ── Bot-Konfiguration ─────────────────────────────────────────
+
         /// <summary>Anzahl AI-Bots die beim Server-Start gespawnt werden (sv_botcount). 0 = keine Bots.</summary>
         public int sv_botcount;
 

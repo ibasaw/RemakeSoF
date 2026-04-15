@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using ConnectionEvent = Tolik.RemakeSoF.Runtime.ConnectionManagement.ConnectionEvent;
 using Tolik.RemakeSoF.Runtime.DataManagement;
+using Tolik.RemakeSoF.Runtime.ChatManagement;
 using Tolik.RemakeSoF.Runtime.ConsoleManagement;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
 using Tolik.RemakeSoF.Runtime.GoreManagement;
@@ -50,6 +51,10 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
         [SerializeField]
         ConsoleManager m_ConsoleManager;
         public ConsoleManager ConsoleManager => m_ConsoleManager;
+
+        [SerializeField]
+        ChatManager m_ChatManager;
+        public ChatManager ChatManager => m_ChatManager;
 
         /// <summary>MasterMixer fuer Audio-Routing (SFX/Music-Gruppen werden automatisch aufgeloest).</summary>
         [SerializeField]

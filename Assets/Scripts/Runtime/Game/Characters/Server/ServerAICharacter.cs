@@ -1,5 +1,6 @@
 using Tolik.RemakeSoF.Runtime.AI;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.ChatManagement;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
@@ -399,6 +400,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                         int newHealth = targetState.Health;
                         bool isKill = newHealth <= 0 && previousHealth > 0;
 
+                        if (isKill)
+                        {
+                            BroadcastKillFeedForHit(targetState, hitboxCollider.HitRegion, weaponName, weapon);
+                        }
+
                         Debug.Log($"[AI·Attack] Bot '{m_CharacterState.CharacterName}' → " +
                                   $"'{targetState.CharacterName}' | Region={hitboxCollider.HitRegion} | " +
                                   $"Damage={modifiedDamage} (Base={attackDef.Damage}×{damageMultiplier:F2}) | " +
@@ -413,6 +419,60 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
             {
                 physicsCollider.enabled = true;
             }
+        }
+
+        /// <summary>
+        /// Broadcasts a kill feed message when this AI bot kills a target.
+        /// </summary>
+        private void BroadcastKillFeedForHit(NetworkedCharacterState victimState, HitRegion hitRegion, string weaponName, WeaponDefinition weapon)
+        {
+            NetworkedChatBridge bridge = NetworkedChatBridge.Instance;
+            if (bridge == null)
+            {
+                return;
+            }
+
+            string killerName = m_CharacterState.CharacterName ?? "Bot";
+            string victimName = victimState.CharacterName ?? "Unknown";
+
+            string weaponDisplayName = weaponName;
+            if (weapon != null && !string.IsNullOrEmpty(weapon.DisplayName))
+            {
+                weaponDisplayName = weapon.DisplayName;
+            }
+
+            string regionName = FormatHitRegionName(hitRegion);
+            bridge.BroadcastKillFeed(killerName, victimName, weaponDisplayName, regionName);
+        }
+
+        /// <summary>
+        /// Formats a <see cref="HitRegion"/> into a readable display name for the kill feed.
+        /// </summary>
+        private static string FormatHitRegionName(HitRegion region)
+        {
+            return region switch
+            {
+                HitRegion.Head => "HEAD",
+                HitRegion.Neck => "NECK",
+                HitRegion.Chest => "CHEST",
+                HitRegion.Gut => "GUT",
+                HitRegion.Groin => "GROIN",
+                HitRegion.LeftShoulder => "L. SHOULDER",
+                HitRegion.RightShoulder => "R. SHOULDER",
+                HitRegion.LeftArm => "L. ARM",
+                HitRegion.RightArm => "R. ARM",
+                HitRegion.LeftForearm => "L. FOREARM",
+                HitRegion.RightForearm => "R. FOREARM",
+                HitRegion.LeftHand => "L. HAND",
+                HitRegion.RightHand => "R. HAND",
+                HitRegion.LeftThigh => "L. THIGH",
+                HitRegion.RightThigh => "R. THIGH",
+                HitRegion.LeftLeg => "L. LEG",
+                HitRegion.RightLeg => "R. LEG",
+                HitRegion.LeftFoot => "L. FOOT",
+                HitRegion.RightFoot => "R. FOOT",
+                _ => region.ToString().ToUpperInvariant()
+            };
         }
 
         /// <summary>

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Newtonsoft.Json.Linq;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.ChatManagement;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using Tolik.RemakeSoF.Runtime.GoreManagement;
@@ -1066,6 +1067,69 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
+        /// Server: Sends a kill feed broadcast via <see cref="NetworkedChatBridge"/> when a kill is confirmed.
+        /// Resolves weapon display name and formats the hit region for the kill message.
+        /// </summary>
+        /// <param name="victimState">The killed character's state.</param>
+        /// <param name="hitRegion">The body region of the killing blow.</param>
+        /// <param name="isAltAttack">Whether the kill was from an alt-attack.</param>
+        private void BroadcastKillFeedForHit(NetworkedCharacterState victimState, HitRegion hitRegion, bool isAltAttack)
+        {
+            NetworkedChatBridge bridge = NetworkedChatBridge.Instance;
+            if (bridge == null)
+            {
+                return;
+            }
+
+            string killerName = m_CharacterState.CharacterName ?? $"Player {OwnerClientId}";
+            string victimName = victimState.CharacterName ?? $"Player {victimState.OwnerClientId}";
+
+            string weaponDisplayName = m_CharacterState.CurrentWeaponName;
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader != null)
+            {
+                WeaponDefinition weapon = loader.GetById(m_CharacterState.CurrentWeaponName);
+                if (weapon != null && !string.IsNullOrEmpty(weapon.DisplayName))
+                {
+                    weaponDisplayName = weapon.DisplayName;
+                }
+            }
+
+            string regionName = FormatHitRegionName(hitRegion);
+            bridge.BroadcastKillFeed(killerName, victimName, weaponDisplayName, regionName);
+        }
+
+        /// <summary>
+        /// Formats a <see cref="HitRegion"/> into a readable display name for the kill feed.
+        /// </summary>
+        private static string FormatHitRegionName(HitRegion region)
+        {
+            return region switch
+            {
+                HitRegion.Head => "HEAD",
+                HitRegion.Neck => "NECK",
+                HitRegion.Chest => "CHEST",
+                HitRegion.Gut => "GUT",
+                HitRegion.Groin => "GROIN",
+                HitRegion.LeftShoulder => "L. SHOULDER",
+                HitRegion.RightShoulder => "R. SHOULDER",
+                HitRegion.LeftArm => "L. ARM",
+                HitRegion.RightArm => "R. ARM",
+                HitRegion.LeftForearm => "L. FOREARM",
+                HitRegion.RightForearm => "R. FOREARM",
+                HitRegion.LeftHand => "L. HAND",
+                HitRegion.RightHand => "R. HAND",
+                HitRegion.LeftThigh => "L. THIGH",
+                HitRegion.RightThigh => "R. THIGH",
+                HitRegion.LeftLeg => "L. LEG",
+                HitRegion.RightLeg => "R. LEG",
+                HitRegion.LeftFoot => "L. FOOT",
+                HitRegion.RightFoot => "R. FOOT",
+                _ => region.ToString().ToUpperInvariant()
+            };
+        }
+
+        /// <summary>
         /// Server → Owner-Client: Hard-Correction (Respawn, Teleport, Anti-Cheat).
         /// Überschreibt Client-Position ohne Reconciliation.
         /// Resettet auch die Client-Simulation (Velocity, Grounded-State), damit keine
@@ -1340,6 +1404,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                             int newHealth = targetState.Health;
                             bool isKill = newHealth <= 0 && previousHealth > 0;
                             HitConfirmRpc((int)resolvedRegion, finalDamage, isKill);
+
+                            if (isKill)
+                            {
+                                BroadcastKillFeedForHit(targetState, resolvedRegion, false);
+                            }
 
                             if (attackDef.Gore)
                             {
@@ -2638,6 +2707,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                             int newHealth = targetState.Health;
                             bool isKill = newHealth <= 0 && previousHealth > 0;
                             HitConfirmRpc((int)resolvedRegion, finalDamage, isKill);
+
+                            if (isKill)
+                            {
+                                BroadcastKillFeedForHit(targetState, resolvedRegion, true);
+                            }
 
                             if (altAttackDef.Gore)
                             {

@@ -230,6 +230,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleChat",
+                    "type": "Button",
+                    "id": "5ba59914-b569-4c4a-9361-fb7d043c45ad",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -802,6 +811,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleSwitchTeamMenu",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8d98974b-d749-462c-bde0-8394993c7f86",
+                    "path": "<Keyboard>/t",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "ToggleChat",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

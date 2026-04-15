@@ -1,0 +1,14 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UIToolkit/ChatView/ChatViewStyle.uss" />
+
+    <!-- HUD overlay: always visible, shows recent messages with fade (bottom-left, SoF2 style) -->
+    <ui:VisualElement name="chat-hud-overlay" class="chat-hud-overlay" picking-mode="Ignore" />
+
+    <!-- Full chat panel: toggled via T key -->
+    <ui:VisualElement name="chat-root" class="chat-root">
+        <ui:VisualElement class="chat-panel">
+            <ui:ScrollView name="chat-output" class="chat-output" />
+            <ui:TextField name="chat-input" class="chat-input" hide-placeholder-on-focus="true" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -67,6 +67,28 @@ namespace Tolik.RemakeSoF.Runtime
     {
         public string command;
     }
+
+    /// <summary>
+    /// Called when the player presses the toggle chat hotkey (default: 't')
+    /// </summary>
+    internal class ToggleChatEvent : AppEvent { }
+
+    /// <summary>
+    /// Called when the user submits a chat message
+    /// </summary>
+    internal class SubmitChatMessageEvent : AppEvent
+    {
+        public string message;
+    }
+
+    /// <summary>
+    /// Called when a chat message is received from the server (to display in the HUD)
+    /// </summary>
+    internal class ChatMessageReceivedEvent : AppEvent
+    {
+        public string senderName;
+        public string message;
+    }
     
     /// <summary>
     /// Called when the user clicks the "Register" button on the registration view
