@@ -1,5 +1,4 @@
-"""
-distribute.py — Post-Build Distribution Script fuer RemakeSoF.
+"""distribute.py — Post-Build Distribution Script fuer RemakeSoF.
 
 Zippt einen fertigen Unity-Build, generiert ein SHA256-Manifest
 und laedt beides an den AuthServer (FastAPI) hoch.
@@ -7,16 +6,15 @@ und laedt beides an den AuthServer (FastAPI) hoch.
 Build-Typ wird automatisch aus dem Pfad erkannt (Server/ oder Client/).
 Kompression: zstandard > LZMA > DEFLATE (Fallback-Kette).
 
-Verwendung:
+Verwendung::
+
     python Tools/distribute.py --build-dir Builds/Client/Windows10 --version 1.2.0
     python Tools/distribute.py --build-dir Builds/Server/Windows10 --version 1.2.0
     python Tools/distribute.py --build-dir Builds/Client/Windows10 --version 1.2.0 --api-url https://api.remakesof.com
-
-cd D:\RemakeSoF\Tools
-.\venv\Scripts\python.exe distribute.py --build-dir "..\Builds\Client\Windows10" --version 1.0.0 --token "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTgwNzUyMDExMH0.06_OjIwLct2UmkUxmsnaTtnuwwfWxk39NPi4UvUlyWU"
-
-.\venv\Scripts\python.exe distribute.py --build-dir "..\Builds\Server\Windows10" --version 1.0.0 --token "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTgwNzUyMDExMH0.06_OjIwLct2UmkUxmsnaTtnuwwfWxk39NPi4UvUlyWU"
+    python Tools/distribute.py --build-dir Builds/Client/Windows10 --version 1.0.0 --token "<JWT>"
 """
+
+from __future__ import annotations
 
 import argparse
 import hashlib
@@ -26,7 +24,8 @@ import re
 import sys
 import tarfile
 import zipfile
-from pathlib import Path
+from collections.abc import Callable
+from typing import Any
 
 try:
     import requests
@@ -34,7 +33,7 @@ except ImportError:
     requests = None
 
 try:
-    import zstandard as zstd
+    import zstandard as zstd  # type: ignore[import-untyped]
 except ImportError:
     zstd = None
 
@@ -84,13 +83,13 @@ def detect_build_type(build_dir: str) -> str:
 
 
 def generate_manifest(build_dir: str, version: str, build_type: str,
-                      path_filter: callable = None) -> dict:
+                      path_filter: Callable[[str], bool] | None = None) -> dict[str, Any]:
     """Erzeugt ein Manifest mit SHA256-Hashes und Dateigroessen fuer alle Dateien im Build.
     
     path_filter: Optional. Bekommt den relativen Pfad (forward slashes) und gibt True zurueck
                  wenn die Datei ins Manifest aufgenommen werden soll.
     """
-    files = []
+    files: list[dict[str, Any]] = []
     total_size = 0
     excluded_count = 0
 
@@ -126,9 +125,10 @@ def generate_manifest(build_dir: str, version: str, build_type: str,
     }
 
 
-def create_archive_zstd(build_dir: str, output_path: str, path_filter: callable = None,
+def create_archive_zstd(build_dir: str, output_path: str, path_filter: Callable[[str], bool] | None = None,
                         zstd_level: int = ZSTD_LEVEL_DEFAULT) -> str:
     """Erstellt ein .tar.zst Archiv (beste Kompressionsrate) und gibt den SHA256-Hash zurueck."""
+    assert zstd is not None, "zstandard muss installiert sein"
     cctx = zstd.ZstdCompressor(level=zstd_level, threads=-1)
 
     with open(output_path, "wb") as fh:
@@ -153,7 +153,7 @@ def create_archive_zstd(build_dir: str, output_path: str, path_filter: callable 
     return archive_hash
 
 
-def create_archive_zip(build_dir: str, output_path: str, path_filter: callable = None) -> str:
+def create_archive_zip(build_dir: str, output_path: str, path_filter: Callable[[str], bool] | None = None) -> str:
     """Erstellt ein ZIP-Archiv mit LZMA-Kompression (Fallback) und gibt den SHA256-Hash zurueck."""
     with zipfile.ZipFile(output_path, "w", zipfile.ZIP_LZMA) as zf:
         for root, dirs, filenames in os.walk(build_dir):
@@ -175,7 +175,7 @@ def create_archive_zip(build_dir: str, output_path: str, path_filter: callable =
 
 
 def create_archive(build_dir: str, output_dir: str, base_name: str,
-                   path_filter: callable = None, zstd_level: int = ZSTD_LEVEL_DEFAULT) -> tuple[str, str]:
+                   path_filter: Callable[[str], bool] | None = None, zstd_level: int = ZSTD_LEVEL_DEFAULT) -> tuple[str, str]:
     """Erstellt das bestmoegliche Archiv. Gibt (dateipfad, sha256_hash) zurueck."""
     if zstd is not None:
         output_path = os.path.join(output_dir, base_name + ".tar.zst")
@@ -191,7 +191,7 @@ def create_archive(build_dir: str, output_dir: str, base_name: str,
 
 
 def upload_to_server(api_url: str, version: str, build_type: str,
-                     archive_path: str, manifest: dict, token: str) -> bool:
+                     archive_path: str, manifest: dict[str, Any], token: str) -> bool:
     """Laedt Archiv + Manifest per Chunked Streaming an den FastAPI AuthServer hoch."""
     if requests is None:
         print("FEHLER: 'requests' ist nicht installiert. Installiere mit: pip install requests")
@@ -262,8 +262,8 @@ def upload_to_server(api_url: str, version: str, build_type: str,
 
 
 def build_package(build_dir: str, output_dir: str, version: str,
-                  build_type: str, label: str, path_filter: callable = None,
-                  zstd_level: int = ZSTD_LEVEL_DEFAULT) -> tuple[dict, str]:
+                  build_type: str, label: str, path_filter: Callable[[str], bool] | None = None,
+                  zstd_level: int = ZSTD_LEVEL_DEFAULT) -> tuple[dict[str, Any], str]:
     """Erzeugt Manifest + Archiv fuer ein Paket. Gibt (manifest, archive_path) zurueck."""
     base_name = f"RemakeSoF-{label}-{version}"
     manifest_path = os.path.join(output_dir, f"manifest-{label}-{version}.json")
@@ -349,12 +349,12 @@ def main():
         print(f"\nClient-Build erkannt — trenne Art-Assets ({ART_DIR_RELATIVE}/) ab ...")
 
         # 1. Client-Paket (ohne Art/)
-        client_filter = lambda p: not p.startswith(art_prefix)
+        client_filter: Callable[[str], bool] = lambda p: not p.startswith(art_prefix)
         client_manifest, client_archive = build_package(
             build_dir, output_dir, args.version, build_type, "client", client_filter, zstd_level)
 
         # 2. Assets-Paket (nur Art/)
-        assets_filter = lambda p: p.startswith(art_prefix)
+        assets_filter: Callable[[str], bool] = lambda p: p.startswith(art_prefix)
         assets_manifest, assets_archive = build_package(
             build_dir, output_dir, args.version, "assets", "assets", assets_filter, zstd_level)
 
