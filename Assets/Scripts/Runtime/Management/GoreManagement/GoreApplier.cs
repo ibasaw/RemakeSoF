@@ -125,7 +125,7 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
             bool suppressChunks = parentFlags != null && parentFlags.Contains("NoChildChunks");
             if (!suppressChunks && area.Chunk != null)
             {
-                SpawnChunk(modelRoot.gameObject, allRenderers, area.Chunk, hitDirection, goreDataLoader, isRightSide);
+                SpawnChunk(modelRoot.gameObject, allRenderers, area.Chunk, area.Surfaces_Off, hitDirection, goreDataLoader, isRightSide);
             }
 
             // 5. BoltOn befestigen (sofern nicht vom Eltern unterdrueckt)
@@ -240,20 +240,20 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                     continue;
                 }
 
-                bool found = false;
+                //bool found = false;
                 foreach (Renderer renderer in allRenderers)
                 {
                     if (MatchesSurface(renderer, surfaceName))
                     {
                         renderer.gameObject.SetActive(false);
-                        found = true;
+                        //found = true;
                     }
                 }
 
-                if (!found)
+                /*if (!found)
                 {
                     Debug.LogWarning($"[GoreApplier] Surface not found for deactivation: {surfaceName}");
-                }
+                }*/
             }
         }
 
@@ -372,7 +372,7 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
         /// 1:1 SoF2-Ansatz: Der Chunk wird aus Kopien der Charakter-Renderer erstellt (nicht aus separaten Prefabs).
         /// GHOUL2 hat die Surfaces des Spielermodells dupliziert und als fliegendes Teil mit Physik versehen.
         /// </summary>
-        private void SpawnChunk(GameObject characterRoot, Renderer[] allRenderers, GoreChunk chunk, Vector3 hitDirection, GoreDataLoader goreDataLoader, bool isRightSide)
+        private void SpawnChunk(GameObject characterRoot, Renderer[] allRenderers, GoreChunk chunk, List<string> areaSurfacesOff, Vector3 hitDirection, GoreDataLoader goreDataLoader, bool isRightSide)
         {
             if (string.IsNullOrEmpty(chunk.root))
             {
@@ -434,7 +434,7 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
             // 1:1 SoF2: Klone die Renderer des Charakters die zu diesem Chunk gehoeren.
             // In GHOUL2 wurde das gleiche Modell dupliziert und nur die Chunk-Surfaces sichtbar gelassen.
             // Hier klonen wir die bereits deaktivierten Renderer (Surfaces_Off) des Hauptmodells.
-            CloneChunkRenderers(allRenderers, chunk, chunkObj.transform);
+            CloneChunkRenderers(allRenderers, chunk, areaSurfacesOff, chunkObj.transform);
 
             // Rigidbody fuer Physik-Simulation
             Rigidbody rb = chunkObj.AddComponent<Rigidbody>();
@@ -533,11 +533,26 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
         /// Entspricht dem SoF2 GHOUL2-Verfahren: Das Charakter-Mesh wird dupliziert und
         /// nur die abgetrennten Surfaces bleiben sichtbar.
         /// </summary>
-        private void CloneChunkRenderers(Renderer[] allRenderers, GoreChunk chunk, Transform chunkParent)
+        private void CloneChunkRenderers(Renderer[] allRenderers, GoreChunk chunk, List<string> areaSurfacesOff, Transform chunkParent)
         {
-            // Wenn chunk.Surfaces gesetzt ist, nutze die explizite Surfaceliste fuer Multi-Surface-Chunks
-            // (z.B. Kopf mit >12 Surfaces). Sonst Fallback auf chunk.root Matching.
+            // 1. Explizite Surfaceliste am Chunk (Multi-Surface-Chunks wie Kopf)
+            // 2. Fallback: area.Surfaces_Off (die gerade deaktivierten Surfaces der Gore-Area)
+            // 3. Letzter Fallback: chunk.root Matching (Bone-Name, funktioniert selten)
             bool useSurfaceList = chunk.Surfaces != null && chunk.Surfaces.Count > 0;
+            if (!useSurfaceList && areaSurfacesOff != null && areaSurfacesOff.Count > 0)
+            {
+                useSurfaceList = true;
+                chunk = new GoreChunk
+                {
+                    root = chunk.root,
+                    bone = chunk.bone,
+                    MinForce = chunk.MinForce,
+                    MaxForce = chunk.MaxForce,
+                    Surfaces_On = chunk.Surfaces_On,
+                    Surfaces = new List<string>(areaSurfacesOff),
+                    Children_Off = chunk.Children_Off
+                };
+            }
             int clonedCount = 0;
             int deactivatedCount = 0;
 

@@ -268,7 +268,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdc4f9747a1ba75418e5fc7800e8d322, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientHitboxSystem
-  m_ShowVisualHitboxes: 1
+  m_ShowVisualHitboxes: 0
   m_VisualAlpha: 0.3
 --- !u!114 &5328490211640741795
 MonoBehaviour:
@@ -322,9 +322,9 @@ MonoBehaviour:
   m_MaxDistance: 25
   m_SensorLayerMask:
     serializedVersion: 2
-    m_Bits: 705
+    m_Bits: 961
   m_SphereRadius: 0.15
-  m_DebugDraw: 1
+  m_DebugDraw: 0
 --- !u!1 &7281561516230162784
 GameObject:
   m_ObjectHideFlags: 0

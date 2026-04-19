@@ -12,7 +12,7 @@
         "spawnFlags": [
           "rgbComponentInterpolation"
         ],
-        "texture": "models/characters/gore/gil_mist",
+        "texture": "models/characters/gore/mist",
         "particle": {
           "countMin": 5,
           "countMax": 5,
@@ -65,18 +65,18 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 50.0,
           "parmMax": 75.0
         },
         "size": {
           "startMin": 0.0254,
           "startMax": 0.0508,
-          "endMin": 0.1905,
-          "endMax": 0.254,
+          "endMin": 0.381,
+          "endMax": 0.508,
           "curve": "linear"
         }
       },
@@ -110,7 +110,7 @@
             0.2032
           ],
           "gravityModifier": -0.254,
-          "burst": false
+          "burst": true
         },
         "color": {
           "startMin": [
@@ -143,8 +143,6 @@
           "parmMax": 50.0
         },
         "size": {
-          "startMin": 0.0,
-          "startMax": 0.0,
           "endMin": 0.3048,
           "endMax": 0.3556,
           "parm": 30.0,
@@ -193,6 +191,7 @@
             1.016
           ],
           "gravityModifier": -2.54,
+          "gravityModifierMax": -6.35,
           "burst": true
         },
         "color": {
@@ -208,10 +207,10 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 40.0,
           "parmMax": 50.0
         },
@@ -250,6 +249,7 @@
             1.016
           ],
           "gravityModifier": -2.54,
+          "gravityModifierMax": -6.35,
           "burst": true
         },
         "color": {
@@ -265,16 +265,16 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 40.0,
           "parmMax": 50.0
         },
         "size": {
-          "startMin": 0.0178,
-          "startMax": 0.033
+          "startMin": 0.01778,
+          "startMax": 0.03302
         }
       }
     ]
@@ -284,181 +284,45 @@
     "displayName": "Blood Spurt Arterial (MP)",
     "segments": [
       {
-        "type": "particle",
-        "name": "blood_line",
-        "flags": [
-          "usePhysics",
-          "impactKills",
-          "useAlpha"
-        ],
-        "spawnFlags": [
-          "rgbComponentInterpolation"
-        ],
-        "texture": "gfx/misc/bp_smoke01",
-        "particle": {
-          "countMin": 8,
-          "countMax": 8,
-          "lifetimeMin": 0.5,
-          "lifetimeMax": 0.9,
-          "delayMin": 0.0,
-          "delayMax": 0.15,
-          "velocityMin": [
-            4.445,
-            -0.0254,
-            -0.0254
-          ],
-          "velocityMax": [
-            4.572,
-            0.0254,
-            0.0254
-          ],
-          "gravityModifier": -5.08,
-          "burst": false
-        },
-        "color": {
-          "startMin": [
-            0.302,
-            0.102,
-            0.102
-          ],
-          "startMax": [
-            0.302,
-            0.102,
-            0.102
-          ],
-          "endMin": [
-            0.502,
-            0.0,
-            0.0
-          ],
-          "endMax": [
-            0.502,
-            0.0,
-            0.0
-          ]
-        },
-        "alpha": {
-          "startMin": 0.5,
-          "startMax": 0.5,
-          "endMin": 0.0,
-          "endMax": 0.0,
-          "parm": 40.0,
-          "parmMax": 60.0
+        "type": "fxRunner",
+        "playFx": "arterial_squirt_long"
+      },
+      {
+        "type": "fxRunner",
+        "name": "Copy of Unnamed FxRunner 0",
+        "playFx": "arterial_squirt_med",
+        "runner": {
+          "delayMin": 1.2,
+          "delayMax": 1.2
         }
       },
       {
-        "type": "particle",
-        "name": "emmits_effect",
-        "flags": [
-          "usePhysics",
-          "impactKills",
-          "impactFx",
-          "useAlpha"
-        ],
-        "texture": "gfx/misc/jk_drop",
-        "particle": {
-          "lifetimeMin": 0.9,
-          "lifetimeMax": 0.9,
-          "gravityModifier": -5.08
-        },
-        "color": {
-          "startMin": [
-            0.8235,
-            0.0,
-            0.0
-          ],
-          "startMax": [
-            0.3922,
-            0.0,
-            0.0
-          ],
-          "endMin": [
-            0.8353,
-            0.0,
-            0.0
-          ],
-          "endMax": [
-            0.502,
-            0.0,
-            0.0
-          ]
-        },
-        "alpha": {
-          "startMin": 0.1,
-          "startMax": 0.1,
-          "endMin": 0.0,
-          "endMax": 0.0
-        },
-        "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0508,
-          "endMin": 0.0127,
-          "endMax": 0.0127
+        "type": "fxRunner",
+        "name": "Copy of Copy of Unnamed FxRunne",
+        "playFx": "arterial_squirt_med",
+        "runner": {
+          "delayMin": 2.6,
+          "delayMax": 2.6
         }
       },
       {
-        "type": "tail",
-        "flags": [
-          "usePhysics",
-          "impactKills",
-          "useAlpha"
-        ],
-        "spawnFlags": [
-          "evenDistribution",
-          "rgbComponentInterpolation"
-        ],
-        "texture": "gfx/misc/jk_smoke4",
-        "particle": {
-          "countMin": 16,
-          "countMax": 16,
-          "lifetimeMin": 0.5,
-          "lifetimeMax": 0.9,
-          "delayMin": 0.0,
-          "delayMax": 0.2,
-          "velocityMin": [
-            4.445,
-            -0.0254,
-            -0.0254
-          ],
-          "velocityMax": [
-            4.572,
-            0.0254,
-            0.0254
-          ],
-          "gravityModifier": -5.08,
-          "burst": false
-        },
-        "color": {
-          "startMin": [
-            0.5333,
-            0.0824,
-            0.0824
-          ],
-          "startMax": [
-            0.3725,
-            0.0628,
-            0.0628
-          ]
-        },
-        "alpha": {
-          "startMin": 0.6,
-          "startMax": 0.6,
-          "endMin": 0.0,
-          "endMax": 0.0,
-          "parm": 30.0
-        },
-        "size": {
-          "startMin": 0.0127,
-          "startMax": 0.0152,
-          "endMin": 0.0381,
-          "endMax": 0.0254
-        },
-        "length": {
-          "startMin": 0.254,
-          "startMax": 0.254,
-          "endMin": 0.0508,
-          "endMax": 0.0508,
-          "curve": "linear"
+        "type": "fxRunner",
+        "name": "Copy of Copy of Copy of Unnamed",
+        "playFx": "arterial_squirt_small",
+        "runner": {
+          "delayMin": 4.0,
+          "delayMax": 4.0
+        }
+      },
+      {
+        "type": "fxRunner",
+        "name": "Copy of Copy of Copy of Copy of",
+        "playFx": "arterial_squirt_small",
+        "runner": {
+          "countMin": 0.0,
+          "countMax": 1.0,
+          "delayMin": 5.7,
+          "delayMax": 5.7
         }
       }
     ]
@@ -468,181 +332,16 @@
     "displayName": "Blood Spurt Arterial Small (MP)",
     "segments": [
       {
-        "type": "particle",
-        "name": "blood_line",
-        "flags": [
-          "usePhysics",
-          "impactKills",
-          "useAlpha"
-        ],
-        "spawnFlags": [
-          "rgbComponentInterpolation"
-        ],
-        "texture": "gfx/misc/bp_smoke01",
-        "particle": {
-          "countMin": 8,
-          "countMax": 8,
-          "lifetimeMin": 0.5,
-          "lifetimeMax": 0.9,
-          "delayMin": 0.0,
-          "delayMax": 0.25,
-          "velocityMin": [
-            2.032,
-            -0.0254,
-            -0.0254
-          ],
-          "velocityMax": [
-            2.032,
-            0.0254,
-            0.0254
-          ],
-          "gravityModifier": -5.08,
-          "burst": false
-        },
-        "color": {
-          "startMin": [
-            0.302,
-            0.102,
-            0.102
-          ],
-          "startMax": [
-            0.302,
-            0.102,
-            0.102
-          ],
-          "endMin": [
-            0.502,
-            0.0,
-            0.0
-          ],
-          "endMax": [
-            0.502,
-            0.0,
-            0.0
-          ]
-        },
-        "alpha": {
-          "startMin": 0.5,
-          "startMax": 0.5,
-          "endMin": 0.0,
-          "endMax": 0.0,
-          "parm": 40.0,
-          "parmMax": 60.0
-        }
+        "type": "fxRunner",
+        "playFx": "arterial_squirt_med"
       },
       {
-        "type": "particle",
-        "name": "emmits_effect",
-        "flags": [
-          "usePhysics",
-          "impactKills",
-          "impactFx",
-          "useAlpha"
-        ],
-        "texture": "gfx/misc/jk_drop",
-        "particle": {
-          "lifetimeMin": 0.8,
-          "lifetimeMax": 0.8,
-          "gravityModifier": -5.08
-        },
-        "color": {
-          "startMin": [
-            0.8235,
-            0.0,
-            0.0
-          ],
-          "startMax": [
-            0.3922,
-            0.0,
-            0.0
-          ],
-          "endMin": [
-            0.8353,
-            0.0,
-            0.0
-          ],
-          "endMax": [
-            0.502,
-            0.0,
-            0.0
-          ]
-        },
-        "alpha": {
-          "startMin": 0.1,
-          "startMax": 0.1,
-          "endMin": 0.0,
-          "endMax": 0.0
-        },
-        "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0508,
-          "endMin": 0.0127,
-          "endMax": 0.0127
-        }
-      },
-      {
-        "type": "tail",
-        "flags": [
-          "usePhysics",
-          "impactKills",
-          "useAlpha"
-        ],
-        "spawnFlags": [
-          "evenDistribution",
-          "rgbComponentInterpolation"
-        ],
-        "texture": "gfx/misc/jk_smoke4",
-        "particle": {
-          "countMin": 15,
-          "countMax": 15,
-          "lifetimeMin": 0.5,
-          "lifetimeMax": 0.9,
-          "delayMin": 0.0,
-          "delayMax": 0.25,
-          "velocityMin": [
-            2.032,
-            -0.0254,
-            -0.0254
-          ],
-          "velocityMax": [
-            2.032,
-            0.0254,
-            0.0254
-          ],
-          "gravityModifier": -5.08,
-          "burst": false
-        },
-        "color": {
-          "startMin": [
-            0.5333,
-            0.0824,
-            0.0824
-          ],
-          "startMax": [
-            0.3725,
-            0.0628,
-            0.0628
-          ]
-        },
-        "alpha": {
-          "startMin": 0.6,
-          "startMax": 0.6,
-          "endMin": 0.0,
-          "endMax": 0.0,
-          "parm": 30.0
-        },
-        "size": {
-          "startMin": 0.0102,
-          "startMax": 0.0152,
-          "endMin": 0.0381,
-          "endMax": 0.0254
-        },
-        "length": {
-          "startMin": 0.1016,
-          "startMax": 0.1016,
-          "endMin": 0.0508,
-          "endMax": 0.0508,
-          "curve": "linear"
+        "type": "fxRunner",
+        "name": "Copy of Unnamed FxRunner 0",
+        "playFx": "arterial_squirt_small",
+        "runner": {
+          "delayMin": 1.2,
+          "delayMax": 1.2
         }
       }
     ]
@@ -651,6 +350,73 @@
     "id": "effects/flesh_chunks",
     "displayName": "Flesh Chunks (MP)",
     "segments": [
+      {
+        "type": "emitter",
+        "name": "chunks",
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 6.0,
+          "lifetimeMax": 7.0,
+          "bounceMin": 0.1,
+          "bounceMax": 0.2,
+          "angleMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "angleDeltaMin": [
+            -10.0,
+            -15.0,
+            -20.0
+          ],
+          "angleDeltaMax": [
+            10.0,
+            15.0,
+            20.0
+          ],
+          "velocityMin": [
+            5.08,
+            -1.651,
+            -1.651
+          ],
+          "velocityMax": [
+            6.35,
+            1.651,
+            1.651
+          ],
+          "gravityModifier": -12.7,
+          "gravityModifierMax": -11.43,
+          "models": [
+            "models/characters/gore/chunk_lrg/chunk_lrg.md3",
+            "models/characters/gore/chunk_med/chunk_med.md3",
+            "models/characters/gore/chunk_smll/chunk_smll.md3"
+          ],
+          "impactFx": "blood_splat"
+        },
+        "alpha": {
+          "endMin": 0.0,
+          "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
+          "parm": 80.0,
+          "parmMax": 90.0
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0889
+        }
+      },
       {
         "type": "particle",
         "name": "blood_flash",
@@ -687,7 +453,8 @@
             0.2032,
             0.1016,
             0.1016
-          ]
+          ],
+          "cullRange": 450.0
         },
         "color": {
           "startMin": [
@@ -702,10 +469,10 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 60.0,
           "parmMax": 75.0
         },
@@ -755,7 +522,19 @@
             0.1016,
             0.1016
           ],
-          "gravityModifier": -0.635
+          "gravityModifier": -0.635,
+          "gravityModifierMax": -0.762,
+          "accelerationMin": [
+            0.0,
+            -0.127,
+            -0.127
+          ],
+          "accelerationMax": [
+            0.0,
+            0.127,
+            0.127
+          ],
+          "cullRange": 350.0
         },
         "color": {
           "startMin": [
@@ -780,18 +559,18 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 50.0,
           "parmMax": 75.0
         },
         "size": {
-          "startMin": 0.0508,
-          "startMax": 0.0635,
-          "endMin": 0.127,
-          "endMax": 0.1524,
+          "startMin": 0.1016,
+          "startMax": 0.127,
+          "endMin": 0.254,
+          "endMax": 0.3048,
           "parm": 50.0,
           "parmMax": 80.0,
           "curve": "clamp"
@@ -836,7 +615,9 @@
             0.254
           ],
           "gravityModifier": -15.24,
-          "burst": false
+          "gravityModifierMax": -20.32,
+          "cullRange": 600.0,
+          "burst": true
         },
         "color": {
           "startMin": [
@@ -861,17 +642,18 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.3,
-          "endMax": 0.5
+          "endMax": 0.5,
+          "startMin": 1.0,
+          "startMax": 1.0
         },
         "size": {
           "startMin": 0.0127,
           "startMax": 0.0254,
           "endMin": 0.0254,
           "endMax": 0.0762
-        }
+        },
+        "impactFx": "blood_splat"
       },
       {
         "type": "particle",
@@ -912,7 +694,8 @@
             0.254
           ],
           "gravityModifier": -15.24,
-          "burst": false
+          "gravityModifierMax": -20.32,
+          "burst": true
         },
         "color": {
           "startMin": [
@@ -937,17 +720,18 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.3,
-          "endMax": 0.5
+          "endMax": 0.5,
+          "startMin": 1.0,
+          "startMax": 1.0
         },
         "size": {
           "startMin": 0.0127,
           "startMax": 0.0254,
           "endMin": 0.0254,
           "endMax": 0.0762
-        }
+        },
+        "impactFx": "blood_splat"
       }
     ]
   }

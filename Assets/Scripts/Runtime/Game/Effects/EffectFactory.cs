@@ -3,6 +3,7 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.EffectManagement;
 using Tolik.RemakeSoF.Runtime.Game.Camera;
+using Tolik.RemakeSoF.Runtime.PlayerSkinManagement;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
 using Tolik.RemakeSoF.Runtime.SoundManagement;
 using Tolik.RemakeSoF.Runtime.TextureManagement;
@@ -903,6 +904,33 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 {
                     material.SetTexture("_BaseMap", textureData.Texture);
                 }
+                else
+                {
+                    // Shader-Name → echten Textur-Pfad via LegacyShaderLoader aufloesen
+                    ShaderEntry shaderEntry = ResolveShaderEntry(texturePath);
+                    if (shaderEntry != null)
+                    {
+                        string resolvedTexture = !string.IsNullOrEmpty(shaderEntry.MainTexture)
+                            ? shaderEntry.MainTexture
+                            : shaderEntry.EditorImage;
+                        if (!string.IsNullOrEmpty(resolvedTexture))
+                        {
+                            TextureData resolvedData = textureManager.GetTextureData(resolvedTexture);
+                            if (resolvedData != null && resolvedData.HasTexture())
+                            {
+                                material.SetTexture("_BaseMap", resolvedData.Texture);
+                            }
+                            else
+                            {
+                                Debug.LogWarning($"[EffectFactory] Trail texture not found after shader resolve: {texturePath} → {resolvedTexture}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[EffectFactory] Trail texture not found and no ShaderEntry for: {texturePath}");
+                    }
+                }
             }
 
             material.SetColor("_BaseColor", Color.white);
@@ -965,21 +993,41 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 }
                 else
                 {
-                    // Soft-Circle-Fallback: ohne Textur wuerden Alpha-Partikel als solide
-                    // Kreise/Kugeln gerendert. Default-Particle ist ein weiches Kreis-Sprite.
-                    Texture2D fallbackTex = Resources.GetBuiltinResource<Texture2D>("Default-Particle.psd");
-                    if (fallbackTex != null)
+                    // Shader-Name → echten Textur-Pfad via LegacyShaderLoader aufloesen
+                    ShaderEntry shaderEntry = ResolveShaderEntry(texturePath);
+                    if (shaderEntry != null)
                     {
-                        if (material.HasProperty("_BaseMap"))
+                        string resolvedTexture = !string.IsNullOrEmpty(shaderEntry.MainTexture)
+                            ? shaderEntry.MainTexture
+                            : shaderEntry.EditorImage;
+                        if (!string.IsNullOrEmpty(resolvedTexture))
                         {
-                            material.SetTexture("_BaseMap", fallbackTex);
+                            TextureData resolvedData = textureManager.GetTextureData(resolvedTexture);
+                            if (resolvedData != null && resolvedData.HasTexture())
+                            {
+                                if (material.HasProperty("_BaseMap"))
+                                {
+                                    material.SetTexture("_BaseMap", resolvedData.Texture);
+                                }
+                                else
+                                {
+                                    material.mainTexture = resolvedData.Texture;
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogWarning($"[EffectFactory] Texture not found after shader resolve: {texturePath} → {resolvedTexture}");
+                            }
                         }
                         else
                         {
-                            material.mainTexture = fallbackTex;
+                            Debug.LogWarning($"[EffectFactory] ShaderEntry has no texture for: {texturePath}");
                         }
                     }
-                    Debug.LogWarning($"[EffectFactory] Texture not found: {texturePath}, using soft particle fallback");
+                    else
+                    {
+                        Debug.LogWarning($"[EffectFactory] Texture not found and no ShaderEntry for: {texturePath}");
+                    }
                 }
             }
 
@@ -1684,12 +1732,75 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                 }
                 else
                 {
-                    Debug.LogWarning($"[EffectFactory] Decal texture not found: {texturePath}");
+                    // Shader-Name → echten Textur-Pfad via LegacyShaderLoader auflösen
+                    ShaderEntry shaderEntry = ResolveShaderEntry(texturePath);
+                    if (shaderEntry != null)
+                    {
+                        string resolvedTexture = !string.IsNullOrEmpty(shaderEntry.MainTexture)
+                            ? shaderEntry.MainTexture
+                            : shaderEntry.EditorImage;
+                        if (!string.IsNullOrEmpty(resolvedTexture))
+                        {
+                            TextureData resolvedData = textureManager.GetTextureData(resolvedTexture);
+                            if (resolvedData != null && resolvedData.HasTexture())
+                            {
+                                if (material.HasProperty("_BaseMap"))
+                                {
+                                    material.SetTexture("_BaseMap", resolvedData.Texture);
+                                }
+                                else
+                                {
+                                    material.mainTexture = resolvedData.Texture;
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogWarning($"[EffectFactory] Decal texture not found after shader resolve: {texturePath} → {resolvedTexture}");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[EffectFactory] ShaderEntry has no texture for: {texturePath}");
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[EffectFactory] Decal texture not found: {texturePath}");
+                    }
                 }
             }
 
             m_MaterialCache[decalKey] = material;
             return material;
+        }
+
+        /// <summary>
+        /// Sucht einen ShaderEntry fuer den gegebenen Shader-Namen in allen geladenen
+        /// Legacy-Shader-Definitionen (.g2shader). Gibt null zurueck wenn kein Eintrag gefunden.
+        /// </summary>
+        private static ShaderEntry ResolveShaderEntry(string shaderName)
+        {
+            LegacyShaderLoader shaderLoader = ServiceLocator.Get<LegacyShaderLoader>();
+            if (shaderLoader == null)
+            {
+                return null;
+            }
+
+            Dictionary<string, Dictionary<string, ShaderEntry>> allShaderDefinitions = shaderLoader.GetAll();
+            if (allShaderDefinitions == null)
+            {
+                return null;
+            }
+
+            foreach (Dictionary<string, ShaderEntry> modelShaders in allShaderDefinitions.Values)
+            {
+                if (modelShaders.TryGetValue(shaderName, out ShaderEntry entry))
+                {
+                    return entry;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -1930,6 +2041,15 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                         ? segment.Particle.LifetimeMax + segment.Particle.DelayMax
                         : (segment.Trail?.Lifetime ?? 1f);
                     maxLifetime = Mathf.Max(maxLifetime, segLife);
+                }
+                else if (segment.Type == "emitter" && segment.Emitter != null)
+                {
+                    // Gore-Emitter: 3D-Model-Chunks (flesh_chunks, gore_gib_body etc.)
+                    // mit Physik wegschleudern — gleiche Logik wie SpawnExplosion.
+                    Quaternion emitterRotation = impactObj.transform.rotation;
+                    SpawnEmitterChunks(hitPoint, emitterRotation, segment.Emitter, segment.Flags);
+                    float emitterLife = Mathf.Max(segment.Emitter.LifetimeMin, segment.Emitter.LifetimeMax);
+                    maxLifetime = Mathf.Max(maxLifetime, emitterLife);
                 }
                 else if (segment.Type == "decal")
                 {

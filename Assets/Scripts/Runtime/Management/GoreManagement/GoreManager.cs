@@ -573,11 +573,20 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
 
         /// <summary>
         /// Rekursive DFS-Suche nach einem Kind-Transform per Name (case-insensitive).
+        /// Normalisiert Namen: entfernt '*'-Praefix und Unity-Suffix ('_0', '_1' etc.).
         /// Statische Hilfsmethode fuer GoreManager ohne MonoBehaviour-Abhaengigkeit.
         /// </summary>
         private static Transform FindDeepChildStatic(Transform parent, string childName)
         {
             if (string.Equals(parent.name, childName, StringComparison.OrdinalIgnoreCase))
+            {
+                return parent;
+            }
+
+            // Normalisierter Match: '*'-Praefix und '_N'-Suffix entfernen
+            string cleanParentName = parent.name.TrimStart('*');
+            cleanParentName = System.Text.RegularExpressions.Regex.Replace(cleanParentName, @"_\d+$", "");
+            if (string.Equals(cleanParentName, childName, StringComparison.OrdinalIgnoreCase))
             {
                 return parent;
             }

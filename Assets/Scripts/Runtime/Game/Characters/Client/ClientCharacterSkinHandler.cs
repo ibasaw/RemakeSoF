@@ -277,6 +277,31 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
         }
 
         /// <summary>
+        /// Setzt das Visual zurueck und laedt den Skin neu.
+        /// Wird bei Respawn aufgerufen um alle Gore-Surfaces wiederherzustellen.
+        /// </summary>
+        public void ForceReloadSkin()
+        {
+            string skinName = m_CharacterState != null ? m_CharacterState.CurrentSkinName : null;
+            if (string.IsNullOrEmpty(skinName))
+            {
+                return;
+            }
+
+            // Altes Visual zerstoeren (inklusive aller Gore-Chunks/BoltOns)
+            ClearCurrentVisual();
+
+            if (m_IsServerMode)
+            {
+                LoadServerSkeleton(skinName);
+            }
+            else
+            {
+                LoadAndApplySkin(skinName);
+            }
+        }
+
+        /// <summary>
         /// Entfernt das aktuell instanziierte Visual.
         /// </summary>
         private void ClearCurrentVisual()

@@ -681,5 +681,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdc4f9747a1ba75418e5fc7800e8d322, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.tolikwebsolutions.remakesof.runtime::Tolik.RemakeSoF.Runtime.Game.Characters.Client.ClientHitboxSystem
-  m_ShowVisualHitboxes: 1
+  m_ShowVisualHitboxes: 0
   m_VisualAlpha: 0.22

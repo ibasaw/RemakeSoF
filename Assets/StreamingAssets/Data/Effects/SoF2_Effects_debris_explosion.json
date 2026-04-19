@@ -6,13 +6,31 @@
       {
         "name": "chunks",
         "type": "emitter",
-        "flags": ["useModel"],
+        "flags": [
+          "useModel"
+        ],
         "emitter": {
           "models": [],
-          "velocityMin": [4.445, -5.08, -5.08],
-          "velocityMax": [7.62, 5.08, 5.08],
-          "angleDeltaMin": [-1000, -1000, -400],
-          "angleDeltaMax": [1000, 1000, 400],
+          "velocityMin": [
+            4.445,
+            -5.08,
+            -5.08
+          ],
+          "velocityMax": [
+            7.62,
+            5.08,
+            5.08
+          ],
+          "angleDeltaMin": [
+            -1000,
+            -1000,
+            -400
+          ],
+          "angleDeltaMax": [
+            1000,
+            1000,
+            400
+          ],
           "gravityMin": -15.24,
           "gravityMax": -15.24,
           "bounceMin": 0.3,
@@ -31,13 +49,31 @@
       {
         "name": "chunks",
         "type": "emitter",
-        "flags": ["useModel"],
+        "flags": [
+          "useModel"
+        ],
         "emitter": {
           "models": [],
-          "velocityMin": [2.54, -3.81, -3.81],
-          "velocityMax": [5.08, 3.81, 3.81],
-          "angleDeltaMin": [-1000, -1000, -400],
-          "angleDeltaMax": [1000, 1000, 400],
+          "velocityMin": [
+            2.54,
+            -3.81,
+            -3.81
+          ],
+          "velocityMax": [
+            5.08,
+            3.81,
+            3.81
+          ],
+          "angleDeltaMin": [
+            -1000,
+            -1000,
+            -400
+          ],
+          "angleDeltaMax": [
+            1000,
+            1000,
+            400
+          ],
           "gravityMin": -15.24,
           "gravityMax": -15.24,
           "bounceMin": 0.3,
@@ -56,13 +92,31 @@
       {
         "name": "chunks",
         "type": "emitter",
-        "flags": ["useModel"],
+        "flags": [
+          "useModel"
+        ],
         "emitter": {
           "models": [],
-          "velocityMin": [1.27, -1.905, -1.905],
-          "velocityMax": [2.54, 1.905, 1.905],
-          "angleDeltaMin": [-1000, -1000, -400],
-          "angleDeltaMax": [1000, 1000, 400],
+          "velocityMin": [
+            1.27,
+            -1.905,
+            -1.905
+          ],
+          "velocityMax": [
+            2.54,
+            1.905,
+            1.905
+          ],
+          "angleDeltaMin": [
+            -1000,
+            -1000,
+            -400
+          ],
+          "angleDeltaMax": [
+            1000,
+            1000,
+            400
+          ],
           "gravityMin": -15.24,
           "gravityMax": -15.24,
           "bounceMin": 0.3,

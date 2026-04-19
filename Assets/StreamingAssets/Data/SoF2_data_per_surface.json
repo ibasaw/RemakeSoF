@@ -455,10 +455,7 @@
         "debris": "effects/chunks/debris_rock"
       },
       "Knife": {
-        "effect": [
-          "effects/impacts/knife_dirt",
-          "effects/impact_default"
-        ],
+        "effect": "effects/impact_default",
         "debris": "effects/chunks/debris_rock"
       },
       "blunt": {
@@ -467,7 +464,7 @@
     }
   },
   "longgrass": {
-    "density": 0.1,
+    "density": 0.2,
     "loudness": 0.8,
     "visibility": 0.5,
     "projectileBounce": 0.5,
@@ -522,10 +519,7 @@
         "debris": "effects/chunks/debris_rock"
       },
       "Knife": {
-        "effect": [
-          "effects/impacts/knife_dirt",
-          "effects/impact_default"
-        ],
+        "effect": "effects/impact_default",
         "debris": "effects/chunks/debris_rock"
       },
       "blunt": {

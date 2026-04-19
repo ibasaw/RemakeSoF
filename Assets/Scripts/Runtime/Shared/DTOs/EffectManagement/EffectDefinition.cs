@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Tolik.RemakeSoF.Runtime.EffectManagement
 {
@@ -53,10 +54,20 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         public string Name;
 
         /// <summary>
-        /// Textur-Pfad (SoF2-Referenz, z.B. "gfx/misc/jk_tracer", "gfx/misc/gb_smoke").
+        /// Textur-Pfade (SoF2-Referenzen). Manche Segmente haben mehrere Shaders
+        /// (z.B. ["gfx/misc/bp_smoke01", "gfx/misc/bp_smoke02"]), andere nur einen.
+        /// Der JsonConverter akzeptiert sowohl einen einzelnen String als auch ein Array.
         /// </summary>
         [JsonProperty("texture")]
-        public string Texture;
+        [JsonConverter(typeof(StringOrStringArrayConverter))]
+        public List<string> Textures;
+
+        /// <summary>
+        /// Erster Textur-Pfad (Convenience fuer Single-Texture-Segmente).
+        /// Bei Multi-Texture-Segmenten wird der erste Eintrag zurueckgegeben.
+        /// </summary>
+        [JsonIgnore]
+        public string Texture => Textures != null && Textures.Count > 0 ? Textures[0] : null;
 
         /// <summary>
         /// SoF2-Flags: "useAlpha", "usePhysics", "expensivePhysics", "impactKills".
@@ -131,6 +142,34 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// </summary>
         [JsonProperty("sound")]
         public EffectSoundDefinition Sound;
+
+        /// <summary>
+        /// Impact-Effekt-Referenz (SoF2 impactfx). Sub-Effekt der bei Kollision spawnt.
+        /// Nur fuer Particle- und Emitter-Segmente relevant.
+        /// Bei Emitter-Segmenten wird impactFx stattdessen in EffectEmitterDefinition gespeichert.
+        /// </summary>
+        [JsonProperty("impactFx")]
+        public string ImpactFx;
+
+        /// <summary>
+        /// PlayFx-Referenz (SoF2 fxRunner). Referenz auf einen Sub-Effekt der abgespielt wird.
+        /// Nur fuer type "fxRunner" relevant.
+        /// </summary>
+        [JsonProperty("playFx")]
+        public string PlayFx;
+
+        /// <summary>
+        /// FxRunner-Timing-Parameter (Delay, Count). Nur fuer type "fxRunner" relevant.
+        /// </summary>
+        [JsonProperty("runner")]
+        public EffectFxRunnerDefinition Runner;
+
+        /// <summary>
+        /// Laengen-Konfiguration fuer Tail-Segmente (Start/End-Laenge mit Curve).
+        /// Nur fuer type "tail" relevant.
+        /// </summary>
+        [JsonProperty("length")]
+        public EffectLengthDefinition Length;
     }
 
     // ===== Tail (TrailRenderer) =====
@@ -713,5 +752,134 @@ namespace Tolik.RemakeSoF.Runtime.EffectManagement
         /// </summary>
         [JsonProperty("delay")]
         public float Delay;
+    }
+
+    // ===== Length (Tail-Laenge) =====
+
+    /// <summary>
+    /// Laengen-Konfiguration fuer Tail-Segmente (SoF2 length-Block).
+    /// Definiert Start- und End-Laenge des Trails mit optionaler Kurve.
+    /// Alle Werte in Unity-Metern (SoF2 QU × 0.0254).
+    /// </summary>
+    [Serializable]
+    public class EffectLengthDefinition
+    {
+        /// <summary>
+        /// Start-Laenge Minimum in Unity-Metern.
+        /// </summary>
+        [JsonProperty("startMin")]
+        public float StartMin;
+
+        /// <summary>
+        /// Start-Laenge Maximum in Unity-Metern.
+        /// </summary>
+        [JsonProperty("startMax")]
+        public float StartMax;
+
+        /// <summary>
+        /// End-Laenge Minimum in Unity-Metern.
+        /// </summary>
+        [JsonProperty("endMin")]
+        public float EndMin;
+
+        /// <summary>
+        /// End-Laenge Maximum in Unity-Metern.
+        /// </summary>
+        [JsonProperty("endMax")]
+        public float EndMax;
+
+        /// <summary>
+        /// Verlaufskurve: "linear", "nonlinear", "clamp".
+        /// </summary>
+        [JsonProperty("curve")]
+        public string Curve;
+    }
+
+    // ===== FxRunner =====
+
+    /// <summary>
+    /// Timing-Parameter fuer FxRunner-Segmente (SoF2 FxRunner-Primitive).
+    /// FxRunner spawnen andere Effekte zeitversetzt (z.B. arterielle Blutspritzer-Sequenzen).
+    /// </summary>
+    [Serializable]
+    public class EffectFxRunnerDefinition
+    {
+        /// <summary>
+        /// Minimale Spawn-Verzoegerung in Sekunden (SoF2 delay min / 1000).
+        /// </summary>
+        [JsonProperty("delayMin")]
+        public float DelayMin;
+
+        /// <summary>
+        /// Maximale Spawn-Verzoegerung in Sekunden (SoF2 delay max / 1000).
+        /// </summary>
+        [JsonProperty("delayMax")]
+        public float DelayMax;
+
+        /// <summary>
+        /// Minimale Anzahl an Spawns (SoF2 count min). Standard 1.
+        /// </summary>
+        [JsonProperty("countMin")]
+        public float CountMin = 1f;
+
+        /// <summary>
+        /// Maximale Anzahl an Spawns (SoF2 count max). Standard 1.
+        /// </summary>
+        [JsonProperty("countMax")]
+        public float CountMax = 1f;
+    }
+
+    // ===== JsonConverter =====
+
+    /// <summary>
+    /// Konvertiert JSON-Werte die entweder ein einzelner String oder ein String-Array sein koennen
+    /// zu einer List&lt;string&gt;.
+    /// SoF2-Effekte haben manchmal eine einzelne Textur ("gfx/misc/jk_tracer")
+    /// und manchmal ein Array von Texturen (["gfx/misc/bp_smoke01", "gfx/misc/bp_smoke02"]).
+    /// </summary>
+    public class StringOrStringArrayConverter : JsonConverter<List<string>>
+    {
+        /// <summary>
+        /// Liest einen JSON-Wert der entweder ein String oder ein String-Array ist
+        /// und gibt immer eine List&lt;string&gt; zurueck.
+        /// </summary>
+        public override List<string> ReadJson(JsonReader reader, Type objectType, List<string> existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.Null)
+            {
+                return null;
+            }
+
+            if (reader.TokenType == JsonToken.String)
+            {
+                return new List<string> { (string)reader.Value };
+            }
+
+            if (reader.TokenType == JsonToken.StartArray)
+            {
+                return serializer.Deserialize<List<string>>(reader);
+            }
+
+            throw new JsonSerializationException($"Unexpected token {reader.TokenType} when parsing string or string array");
+        }
+
+        /// <summary>
+        /// Schreibt die Liste als einzelnen String (bei einem Element) oder als Array.
+        /// </summary>
+        public override void WriteJson(JsonWriter writer, List<string> value, JsonSerializer serializer)
+        {
+            if (value == null || value.Count == 0)
+            {
+                writer.WriteNull();
+            }
+            else if (value.Count == 1)
+            {
+                writer.WriteValue(value[0]);
+            }
+            else
+            {
+                serializer.Serialize(writer, value);
+            }
+        }
     }
 }

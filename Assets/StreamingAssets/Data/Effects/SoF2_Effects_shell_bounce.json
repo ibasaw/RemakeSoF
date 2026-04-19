@@ -6,15 +6,35 @@
       {
         "name": "brass",
         "type": "emitter",
-        "flags": ["useModel", "usePhysics", "useBBox"],
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "useBBox"
+        ],
         "emitter": {
           "models": [
             "models/weapons/shells/shell_brass"
           ],
-          "velocityMin": [1.27, -0.508, -0.508],
-          "velocityMax": [3.175, 0.508, 0.508],
-          "angleDeltaMin": [200, 0, 0],
-          "angleDeltaMax": [1000, 200, 600],
+          "velocityMin": [
+            1.27,
+            -0.508,
+            -0.508
+          ],
+          "velocityMax": [
+            3.175,
+            0.508,
+            0.508
+          ],
+          "angleDeltaMin": [
+            200,
+            0,
+            0
+          ],
+          "angleDeltaMax": [
+            1000,
+            200,
+            600
+          ],
           "gravityMin": -5.08,
           "gravityMax": -7.62,
           "bounceMin": 0.1,
@@ -33,15 +53,34 @@
       {
         "name": "brass",
         "type": "emitter",
-        "flags": ["useModel", "usePhysics"],
+        "flags": [
+          "useModel",
+          "usePhysics"
+        ],
         "emitter": {
           "models": [
             "models/weapons/shells/shell_brass_large"
           ],
-          "velocityMin": [1.27, -0.508, -0.508],
-          "velocityMax": [3.175, 0.508, 0.508],
-          "angleDeltaMin": [200, 200, 200],
-          "angleDeltaMax": [1000, 400, 0],
+          "velocityMin": [
+            1.27,
+            -0.508,
+            -0.508
+          ],
+          "velocityMax": [
+            3.175,
+            0.508,
+            0.508
+          ],
+          "angleDeltaMin": [
+            200,
+            200,
+            200
+          ],
+          "angleDeltaMax": [
+            1000,
+            400,
+            0
+          ],
           "gravityMin": -5.08,
           "gravityMax": -7.62,
           "bounceMin": 0.1,
@@ -60,15 +99,34 @@
       {
         "name": "brass",
         "type": "emitter",
-        "flags": ["useModel", "usePhysics"],
+        "flags": [
+          "useModel",
+          "usePhysics"
+        ],
         "emitter": {
           "models": [
             "models/weapons/shells/shell_brass"
           ],
-          "velocityMin": [1.27, -0.508, -0.508],
-          "velocityMax": [3.175, 0.508, 0.508],
-          "angleDeltaMin": [200, 200, 0],
-          "angleDeltaMax": [1000, 600, 600],
+          "velocityMin": [
+            1.27,
+            -0.508,
+            -0.508
+          ],
+          "velocityMax": [
+            3.175,
+            0.508,
+            0.508
+          ],
+          "angleDeltaMin": [
+            200,
+            200,
+            0
+          ],
+          "angleDeltaMax": [
+            1000,
+            600,
+            600
+          ],
           "gravityMin": -5.08,
           "gravityMax": -7.62,
           "bounceMin": 0.1,
@@ -87,15 +145,35 @@
       {
         "name": "brass",
         "type": "emitter",
-        "flags": ["useModel", "usePhysics", "expensivePhysics"],
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "expensivePhysics"
+        ],
         "emitter": {
           "models": [
             "models/weapons/shells/shell_shotgun"
           ],
-          "velocityMin": [1.27, -0.508, -0.508],
-          "velocityMax": [3.175, 0.508, 0.508],
-          "angleDeltaMin": [200, 0, 0],
-          "angleDeltaMax": [1000, 200, 600],
+          "velocityMin": [
+            1.27,
+            -0.508,
+            -0.508
+          ],
+          "velocityMax": [
+            3.175,
+            0.508,
+            0.508
+          ],
+          "angleDeltaMin": [
+            200,
+            0,
+            0
+          ],
+          "angleDeltaMax": [
+            1000,
+            200,
+            600
+          ],
           "gravityMin": -5.08,
           "gravityMax": -7.62,
           "bounceMin": 0.2,

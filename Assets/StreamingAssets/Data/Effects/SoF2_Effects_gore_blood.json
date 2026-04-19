@@ -14,7 +14,10 @@
         "spawnFlags": [
           "rgbComponentInterpolation"
         ],
-        "texture": "gfx/misc/bp_smoke01",
+        "texture": [
+          "gfx/misc/bp_smoke01",
+          "gfx/misc/bp_smoke02"
+        ],
         "particle": {
           "countMin": 8,
           "countMax": 8,
@@ -79,6 +82,16 @@
         "particle": {
           "lifetimeMin": 0.9,
           "lifetimeMax": 0.9,
+          "velocityMin": [
+            4.445,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            4.445,
+            0.0,
+            0.0
+          ],
           "gravityModifier": -5.08
         },
         "color": {
@@ -114,7 +127,8 @@
           "startMax": 0.0508,
           "endMin": 0.0127,
           "endMax": 0.0127
-        }
+        },
+        "impactFx": "blood_squirt_splat_mp"
       },
       {
         "type": "tail",
@@ -169,7 +183,7 @@
         },
         "size": {
           "startMin": 0.0127,
-          "startMax": 0.0152,
+          "startMax": 0.01524,
           "endMin": 0.0381,
           "endMax": 0.0254
         },
@@ -198,7 +212,10 @@
         "spawnFlags": [
           "rgbComponentInterpolation"
         ],
-        "texture": "gfx/misc/bp_smoke01",
+        "texture": [
+          "gfx/misc/bp_smoke01",
+          "gfx/misc/bp_smoke02"
+        ],
         "particle": {
           "countMin": 8,
           "countMax": 8,
@@ -263,6 +280,16 @@
         "particle": {
           "lifetimeMin": 0.8,
           "lifetimeMax": 0.8,
+          "velocityMin": [
+            3.302,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            3.302,
+            0.0,
+            0.0
+          ],
           "gravityModifier": -5.08
         },
         "color": {
@@ -298,7 +325,8 @@
           "startMax": 0.0508,
           "endMin": 0.0127,
           "endMax": 0.0127
-        }
+        },
+        "impactFx": "blood_squirt_splat_mp"
       },
       {
         "type": "tail",
@@ -353,7 +381,7 @@
         },
         "size": {
           "startMin": 0.0127,
-          "startMax": 0.0152,
+          "startMax": 0.01524,
           "endMin": 0.0381,
           "endMax": 0.0254
         },
@@ -382,7 +410,10 @@
         "spawnFlags": [
           "rgbComponentInterpolation"
         ],
-        "texture": "gfx/misc/bp_smoke01",
+        "texture": [
+          "gfx/misc/bp_smoke01",
+          "gfx/misc/bp_smoke02"
+        ],
         "particle": {
           "countMin": 8,
           "countMax": 8,
@@ -447,6 +478,16 @@
         "particle": {
           "lifetimeMin": 0.8,
           "lifetimeMax": 0.8,
+          "velocityMin": [
+            2.032,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            2.032,
+            0.0,
+            0.0
+          ],
           "gravityModifier": -5.08
         },
         "color": {
@@ -482,7 +523,8 @@
           "startMax": 0.0508,
           "endMin": 0.0127,
           "endMax": 0.0127
-        }
+        },
+        "impactFx": "blood_squirt_splat_mp"
       },
       {
         "type": "tail",
@@ -536,8 +578,8 @@
           "parm": 30.0
         },
         "size": {
-          "startMin": 0.0102,
-          "startMax": 0.0152,
+          "startMin": 0.01016,
+          "startMax": 0.01524,
           "endMin": 0.0381,
           "endMax": 0.0254
         },
@@ -567,7 +609,10 @@
           "evenDistribution",
           "rgbComponentInterpolation"
         ],
-        "texture": "gfx/misc/bp_smoke01",
+        "texture": [
+          "gfx/misc/bp_smoke01",
+          "gfx/misc/bp_smoke02"
+        ],
         "particle": {
           "countMin": 10,
           "countMax": 10,
@@ -709,7 +754,8 @@
           "startMax": 0.0508,
           "endMin": 0.0127,
           "endMax": 0.0127
-        }
+        },
+        "impactFx": "blood_squirt_splat"
       },
       {
         "type": "tail",
@@ -761,8 +807,6 @@
           "parm": 20.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
           "endMin": 0.0508,
           "endMax": 0.0762,
           "curve": "linear"
@@ -783,13 +827,13 @@
     "segments": [
       {
         "type": "decal",
-        "texture": "gfx/damage/dvbloodmark",
-        "decal": {
-          "sizeMin": 0.152,
-          "sizeMax": 0.254,
-          "rotationMin": 0.0,
-          "rotationMax": 360.0,
-          "lifetime": 30.0
+        "texture": [
+          "gfx/damage/dvbloodmark",
+          "gfx/damage/dvbloodmark4"
+        ],
+        "size": {
+          "startMin": 0.03175,
+          "startMax": 0.04445
         }
       }
     ]
@@ -930,10 +974,10 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 70.0,
           "parmMax": 80.0
         },
@@ -967,12 +1011,9 @@
       {
         "type": "decal",
         "texture": "gfx/damage/bloodpool1",
-        "decal": {
-          "sizeMin": 0.508,
-          "sizeMax": 0.762,
-          "rotationMin": -180.0,
-          "rotationMax": 180.0,
-          "lifetime": 30.0
+        "size": {
+          "startMin": 0.508,
+          "startMax": 0.762
         }
       }
     ]
@@ -983,26 +1024,58 @@
     "segments": [
       {
         "type": "decal",
-        "texture": "models/characters/gore/gil_bloody_splotch4",
-        "decal": {
-          "sizeMin": 0.152,
-          "sizeMax": 0.203,
-          "rotationMin": 0.0,
-          "rotationMax": 360.0,
-          "lifetime": 30.0
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "texture": [
+          "models/characters/gore/bloody_splotch4",
+          "models/characters/gore/gt_uhh_eww3",
+          "models/characters/gore/world_splat1",
+          "models/characters/gore/world_splat4",
+          "models/characters/gore/world_splat5"
+        ],
+        "size": {
+          "startMin": 0.1524,
+          "startMax": 0.2032
+        },
+        "color": {
+          "startMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.502,
+            0.0,
+            0.0
+          ]
         }
       },
       {
         "type": "decal",
-        "texture": "models/characters/gore/gil_bloody_drops2",
-        "decal": {
-          "sizeMin": 0.254,
-          "sizeMax": 0.406,
-          "rotationMin": 0.0,
-          "rotationMax": 360.0,
-          "alphaMin": 0.4,
-          "alphaMax": 0.6,
-          "lifetime": 30.0
+        "texture": [
+          "models/characters/gore/world_splat2",
+          "models/characters/gore/world_splat3"
+        ],
+        "size": {
+          "startMin": 0.254,
+          "startMax": 0.4064
+        },
+        "color": {
+          "startMin": [
+            0.6667,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.502,
+            0.0,
+            0.0
+          ]
+        },
+        "alpha": {
+          "startMin": 0.4,
+          "startMax": 0.6
         }
       }
     ]
@@ -1013,13 +1086,17 @@
     "segments": [
       {
         "type": "decal",
-        "texture": "gfx/damage/bloodmark6",
-        "decal": {
-          "sizeMin": 0.127,
-          "sizeMax": 0.178,
-          "rotationMin": -180.0,
-          "rotationMax": 180.0,
-          "lifetime": 30.0
+        "texture": [
+          "gfx/damage/bloodmark6",
+          "gfx/damage/bloodmark7",
+          "gfx/damage/bloodmark8",
+          "gfx/damage/bloodmark9",
+          "gfx/damage/bloodmark10",
+          "gfx/damage/bloodmark11"
+        ],
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.1778
         }
       }
     ]
@@ -1030,13 +1107,17 @@
     "segments": [
       {
         "type": "decal",
-        "texture": "gfx/damage/bloodmark6",
-        "decal": {
-          "sizeMin": 0.127,
-          "sizeMax": 0.178,
-          "rotationMin": -180.0,
-          "rotationMax": 180.0,
-          "lifetime": 30.0
+        "texture": [
+          "gfx/damage/bloodmark6",
+          "gfx/damage/bloodmark7",
+          "gfx/damage/bloodmark8",
+          "gfx/damage/bloodmark9",
+          "gfx/damage/bloodmark10",
+          "gfx/damage/bloodmark11"
+        ],
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.254
         }
       }
     ]
@@ -1071,6 +1152,7 @@
             0.508
           ],
           "gravityModifier": -0.254,
+          "gravityModifierMax": -0.508,
           "burst": true
         },
         "color": {
@@ -1086,18 +1168,18 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 75.0,
           "parmMax": 85.0
         },
         "size": {
-          "startMin": 0.0305,
+          "startMin": 0.03048,
           "startMax": 0.0508,
           "endMin": 0.0381,
-          "endMax": 0.0457
+          "endMax": 0.04572
         }
       },
       {
@@ -1146,16 +1228,14 @@
           "endMax": 0.0
         },
         "size": {
-          "startMin": 0.0,
-          "startMax": 0.0,
-          "endMin": 0.254,
-          "endMax": 0.3175,
+          "endMin": 1.016,
+          "endMax": 1.27,
           "curve": "linear"
         }
       },
       {
         "type": "particle",
-        "name": "Copy",
+        "name": "Copy of Unnamed Particle 1",
         "flags": [
           "useAlpha"
         ],
@@ -1194,14 +1274,12 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
-          "endMax": 0.0
+          "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0
         },
         "size": {
-          "startMin": 0.0,
-          "startMax": 0.0,
           "endMin": 0.127,
           "endMax": 0.127,
           "curve": "linear"
@@ -1224,7 +1302,10 @@
         "spawnFlags": [
           "rgbComponentInterpolation"
         ],
-        "texture": "gfx/misc/bp_smoke01",
+        "texture": [
+          "gfx/misc/bp_smoke01",
+          "gfx/misc/bp_smoke02"
+        ],
         "particle": {
           "countMin": 6,
           "countMax": 8,
@@ -1253,6 +1334,17 @@
             0.0127
           ],
           "gravityModifier": -2.286,
+          "gravityModifierMax": -2.54,
+          "accelerationMin": [
+            -1.27,
+            0.0,
+            0.0
+          ],
+          "accelerationMax": [
+            -1.524,
+            0.0,
+            0.0
+          ],
           "burst": false
         },
         "color": {
@@ -1335,7 +1427,8 @@
             0.1524,
             0.1524
           ],
-          "gravityModifier": -1.778
+          "gravityModifier": -1.778,
+          "gravityModifierMax": -2.032
         },
         "color": {
           "startMin": [
@@ -1371,7 +1464,8 @@
           "endMin": 0.0,
           "endMax": 0.0127,
           "curve": "linear"
-        }
+        },
+        "impactFx": "blood_squirt_splat_mp"
       },
       {
         "type": "tail",
@@ -1430,8 +1524,6 @@
           "parm": 20.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
           "endMin": 0.0762,
           "endMax": 0.127,
           "curve": "linear"
@@ -1503,7 +1595,7 @@
           "parm": 30.0
         },
         "size": {
-          "startMin": 0.0152,
+          "startMin": 0.01524,
           "startMax": 0.0254,
           "endMin": 0.0,
           "endMax": 0.0762,
@@ -1535,13 +1627,29 @@
       {
         "type": "decal",
         "name": "splat",
-        "texture": "models/characters/gore/gil_bloody_splotch4",
-        "decal": {
-          "sizeMin": 0.2,
-          "sizeMax": 0.4,
-          "rotationMin": 0.0,
-          "rotationMax": 360.0,
-          "lifetime": 30.0
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "texture": [
+          "models/characters/gore/bloody_splotch4",
+          "models/characters/gore/world_splat5",
+          "models/characters/gore/world_splat8"
+        ],
+        "size": {
+          "startMin": 0.127,
+          "startMax": 0.381
+        },
+        "color": {
+          "startMin": [
+            0.502,
+            0.0,
+            0.0
+          ],
+          "startMax": [
+            0.502,
+            0.0,
+            0.0
+          ]
         }
       },
       {
@@ -1562,6 +1670,16 @@
           ],
           "velocityMax": [
             0.1524,
+            0.0,
+            0.0
+          ],
+          "originMin": [
+            0.0508,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0508,
             0.0,
             0.0
           ]
@@ -1595,8 +1713,6 @@
           "endMax": 0.0
         },
         "size": {
-          "startMin": 0.0,
-          "startMax": 0.0,
           "endMin": 0.254,
           "endMax": 0.254,
           "curve": "linear"
@@ -1660,14 +1776,12 @@
           "startMax": 0.1016,
           "endMin": 0.3048,
           "endMax": 0.508,
-          "parm": 40.0,
-          "parmMax": 50.0,
-          "curve": "clamp"
+          "curve": "linear"
         }
       },
       {
         "type": "tail",
-        "name": "Copy",
+        "name": "Copy of Unnamed Tail 7",
         "flags": [
           "useAlpha"
         ],
@@ -1725,9 +1839,7 @@
           "startMax": 0.1778,
           "endMin": 0.508,
           "endMax": 0.9144,
-          "parm": 40.0,
-          "parmMax": 50.0,
-          "curve": "clamp"
+          "curve": "linear"
         }
       }
     ]
@@ -1799,7 +1911,10 @@
         "spawnFlags": [
           "rgbComponentInterpolation"
         ],
-        "texture": "gfx/misc/bp_smoke01",
+        "texture": [
+          "gfx/misc/bp_smoke01",
+          "gfx/misc/bp_smoke02"
+        ],
         "particle": {
           "countMin": 8,
           "countMax": 16,
@@ -1818,6 +1933,7 @@
             0.0508
           ],
           "gravityModifier": -19.05,
+          "gravityModifierMax": -22.86,
           "burst": false
         },
         "color": {
@@ -1854,7 +1970,7 @@
           "startMin": 0.0127,
           "startMax": 0.0127,
           "endMin": 0.0254,
-          "endMax": 0.0305,
+          "endMax": 0.03048,
           "curve": "linear"
         }
       },
@@ -1873,6 +1989,16 @@
           "countMax": 4,
           "lifetimeMin": 5.0,
           "lifetimeMax": 5.0,
+          "velocityMin": [
+            2.413,
+            0.0,
+            0.0
+          ],
+          "velocityMax": [
+            2.413,
+            0.0,
+            0.0
+          ],
           "gravityModifier": -20.32,
           "burst": true
         },
@@ -1909,7 +2035,8 @@
           "startMax": 0.0508,
           "endMin": 0.0127,
           "endMax": 0.0127
-        }
+        },
+        "impactFx": "blood_squirt_splat"
       },
       {
         "type": "tail",
@@ -1963,8 +2090,8 @@
           "parm": 30.0
         },
         "size": {
-          "startMin": 0.0102,
-          "startMax": 0.0152,
+          "startMin": 0.01016,
+          "startMax": 0.01524,
           "endMin": 0.0254,
           "endMax": 0.0381
         },
@@ -1975,6 +2102,10 @@
           "endMax": 0.0508,
           "curve": "linear"
         }
+      },
+      {
+        "type": "fxRunner",
+        "playFx": "impact_flesh2"
       }
     ]
   },
@@ -1988,7 +2119,10 @@
         "flags": [
           "useAlpha"
         ],
-        "texture": "gfx/misc/bp_gib_organs01",
+        "texture": [
+          "gfx/misc/bp_gib_organs01",
+          "gfx/misc/bp_gib_organs02"
+        ],
         "particle": {
           "lifetimeMin": 0.1,
           "lifetimeMax": 0.1
@@ -2043,6 +2177,8 @@
             0.0508
           ],
           "gravityModifier": -0.762,
+          "gravityModifierMax": -1.27,
+          "cullRange": 500.0,
           "burst": false
         },
         "color": {
@@ -2065,6 +2201,9 @@
             0.502,
             0.0,
             0.0
+          ],
+          "flags": [
+            "linear"
           ]
         },
         "alpha": {
@@ -2144,15 +2283,13 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 60.0
         },
         "size": {
-          "startMin": 0.0,
-          "startMax": 0.0,
           "endMin": 0.2286,
           "endMax": 0.3048,
           "curve": "linear"
@@ -2197,6 +2334,8 @@
             0.1016
           ],
           "gravityModifier": -15.24,
+          "gravityModifierMax": -17.78,
+          "cullRange": 600.0,
           "burst": true
         },
         "color": {
@@ -2228,10 +2367,80 @@
           "endMax": 0.8
         },
         "size": {
-          "startMin": 0.0076,
-          "startMax": 0.0102,
+          "startMin": 0.00762,
+          "startMax": 0.01016,
           "endMin": 0.0254,
           "endMax": 0.0381
+        },
+        "impactFx": "blood_splat"
+      },
+      {
+        "type": "emitter",
+        "name": "chunks",
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 7.0,
+          "lifetimeMax": 8.0,
+          "bounceMin": 0.3,
+          "bounceMax": 0.4,
+          "angleMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "angleDeltaMin": [
+            -50.0,
+            -50.0,
+            -20.0
+          ],
+          "angleDeltaMax": [
+            50.0,
+            50.0,
+            20.0
+          ],
+          "velocityMin": [
+            3.81,
+            -1.778,
+            -1.778
+          ],
+          "velocityMax": [
+            5.08,
+            1.778,
+            1.778
+          ],
+          "originMin": [
+            0.0508,
+            -0.0762,
+            -0.0762
+          ],
+          "originMax": [
+            0.0508,
+            0.0762,
+            0.0762
+          ],
+          "gravityModifier": -7.62,
+          "gravityModifierMax": -11.43,
+          "models": [
+            "models/characters/gore/chunk_smll/chunk_smll.md3"
+          ],
+          "impactFx": "blood_splat"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.1016,
+          "endMin": 0.1016,
+          "endMax": 0.1778
         }
       },
       {
@@ -2282,6 +2491,67 @@
         "size": {
           "startMin": 0.0127,
           "startMax": 0.0127
+        },
+        "impactFx": "blood_pool_big"
+      },
+      {
+        "type": "emitter",
+        "name": "chunkmedium",
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 4,
+          "countMax": 5,
+          "lifetimeMin": 20.0,
+          "lifetimeMax": 30.0,
+          "bounceMin": 0.2,
+          "bounceMax": 0.3,
+          "angleMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "angleDeltaMin": [
+            -10.0,
+            -20.0,
+            -20.0
+          ],
+          "angleDeltaMax": [
+            10.0,
+            20.0,
+            20.0
+          ],
+          "velocityMin": [
+            4.445,
+            -1.524,
+            -1.524
+          ],
+          "velocityMax": [
+            5.715,
+            1.524,
+            1.524
+          ],
+          "gravityModifier": -7.62,
+          "gravityModifierMax": -11.43,
+          "models": [
+            "models/characters/gore/chunk_med/chunk_med.md3"
+          ],
+          "impactFx": "blood_splat_big"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0762,
+          "endMin": 0.0508,
+          "endMax": 0.1016
         }
       },
       {
@@ -2321,6 +2591,7 @@
             0.1016
           ],
           "gravityModifier": -0.1016,
+          "gravityModifierMax": -0.2032,
           "burst": true
         },
         "color": {
@@ -2343,6 +2614,9 @@
             0.502,
             0.0,
             0.0
+          ],
+          "flags": [
+            "linear"
           ]
         },
         "alpha": {
@@ -2408,6 +2682,8 @@
             0.254
           ],
           "gravityModifier": -0.508,
+          "gravityModifierMax": -0.762,
+          "cullRange": 450.0,
           "burst": false
         },
         "color": {
@@ -2430,21 +2706,24 @@
             0.502,
             0.0,
             0.0
+          ],
+          "flags": [
+            "linear"
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 50.0,
           "parmMax": 60.0
         },
         "size": {
-          "startMin": 0.0635,
-          "startMax": 0.0953,
-          "endMin": 0.4445,
-          "endMax": 0.508,
+          "startMin": 0.254,
+          "startMax": 0.381,
+          "endMin": 1.778,
+          "endMax": 2.032,
           "curve": "linear"
         }
       },
@@ -2502,17 +2781,17 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 40.0
         },
         "size": {
-          "startMin": 0.127,
-          "startMax": 0.127,
-          "endMin": 0.508,
-          "endMax": 0.508,
+          "startMin": 0.508,
+          "startMax": 0.508,
+          "endMin": 2.032,
+          "endMax": 2.032,
           "curve": "linear"
         }
       },
@@ -2549,6 +2828,8 @@
             10.16
           ],
           "gravityModifier": -15.24,
+          "gravityModifierMax": -17.78,
+          "cullRange": 750.0,
           "burst": true
         },
         "color": {
@@ -2586,6 +2867,65 @@
           "startMax": 0.1016,
           "endMin": 0.0254,
           "endMax": 0.0381
+        }
+      },
+      {
+        "type": "emitter",
+        "name": "chunkslarge",
+        "flags": [
+          "expensivePhysics",
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 2,
+          "countMax": 2,
+          "lifetimeMin": 30.0,
+          "lifetimeMax": 30.0,
+          "angleMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "angleDeltaMin": [
+            -50.0,
+            -50.0,
+            -20.0
+          ],
+          "angleDeltaMax": [
+            50.0,
+            50.0,
+            20.0
+          ],
+          "velocityMin": [
+            5.08,
+            -7.62,
+            -7.62
+          ],
+          "velocityMax": [
+            7.62,
+            7.62,
+            7.62
+          ],
+          "gravityModifier": -17.78,
+          "gravityModifierMax": -20.32,
+          "models": [
+            "models/characters/gore/chunk_lrg/chunk_lrg.md3"
+          ],
+          "impactFx": "gore_organ_splat_gib"
+        },
+        "size": {
+          "startMin": 0.1016,
+          "startMax": 0.1778,
+          "endMin": 0.1016,
+          "endMax": 0.1778
         }
       },
       {
@@ -2648,6 +2988,66 @@
         "size": {
           "startMin": 0.0762,
           "startMax": 0.127
+        },
+        "impactFx": "blood_pool_gib"
+      },
+      {
+        "type": "emitter",
+        "name": "chunkmedium",
+        "flags": [
+          "expensivePhysics",
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 2,
+          "countMax": 3,
+          "lifetimeMin": 30.0,
+          "lifetimeMax": 30.0,
+          "angleMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "angleDeltaMin": [
+            -10.0,
+            -20.0,
+            0.0
+          ],
+          "angleDeltaMax": [
+            10.0,
+            20.0,
+            0.0
+          ],
+          "velocityMin": [
+            5.08,
+            -6.35,
+            -6.35
+          ],
+          "velocityMax": [
+            7.62,
+            6.35,
+            6.35
+          ],
+          "gravityModifier": -15.24,
+          "gravityModifierMax": -17.78,
+          "models": [
+            "models/characters/gore/chunk_med/chunk_med.md3"
+          ],
+          "impactFx": "gore_organ_splat_gib"
+        },
+        "size": {
+          "startMin": 0.1016,
+          "startMax": 0.2032,
+          "endMin": 0.0508,
+          "endMax": 0.1016
         }
       },
       {
@@ -2686,7 +3086,8 @@
             0.0,
             0.0
           ],
-          "gravityModifier": -0.254
+          "gravityModifier": -0.254,
+          "gravityModifierMax": -0.508
         },
         "color": {
           "startMin": [
@@ -2711,19 +3112,78 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 20.0,
           "parmMax": 40.0
         },
         "size": {
-          "startMin": 0.3175,
-          "startMax": 0.381,
-          "endMin": 1.27,
-          "endMax": 1.27,
+          "startMin": 1.27,
+          "startMax": 1.524,
+          "endMin": 5.08,
+          "endMax": 5.08,
           "curve": "linear"
+        }
+      },
+      {
+        "type": "emitter",
+        "name": "brain",
+        "flags": [
+          "expensivePhysics",
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 0,
+          "countMax": 1,
+          "lifetimeMin": 30.0,
+          "lifetimeMax": 30.0,
+          "angleMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "angleDeltaMin": [
+            -50.0,
+            -50.0,
+            -20.0
+          ],
+          "angleDeltaMax": [
+            50.0,
+            50.0,
+            20.0
+          ],
+          "velocityMin": [
+            10.16,
+            -1.524,
+            -1.524
+          ],
+          "velocityMax": [
+            11.43,
+            1.524,
+            1.524
+          ],
+          "gravityModifier": -15.24,
+          "gravityModifierMax": -17.78,
+          "models": [
+            "models/characters/gore/brain/brain.md3"
+          ],
+          "impactFx": "gore_organ_splat"
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0508,
+          "endMin": 0.1016,
+          "endMax": 0.1778
         }
       },
       {
@@ -2772,6 +3232,7 @@
             0.254,
             0.254
           ],
+          "cullRange": 700.0,
           "burst": true
         },
         "color": {
@@ -2804,11 +3265,240 @@
           "parm": 40.0
         },
         "size": {
-          "startMin": 0.0,
-          "startMax": 0.0,
-          "endMin": 0.635,
-          "endMax": 0.6985,
+          "endMin": 2.54,
+          "endMax": 2.794,
           "curve": "linear"
+        }
+      },
+      {
+        "type": "emitter",
+        "name": "hand",
+        "flags": [
+          "expensivePhysics",
+          "useModel",
+          "usePhysics",
+          "impactFx"
+        ],
+        "emitter": {
+          "lifetimeMin": 30.0,
+          "lifetimeMax": 30.0,
+          "angleMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "angleDeltaMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleDeltaMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "velocityMin": [
+            6.35,
+            -8.89,
+            -8.89
+          ],
+          "velocityMax": [
+            7.62,
+            8.89,
+            8.89
+          ],
+          "gravityModifier": -17.78,
+          "gravityModifierMax": -20.32,
+          "models": [
+            "models/characters/gore/hand.md3"
+          ],
+          "impactFx": "gore_organ_splat_gib"
+        },
+        "size": {
+          "startMin": 0.0127,
+          "startMax": 0.0127,
+          "endMin": 0.0508,
+          "endMax": 0.1016
+        }
+      },
+      {
+        "type": "emitter",
+        "name": "stomach",
+        "flags": [
+          "expensivePhysics",
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 0,
+          "countMax": 1,
+          "lifetimeMin": 30.0,
+          "lifetimeMax": 30.0,
+          "angleMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "angleDeltaMin": [
+            -10.0,
+            -20.0,
+            -20.0
+          ],
+          "angleDeltaMax": [
+            10.0,
+            20.0,
+            20.0
+          ],
+          "velocityMin": [
+            7.62,
+            -2.54,
+            -2.54
+          ],
+          "velocityMax": [
+            11.43,
+            2.54,
+            2.54
+          ],
+          "gravityModifier": -17.78,
+          "gravityModifierMax": -20.32,
+          "models": [
+            "models/characters/gore/stomach.md3"
+          ],
+          "impactFx": "gore_organ_splat"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 0.0508,
+          "endMax": 0.1016
+        }
+      },
+      {
+        "type": "emitter",
+        "name": "lung",
+        "flags": [
+          "expensivePhysics",
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 1,
+          "countMax": 2,
+          "lifetimeMin": 30.0,
+          "lifetimeMax": 30.0,
+          "angleMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "angleDeltaMin": [
+            -10.0,
+            -20.0,
+            -20.0
+          ],
+          "angleDeltaMax": [
+            10.0,
+            20.0,
+            20.0
+          ],
+          "velocityMin": [
+            8.89,
+            -10.16,
+            -10.16
+          ],
+          "velocityMax": [
+            12.7,
+            10.16,
+            10.16
+          ],
+          "gravityModifier": -17.78,
+          "gravityModifierMax": -20.32,
+          "models": [
+            "models/characters/gore/lung.md3"
+          ],
+          "impactFx": "gore_organ_splat"
+        },
+        "size": {
+          "startMin": 0.0254,
+          "startMax": 0.0508,
+          "endMin": 0.0508,
+          "endMax": 0.1016
+        }
+      },
+      {
+        "type": "emitter",
+        "name": "guts",
+        "flags": [
+          "expensivePhysics",
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
+        "emitter": {
+          "lifetimeMin": 30.0,
+          "lifetimeMax": 30.0,
+          "angleMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "angleDeltaMin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angleDeltaMax": [
+            360.0,
+            360.0,
+            360.0
+          ],
+          "velocityMin": [
+            10.16,
+            -5.08,
+            -5.08
+          ],
+          "velocityMax": [
+            10.16,
+            5.08,
+            5.08
+          ],
+          "gravityModifier": -17.78,
+          "gravityModifierMax": -20.32,
+          "models": [
+            "models/characters/gore/guts.md3"
+          ],
+          "impactFx": "gore_organ_splat"
+        },
+        "size": {
+          "startMin": 0.0381,
+          "startMax": 0.0508,
+          "endMin": 0.0508,
+          "endMax": 0.1016
         }
       }
     ]
@@ -2840,6 +3530,7 @@
             0.635
           ],
           "gravityModifier": -0.254,
+          "gravityModifierMax": -0.508,
           "burst": true
         },
         "color": {
@@ -2871,8 +3562,8 @@
           "endMax": 0.0
         },
         "size": {
-          "startMin": 0.0025,
-          "startMax": 0.0063
+          "startMin": 0.00254,
+          "startMax": 0.00635
         }
       },
       {
@@ -2892,6 +3583,7 @@
           "rotationSpeedMin": -5.0,
           "rotationSpeedMax": 5.0,
           "gravityModifier": -0.0254,
+          "gravityModifierMax": -0.127,
           "burst": true
         },
         "color": {
@@ -2914,6 +3606,9 @@
             0.502,
             0.0,
             0.0
+          ],
+          "flags": [
+            "linear"
           ]
         },
         "alpha": {
@@ -2944,8 +3639,63 @@
         }
       },
       {
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 3,
+          "countMax": 4,
+          "lifetimeMin": 10.0,
+          "lifetimeMax": 10.0,
+          "angleMin": [
+            -180.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            190.0,
+            10.0,
+            10.0
+          ],
+          "angleDeltaMin": [
+            -180.0,
+            0.0,
+            0.0
+          ],
+          "angleDeltaMax": [
+            180.0,
+            10.0,
+            10.0
+          ],
+          "velocityMin": [
+            -1.905,
+            -1.905,
+            -1.905
+          ],
+          "velocityMax": [
+            1.905,
+            1.905,
+            1.905
+          ],
+          "gravityModifier": -2.54,
+          "gravityModifierMax": -17.78,
+          "models": [
+            "models/characters/gore/chunk_med/chunk_med.md3",
+            "models/characters/gore/chunk_smll/chunk_smll.md3"
+          ],
+          "impactFx": "blood_splat_mp"
+        },
+        "size": {
+          "startMin": 0.03175,
+          "startMax": 0.0381
+        }
+      },
+      {
         "type": "particle",
-        "name": "Copy",
+        "name": "Copy of mist",
         "flags": [
           "useAlpha"
         ],
@@ -2981,6 +3731,9 @@
             0.502,
             0.0,
             0.0
+          ],
+          "flags": [
+            "linear"
           ]
         },
         "alpha": {
@@ -3033,6 +3786,7 @@
             0.127,
             0.127
           ],
+          "cullRange": 350.0,
           "burst": true
         },
         "color": {
@@ -3056,8 +3810,6 @@
           "parmMax": 70.0
         },
         "size": {
-          "startMin": 0.0,
-          "startMax": 0.0,
           "endMin": 0.2032,
           "endMax": 0.254,
           "curve": "linear"
@@ -3103,6 +3855,8 @@
             -0.127
           ],
           "gravityModifier": -0.508,
+          "gravityModifierMax": -0.762,
+          "cullRange": 500.0,
           "burst": true
         },
         "color": {
@@ -3167,6 +3921,8 @@
             1.143
           ],
           "gravityModifier": -3.175,
+          "gravityModifierMax": -5.08,
+          "cullRange": 800.0,
           "burst": true
         },
         "color": {
@@ -3184,12 +3940,10 @@
         "alpha": {
           "startMin": 1.0,
           "startMax": 1.0,
-          "endMin": 0.0,
-          "endMax": 0.0,
           "parm": 80.0
         },
         "size": {
-          "startMin": 0.0051,
+          "startMin": 0.00508,
           "startMax": 0.0254
         }
       },
@@ -3239,8 +3993,6 @@
           "parmMax": 45.0
         },
         "size": {
-          "startMin": 0.0,
-          "startMax": 0.0,
           "endMin": 0.2032,
           "endMax": 0.254,
           "curve": "linear"
@@ -3280,6 +4032,16 @@
             0.254,
             0.254
           ],
+          "originMin": [
+            0.0,
+            -0.254,
+            0.0
+          ],
+          "originMax": [
+            0.0,
+            -0.254,
+            0.0
+          ],
           "gravityModifier": -0.254,
           "burst": false
         },
@@ -3303,6 +4065,9 @@
             0.502,
             0.0,
             0.0
+          ],
+          "flags": [
+            "linear"
           ]
         },
         "alpha": {
@@ -3347,6 +4112,16 @@
             0.127,
             0.127
           ],
+          "originMin": [
+            0.0,
+            -0.254,
+            0.0
+          ],
+          "originMax": [
+            0.0,
+            -0.254,
+            0.0
+          ],
           "burst": true
         },
         "color": {
@@ -3372,14 +4147,12 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
-          "endMax": 0.0
+          "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0
         },
         "size": {
-          "startMin": 0.0,
-          "startMax": 0.0,
           "endMin": 0.1778,
           "endMax": 0.2032,
           "curve": "linear"
@@ -3413,6 +4186,16 @@
             0.254,
             0.254
           ],
+          "originMin": [
+            0.0,
+            -0.254,
+            0.0
+          ],
+          "originMax": [
+            0.0,
+            -0.254,
+            0.0
+          ],
           "gravityModifier": -0.254,
           "burst": false
         },
@@ -3436,6 +4219,9 @@
             0.502,
             0.0,
             0.0
+          ],
+          "flags": [
+            "linear"
           ]
         },
         "alpha": {
@@ -3463,6 +4249,50 @@
           ],
           "delay": 0.0
         }
+      },
+      {
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "impactKills",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 4,
+          "countMax": 5,
+          "lifetimeMin": 30.0,
+          "lifetimeMax": 30.0,
+          "velocityMin": [
+            2.54,
+            12.7,
+            -5.08
+          ],
+          "velocityMax": [
+            5.08,
+            12.7,
+            -2.54
+          ],
+          "originMin": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.127,
+            0.0,
+            0.0
+          ],
+          "models": [
+            "models/characters/gore/chunk_med/chunk_med.md3",
+            "models/characters/gore/chunk_smll/chunk_smll.md3"
+          ],
+          "impactFx": "blood_splat_no_sound"
+        },
+        "size": {
+          "startMin": 0.0508,
+          "startMax": 0.0762
+        }
       }
     ]
   },
@@ -3484,7 +4314,10 @@
           "axisFromSphere",
           "rgbComponentInterpolation"
         ],
-        "texture": "gfx/misc/bp_gib_chunk01",
+        "texture": [
+          "gfx/misc/bp_gib_chunk01",
+          "gfx/misc/bp_gib_chunk02"
+        ],
         "particle": {
           "countMin": 3,
           "countMax": 4,
@@ -3515,6 +4348,8 @@
             0.0
           ],
           "gravityModifier": -7.62,
+          "bounceMin": 0.2,
+          "bounceMax": 0.4,
           "burst": true
         },
         "color": {
@@ -3530,16 +4365,17 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 80.0
         },
         "size": {
           "startMin": 0.0381,
           "startMax": 0.0762
-        }
+        },
+        "impactFx": "blood_splat_sound"
       },
       {
         "type": "orientedParticle",
@@ -3547,12 +4383,25 @@
         "flags": [
           "useAlpha"
         ],
-        "texture": "models/characters/gore/gil_bloody_splotch4",
+        "texture": [
+          "models/characters/gore/world_wall1",
+          "models/characters/gore/world_wall2"
+        ],
         "particle": {
           "lifetimeMin": 5.0,
           "lifetimeMax": 5.0,
           "rotationMin": 0.0,
-          "rotationMax": 360.0
+          "rotationMax": 360.0,
+          "originMin": [
+            0.0127,
+            0.0,
+            0.0
+          ],
+          "originMax": [
+            0.0127,
+            0.0,
+            0.0
+          ]
         },
         "color": {
           "startMin": [
@@ -3567,10 +4416,10 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
           "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0,
           "parm": 80.0
         },
         "size": {
@@ -3617,6 +4466,7 @@
             0.0
           ],
           "gravityModifier": -3.81,
+          "gravityModifierMax": -5.08,
           "burst": false
         },
         "color": {
@@ -3639,6 +4489,9 @@
             0.3922,
             0.0,
             0.0
+          ],
+          "flags": [
+            "linear"
           ]
         },
         "alpha": {
@@ -3659,7 +4512,7 @@
       },
       {
         "type": "particle",
-        "name": "Copy",
+        "name": "Copy of bloodparticle_cloud",
         "flags": [
           "useAlpha"
         ],
@@ -3699,6 +4552,7 @@
             0.0
           ],
           "gravityModifier": -0.254,
+          "gravityModifierMax": -1.27,
           "burst": false
         },
         "color": {
@@ -3721,6 +4575,9 @@
             0.3922,
             0.0,
             0.0
+          ],
+          "flags": [
+            "linear"
           ]
         },
         "alpha": {
@@ -3817,13 +4674,28 @@
       {
         "type": "decal",
         "name": "splat",
-        "texture": "models/characters/gore/gt_uhh_eww6",
-        "decal": {
-          "sizeMin": 0.2,
-          "sizeMax": 0.35,
-          "rotationMin": 0.0,
-          "rotationMax": 360.0,
-          "lifetime": 30.0
+        "spawnFlags": [
+          "rgbComponentInterpolation"
+        ],
+        "texture": [
+          "models/characters/gore/world_gib1",
+          "models/characters/gore/world_gib2"
+        ],
+        "size": {
+          "startMin": 0.3048,
+          "startMax": 0.381
+        },
+        "color": {
+          "startMin": [
+            1.0,
+            0.9843,
+            0.9412
+          ],
+          "startMax": [
+            1.0,
+            0.9843,
+            0.9412
+          ]
         }
       }
     ]
@@ -3873,6 +4745,7 @@
             0.0508
           ],
           "gravityModifier": -0.254,
+          "gravityModifierMax": -2.54,
           "burst": false
         },
         "color": {
@@ -3904,8 +4777,6 @@
           "endMax": 0.0
         },
         "size": {
-          "startMin": 0.0254,
-          "startMax": 0.0254,
           "endMin": 0.0762,
           "endMax": 0.1016,
           "curve": "linear"
@@ -3916,7 +4787,21 @@
   {
     "id": "effects/gut_model",
     "displayName": "Gut Model",
-    "segments": []
+    "segments": [
+      {
+        "type": "emitter",
+        "flags": [
+          "useModel"
+        ],
+        "emitter": {
+          "lifetimeMin": 10.0,
+          "lifetimeMax": 10.0,
+          "models": [
+            "models/characters/gore/guts.md3"
+          ]
+        }
+      }
+    ]
   },
   {
     "id": "effects/head_pop_mp",
@@ -3945,6 +4830,7 @@
             0.635
           ],
           "gravityModifier": -0.254,
+          "gravityModifierMax": -0.508,
           "burst": true
         },
         "color": {
@@ -3976,8 +4862,8 @@
           "endMax": 0.0
         },
         "size": {
-          "startMin": 0.0025,
-          "startMax": 0.0063
+          "startMin": 0.00254,
+          "startMax": 0.00635
         }
       },
       {
@@ -3997,6 +4883,7 @@
           "rotationSpeedMin": -5.0,
           "rotationSpeedMax": 5.0,
           "gravityModifier": -0.0254,
+          "gravityModifierMax": -0.127,
           "burst": true
         },
         "color": {
@@ -4019,6 +4906,9 @@
             0.502,
             0.0,
             0.0
+          ],
+          "flags": [
+            "linear"
           ]
         },
         "alpha": {
@@ -4049,8 +4939,63 @@
         }
       },
       {
+        "type": "emitter",
+        "flags": [
+          "useModel",
+          "usePhysics",
+          "impactFx"
+        ],
+        "emitter": {
+          "countMin": 6,
+          "countMax": 9,
+          "lifetimeMin": 10.0,
+          "lifetimeMax": 10.0,
+          "angleMin": [
+            -180.0,
+            0.0,
+            0.0
+          ],
+          "angleMax": [
+            190.0,
+            10.0,
+            10.0
+          ],
+          "angleDeltaMin": [
+            -180.0,
+            0.0,
+            0.0
+          ],
+          "angleDeltaMax": [
+            180.0,
+            10.0,
+            10.0
+          ],
+          "velocityMin": [
+            -1.905,
+            -1.905,
+            -1.905
+          ],
+          "velocityMax": [
+            1.905,
+            1.905,
+            1.905
+          ],
+          "gravityModifier": -2.54,
+          "gravityModifierMax": -17.78,
+          "models": [
+            "models/characters/gore/chunk_med/chunk_med.md3",
+            "models/characters/gore/chunk_smll/chunk_smll.md3"
+          ],
+          "impactFx": "blood_splat_mp"
+        },
+        "size": {
+          "startMin": 0.0381,
+          "startMax": 0.0508
+        }
+      },
+      {
         "type": "particle",
-        "name": "Copy",
+        "name": "Copy of mist",
         "flags": [
           "useAlpha"
         ],
@@ -4086,6 +5031,9 @@
             0.502,
             0.0,
             0.0
+          ],
+          "flags": [
+            "linear"
           ]
         },
         "alpha": {
@@ -4118,7 +5066,10 @@
         "flags": [
           "useAlpha"
         ],
-        "texture": "gfx/misc/jk_smoke3",
+        "texture": [
+          "gfx/misc/jk_smoke3",
+          "gfx/misc/jk_smoke4"
+        ],
         "particle": {
           "countMin": 2,
           "countMax": 3,
@@ -4139,26 +5090,30 @@
             0.889
           ],
           "gravityModifier": 0.0,
+          "gravityModifierMax": 1.27,
           "burst": true
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
-          "endMax": 0.0
+          "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0
         },
         "size": {
-          "startMin": 0.0635,
-          "startMax": 0.0953,
-          "endMin": 0.635,
-          "endMax": 0.9525,
+          "startMin": 0.254,
+          "startMax": 0.381,
+          "endMin": 2.54,
+          "endMax": 3.81,
           "curve": "linear"
         }
       },
       {
         "type": "particle",
         "name": "flames",
-        "texture": "gfx/misc/jk_fire",
+        "texture": [
+          "gfx/misc/jk_fire",
+          "gfx/misc/jk_fire2"
+        ],
         "particle": {
           "countMin": 8,
           "countMax": 8,
@@ -4187,19 +5142,30 @@
             0.0
           ],
           "gravityModifier": 0.254,
+          "gravityModifierMax": 0.508,
+          "accelerationMin": [
+            0.254,
+            0.0,
+            0.0
+          ],
+          "accelerationMax": [
+            0.762,
+            0.0,
+            0.0
+          ],
           "burst": false
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
-          "endMax": 0.0
+          "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0
         },
         "size": {
-          "startMin": 0.381,
-          "startMax": 0.508,
-          "endMin": 0.762,
-          "endMax": 0.889,
+          "startMin": 0.762,
+          "startMax": 1.016,
+          "endMin": 1.524,
+          "endMax": 1.778,
           "parm": 1.0,
           "curve": "linear"
         }
@@ -4210,7 +5176,10 @@
         "spawnFlags": [
           "rgbComponentInterpolation"
         ],
-        "texture": "gfx/misc/bp_exp_debris01",
+        "texture": [
+          "gfx/misc/bp_exp_debris01",
+          "gfx/misc/bp_exp_debris02"
+        ],
         "particle": {
           "lifetimeMin": 1.0,
           "lifetimeMax": 1.0,
@@ -4253,26 +5222,29 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
-          "endMax": 0.0
+          "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0
         },
         "size": {
-          "startMin": 0.0635,
-          "startMax": 0.127,
-          "endMin": 0.381,
-          "endMax": 0.508,
+          "startMin": 0.127,
+          "startMax": 0.254,
+          "endMin": 0.762,
+          "endMax": 1.016,
           "curve": "linear"
         }
       },
       {
         "type": "particle",
-        "name": "Copy",
+        "name": "Copy of spark_splash",
         "spawnFlags": [
           "rgbComponentInterpolation"
         ],
-        "texture": "gfx/misc/bp_exp_debris01",
+        "texture": [
+          "gfx/misc/bp_exp_debris01",
+          "gfx/misc/bp_exp_debris02"
+        ],
         "particle": {
           "lifetimeMin": 3.0,
           "lifetimeMax": 4.0,
@@ -4315,10 +5287,10 @@
           ]
         },
         "alpha": {
-          "startMin": 1.0,
-          "startMax": 1.0,
           "endMin": 0.0,
-          "endMax": 0.0
+          "endMax": 0.0,
+          "startMin": 1.0,
+          "startMax": 1.0
         },
         "size": {
           "startMin": 0.0254,
@@ -4326,6 +5298,18 @@
           "endMin": 0.254,
           "endMax": 0.254,
           "curve": "linear"
+        }
+      },
+      {
+        "type": "light",
+        "light": {
+          "lifetimeMin": 0.05,
+          "lifetimeMax": 0.4
+        },
+        "color": {
+          "flags": [
+            "linear"
+          ]
         }
       }
     ]

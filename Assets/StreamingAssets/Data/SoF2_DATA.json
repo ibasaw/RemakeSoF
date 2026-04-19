@@ -1411,7 +1411,8 @@
                 ],
                 "Surfaces_On": [
                     "cap_head_bck_uppr_<OS>_off",
-                    "cap_head_bck_lwr_<PS>_off"
+                    "cap_head_bck_lwr_<PS>_off",
+                    "cap_head_side_<PS>_off"
                 ],
                 "Children": [],
                 "FX": [

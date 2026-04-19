@@ -25,6 +25,36 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 471a9e1a84ee9dd45bbdbb952aeb2ffa
+    m_Address: models/characters/gore/chunk_smll/chunk_smll.md3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 69c1c0dfe3b002145a34eea1f48d4dd6
+    m_Address: models/characters/gore/stomach.md3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7cd819161a73c244ca1c99e82ba201b9
+    m_Address: models/characters/gore/chunk_lrg/chunk_lrg.md3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8b1373e4036041d41a53e6cc98989aae
+    m_Address: models/characters/gore/guts.md3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a77df84fab2bd6048ba210ed449c2f4c
+    m_Address: models/characters/gore/lung.md3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a96a779721a4af04c87b98066df69d20
+    m_Address: models/characters/gore/hand.md3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b3ef09285648a90498fe8276eab4e975
     m_Address: models/characters/gore/brain/g2brain.glm
     m_ReadOnly: 0
@@ -32,6 +62,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ca170c239dd44eb4a9f8653edb7f4ddf
     m_Address: models/characters/gore/shoulder_bone/shoulder_bone.glm
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d35f71c9adcd04243aa623e4f2560d47
+    m_Address: models/characters/gore/brain.md3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fb71cbdd67861e54a8fe718779831f3c
+    m_Address: models/characters/gore/chunk_med/chunk_med.md3
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

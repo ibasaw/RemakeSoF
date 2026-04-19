@@ -152,6 +152,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                 {
                     m_AIController.SetPhysicsSimulation(m_Simulation);
                 }
+
+                // IsAlive-Aenderungen abonnieren (Tod → GOAP stoppen, Respawn → GOAP starten)
+                if (m_CharacterState != null)
+                {
+                    m_CharacterState.OnIsAliveChanged += OnIsAliveChanged;
+                }
             }
 
             m_IsReady = true;
@@ -166,7 +172,42 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                 return;
             }
 
+            // Tote Bots nicht simulieren (kein GOAP-Tick, kein Angriff, keine Bewegung).
+            // ServerCharacterController setzt IsAlive=false bei Tod und =true bei Respawn.
+            if (m_CharacterState != null && !m_CharacterState.IsAlive)
+            {
+                return;
+            }
+
             SimulatePhysics();
+        }
+
+        /// <summary>
+        /// Reagiert auf IsAlive-Aenderungen: Tod → GOAP stoppen, Respawn → GOAP reaktivieren.
+        /// </summary>
+        private void OnIsAliveChanged(bool isAlive)
+        {
+            if (m_AIController == null)
+            {
+                return;
+            }
+
+            if (!isAlive)
+            {
+                m_AIController.OnDeath();
+            }
+            else
+            {
+                m_AIController.OnRespawn();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (m_CharacterState != null)
+            {
+                m_CharacterState.OnIsAliveChanged -= OnIsAliveChanged;
+            }
         }
 
         /// <summary>
@@ -404,6 +445,18 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                         {
                             BroadcastKillFeedForHit(targetState, hitboxCollider.HitRegion, weaponName, weapon);
                         }
+
+                        // Gore-System: Treffer an Clients weiterleiten (identisch zu Spieler-Hitscan)
+                        m_NetworkedAICharacter.TryProcessGoreHit(
+                            targetState.gameObject,
+                            hitboxCollider.HitRegion,
+                            aimDirection,
+                            boneHit.point,
+                            modifiedDamage,
+                            previousHealth,
+                            newHealth,
+                            weaponName,
+                            false);
 
                         Debug.Log($"[AI·Attack] Bot '{m_CharacterState.CharacterName}' → " +
                                   $"'{targetState.CharacterName}' | Region={hitboxCollider.HitRegion} | " +

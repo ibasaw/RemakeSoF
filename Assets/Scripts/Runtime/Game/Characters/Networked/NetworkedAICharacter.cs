@@ -5,6 +5,8 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
+using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
+using Tolik.RemakeSoF.Runtime.GoreManagement;
 using Tolik.RemakeSoF.Runtime.SoundManagement;
 using Tolik.RemakeSoF.Runtime.WeaponManagement;
 using Unity.Netcode;
@@ -270,6 +272,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             base.OnServerSpawn();
 
+            // Gore-State bei jedem Respawn zuruecksetzen (deckt ServerCharacterController.RespawnCharacter ab)
+            m_CharacterState.OnCharacterRespawned += OnCharacterRespawned;
+
             // Hitboxen aufbauen sobald Visual geladen ist (Server braucht Hitboxes fuer Bone-Tracking)
             SubscribeToVisualInstantiated();
 
@@ -290,6 +295,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         protected override void OnRemoteSpawn()
         {
             base.OnRemoteSpawn();
+
+            // Gore-State bei jedem Respawn zuruecksetzen (deckt ServerCharacterController.RespawnCharacter ab)
+            m_CharacterState.OnCharacterRespawned += OnCharacterRespawned;
 
             // Hitboxen aufbauen sobald Visual geladen ist (Client braucht Hitboxes fuer Trefferkennung)
             SubscribeToVisualInstantiated();
@@ -316,6 +324,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             if (m_HitboxSystem != null)
             {
+                // ClearHitboxes zuruecksetzen: Nach ForceReloadSkin() sind die alten Hitbox-GOs
+                // als Children des alten Visuals zerstoert, aber m_IsInitialized ist noch true.
+                // Ohne Clear blockiert BuildHitboxes() mit dem Idempotent-Guard.
+                m_HitboxSystem.ClearHitboxes();
                 m_HitboxSystem.BuildHitboxes(visualInstance.transform);
                 Debug.Log("[AI·Visual] Hitboxen aufgebaut.");
             }
@@ -439,6 +451,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             base.OnNetworkDespawn();
 
+            if (m_CharacterState != null)
+            {
+                m_CharacterState.OnCharacterRespawned -= OnCharacterRespawned;
+            }
+
             if (m_SkinHandler != null)
             {
                 m_SkinHandler.OnVisualInstantiated -= OnVisualInstantiated;
@@ -508,6 +525,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             // Waffen/Ammo zuruecksetzen und Gametype-Startwaffen neu zuweisen
             ResetWeaponsForRound();
+
+            // Gore-State zuruecksetzen und Visual neu laden (alle Surfaces wiederherstellen)
+            ResetGoreStateClientRpc();
 
             m_ServerAICharacter.SetReady();
 
@@ -951,6 +971,184 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_CharacterState.SetCurrentWeaponName("knife");
 
             Debug.Log($"[AI·Init] Bot: Name='{botName}' | Skin='{skinName}' | Team={teamId} | Weapons={weapons?.Length ?? 1}");
+        }
+
+        // ──────────────────────────────────────────────────────────
+        //  Gore-State Reset bei Respawn
+        // ──────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Callback fuer NetworkVariable-basiertes IsAlive-Change (false→true).
+        /// Feuert auf ALLEN Maschinen (Server + Clients) und deckt damit auch
+        /// Respawns via ServerCharacterController.RespawnCharacter() ab,
+        /// die keinen expliziten RPC senden.
+        /// </summary>
+        private void OnCharacterRespawned()
+        {
+            GoreManager goreManager = ServiceLocator.Get<GoreManager>();
+            if (goreManager != null)
+            {
+                goreManager.ResetCharacterGore(gameObject);
+            }
+
+            if (m_SkinHandler != null)
+            {
+                m_SkinHandler.ForceReloadSkin();
+            }
+
+            Debug.Log($"[AI·Spawn] Gore-State zurueckgesetzt fuer Bot {NetworkObjectId} (via OnCharacterRespawned)");
+        }
+
+        /// <summary>
+        /// Server → Alle Clients: Setzt den Gore-State zurueck und laedt das Visual neu.
+        /// Wird bei Runden-Respawn (RespawnAtNextSpawnPoint) aufgerufen fuer Faelle
+        /// in denen der Character noch lebt und kein IsAlive-Change feuert.
+        /// </summary>
+        [Rpc(SendTo.Everyone)]
+        private void ResetGoreStateClientRpc()
+        {
+            // GoreManager-Tracking fuer diesen Charakter zuruecksetzen.
+            // WICHTIG: gameObject (NetworkObject-Root) verwenden, nicht CurrentVisualInstance,
+            // da ProcessGoreHit den Gore-State mit characterRoot.GetInstanceID() trackt.
+            GoreManager goreManager = ServiceLocator.Get<GoreManager>();
+            if (goreManager != null)
+            {
+                goreManager.ResetCharacterGore(gameObject);
+            }
+
+            // Visual komplett neu laden (zerstoert altes Visual mit Gore-Artefakten)
+            if (m_SkinHandler != null)
+            {
+                m_SkinHandler.ForceReloadSkin();
+            }
+
+            Debug.Log($"[AI·Spawn] Gore-State zurueckgesetzt fuer Bot {NetworkObjectId}");
+        }
+
+        // ──────────────────────────────────────────────────────────
+        //  Gore-Hit Verarbeitung (AI → Opfer)
+        // ──────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Server: Leitet einen AI-Treffer in das Gore-System weiter.
+        /// Identische DamageLevel-Logik wie NetworkedPlayerCharacter.TryProcessGoreHit.
+        /// Wird von ServerAICharacter.ProcessAIAttack() aufgerufen.
+        /// </summary>
+        public void TryProcessGoreHit(
+            GameObject targetCharacterRoot,
+            HitRegion hitRegion,
+            Vector3 shotDirection,
+            Vector3 hitPoint,
+            int finalDamage,
+            int previousHealth,
+            int newHealth,
+            string weaponId,
+            bool isAltAttack)
+        {
+            if (targetCharacterRoot == null || !IsServer)
+            {
+                return;
+            }
+
+            int damageLevel = ComputeSoF2DamageLevel(finalDamage, previousHealth, newHealth);
+
+            // Server-seitige sofortige Hitbox-Deaktivierung bei Dismemberment
+            if (damageLevel >= 4)
+            {
+                ClientHitboxSystem targetHitboxSystem = targetCharacterRoot.GetComponentInChildren<ClientHitboxSystem>();
+                if (targetHitboxSystem != null)
+                {
+                    targetHitboxSystem.DisableHitboxForRegionAndChildren(hitRegion);
+                }
+            }
+
+            NetworkObject targetNetworkObject = targetCharacterRoot.GetComponent<NetworkObject>();
+            if (targetNetworkObject == null)
+            {
+                return;
+            }
+
+            ApplyGoreHitFromAIClientRpc(
+                targetNetworkObject,
+                (int)hitRegion,
+                damageLevel,
+                shotDirection,
+                hitPoint,
+                weaponId ?? "",
+                isAltAttack);
+        }
+
+        /// <summary>
+        /// Server → Alle Clients: Wendet einen Gore-Treffer auf das Opfer an.
+        /// Identisch zu NetworkedPlayerCharacter.ApplyGoreHitClientRpc.
+        /// </summary>
+        [Rpc(SendTo.Everyone)]
+        private void ApplyGoreHitFromAIClientRpc(
+            NetworkObjectReference targetCharacterRef,
+            int hitRegionValue,
+            int damageLevel,
+            Vector3 hitDirection,
+            Vector3 hitPoint,
+            string weaponId,
+            bool isAltAttack)
+        {
+            if (!targetCharacterRef.TryGet(out NetworkObject targetCharacterNetworkObject) || targetCharacterNetworkObject == null)
+            {
+                return;
+            }
+
+            GoreManager goreManager = ServiceLocator.Get<GoreManager>();
+            if (goreManager == null)
+            {
+                return;
+            }
+
+            GoreHitData hitData = new()
+            {
+                CharacterRoot = targetCharacterNetworkObject.gameObject,
+                HitRegion = (HitRegion)hitRegionValue,
+                DamageLevel = damageLevel,
+                HitDirection = hitDirection,
+                HitPoint = hitPoint,
+                WeaponId = weaponId,
+                IsAltAttack = isAltAttack,
+            };
+
+            goreManager.ProcessGoreHit(hitData);
+        }
+
+        /// <summary>
+        /// Approximiert die SoF2 DamageLevel-Skala (0..5) fuer das Gore-System.
+        /// 0-3: nicht-toedlich, 4-5: toedlich mit Dismemberment.
+        /// </summary>
+        private static int ComputeSoF2DamageLevel(int finalDamage, int previousHealth, int newHealth)
+        {
+            if (newHealth <= 0)
+            {
+                if (finalDamage >= 75 || previousHealth <= 35)
+                {
+                    return 5;
+                }
+
+                return 4;
+            }
+
+            if (finalDamage >= 60)
+            {
+                return 3;
+            }
+
+            if (finalDamage >= 35)
+            {
+                return 2;
+            }
+
+            if (finalDamage >= 15)
+            {
+                return 1;
+            }
+
+            return 0;
         }
 
         // ──────────────────────────────────────────────────────────

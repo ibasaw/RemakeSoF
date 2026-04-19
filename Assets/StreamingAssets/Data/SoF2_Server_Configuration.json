@@ -49,7 +49,7 @@
     "hideandseek_roundlimit": 5,
 
     "g_redTeamStartWeapons": [],
-    "g_blueTeamStartWeapons": [],
+    "g_blueTeamStartWeapons": ["m4"],
 
     "sv_botcount": 1,
     "sv_botnames": [

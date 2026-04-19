@@ -250,16 +250,31 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
 
         /// <summary>
         /// Server: Character respawnen.
-        /// Setzt Health auf Max und IsAlive auf true.
-        /// Client-Benachrichtigung erfolgt automatisch via NetworkVariable-Change.
+        /// Delegiert an den jeweiligen NetworkedCharacter (AI oder Spieler),
+        /// der Position, Health, Waffen, Gore und Ready-State zuruecksetzt.
         /// </summary>
         private void RespawnCharacter()
         {
+            // AI-Bots: voller Respawn inkl. neuer Spawn-Position
+            NetworkedAICharacter aiCharacter = GetComponent<NetworkedAICharacter>();
+            if (aiCharacter != null)
+            {
+                aiCharacter.RespawnAtNextSpawnPoint();
+                return;
+            }
+
+            // Spieler: voller Respawn inkl. neuer Spawn-Position
+            NetworkedPlayerCharacter playerCharacter = GetComponent<NetworkedPlayerCharacter>();
+            if (playerCharacter != null)
+            {
+                playerCharacter.RespawnAtNextSpawnPoint();
+                return;
+            }
+
+            // Fallback: nur Health/Alive setzen (sollte nie erreicht werden)
             m_CharacterState.SetHealth(m_MaxHealth);
             m_CharacterState.SetIsAlive(true);
-            Debug.Log($"[ServerCharacterController] Character respawned. Health: {m_MaxHealth}");
-
-            // TODO: Spawn-Position zurücksetzen via NetworkedPlayerCharacter
+            Debug.LogWarning($"[ServerCharacterController] Fallback-Respawn (kein NetworkedCharacter gefunden). Health: {m_MaxHealth}");
         }
 
         /// <summary>

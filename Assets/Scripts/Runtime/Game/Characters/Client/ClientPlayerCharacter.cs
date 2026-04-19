@@ -1501,6 +1501,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 // Hitboxen fuer Remote erstellen (Schaden wird auf allen Clients erkannt)
                 if (m_HitboxSystem != null)
                 {
+                    // ClearHitboxes: Nach ForceReloadSkin() sind die alten Hitbox-GOs
+                    // als Children des alten Visuals zerstoert, aber m_IsInitialized ist noch true.
+                    m_HitboxSystem.ClearHitboxes();
                     m_HitboxSystem.BuildHitboxes(visualInstance.transform);
                 }
 
@@ -1508,7 +1511,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
                 Transform remoteHandBolt = FindDeepChild(visualInstance.transform, "rhang_tag_bone");
                 if (remoteHandBolt != null)
                 {
+                    // TP-Waffe clearen: Die alte Waffe war Child des alten rhang_tag_bone
+                    // und wird durch Destroy(oldVisual) mitgeloescht. Destroy() ist deferred,
+                    // daher ist CurrentWeaponInstance im selben Frame noch nicht null.
+                    // ClearCurrentWeapon() setzt m_CurrentWeaponName/Instance explizit zurueck.
+                    m_WeaponLoader.ClearCurrentWeapon();
                     m_WeaponLoader.SetAttachmentBone(remoteHandBolt);
+
+                    // Pending-Waffe aus CharacterState wiederherstellen falls noetig
+                    if (string.IsNullOrEmpty(m_PendingWeaponName) && m_CharacterState != null)
+                    {
+                        string currentWeapon = m_CharacterState.CurrentWeaponName;
+                        if (!string.IsNullOrEmpty(currentWeapon))
+                        {
+                            m_PendingWeaponName = currentWeapon;
+                        }
+                    }
+
                     TryLoadPendingWeapon();
                 }
 
@@ -1581,6 +1600,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Hitboxen fuer Owner erstellen
             if (m_HitboxSystem != null)
             {
+                // ClearHitboxes: Nach ForceReloadSkin() sind die alten Hitbox-GOs
+                // als Children des alten Visuals zerstoert, aber m_IsInitialized ist noch true.
+                m_HitboxSystem.ClearHitboxes();
                 m_HitboxSystem.BuildHitboxes(visualInstance.transform);
             }
 
@@ -1589,30 +1611,55 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             // Visual-Root cachen fuer Renderer-Refresh nach Waffenwechsel
             m_VisualRoot = visualInstance.transform;
 
-            // FP-Waffen-Parent unter Main Camera erstellen (SoF2: viewG2Model rendered at vieworg)
-            UnityEngine.Camera mainCam = UnityEngine.Camera.main;
-            if (mainCam != null)
+            // FP-Waffen-Parent: Wiederverwenden falls bereits vorhanden (Respawn),
+            // sonst einmalig unter Main Camera erstellen (SoF2: viewG2Model rendered at vieworg).
+            if (m_FpWeaponParent == null)
             {
-                GameObject fpWeaponHolder = new("FP_WeaponHolder");
-                fpWeaponHolder.transform.SetParent(mainCam.transform, false);
-                // SoF2: viewG2Model wird an vieworg gerendert (Kamera-Ursprung).
-                // Per-Weapon viewOffset aus JSON wird additiv via FirstPersonCameraEffects angewendet.
-                fpWeaponHolder.transform.localPosition = Vector3.zero;
-                m_FpWeaponParent = fpWeaponHolder.transform;
-                m_FpWeaponLoader.SetAttachmentBone(m_FpWeaponParent);
-                m_FpWeaponLoader.SetLocalRotation(Quaternion.Euler(0f, 0f, 0f));
-                m_FpWeaponLoader.SetCompensateBoneScale(false);
+                UnityEngine.Camera mainCam = UnityEngine.Camera.main;
+                if (mainCam != null)
+                {
+                    GameObject fpWeaponHolder = new("FP_WeaponHolder");
+                    fpWeaponHolder.transform.SetParent(mainCam.transform, false);
+                    // SoF2: viewG2Model wird an vieworg gerendert (Kamera-Ursprung).
+                    // Per-Weapon viewOffset aus JSON wird additiv via FirstPersonCameraEffects angewendet.
+                    fpWeaponHolder.transform.localPosition = Vector3.zero;
+                    m_FpWeaponParent = fpWeaponHolder.transform;
+                    m_FpWeaponLoader.SetAttachmentBone(m_FpWeaponParent);
+                    m_FpWeaponLoader.SetLocalRotation(Quaternion.Euler(0f, 0f, 0f));
+                    m_FpWeaponLoader.SetCompensateBoneScale(false);
 
-                // SoF2: CG_CalculateWeaponFov — separate Overlay-Kamera fuer Waffen-FOV.
-                // Main Camera rendert Welt (ohne FPWeapon-Layer),
-                // Overlay-Kamera rendert nur FPWeapon-Layer mit engerem FOV.
-                SetupWeaponOverlayCamera(mainCam);
+                    // SoF2: CG_CalculateWeaponFov — separate Overlay-Kamera fuer Waffen-FOV.
+                    // Main Camera rendert Welt (ohne FPWeapon-Layer),
+                    // Overlay-Kamera rendert nur FPWeapon-Layer mit engerem FOV.
+                    SetupWeaponOverlayCamera(mainCam);
+                }
+            }
+            else
+            {
+                // Respawn: FP-Waffe entfernen (wird via TryLoadPendingWeapon neu geladen)
+                m_FpWeaponLoader.ClearCurrentWeapon();
+                m_FpHandsLoader.Clear();
             }
 
             // Waffen-Attachment-Bone fuer Owner setzen (Third-Person Waffe am Hand-Bone)
             if (rightHandBolt != null)
             {
+                // TP-Waffe clearen: Die alte Waffe war Child des alten rhang_tag_bone
+                // und wird durch Destroy(oldVisual) mitgeloescht. Destroy() ist deferred,
+                // daher ist CurrentWeaponInstance im selben Frame noch nicht null.
+                m_WeaponLoader.ClearCurrentWeapon();
                 m_WeaponLoader.SetAttachmentBone(rightHandBolt);
+
+                // Pending-Waffe aus CharacterState wiederherstellen falls noetig
+                if (string.IsNullOrEmpty(m_PendingWeaponName) && m_CharacterState != null)
+                {
+                    string currentWeapon = m_CharacterState.CurrentWeaponName;
+                    if (!string.IsNullOrEmpty(currentWeapon))
+                    {
+                        m_PendingWeaponName = currentWeapon;
+                    }
+                }
+
                 TryLoadPendingWeapon();
             }
 

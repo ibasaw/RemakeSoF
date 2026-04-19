@@ -291,13 +291,23 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
 
         /// <summary>
         /// Gibt TextureData nach Key zurück.
+        /// Falls der Key nicht direkt gefunden wird, wird der LegacyShaderLoader
+        /// als Fallback verwendet um den Shader-Namen in einen Textur-Pfad aufzuloesen
+        /// (inkl. aliasShader-Ketten).
         /// </summary>
         public TextureData GetTextureData(string key)
         {
             if (string.IsNullOrEmpty(key))
                 return null;
 
-            return m_Registry?.GetTextureData(key);
+            TextureData result = m_Registry?.GetTextureData(key);
+            if (result != null)
+            {
+                return result;
+            }
+
+            // Fallback: Shader-Name ueber LegacyShaderLoader → Textur-Pfad aufloesen
+            return ResolveTextureViaLegacyShader(key);
         }
 
         /// <summary>
@@ -310,6 +320,85 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 return null;
 
             return m_Registry?.GetTextureDataByAlias(aliasKey);
+        }
+
+        /// <summary>
+        /// Loest einen Shader-Namen ueber den LegacyShaderLoader auf und gibt die
+        /// zugehoerige TextureData zurueck. Folgt aliasShader-Ketten (max 8 Stufen)
+        /// und laedt die Textur aus dem MainTexture/EditorImage-Pfad.
+        /// Erzeugt bei Erfolg ein Material und cached es unter dem Original-Key.
+        /// </summary>
+        private TextureData ResolveTextureViaLegacyShader(string shaderName)
+        {
+            LegacyShaderLoader shaderLoader = ServiceLocator.Get<LegacyShaderLoader>();
+            if (shaderLoader == null)
+            {
+                return null;
+            }
+
+            Dictionary<string, Dictionary<string, ShaderEntry>> allShaderDefs = shaderLoader.GetAll();
+            if (allShaderDefs == null)
+            {
+                return null;
+            }
+
+            // ShaderEntry suchen (ueber alle geladenen Model-Shader-Dateien)
+            ShaderEntry entry = FindShaderEntry(allShaderDefs, shaderName);
+            if (entry == null)
+            {
+                return null;
+            }
+
+            // aliasShader-Kette folgen (max 8 Stufen um Endlos-Loops zu vermeiden)
+            string currentName = shaderName;
+            ShaderEntry resolved = entry;
+            for (int i = 0; i < 8 && !string.IsNullOrEmpty(resolved.AliasShader); i++)
+            {
+                ShaderEntry aliasEntry = FindShaderEntry(allShaderDefs, resolved.AliasShader);
+                if (aliasEntry == null)
+                {
+                    break;
+                }
+                currentName = resolved.AliasShader;
+                resolved = aliasEntry;
+            }
+
+            // Textur-Pfad aus dem aufgeloesten ShaderEntry extrahieren
+            string texturePath = !string.IsNullOrEmpty(resolved.MainTexture)
+                ? resolved.MainTexture
+                : resolved.EditorImage;
+
+            if (string.IsNullOrEmpty(texturePath))
+            {
+                return null;
+            }
+
+            // Textur laden
+            TextureData textureData = m_Registry?.GetTextureData(texturePath);
+            if (textureData == null || !textureData.IsValid() || !textureData.HasTexture())
+            {
+                return null;
+            }
+
+            // Material erzeugen und unter dem Original-Shader-Namen cachen
+            CreateMaterialFromShaderEntry(shaderName, resolved);
+            return m_Registry?.GetTextureData(shaderName) ?? textureData;
+        }
+
+        /// <summary>
+        /// Sucht einen ShaderEntry in allen geladenen Legacy-Shader-Definitionen.
+        /// </summary>
+        private static ShaderEntry FindShaderEntry(
+            Dictionary<string, Dictionary<string, ShaderEntry>> allShaderDefs, string shaderName)
+        {
+            foreach (Dictionary<string, ShaderEntry> modelShaders in allShaderDefs.Values)
+            {
+                if (modelShaders.TryGetValue(shaderName, out ShaderEntry entry))
+                {
+                    return entry;
+                }
+            }
+            return null;
         }
 
         /// <summary>

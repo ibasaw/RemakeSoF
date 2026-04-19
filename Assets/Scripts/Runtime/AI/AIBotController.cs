@@ -1940,6 +1940,34 @@ namespace Tolik.RemakeSoF.Runtime.AI
         }
 
         /// <summary>
+        /// Leert alle Intents wenn der Bot stirbt.
+        /// GOAP-Goals werden NICHT gestoppt/gecleared — der ServerAICharacter.Update()-Guard
+        /// (IsAlive-Check) verhindert bereits dass Tick() aufgerufen wird.
+        /// So bleibt das GOAP-Goal aktiv und laeuft beim Respawn sofort weiter.
+        /// </summary>
+        public void OnDeath()
+        {
+            // Intents sofort leeren
+            m_MoveTarget = null;
+            m_LookTarget = null;
+            m_ShouldAttack = false;
+            m_ShouldJump = false;
+            m_ShouldCrouch = false;
+
+            Debug.Log($"[AI·Bot] OnDeath: Intents geleert (GOAP-Goal bleibt aktiv).");
+        }
+
+        /// <summary>
+        /// Setzt Checkpoint-/Stuck-State nach Respawn zurueck.
+        /// GOAP-Goal muss nicht neu angefordert werden — es ist noch aktiv.
+        /// </summary>
+        public void OnRespawn()
+        {
+            ResetCheckpointProgress();
+            Debug.Log($"[AI·Bot] OnRespawn: Checkpoint-Progress zurueckgesetzt.");
+        }
+
+        /// <summary>
         /// Setzt die Referenz zur Physik-Simulation fuer Zustandsinputs.
         /// Wird von ServerAICharacter nach SetReady aufgerufen.
         /// </summary>

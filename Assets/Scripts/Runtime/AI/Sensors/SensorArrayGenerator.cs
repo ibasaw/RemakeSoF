@@ -43,7 +43,7 @@ namespace Tolik.RemakeSoF.Runtime.AI
 
         [Tooltip("Debug-Zeichnung der Sensoren aktivieren.")]
         [SerializeField]
-        private bool m_DebugDraw = true;
+        private bool m_DebugDraw = false;
 
         /// <summary>Das erzeugte Sensor-Array. Null bis Generate() aufgerufen wird.</summary>
         public Sensor3D[] Sensors { get; private set; }
@@ -84,11 +84,6 @@ namespace Tolik.RemakeSoF.Runtime.AI
         public void Generate(Transform sensorRoot, float heightOffset = 0f)
         {
             Clear();
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            // Debug-Visualisierung in Development-Builds immer erzwingen
-            m_DebugDraw = true;
-#endif
 
             int totalCount = m_HorizontalSteps * m_VerticalSteps;
             Debug.Log($"[AI·Sensor] Generiere {totalCount} Sensoren | Root='{sensorRoot.name}' | H={heightOffset:F2}m | Debug={m_DebugDraw}");

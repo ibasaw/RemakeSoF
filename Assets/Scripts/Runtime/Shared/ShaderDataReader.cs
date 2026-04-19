@@ -123,14 +123,24 @@ namespace Tolik.RemakeSoF.Runtime
                 }
             }
 
+            // Parse aliasShader
+            if (line.StartsWith("aliasShader"))
+            {
+                var parts = line.Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 2)
+                {
+                    entry.AliasShader = parts[1];
+                }
+            }
+
             // Parse cull disable
             if (line.Trim() == "cull\tdisable" || line.Trim() == "cull disable")
             {
                 entry.CullDisabled = true;
             }
 
-            // Parse map (main texture) - this is inside nested blocks, so we need to handle it differently
-            if (line.StartsWith("map"))
+            // Parse map or clampmap (main texture) - this is inside nested blocks, so we need to handle it differently
+            if (line.StartsWith("map") || line.StartsWith("clampmap"))
             {
                 var parts = line.Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length >= 2)

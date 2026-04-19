@@ -515,6 +515,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             base.OnServerSpawn();
 
+            // Gore-State bei jedem Respawn zuruecksetzen (deckt ServerCharacterController.RespawnCharacter ab)
+            m_CharacterState.OnCharacterRespawned += OnCharacterRespawned;
+
             // Server-seitige Physik + BoxCollider initialisieren
             m_ServerPlayerCharacter.InitializeServer();
 
@@ -612,6 +615,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Waffen/Ammo zuruecksetzen und Gametype-Startwaffen neu zuweisen
             ResetWeaponsForRound();
 
+            // Gore-State zuruecksetzen und Visual neu laden (alle Surfaces wiederherstellen)
+            ResetGoreStateClientRpc();
+
             m_ServerPlayerCharacter.ResetForRespawn();
             m_ServerPlayerCharacter.SetReady();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -685,6 +691,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             base.OnOwnerSpawn();
 
+            // Gore-State bei jedem Respawn zuruecksetzen (deckt ServerCharacterController.RespawnCharacter ab)
+            m_CharacterState.OnCharacterRespawned += OnCharacterRespawned;
+
             // Animator-Referenz nach Visual-Instanziierung setzen
             SubscribeToVisualInstantiated();
 
@@ -703,6 +712,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         {
             base.OnRemoteSpawn();
 
+            // Gore-State bei jedem Respawn zuruecksetzen (deckt ServerCharacterController.RespawnCharacter ab)
+            m_CharacterState.OnCharacterRespawned += OnCharacterRespawned;
+
             // Animator-Referenz nach Visual-Instanziierung setzen
             SubscribeToVisualInstantiated();
 
@@ -714,6 +726,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public override void OnNetworkDespawn()
         {
             UnsubscribeFromVisualInstantiated();
+
+            if (m_CharacterState != null)
+            {
+                m_CharacterState.OnCharacterRespawned -= OnCharacterRespawned;
+            }
 
             if (IsOwner)
             {
@@ -2876,6 +2893,52 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             };
 
             goreManager.ProcessGoreHit(hitData);
+        }
+
+        /// <summary>
+        /// Callback fuer NetworkVariable-basiertes IsAlive-Change (false→true).
+        /// Feuert auf ALLEN Maschinen (Server + Clients) und deckt damit auch
+        /// Respawns via ServerCharacterController.RespawnCharacter() ab,
+        /// die keinen expliziten RPC senden.
+        /// </summary>
+        private void OnCharacterRespawned()
+        {
+            GoreManager goreManager = ServiceLocator.Get<GoreManager>();
+            if (goreManager != null)
+            {
+                goreManager.ResetCharacterGore(gameObject);
+            }
+
+            if (m_SkinHandler != null)
+            {
+                m_SkinHandler.ForceReloadSkin();
+            }
+
+            Debug.Log($"[NetworkedPlayerCharacter] Gore-State zurueckgesetzt fuer Spieler {NetworkObjectId} (via OnCharacterRespawned)");
+        }
+
+        /// <summary>
+        /// Server → Alle Clients: Setzt den Gore-State zurueck und laedt das Visual neu.
+        /// Wird bei Runden-Respawn (RespawnAtNextSpawnPoint) aufgerufen fuer Faelle
+        /// in denen der Character noch lebt und kein IsAlive-Change feuert.
+        /// </summary>
+        [ClientRpc]
+        private void ResetGoreStateClientRpc()
+        {
+            // WICHTIG: gameObject (NetworkObject-Root) verwenden, nicht CurrentVisualInstance,
+            // da ProcessGoreHit den Gore-State mit characterRoot.GetInstanceID() trackt.
+            GoreManager goreManager = ServiceLocator.Get<GoreManager>();
+            if (goreManager != null)
+            {
+                goreManager.ResetCharacterGore(gameObject);
+            }
+
+            if (m_SkinHandler != null)
+            {
+                m_SkinHandler.ForceReloadSkin();
+            }
+
+            Debug.Log($"[NetworkedPlayerCharacter] Gore-State zurueckgesetzt fuer Spieler {NetworkObjectId}");
         }
 
         /// <summary>
