@@ -126,6 +126,7 @@ unitygame/.vscode
 __pycache__
 .venv
 .env
+venv
 
 Library
 
