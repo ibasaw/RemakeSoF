@@ -370,7 +370,8 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 resolvedArea,
                 hitData.HitDirection,
                 goreDataLoader,
-                mapping.IsRightSide);
+                mapping.IsRightSide,
+                hitData.DamageLevel);
 
             // PGORE Wund-Decals auch bei Dismemberment anwenden (Todestreferwunde)
             ApplyPGoreDecals(hitData);

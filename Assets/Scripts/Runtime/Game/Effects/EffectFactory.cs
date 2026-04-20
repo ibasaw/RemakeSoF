@@ -2232,7 +2232,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                         if (prefab != null)
                         {
                             chunkObj = Object.Instantiate(prefab, position, rotation);
-                            PrefabTextureApplier.ApplyTextures(chunkObj);
+                            PrefabTextureApplier.ApplyTextures(chunkObj, modelKey);
                         }
                     }
 
@@ -2366,7 +2366,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Effects
                     if (prefab != null)
                     {
                         shellObj = Object.Instantiate(prefab, position, rotation);
-                        PrefabTextureApplier.ApplyTextures(shellObj);
+                        PrefabTextureApplier.ApplyTextures(shellObj, modelKey);
                     }
                 }
             }

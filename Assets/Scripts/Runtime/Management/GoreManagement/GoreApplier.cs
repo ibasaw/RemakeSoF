@@ -6,6 +6,7 @@ using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Effects;
 using Tolik.RemakeSoF.Runtime.PrefabManagement;
+using Tolik.RemakeSoF.Runtime.TextureManagement;
 using UnityEngine;
 namespace Tolik.RemakeSoF.Runtime.GoreManagement
 {
@@ -35,6 +36,7 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
         /// <param name="hitDirection">Richtung des Treffers fuer Chunk-Force.</param>
         /// <param name="goreDataLoader">Loader fuer Kinderzonen und Pieces.</param>
         /// <param name="isRightSide">Seite fuer Platzhalter-Aufloesung der Kinder.</param>
+        /// <param name="damageLevel">SoF2 DamageLevel (4=Medium Death, 5=High Death). Bei DL4 werden Kinder-Chunks unterdrueckt.</param>
         /// <param name="parentFlags">Flags des Eltern-Bereichs fuer hierarchische Flag-Vererbung.</param>
         public void ApplyGoreArea(
             GameObject characterRoot,
@@ -42,6 +44,7 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
             Vector3 hitDirection,
             GoreDataLoader goreDataLoader,
             bool isRightSide,
+            int damageLevel = 5,
             HashSet<string> parentFlags = null)
         {
             if (characterRoot == null || area == null)
@@ -56,6 +59,16 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                 {
                     flags.Add(flag);
                 }
+            }
+
+            // SoF2 DamageLevel-Semantik:
+            // DL 4 (Medium Death): Nur getroffene Zone dismembered, Kinder nur Surfaces off (keine Chunks/FX/BoltOns)
+            // DL 5 (High Death): Volle rekursive Verarbeitung mit Chunks, FX, BoltOns fuer alle Kinder
+            if (damageLevel < 5)
+            {
+                flags.Add("NoChildChunks");
+                flags.Add("NoChildFX");
+                flags.Add("NoChildBoltOns");
             }
 
             // Resolve to model_root_0 where surfaces and *bolts live
@@ -117,7 +130,7 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
                     // (Templates wie head_<OL> verwenden <PS>/<OS> relativ zum Original-Hit),
                     // aber fuer dessen Kinder den invertierten Seitenkontext verwenden.
                     GoreArea resolvedChild = ResolveArea(childArea, isRightSide);
-                    ApplyGoreArea(characterRoot, resolvedChild, hitDirection, goreDataLoader, childIsRightSide, flags);
+                    ApplyGoreArea(characterRoot, resolvedChild, hitDirection, goreDataLoader, childIsRightSide, damageLevel, flags);
                 }
             }
 
@@ -436,13 +449,6 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
             // Hier klonen wir die bereits deaktivierten Renderer (Surfaces_Off) des Hauptmodells.
             CloneChunkRenderers(allRenderers, chunk, areaSurfacesOff, chunkObj.transform);
 
-            // Rigidbody fuer Physik-Simulation
-            Rigidbody rb = chunkObj.AddComponent<Rigidbody>();
-            rb.mass = 2f;
-            rb.linearDamping = 0.5f;
-            rb.angularDamping = 0.5f;
-            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-
             // SoF2 cg_gore.c CG_ProcessChunk:
             // VectorMA(vec3_origin, irand(MinForce*2, MaxForce*2), Direction, trDelta)  → horizontal
             // trDelta[2] = flrand(100, 150)                                             → vertikal override
@@ -460,22 +466,11 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
             float upwardSpeed = UnityEngine.Random.Range(100f, 150f) * 0.0254f;
             Vector3 velocity = horizontalDir * speed;
             velocity.y = upwardSpeed;
-            rb.linearVelocity = velocity;
 
-            // Rotation: leichte Yaw-Drehung wie SoF2 (crandom()*15 - 7 Grad/s)
-            rb.angularVelocity = new Vector3(0f, UnityEngine.Random.Range(-7f, 8f) * Mathf.Deg2Rad, 0f);
-
-            // Bounce-Material (SoF2 bounceFactor = 0.2)
-            BoxCollider collider = chunkObj.AddComponent<BoxCollider>();
-            collider.size = Vector3.one * 0.15f;
-            PhysicsMaterial chunkPhysMat = new()
-            {
-                bounciness = 0.2f,
-                dynamicFriction = 0.5f,
-                staticFriction = 0.5f,
-                bounceCombine = PhysicsMaterialCombine.Maximum
-            };
-            collider.material = chunkPhysMat;
+            // SoF2 TR_GRAVITY Trajectory — manuelle Parabel-Physik statt Unity Rigidbody.
+            // Identisch zur PlayerPhysicsSimulation: eigene Gravity + Raycast Kollision.
+            ChunkTrajectory trajectory = chunkObj.AddComponent<ChunkTrajectory>();
+            trajectory.Initialize(velocity);
 
             UnityEngine.Object.Destroy(chunkObj, CHUNK_LIFETIME);
         }
@@ -743,6 +738,9 @@ namespace Tolik.RemakeSoF.Runtime.GoreManagement
             boltOnInstance.transform.localPosition = Vector3.zero;
             boltOnInstance.transform.localRotation = Quaternion.identity;
             boltOnInstance.transform.localScale = Vector3.one * BOLT_ON_SCALE;
+
+            // Textur aus TextureManager anwenden (Key = Model-Pfad ohne Dateiendung)
+            PrefabTextureApplier.ApplyTextures(boltOnInstance, piece.modelName);
         }
 
         /// <summary>

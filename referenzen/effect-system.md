@@ -49,6 +49,7 @@ EffectFactory (MonoBehaviour, ServiceLocator)
 | **TracerVisual** | `Assets/Scripts/Runtime/Game/Effects/TracerVisual.cs` | Hitscan-Tracer (Trail von Start → End) |
 | **ShellCasingBehaviour** | `Assets/Scripts/Runtime/Game/Effects/ShellCasingBehaviour.cs` | Hülsen-Physik + Impact-Bounce-Effekt |
 | **ClientProjectileVisual** | `Assets/Scripts/Runtime/Game/Projectiles/ClientProjectileVisual.cs` | Client-seitige Projektil-Visuals (Trail, Modell, Explosion) |
+| **PrefabTextureApplier** | `Assets/Scripts/Runtime/Management/TextureManagement/PrefabTextureApplier.cs` | Textur-Anwendung auf Prefabs (Ghoul2Meta + modelKey-Fallback für Chunks/Shells) |
 
 ---
 
@@ -238,6 +239,7 @@ Waffe feuert (Client)
        └─ EffectFactory.SpawnShellCasing(ejectBonePos, ejectBoneRot, shellCasingEjectId)
              ├─ Segment Typ "emitter" → SpawnEmitterChunks()
              │   ├─ PrefabManager.Get(models[random])
+             │   ├─ PrefabTextureApplier.ApplyTextures(shellObj, modelKey)
              │   ├─ Rigidbody (velocity, angularVelocity, gravity)
              │   └─ ShellCasingBehaviour (impactFx, impactKills)
              └─ Hülse fällt, rotiert, prallt
@@ -388,11 +390,13 @@ EffectFactory.SpawnDebris(position, rotation, effectId)
   │         ├─ N = Random(CountMin, CountMax)
   │         ├─ Für jedes Chunk:
   │         │   ├─ PrefabManager.Get(models[random]) → 3D-Modell
+  │         │   ├─ PrefabTextureApplier.ApplyTextures(chunkObj, modelKey)
+  │         │   │   → modelKey-Fallback: Extension entfernen → TextureManager → Material
   │         │   ├─ Rigidbody: velocity, angularVelocity, useGravity
   │         │   ├─ AutoDestroy nach Lifetime
   │         │   └─ Optional: ShellCasingBehaviour (wenn impactFx gesetzt)
   │         └─ Zufällige Werte aus Min/Max-Ranges
-  └─ Ergebnis: Staubwolke + fliegende Trümmer-Stücke
+  └─ Ergebnis: Staubwolke + fliegende Trümmer-Stücke (mit korrekten Texturen)
 ```
 
 #### Surface Debris (Einschlag-Trümmer)
@@ -430,6 +434,26 @@ Jeder Surface-Debris-Effekt enthält:
 Explosions-Debris-Modelle werden zur Laufzeit aus der Umgebung bestimmt
 (z.B. SurfaceType des Bodens). Das `models[]`-Array in der JSON ist leer —
 der Game-Code füllt es basierend auf dem Kontext.
+
+#### Gore-Chunks (Fleischstücke bei Tod)
+
+**JSON-Datei:** `SoF2_Effects_gore_blood.json` — Gore-Effekte mit 3D-Emitter-Chunks
+
+Gore-Effekte wie `flesh_chunks`, `gore_mist_small`, `blood_spurt_arterial` werden vom
+`GoreManager` bei Dismemberment (DamageLevel ≥ 4) ausgelöst. Die `emitter`-Segmente
+spawnen 3D-Modelle (hand.md3, lung.md3, stomach.md3, guts.md3, chunk_lrg/med/smll.md3),
+die via `PrefabTextureApplier.ApplyTextures(chunkObj, modelKey)` automatisch ihre
+korrekte Textur aus der TextureManager → LegacyShaderLoader → gore.g2shader Kette erhalten.
+
+| Modell | Addressable-Key | Textur-Auflösung |
+|--------|----------------|-----------------|
+| Hand | `models/characters/gore/hand.md3` | gore.g2shader → `models/characters/gore/hand` |
+| Lunge | `models/characters/gore/lung.md3` | gore.g2shader → `models/characters/gore/lung` |
+| Magen | `models/characters/gore/stomach.md3` | gore.g2shader → `models/characters/gore/stomach` |
+| Gedärm | `models/characters/gore/guts.md3` | gore.g2shader → `models/characters/gore/guts` |
+| Großes Stück | `models/characters/gore/chunk_lrg/chunk_lrg.md3` | Direkt via TextureManager |
+| Mittleres Stück | `models/characters/gore/chunk_med/chunk_med.md3` | Direkt via TextureManager |
+| Kleines Stück | `models/characters/gore/chunk_smll/chunk_smll.md3` | Direkt via TextureManager |
 
 ---
 

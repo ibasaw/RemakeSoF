@@ -25,6 +25,19 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
         /// <param name="instance">Das instanziierte Prefab-GameObject.</param>
         public static void ApplyTextures(GameObject instance)
         {
+            ApplyTextures(instance, null);
+        }
+
+        /// <summary>
+        /// Wendet Texturen auf alle Renderer im GameObject-Baum an.
+        /// Primaer via Ghoul2Meta (mapped_texture_0..N).
+        /// Fallback fuer Prefabs ohne Ghoul2Meta: Textur-Key wird aus dem Model-Pfad abgeleitet
+        /// (ohne Dateiendung .glm/.md3) und via TextureManager mit LegacyShaderLoader-Fallback aufgeloest.
+        /// </summary>
+        /// <param name="instance">Das instanziierte Prefab-GameObject.</param>
+        /// <param name="modelKey">Optionaler Addressable-Key / Model-Pfad fuer Fallback-Aufloesung.</param>
+        public static void ApplyTextures(GameObject instance, string modelKey)
+        {
             if (instance == null)
             {
                 return;
@@ -37,17 +50,94 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
             }
 
             Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
+            bool hasGhoul2 = false;
 
             foreach (Renderer renderer in renderers)
             {
                 if (renderer.TryGetComponent(out Ghoul2Meta meta))
                 {
+                    hasGhoul2 = true;
                     List<(int slotIndex, string key)> textureSlots = CollectTextureKeys(meta);
                     if (textureSlots.Count > 0)
                     {
                         ApplyMaterialsFromGhoul2(renderer, textureSlots, meta, textureManager);
                     }
                 }
+            }
+
+            // Fallback: Kein Ghoul2Meta vorhanden (z.B. Gore-Prefabs, einfache 3D-Modelle).
+            // Textur-Key aus Model-Pfad ableiten und auf alle Renderer anwenden.
+            if (!hasGhoul2 && !string.IsNullOrEmpty(modelKey))
+            {
+                ApplyTextureFromModelKey(renderers, modelKey, textureManager);
+            }
+        }
+
+        /// <summary>
+        /// Fallback-Textur-Anwendung fuer Prefabs ohne Ghoul2Meta.
+        /// Leitet den Textur-Key aus dem Model-Pfad ab (ohne .glm/.md3 Endung)
+        /// und loest ueber TextureManager + LegacyShaderLoader auf.
+        /// </summary>
+        private static void ApplyTextureFromModelKey(Renderer[] renderers, string modelKey, TextureManager textureManager)
+        {
+            // Textur-Key: Model-Pfad ohne Dateiendung (.glm/.md3)
+            string textureKey = modelKey;
+            int extensionIndex = textureKey.LastIndexOf('.');
+            if (extensionIndex >= 0)
+            {
+                textureKey = textureKey.Substring(0, extensionIndex);
+            }
+
+            TextureData textureData = textureManager.GetTextureData(textureKey);
+            if (textureData == null || !textureData.IsValid())
+            {
+                return;
+            }
+
+            Material material = textureData.Material;
+            if (material == null && textureData.HasTexture())
+            {
+                Shader shader = Shader.Find(k_ShaderName);
+                if (shader != null)
+                {
+                    material = new Material(shader) { name = textureKey };
+                    if (material.HasProperty("_BaseMap"))
+                    {
+                        material.SetTexture("_BaseMap", textureData.Texture);
+                    }
+                    else
+                    {
+                        material.mainTexture = textureData.Texture;
+                    }
+
+                    if (material.HasProperty("_Smoothness"))
+                    {
+                        material.SetFloat("_Smoothness", 0f);
+                    }
+
+                    // Doppelseitig (SoF2 Default fuer Gore-Pieces)
+                    material.SetFloat("_Cull", 0f);
+                    if (material.HasProperty("_CullMode"))
+                    {
+                        material.SetFloat("_CullMode", 0f);
+                    }
+                    material.doubleSidedGI = true;
+                }
+            }
+
+            if (material == null)
+            {
+                return;
+            }
+
+            foreach (Renderer renderer in renderers)
+            {
+                Material[] materials = renderer.sharedMaterials;
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    materials[i] = material;
+                }
+                renderer.sharedMaterials = materials;
             }
         }
 

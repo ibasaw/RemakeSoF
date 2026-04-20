@@ -449,6 +449,190 @@ Erzeugt waffen-spezifische Gore-Decal-Listen basierend auf Waffentyp und Treffer
 | 1 | + wachsende Blutlache (Standard) |
 | 2 | + Pellet-Markierungen (Schrotflinten-Detail) |
 
+---
+
+## 9. Chunk-Physik (ChunkTrajectory — TR_GRAVITY)
+
+### 9.1 Problem: Unity-Rigidbody nicht kompatibel
+
+Das Projekt verwendet **SoF2/Quake III-Style manuelle Physik** (`PlayerPhysicsSimulation.cs`, Port von `bg_pmove.c`).
+Unity-Rigidbodies kollidieren nicht korrekt mit der manuellen Welt-Geometrie (BrushCollision-Layer).
+Nach 6 fehlgeschlagenen Rigidbody-Ansätzen wurde ein eigenes Trajectory-System implementiert.
+
+### 9.2 ChunkTrajectory.cs — SoF2 TR_GRAVITY Port
+
+**Datei:** `Assets/Scripts/Runtime/Management/GoreManagement/ChunkTrajectory.cs`
+
+Ersetzt Unity-Rigidbody durch manuelle Parabel-Physik, identisch zum SoF2 Original:
+
+| Konstante | Wert | SoF2-Quelle |
+|-----------|------|-------------|
+| `GRAVITY` | 20.32 m/s² | 800 QU/s² × 0.0254 (`bg_misc.c`) |
+| `BOUNCE_FACTOR` | 0.2 | `cg_gore.c` CG_ProcessChunk |
+| `REST_THRESHOLD` | 0.1 m/s | Minimale Velocity für Stillstand |
+| Collision Layer | BrushCollision (9) | Welt-Geometrie |
+
+**Algorithmus (Update):**
+```
+position += velocity * dt
+velocity.y -= GRAVITY * dt
+Raycast(position, velocity.normalized, distance)
+  → Hit? velocity = Reflect(velocity, normal) * BOUNCE_FACTOR
+  → |velocity| < REST_THRESHOLD? → m_AtRest = true (kein Update mehr)
+```
+
+**Verwendung:** `GoreApplier.SpawnChunk()` fügt `ChunkTrajectory` statt `Rigidbody` hinzu.
+
+---
+
+## 10. DamageLevel-Differenzierung (DL4 vs DL5)
+
+### 10.1 Übersicht
+
+Die DamageLevels 4 (Medium Death) und 5 (High Death) verhalten sich unterschiedlich:
+
+| DamageLevel | Name | Verhalten |
+|-------------|------|-----------|
+| 0–3 | Blood FX | Nur Blut-Partikel, kein Dismemberment |
+| **4** | **Medium Death** | Dismemberment **nur der getroffenen Zone** — keine Kinder-Zonen |
+| **5** | **High Death** | Vollständiges Gore: getroffene Zone + **alle Children rekursiv** |
+
+### 10.2 Code-Logik (GoreManager.cs)
+
+```csharp
+// GoreManager.ProcessGoreHit():
+if (hitData.DamageLevel < DAMAGE_LEVEL_DISMEMBER)    // DL 0-3
+    → ProcessBloodFX() nur Blut-Partikel
+
+if (hitData.DamageLevel >= DAMAGE_LEVEL_DISMEMBER)    // DL 4-5
+    → ApplyGoreArea() mit damageLevel Parameter
+
+// GoreManager.ApplyDismemberment():
+goreApplier.ApplyGoreArea(..., damageLevel: hitData.DamageLevel)
+
+// DL5: Kinder-Zonen rekursiv
+if (hitData.DamageLevel >= DAMAGE_LEVEL_HIGH_DEATH && area.Children != null)
+    → Jede Kind-GoreArea ebenfalls ApplyGoreArea()
+```
+
+### 10.3 Beispiel: Treffer am Oberarm
+
+| DL4 (Medium Death) | DL5 (High Death) |
+|--------------------|-------------------|
+| Oberarm fliegt ab (Chunk) | Oberarm fliegt ab (Chunk) |
+| Schulter-BoltOn spawnt | Schulter-BoltOn spawnt |
+| Gore-Cap am Torso aktiv | Gore-Cap am Torso aktiv |
+| ❌ Unterarm + Hand bleiben | ✅ Unterarm fliegt (separater Chunk) |
+| | ✅ Hand fliegt (separater Chunk) |
+| | ✅ Alle zugehörigen Caps aktiv |
+| | ✅ Alle Kinder-FX abspielen |
+
+### 10.4 GoreApplier.ApplyGoreArea() Signatur
+
+```csharp
+public void ApplyGoreArea(
+    GameObject characterRoot,
+    GoreArea area,
+    Vector3 hitDirection,
+    GoreDataLoader goreDataLoader,
+    bool isRightSide,
+    int damageLevel = 5,           // Default: High Death
+    HashSet<string> parentFlags = null
+)
+```
+
+---
+
+## 11. Gore-Textur-Pipeline
+
+### 11.1 Problem
+
+Gore-Prefabs (BoltOns wie brain, bone_long; Chunks wie hand.md3, lung.md3) werden als
+3D-Modelle via `PrefabManager` geladen und instantiiert. Diese Prefabs haben **keine Ghoul2Meta**-Komponente
+(im Gegensatz zu Character-Modellen), daher konnte der Standard-Textur-Pfad (Ghoul2Meta → mapped_texture → TextureManager)
+die Texturen nicht auflösen.
+
+### 11.2 Lösung: PrefabTextureApplier modelKey-Fallback
+
+`PrefabTextureApplier.ApplyTextures()` wurde um einen **modelKey-Parameter** erweitert:
+
+```
+PrefabTextureApplier.ApplyTextures(instance, modelKey)
+  │
+  ├── Primär: Ghoul2Meta vorhanden?
+  │   └── Ja → mapped_texture_0..N → TextureManager → Material erstellen
+  │
+  └── Fallback: Kein Ghoul2Meta UND modelKey angegeben?
+      └── modelKey (z.B. "models/characters/gore/hand.md3")
+          → Extension entfernen → "models/characters/gore/hand"
+          → TextureManager.GetTextureData(textureKey)
+          → LazyTextureLoader → LegacyShaderLoader (gore.g2shader) → Textur
+          → SoF2/MapSurface Material erstellen (doppelseitig)
+          → Auf alle Renderer anwenden
+```
+
+### 11.3 Auflösungskette für Gore-Texturen
+
+```
+modelKey: "models/characters/gore/hand.md3"
+    ↓ Extension entfernen
+textureKey: "models/characters/gore/hand"
+    ↓ TextureManager.GetTextureData()
+    ↓ Registry-Cache? → Cache-Hit → fertig
+    ↓ LazyTextureLoader → Art/Textures/models/characters/gore/hand/ → Textur
+    ↓ LegacyShaderLoader Fallback → gore.g2shader Lookup:
+        "models/characters/gore/hand/hand" { map "models/characters/gore/hand" }
+    ↓ Textur-Datei: Art/Textures/models/characters/gore/hand.jpg
+    ↓ Material: SoF2/MapSurface, _BaseMap = Textur, _Cull = 0 (doppelseitig)
+```
+
+### 11.4 Stellen wo modelKey übergeben wird
+
+| Aufrufstelle | Datei | modelKey Quelle |
+|-------------|-------|----------------|
+| `SpawnEmitterChunks` | EffectFactory.cs | `emitter.Models[index]` (z.B. `"models/characters/gore/hand.md3"`) |
+| `SpawnShellCasing` | EffectFactory.cs | `emitter.Models[index]` (z.B. `"models/weapons/shells/shell_brass_hires"`) |
+| `SpawnBoltOn` | GoreApplier.cs | `piece.modelName` (z.B. `"models/characters/gore/brain/g2brain.glm"`) |
+
+### 11.5 Gore-Textur-Dateien
+
+Vorhandene Texturen in `Art/Textures/models/characters/gore/`:
+
+| Ordner | Textur | Status |
+|--------|--------|--------|
+| `brain/` | `brain.jpg` | ✅ Vorhanden |
+| `bone_long/` | `bone_long.png` | ✅ Vorhanden |
+| `hand/` | — (via g2shader) | ✅ Via LegacyShader |
+| `lung/` | — (via g2shader) | ✅ Via LegacyShader |
+| `stomach/` | — (via g2shader) | ✅ Via LegacyShader |
+| `guts/` | — (via g2shader) | ✅ Via LegacyShader |
+| `chunk_lrg/` | chunk_lrg Texturen | ✅ Vorhanden |
+| `chunk_med/` | chunk_med Texturen | ✅ Vorhanden |
+| `chunk_smll/` | chunk_smll Texturen | ✅ Vorhanden |
+| `exit_wound/` | exit_wound Texturen | ✅ Vorhanden |
+| `rib_cage/` | rib_cage Texturen | ✅ Vorhanden |
+| `shoulder_bone/` | — | ⚠️ Keine Textur |
+| `bone_small/` | — | ⚠️ Keine Textur |
+
+---
+
+## 12. Aktualisierte Klassen-Übersicht
+
+| Klasse | Pfad | Zweck |
+|--------|------|-------|
+| `GoreManager` | GoreManagement/GoreManager.cs | Orchestrator: HitRegion → GoreArea Mapping, DL-Prüfung, Blood-FX, Dismemberment-Dispatch |
+| `GoreApplier` | GoreManagement/GoreApplier.cs | Asset-Anwendung: Surfaces on/off, Chunks spawnen, BoltOns, FX |
+| `GoreDataLoader` | DataManagement/GoreDataLoader.cs | Lädt Gore-Daten aus SoF2_DATA.json |
+| `ChunkTrajectory` | GoreManagement/ChunkTrajectory.cs | **NEU** — SoF2 TR_GRAVITY Parabel-Physik für Gore-Chunks |
+| `PGoreWeaponDispatch` | GoreManagement/PGoreWeaponDispatch.cs | Waffen → Gore-Decal-Einträge |
+| `PGoreDecalApplier` | GoreManagement/PGoreDecalApplier.cs | Charakter-Decals (Blut/Wunden) |
+| `GoreArea` | DTOs/GoreManagement/GoreArea.cs | DTO für Gore-Zonen-Definition |
+| `GorePiece` | DTOs/GoreManagement/GorePiece.cs | DTO für Gore-Model-Stücke (BoltOns) |
+| `PrefabTextureApplier` | TextureManagement/PrefabTextureApplier.cs | Textur-Anwendung auf Prefabs (Ghoul2Meta + modelKey-Fallback) |
+| `HitRegion` | Shared/HitRegion.cs | Enum der 17 Regionen |
+| `HitboxCollider` | Shared/HitboxCollider.cs | Komponente auf BoxCollider |
+| `ClientHitboxSystem` | Client/ClientHitboxSystem.cs | Erstellt 17 BoxCollider an Bones |
+
 **Haupt-Methode**:
 ```csharp
 public static List<PGoreData> CreateGoreEntries(
