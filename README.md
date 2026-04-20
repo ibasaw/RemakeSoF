@@ -2,6 +2,8 @@
 
 A faithful recreation of **Soldier of Fortune II: Double Helix** in Unity 6, featuring server-authoritative Quake III/SoF2-style movement physics, Netcode for GameObjects multiplayer, a fully data-driven weapon/effect/sound pipeline, and a GOAP-based AI bot system.
 
+Assets not included in the repository yet — contact me if u want them.
+
 ---
 
 ## Tech Stack
