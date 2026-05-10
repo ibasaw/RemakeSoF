@@ -389,6 +389,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public event Action<bool> OnStunnedChanged;
 
         /// <summary>
+        /// True wenn dieser Spieler aktuell gestunnt ist (netzwerk-synchronisiert).
+        /// Wird z.B. von der AI gelesen, um in HideAndSeek auf Messer zu wechseln,
+        /// sobald ein Ziel mit der M4 betaeubt wurde.
+        /// </summary>
+        public bool IsStunned => m_IsStunned.Value;
+
+        /// <summary>
         /// Sperrt oder entsperrt die Bewegung dieses Spielers auf dem Server.
         /// Eingehende Commands werden bei Sperre mit leerem Input verarbeitet.
         /// </summary>

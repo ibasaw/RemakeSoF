@@ -96,6 +96,20 @@ Status: **Feature-Complete** (Stand: April 2026)
 - `k_ChaseJumpIntervalMin = 1.5f`, `k_ChaseJumpIntervalMax = 3.5f`
 - Periodischer Sprung in ChasePlayerAction für Quake/SoF2 Speed-Boost
 
+### SoF2-Style Bhop (BuildCommand, Mai 2026)
+Zusätzlich zum periodischen Chase-Sprung läuft ein physik-getriebener Bhop direkt im
+`BuildCommand`-Pfad. Voraussetzung: aktives Move-Target, Move-Input > 0,
+`PlayerPhysicsSimulation` referenziert.
+
+- **Step-Up-Jump**: nächster NavMesh-Corner mit Y-Delta > `PmStepSize` (0.4572 m) bei
+  XZ-Anlauf < 2 m → proaktiver Sprung. Verhindert Momentum-Verlust an Stufen/Geländern,
+  weil der Step-Bonus aus PM_StepSlideMove sonst die Geschwindigkeit kappt.
+- **Land-Chain**: `m_PhysicsSimulation.JustLanded && !IsDebounceActive` → sofortiger
+  Re-Jump beim Bodenkontakt. Echtes Q3/SoF2-Bhop-Verhalten mit Speed-Erhalt.
+- Debounce-Gate respektiert PMD_JUMP — kein Double-Jump-Spam.
+- Koexistiert mit `ChasePlayerAction`-Periodensprung; `IsDebounceActive` filtert
+  doppelte Eingaben automatisch.
+
 ### Sensor-basierte Hindernis-Reaktion
 - `ReactToSensorObstacles()` — 7×5 Grid auswerten
 - Unten nah + oben frei → Springen
@@ -124,13 +138,36 @@ Status: **Feature-Complete** (Stand: April 2026)
 
 ### Player Action Mirroring
 - `MirrorNearestPlayerActions()` — spiegelt Jump + Attack
-- Kein Crouch-Mirroring (verlangsamt Bot)
+- Kein Crouch-Mirroring (verlangsamt Bot — `PmDuckScale = 0.25` bricht Speed/Bhop)
 - Gecachte letzte Mirror-Aktion für Stuck-Replay
+- **Stuck-Replay-Crouch entfernt** (Mai 2026): früher wurde gecachtes Spieler-Crouch
+  beim Stuck-Recovery gespiegelt, das machte den Bot beim Verfolgen 75% langsamer.
+- **Phase-3-Reverse-Crouch nur out-of-combat**: 4-Phasen-Stuck-Recovery zwingt 1 s
+  Crouch beim Rückwärts-Drehen, aber nur wenn `!PlayerSensorDetected`.
+
+### FireMode (Personality-getriebene Triggerdiscipline)
+- `BotPersonality.fireMode` — `single` / `burst` / `full`.
+- `UpdateFirePatternGate()` ersetzt Dauerfeuer durch realistische Bursts mit
+  Cooldowns und Pausen. Verhindert dass weit entfernte Ziele in Sekunden leergefeuert werden.
+- Pro-Personality-Profile (Aggressive=full, Sniper=single, Veteran=burst, …).
 
 ### Waffen-Range-Erkennung
 - `m_WeaponRangeMeters` — gecacht aus SoF2 Waffendefinitionen
 - `m_CachedWeaponName` — Waffenwechsel-Erkennung
 - XZ-Distanz für Reichweiten-Vergleich (nicht 3D)
+
+### Waffen-Auswahl (`EvaluateWeaponState`, Mai 2026)
+Prüft alle `k_WeaponEvalInterval = 1.5 s` informiert das Inventar — kein blindes
+Cyclen mehr, kein Knife↔Ranged Ping-Pong.
+- Skip während laufendem Swap (`HasPendingWeaponSwap`) und während Pre-Round-Countdown.
+- Inventar einmal scannen → `bestRanged` (erste Ranged-mit-Ammo) + `fallbackMelee`.
+- Aktuelle Waffe trocken (clip+reserve = 0, nicht infinite) → bestes Alternativ-Target.
+- Aktuelle Waffe Melee + Spieler in Sicht + Ranged-mit-Ammo verfügbar → Ranged.
+- Sonst: bleiben.
+- Wechsel via `NetworkedCharacterState.ServerSelectWeapon(name)` — direkt zur Zielwaffe,
+  validiert Inventar, setzt `m_PendingSwapTarget`.
+- Ammo-Abfrage für andere Waffen via `NetworkedCharacterState.TryGetAmmoFor(name, …)`
+  (Live-NV für aktive Waffe, AmmoCache für Rest).
 
 ---
 
@@ -164,6 +201,7 @@ Status: **Feature-Complete** (Stand: April 2026)
 | k_ChaseJumpIntervalMax | 3.5f | Max Chase-Sprung Intervall |
 | k_TargetHeadHeight | 1.7f | Ziel-Kopfhöhe für Aiming |
 | k_PitchDecayDegPerSec | 15.0f | Pitch-Rückführung ohne Ziel |
+| k_WeaponEvalInterval | 1.5f | Waffen-Eval Intervall |
 
 ---
 

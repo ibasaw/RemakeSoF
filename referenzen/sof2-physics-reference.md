@@ -249,6 +249,20 @@ Kein SoF2-Feature, sondern ein Debug/HUD-Feature:
 | `ResolvePenetration()` | BSP hat kein Tunneling, Unity Meshes schon | Iteratives Push-Out als Safety-Net |
 | `CorrectGroundPosition()` | SoF2 BSP tracet exakt, Unity Meshes können leicht einsinken | Hält Box über Bodenoberfläche |
 
+## Audit-Status (Mai 2026)
+
+Vollständiger Code-Review gegen `bg_pmove.c` / `bg_slidemove.c` durchgeführt. Verifiziert:
+
+- Pipeline-Reihenfolge (`PM_CheckDuck → PM_GroundTrace → JustLanded-Detect → PM_CheckCrouchJump → DropTimers → WalkMove/AirMove → 2. PM_GroundTrace → 2. JustLanded-Detect`) entspricht exakt SoF2 `PmoveSingle`.
+- `PM_Accelerate` ist die kanonische Q3-Projection-Form (`addspeed = wishspeed - dot(velocity, wishdir)`) → Strafe-Jumping funktioniert nativ.
+- `PM_AirAccelerate = 1.0` (SoF2-Default) → echtes Air-Strafing.
+- `PMD_JUMP`-Debounce verlangt Button-Release zwischen Sprüngen → kein Auto-Hold-Bhop-Cheat.
+- Slope-Speed-Restore nach `PM_ClipVelocity` (Magnitude-Renormalisierung) → keine Speed-Verluste an Schrägen.
+- Same-Frame Land+Jump wird durch doppelte `JustLanded`-Detection korrekt erkannt (sonst Bouncing-Animation-Loop).
+- Alle Konstanten 1:1 SoF2-Defaults × 0.0254 (Inch → Meter).
+
+Custom-Erweiterungen (nicht in Vanilla SoF2): `KnockbackTime` (PMF_TIME_KNOCKBACK-Port), `StunTime`-Friction-Multiplier (Gametype), Bhop-Chain-Telemetrie (`BhopChainCount`, Peak-Speed, Distance) — alle gekapselt und kommentiert, beeinflussen die Simulation nicht.
+
 ## Dateien
 
 | Datei | Beschreibung |

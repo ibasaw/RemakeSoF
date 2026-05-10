@@ -73,6 +73,13 @@ namespace Tolik.RemakeSoF.Runtime.AI
         /// <summary>Intervall zwischen Waffen-Evaluierungen in Sekunden.</summary>
         private const float k_WeaponEvalInterval = 1.5f;
 
+        /// <summary>
+        /// HideAndSeek: Distanz in Metern, ab der der Bot vom Ranged-Stunner (M4) auf
+        /// das Messer wechselt, weil das Ziel ohnehin schnell erreichbar ist.
+        /// In H&S ist nur das Messer toetlich; M4 stunnt nur (3 Schuss).
+        /// </summary>
+        private const float k_HideAndSeekRushRange = 4f;
+
         /// <summary>Ob dieser Bot ein Seeker ist.</summary>
         public bool IsSeeker { get; private set; }
 
@@ -2753,32 +2760,117 @@ namespace Tolik.RemakeSoF.Runtime.AI
 
             m_LastWeaponEvalTime = Time.time;
 
-            int clipAmmo = m_CharacterState.CurrentClipAmmo;
-            int reserveAmmo = m_CharacterState.ReserveAmmo;
-            string currentWeaponName = m_CharacterState.CurrentWeaponName;
-
             WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
             if (loader == null)
             {
                 return;
             }
 
-            WeaponDefinition currentWeapon = loader.GetById(currentWeaponName);
-            bool isInfinite = currentWeapon?.Ammo?.Infinite ?? false;
+            // Inventar scannen: beste Ranged-mit-Ammo + erste Melee-Fallback
+            // ermitteln. So entscheiden wir BEVOR wir swappen — kein Ping-Pong mehr.
+            string currentWeaponName = m_CharacterState.CurrentWeaponName;
+            string bestRanged = null;
+            string fallbackMelee = null;
+            int weaponCount = m_CharacterState.WeaponCount;
 
-            // Waffe komplett trocken (clip=0, reserve=0, nicht infinite) → naechste Waffe
-            if (clipAmmo <= 0 && reserveAmmo <= 0 && !isInfinite)
+            for (int i = 0; i < weaponCount; i++)
             {
-                m_CharacterState.ServerCycleWeapon(1);
-                Debug.Log($"[AI·Weapon] {m_CharacterState.CharacterName}: Waffe '{currentWeaponName}' trocken, wechsle zur naechsten.");
-                return;
+                string weaponId = m_CharacterState.GetWeaponAt(i);
+                if (string.IsNullOrEmpty(weaponId))
+                {
+                    continue;
+                }
+
+                WeaponDefinition def = loader.GetById(weaponId);
+                if (def == null)
+                {
+                    continue;
+                }
+
+                bool defInfinite = def.Ammo?.Infinite ?? false;
+                bool hasUsableAmmo = defInfinite;
+                if (!hasUsableAmmo && m_CharacterState.TryGetAmmoFor(weaponId, out int wClip, out int wReserve))
+                {
+                    hasUsableAmmo = (wClip + wReserve) > 0;
+                }
+
+                if (def.IsMelee)
+                {
+                    if (fallbackMelee == null && hasUsableAmmo)
+                    {
+                        fallbackMelee = weaponId;
+                    }
+                }
+                else if (hasUsableAmmo && bestRanged == null)
+                {
+                    // Erste schussbereite Ranged-Waffe = Wunsch-Ziel.
+                    // (Spaeter ggf. Score-basiert: Reichweite vs Sensor-Distanz.)
+                    bestRanged = weaponId;
+                }
             }
 
-            // Im Kampf: Fernkampfwaffe bevorzugen wenn aktuell Nahkampf gehalten wird
-            if (PlayerSensorDetected && currentWeapon != null && currentWeapon.IsMelee)
+            // Entscheidungslogik:
+            // 1) Aktuelle Waffe trocken & Alternative vorhanden → wechseln.
+            // 2) HideAndSeek: Messer ist die einzige toetende Waffe; M4 stunnt nur (3 Schuss).
+            //    → Ziel gestunnt ODER in Rush-Range → Messer (rush-kill).
+            //    → Ziel weit & nicht gestunnt → Ranged (M4) zum Stunnen.
+            // 3) Sonstige Gametypes: Melee in aktivem Kampf → auf Ranged wechseln.
+            // 4) Sonst: bleiben (kein Swap, kein Ping-Pong).
+            WeaponDefinition currentDef = loader.GetById(currentWeaponName);
+            bool currentIsMelee = currentDef?.IsMelee ?? false;
+            bool currentIsInfinite = currentDef?.Ammo?.Infinite ?? false;
+            bool currentIsDry = !currentIsInfinite
+                && m_CharacterState.CurrentClipAmmo <= 0
+                && m_CharacterState.ReserveAmmo <= 0;
+
+            // HideAndSeek-Kontext: Gametype + Stun-Status + Rush-Range bestimmen.
+            bool isHideAndSeek = false;
+            NetworkedGameState gameStateForGametype = NetworkedGameState.Singleton;
+            if (gameStateForGametype != null)
             {
-                m_CharacterState.ServerCycleWeapon(1);
-                Debug.Log($"[AI·Weapon] {m_CharacterState.CharacterName}: Nahkampfwaffe '{currentWeaponName}' im Kampf, wechsle zu Fernkampf.");
+                isHideAndSeek = gameStateForGametype.activeGametypeId.Value == "hideandseek";
+            }
+            bool targetStunned = m_NearestPlayerCharacter != null && m_NearestPlayerCharacter.IsStunned;
+            bool targetInRushRange = m_NearestPlayerTransform != null
+                && m_NearestPlayerDistance <= k_HideAndSeekRushRange;
+
+            string desired = null;
+
+            if (currentIsDry)
+            {
+                desired = bestRanged ?? fallbackMelee;
+                if (!string.IsNullOrEmpty(desired) && desired != currentWeaponName)
+                {
+                    Debug.Log($"[AI·Weapon] {m_CharacterState.CharacterName}: '{currentWeaponName}' trocken → '{desired}'.");
+                }
+            }
+            else if (isHideAndSeek && PlayerSensorDetected
+                     && (targetStunned || targetInRushRange)
+                     && fallbackMelee != null && fallbackMelee != currentWeaponName)
+            {
+                // H&S: Ziel betaeubt oder in Rush-Range → Messer ziehen und toeten.
+                desired = fallbackMelee;
+                string reason = targetStunned ? "Ziel gestunnt" : $"Rush-Range ({m_NearestPlayerDistance:F1}m)";
+                Debug.Log($"[AI·Weapon|H&S] {m_CharacterState.CharacterName}: {reason} → '{fallbackMelee}'.");
+            }
+            else if (isHideAndSeek && PlayerSensorDetected
+                     && !targetStunned && !targetInRushRange
+                     && currentIsMelee && bestRanged != null && bestRanged != currentWeaponName)
+            {
+                // H&S: Ziel weit & wach → erst mit M4 stunnen.
+                desired = bestRanged;
+                Debug.Log($"[AI·Weapon|H&S] {m_CharacterState.CharacterName}: Ziel weit ({m_NearestPlayerDistance:F1}m) & wach → Stun mit '{bestRanged}'.");
+            }
+            else if (!isHideAndSeek && currentIsMelee && PlayerSensorDetected
+                     && bestRanged != null && bestRanged != currentWeaponName)
+            {
+                desired = bestRanged;
+                Debug.Log($"[AI·Weapon] {m_CharacterState.CharacterName}: Kampf, Melee gehalten → '{bestRanged}'.");
+            }
+
+            if (!string.IsNullOrEmpty(desired) && desired != currentWeaponName)
+            {
+                m_CharacterState.ServerSelectWeapon(desired);
             }
         }
 

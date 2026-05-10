@@ -50,7 +50,7 @@
     "g_blueTeamStartWeapons": [
         "m4"
     ],
-    "sv_botcount": 1,
+    "sv_botcount": 2,
     "sv_botnames": [
         "[RMK]^1Hawk",
         "^4{ELiTE}^7Viper",

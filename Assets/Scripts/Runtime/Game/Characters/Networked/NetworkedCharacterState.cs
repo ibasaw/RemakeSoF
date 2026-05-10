@@ -1130,6 +1130,86 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         }
 
         /// <summary>
+        /// Server: Waehlt eine Waffe direkt anhand ihres Namens (fuer AI-Bot-Steuerung).
+        /// Im Gegensatz zu ServerCycleWeapon kein blindes Cyclen — die AI entscheidet bewusst.
+        /// Setzt m_PendingSwapTarget damit HasPendingWeaponSwap waehrend des Swaps korrekt true ist.
+        /// </summary>
+        /// <param name="weaponName">ID der Zielwaffe (muss im Inventar sein).</param>
+        public void ServerSelectWeapon(string weaponName)
+        {
+            if (!IsServer || string.IsNullOrEmpty(weaponName))
+            {
+                return;
+            }
+
+            // Nicht swappen wenn schon Ziel oder bereits aktive Waffe
+            string effective = EffectiveWeaponName;
+            if (string.Equals(effective, weaponName, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            // Verifizieren dass Waffe im Inventar ist
+            FixedString64Bytes target = new(weaponName);
+            bool found = false;
+            for (int i = 0; i < m_WeaponInventory.Count; i++)
+            {
+                if (m_WeaponInventory[i] == target)
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                return;
+            }
+
+            m_PendingSwapTarget = weaponName;
+            OnWeaponSwapRequested?.Invoke(weaponName);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[NetworkedCharacterState] Server weapon select for client {OwnerClientId}: {effective} → {weaponName}");
+#endif
+        }
+
+        /// <summary>
+        /// Server: Liefert Clip- und Reserve-Munition fuer eine beliebige Waffe im Inventar.
+        /// Fuer die aktuell gehaltene Waffe werden die Live-NetworkVariables verwendet,
+        /// fuer alle anderen der serverseitige AmmoCache.
+        /// AI nutzt das fuer informierte Waffenwahl ohne Probe-Swap.
+        /// </summary>
+        /// <returns>True wenn Ammo-Daten verfuegbar sind, sonst false.</returns>
+        public bool TryGetAmmoFor(string weaponName, out int clip, out int reserve)
+        {
+            clip = 0;
+            reserve = 0;
+
+            if (!IsServer || string.IsNullOrEmpty(weaponName))
+            {
+                return false;
+            }
+
+            // Live-Werte fuer aktive Waffe
+            if (string.Equals(m_CurrentWeaponName.Value.ToString(), weaponName, StringComparison.Ordinal))
+            {
+                clip = m_CurrentClipAmmo.Value;
+                reserve = m_ReserveAmmo.Value;
+                return true;
+            }
+
+            // Cache fuer andere Waffen
+            if (m_AmmoCache.TryGetValue(weaponName, out (int clip, int reserve, int altClip, int altReserve) cached))
+            {
+                clip = cached.clip;
+                reserve = cached.reserve;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Server: Cycled die aktuelle Waffe um den angegebenen Offset (1 = naechste, -1 = vorherige).
         /// Wrap-around am Inventar-Ende/Anfang (wie SoF2 weapon cycling).
         /// </summary>

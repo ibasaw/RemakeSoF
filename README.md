@@ -71,17 +71,22 @@ SoF2/Quake III movement ported from `bg_pmove.c` / `bg_slidemove.c` to C# (`Play
 - Manual physics — no Rigidbody, no Unity CharacterController
 - Client sends `PlayerCommand` structs (MoveInput, YawAngle, PitchAngle, Buttons, DeltaTime, SequenceNumber), server simulates and acknowledges via `ServerMovementAck`
 
-### Physics Parameters (SoF2 ÷ 10)
+### Physics Parameters (SoF2 × 0.0254 — 1 SoF2-Unit = 1 Inch = 0.0254 m)
 
-| Parameter | Value | SoF2 Original |
-|-----------|-------|---------------|
-| Gravity | 80 | 800 |
-| Max Speed | 28 | 280 |
-| Jump Velocity | 27 | 270 |
-| Accelerate | 6 | 6 |
-| Air Accelerate | 1 | 1 |
-| Friction | 6 | 6 |
-| Max Steepness | 0.7 | 0.7 |
+| Parameter | Unity Value | SoF2 Original (QU) | Unit |
+|-----------|-------------|--------------------|------|
+| Gravity | 20.32 | 800 | m/s² |
+| Max Speed (run) | 7.112 | 280 | m/s |
+| Jump Velocity | 6.858 | 270 | m/s |
+| Accelerate | 6.0 | 6 | dimensionless |
+| Air Accelerate | 1.0 | 1 | dimensionless |
+| Friction | 6.0 | 6 | dimensionless |
+| Max Steepness | 0.7 | 0.7 | cos(θ) |
+| Standing Height | 2.2606 | 89 | m |
+| Crouching Height | 1.6256 | 64 | m |
+| Capsule Radius | 0.381 | 15 | m |
+
+> Frühere Versionen dieses Repos benutzten ein ÷10-Schema (Gravity=80, MaxSpeed=28). Das war ein Legacy-Approximation und wurde durch die exakte 1:1-Inch→Meter-Konvertierung (`× 0.0254`) ersetzt. Siehe `PlayerPhysicsSimulation.cs` und `ClientColliderSystem.cs`.
 
 See [referenzen/server-authoritative-movement.md](referenzen/server-authoritative-movement.md) and [referenzen/sof2-physics-reference.md](referenzen/sof2-physics-reference.md) for details.
 
@@ -295,7 +300,9 @@ See [referenzen/round-flow-system.md](referenzen/round-flow-system.md) and [refe
 
 ---
 
-## AI Bot System (Feature Complete — April 2026)
+## AI Bot System (Feature Complete — Mai 2026)
+
+> Mai-2026 Updates: FireMode-Persönlichkeit pro Profil (single/burst/auto), Bunny-Hop (Step-Up-Jump + Land-Chain) für Chase, Anti-Ping-Pong-Waffenwahl (Bot prüft Ammo *vor* Switch), Chase-Crouch-Fix, vollständiges Physics-Audit (1:1 SoF2-Port verifiziert).
 
 GOAP-based Seeker Bot with NavMesh pathfinding and SoF2/Quake3 physics:
 

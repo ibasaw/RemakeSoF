@@ -295,3 +295,49 @@ Waffen-Modelle (WeaponLoader → Shader.Find → Material) auf dem Dedicated Ser
 
 **Dateien**:
 - `Assets/Scripts/Runtime/Management/GametypeManagement/HideAndSeekGametype.cs`
+
+---
+
+## Bug #17: Bot duckt sich beim Verfolgen (Chase-Crouch)
+
+**Symptom**: Beim Verfolgen eines Spielers spiegelte der Bot dessen Crouch-State und wurde dadurch ~75% langsamer (`PmDuckScale = 0.25`). Bhop-Beschleunigung brach ab.
+
+**Ursache**: Zwei Code-Pfade in `AIBotController` setzten `m_ShouldCrouch = true` während eines aktiven Chase:
+1. **Stuck-Replay**: `if (m_LastMirrorCrouch) m_ShouldCrouch = true;` spiegelte das gecachte Spieler-Crouch beim Stuck-Recovery — auch während Chase.
+2. **Phase-3 Reverse-Crouch**: Der 4-Phasen-Stuck-Recovery zwingt 1 s Crouch beim Rückwärts-Drehen — wurde aber auch während Chase ausgelöst.
+
+Beides widersprach dem expliziten Kommentar in `MirrorNearestPlayerActions()` ("Ducken wird absichtlich NICHT gespiegelt").
+
+**Fix**:
+- Stuck-Replay-Crouch komplett entfernt (nur Jump wird gespiegelt).
+- Phase-3 Reverse-Crouch in `if (!PlayerSensorDetected)` gewrappt — kein Slowdown wenn Bot den Spieler aktiv sieht.
+
+**Dateien**:
+- `Assets/Scripts/Runtime/AI/AIBotController.cs`
+
+---
+
+## Bug #18: Seeker-Bot Waffen-Ping-Pong (Knife ↔ Ranged Loop)
+
+**Symptom**: Bot wechselt im Kampf korrekt von leerer Ranged-Waffe (clip=0, reserve=0) auf Knife — aber sofort wieder zurück auf Ranged → wieder auf Knife → endlos. Sieht aus wie Stottern.
+
+**Ursache**: `EvaluateWeaponState` prüfte den Ammo-Zustand **erst nach dem Swap-Commit**, nicht vor der Wechsel-Entscheidung:
+1. Bot hält Knife, sieht Spieler → "Melee im Kampf, cycle zu Ranged"
+2. `ServerCycleWeapon(1)` swappt blind zur nächsten Waffe (M4 mit 0/0).
+3. Nach Commit: nächster Eval sieht "M4 trocken" → cycle weiter → wrap-around zurück zu Knife.
+4. Loop, weil die Wechsel-Entscheidung nie wusste, dass alle Ranged-Waffen leer sind.
+
+**Fix**: Informierte Waffenwahl statt blindes Cyclen.
+- Neue Helper auf `NetworkedCharacterState`:
+  - `TryGetAmmoFor(weaponName, out clip, out reserve)` — liefert Live-Ammo für aktive Waffe + Cache-Werte für andere Inventar-Waffen.
+  - `ServerSelectWeapon(weaponName)` — direkter Wechsel zu einer Ziel-Waffe (mit Inventar-Validation), statt rotierendem Cycle.
+- `EvaluateWeaponState` neu:
+  1. Inventar einmal scannen → erste Ranged-mit-Ammo + erste Melee-Fallback ermitteln.
+  2. Aktuelle Waffe trocken? → bestes Alternativ-Target wählen (Ranged bevorzugt).
+  3. Aktuelle Waffe Melee + Kampf + Ranged-mit-Ammo verfügbar? → Ranged.
+  4. Sonst: bleiben.
+- Wenn keine Ranged-Waffe Munition hat, bleibt der Bot auf dem Knife — kein Ping-Pong mehr.
+
+**Dateien**:
+- `Assets/Scripts/Runtime/AI/AIBotController.cs` (`EvaluateWeaponState`)
+- `Assets/Scripts/Runtime/Game/Characters/Networked/NetworkedCharacterState.cs` (`TryGetAmmoFor`, `ServerSelectWeapon`)
