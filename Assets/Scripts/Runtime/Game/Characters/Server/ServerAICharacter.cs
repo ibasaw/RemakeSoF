@@ -63,6 +63,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
         /// <summary>Naechster Zeitpunkt ab dem ein Angriff moeglich ist (Cooldown).</summary>
         private float m_NextAttackTime;
 
+        // ===== Server Reload (analog zu NetworkedPlayerCharacter, aber stark vereinfacht) =====
+
+        /// <summary>Verbleibende Reload-Frames (autoritativ). 0 = kein Reload aktiv.</summary>
+        private int m_ReloadFramesRemaining;
+
+        /// <summary>Frame-Akkumulator fuer frame-diskretes Reload-Timing.</summary>
+        private float m_ReloadFrameAccumulator;
+
+        /// <summary>Gesamt-Reload-Frames der aktuellen Waffe (aus mp_reload).</summary>
+        private int m_ReloadFrames;
+
+        /// <summary>Reload-FPS aus mp_reload (Default 20).</summary>
+        private int m_ReloadFps = 20;
+
+        /// <summary>True wenn ein Reload gerade laeuft. Blockiert Angriff und neuen Reload.</summary>
+        public bool IsReloading => m_ReloadFramesRemaining > 0;
+
         /// <summary>SoF2-QU zu Unity-Meter Umrechnungsfaktor.</summary>
         private const float SOF2_UNIT_SCALE = 0.0254f;
 
@@ -280,11 +297,21 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                 physicsCollider.center = m_Simulation.CapsuleCenter;
             }
 
-            // Waffen-Angriff verarbeiten (Hitscan-Raycast + Schaden)
-            if ((cmd.Buttons & CommandButtons.Attack) != 0)
+            // Waffen-Angriff verarbeiten (Hitscan-Raycast + Schaden).
+            // Reload blockt Angriff vollstaendig (analog Player: kein Feuern waehrend Nachladen).
+            if ((cmd.Buttons & CommandButtons.Attack) != 0 && !IsReloading)
             {
                 ProcessAIAttack(cmd);
             }
+
+            // Reload-Anforderung verarbeiten (CommandButtons.Reload vom AIBotController gesetzt).
+            if ((cmd.Buttons & CommandButtons.Reload) != 0)
+            {
+                TryStartReload();
+            }
+
+            // Reload-Frames ticken (autoritativer Frame-Counter; CompleteReload am Ende).
+            TickServerReload(Time.deltaTime);
 
             // Animations-State berechnen und an NetworkVariable schreiben
             if (m_NetworkedAICharacter != null)
@@ -332,10 +359,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
             float cooldown = attackDef.FireDelay > 0 ? attackDef.FireDelay / 1000f : 0.5f;
             m_NextAttackTime = Time.time + cooldown;
 
-            // Waffen-Sound an alle Clients senden
-            m_NetworkedAICharacter.PlayAttackSound(weaponName);
-
-            // Munition verbrauchen (Messer hat unendlich, andere Waffen nicht)
+            // Munition verbrauchen (Messer hat unendlich, andere Waffen nicht).
+            // WICHTIG: Vor dem Sound — sonst feuert der Bot mit leerem Magazin Schuss-Sounds ab.
             if (m_CharacterState != null && !weapon.IsMelee)
             {
                 if (!m_CharacterState.TryConsumeAmmo())
@@ -343,6 +368,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
                     return;
                 }
             }
+
+            // Waffen-Sound an alle Clients senden (erst nach erfolgreichem Ammo-Verbrauch)
+            m_NetworkedAICharacter.PlayAttackSound(weaponName);
 
             // Augen-Position und Blickrichtung berechnen
             Vector3 eyePos = GetEyePosition();
@@ -365,6 +393,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
             int hitboxLayerMask = LayerMask.GetMask("Hitbox");
             bool didHitBone = Physics.Raycast(eyePos, aimDirection, out RaycastHit boneHit,
                 rangeMeters, hitboxLayerMask, QueryTriggerInteraction.Collide);
+
+            // Debug-Tracer: Linie von Augen-Position zum Treffer- oder Maximalreichweite-Endpunkt.
+            // Broadcast an alle Clients via NetworkedAICharacter (server-only, Toggle dort).
+            Vector3 tracerEnd = didHitBone ? boneHit.point : eyePos + aimDirection * rangeMeters;
+            m_NetworkedAICharacter?.BroadcastDebugTracer(eyePos, tracerEnd);
 
             if (didHitBone)
             {
@@ -576,11 +609,98 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Server
             state.IsWalking = horizontalSpeed > 0.01f && horizontalSpeed < m_Simulation.PmMaxSpeed * m_Simulation.PmWalkScale;
             state.IsAttacking = isAttacking;
             state.IsCrouching = m_Simulation.IsCrouching;
-            state.IsReloading = false;
+            state.IsReloading = IsReloading;
             state.IsAltAttacking = false;
-            state.IsSwapping = false;
+            state.IsSwapping = m_NetworkedAICharacter != null && m_NetworkedAICharacter.IsServerSwapping;
 
             m_NetworkedAICharacter.WriteAnimationState(state);
+        }
+
+        /// <summary>
+        /// Server: Startet einen Reload wenn moeglich. Blockt waehrend laufendem Reload
+        /// oder Weapon-Swap. Liest mp_reload aus der WeaponDefinition fuer Frames/Fps.
+        /// </summary>
+        private void TryStartReload()
+        {
+            if (IsReloading)
+            {
+                return;
+            }
+
+            // Waehrend Drop/Raise nicht reloaden — Bot wechselt gerade Waffe.
+            if (m_NetworkedAICharacter != null && m_NetworkedAICharacter.IsServerSwapping)
+            {
+                return;
+            }
+
+            if (m_CharacterState == null || !m_CharacterState.CanReload())
+            {
+                return;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+            if (weapon == null || weapon.Animations == null)
+            {
+                return;
+            }
+
+            // mp_reload aus WeaponDefinition (Standard); falls nur mp_reloadStart/Shell/End
+            // existieren (Schrotflinten), Summe verwenden — vereinfacht ohne Per-Shell-Loop.
+            int frames = 0;
+            int fps = 20;
+            if (weapon.Animations.TryGetValue("mp_reload", out WeaponAnimationEntry reloadAnim))
+            {
+                frames = reloadAnim.Duration;
+                fps = reloadAnim.Fps > 0 ? reloadAnim.Fps : 20;
+            }
+            else if (weapon.Animations.TryGetValue("mp_reloadStart", out WeaponAnimationEntry startAnim) &&
+                     weapon.Animations.TryGetValue("mp_reloadShell", out WeaponAnimationEntry shellAnim) &&
+                     weapon.Animations.TryGetValue("mp_reloadEnd", out WeaponAnimationEntry endAnim))
+            {
+                int shells = Mathf.Min(weapon.Ammo != null ? weapon.Ammo.MaxClip : 1, m_CharacterState.ReserveAmmo);
+                frames = startAnim.Duration + shellAnim.Duration * Mathf.Max(1, shells) + endAnim.Duration;
+                fps = startAnim.Fps > 0 ? startAnim.Fps : 20;
+            }
+
+            if (frames <= 0)
+            {
+                // Fallback: 1 Sekunde Reload bei fehlender Animation.
+                frames = 20;
+                fps = 20;
+            }
+
+            m_ReloadFrames = frames;
+            m_ReloadFps = fps;
+            m_ReloadFramesRemaining = frames;
+            m_ReloadFrameAccumulator = 0f;
+        }
+
+        /// <summary>
+        /// Server: Tickt verbleibende Reload-Frames frame-diskret (gleicher Stil wie
+        /// NetworkedPlayerCharacter). Bei Erreichen 0 wird CompleteReload aufgerufen,
+        /// das Clip aus Reserve auffuellt.
+        /// </summary>
+        private void TickServerReload(float deltaTime)
+        {
+            if (m_ReloadFramesRemaining <= 0)
+            {
+                return;
+            }
+
+            m_ReloadFrameAccumulator += deltaTime;
+            float frameInterval = 1f / Mathf.Max(1, m_ReloadFps);
+            while (m_ReloadFrameAccumulator >= frameInterval && m_ReloadFramesRemaining > 0)
+            {
+                m_ReloadFrameAccumulator -= frameInterval;
+                m_ReloadFramesRemaining--;
+            }
+
+            if (m_ReloadFramesRemaining <= 0)
+            {
+                m_CharacterState?.CompleteReload();
+                m_ReloadFrameAccumulator = 0f;
+            }
         }
     }
 }

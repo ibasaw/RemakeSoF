@@ -16,6 +16,7 @@ using Tolik.RemakeSoF.Runtime.Game.Effects;
 using Tolik.RemakeSoF.Runtime.GoreManagement;
 using Tolik.RemakeSoF.Runtime.GametypeManagement;
 using Tolik.RemakeSoF.Runtime.SoundManagement;
+using Tolik.RemakeSoF.Runtime.AI.Personality;
 using UnityEngine.Audio;
 
 namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
@@ -146,6 +147,10 @@ namespace Tolik.RemakeSoF.Runtime.ApplicationLifecycle
                     // GametypeManager erstellen (liest g_gametype aus ServerConfiguration)
                     GametypeManager gametypeManager = new();
                     ServiceLocator.Register(gametypeManager);
+
+                    // BotPersonalityLoader fuer Bot-AI Persoenlichkeitsprofile (Aggressive/Sniper/Rookie/...)
+                    BotPersonalityLoader botPersonalityLoader = new();
+                    ServiceLocator.Register(botPersonalityLoader);
 
                     // Start CLI command listener for server
                     m_ServerCommandListener = new ServerCommandListener();

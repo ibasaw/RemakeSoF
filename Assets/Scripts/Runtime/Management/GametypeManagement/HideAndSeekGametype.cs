@@ -424,7 +424,20 @@ namespace Tolik.RemakeSoF.Runtime.GametypeManagement
         /// <inheritdoc />
         public override string[] GetStartWeapons(GametypeTeam team)
         {
-            // Alle Spieler starten nur mit Knife
+            // Wenn das jeweilige Flag aktiv ist: Knife + Team-Loadout aus Server-Config
+            // (g_blueTeamStartWeapons fuer Seeker, g_redTeamStartWeapons fuer Hider).
+            // Knife wird von der Base-Implementierung automatisch vorangestellt.
+            // Sonst: nur Knife.
+            if (team == GametypeTeam.Blue && SeekersHaveWeapons())
+            {
+                return base.GetStartWeapons(team);
+            }
+
+            if (team == GametypeTeam.Red && HidersHaveWeapons())
+            {
+                return base.GetStartWeapons(team);
+            }
+
             return new[] { "knife" };
         }
 

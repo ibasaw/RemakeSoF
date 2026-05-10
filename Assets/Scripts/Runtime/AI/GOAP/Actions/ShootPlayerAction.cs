@@ -71,7 +71,22 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
             }
 
             controller.SetLookTarget(playerPos);
-            controller.SetMoveTarget(playerPos);
+
+            // Mit Fernkampfwaffe: Position halten sobald der Spieler direkt sichtbar ist
+            // und in Waffenreichweite. Bot soll nicht reinrennen, sondern aus Distanz feuern.
+            // Mit Nahkampfwaffe: weiter zum Spieler laufen (Knife etc. brauchen Kontakt).
+            bool isMelee = controller.IsCurrentWeaponMelee;
+            bool inRangeWithSight = controller.PlayerDirectlyVisible
+                && controller.PlayerSensorDistanceXZ <= controller.WeaponRangeMeters;
+
+            if (!isMelee && inRangeWithSight)
+            {
+                controller.StopMovement();
+            }
+            else
+            {
+                controller.SetMoveTarget(playerPos);
+            }
 
             // Nur feuern wenn der Spieler direkt sichtbar ist (nicht nur im Gedaechtnis)
             // Sonst treffen die Kugeln nur Waende
@@ -80,8 +95,12 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
                 controller.SetShouldAttack(true);
             }
 
-            // Spieler-Aktionen spiegeln (Springen, Ducken)
-            controller.MirrorNearestPlayerActions();
+            // Spieler-Aktionen spiegeln (Springen, Ducken) — aber nur in Bewegung,
+            // sonst springt der Sniper sinnlos auf der Stelle.
+            if (isMelee || !inRangeWithSight)
+            {
+                controller.MirrorNearestPlayerActions();
+            }
 
             return ActionRunState.Continue;
         }

@@ -89,6 +89,7 @@ MonoBehaviour:
   m_ServerCharacterController: {fileID: 8827472037324245302}
   m_HitboxSystem: {fileID: 209944670976753633}
   m_ColliderSystem: {fileID: 5328490211640741795}
+  m_ShowDebugTracers: 1
 --- !u!114 &371786759833745410
 MonoBehaviour:
   m_ObjectHideFlags: 0

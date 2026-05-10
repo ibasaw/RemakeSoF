@@ -10,8 +10,8 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
     /// </summary>
     public class PlayerVisibilitySensor : LocalWorldSensorBase
     {
-        /// <summary>Sensor-Timer: Jedes Frame abtasten fuer reaktive AI.</summary>
-        public override ISensorTimer Timer => SensorTimer.Always;
+        /// <summary>Sensor-Timer: 10 Hz reicht fuer Reaktionszeit; Action-Loop nutzt Echtzeit-Sensoren.</summary>
+        public override ISensorTimer Timer => SensorTimer.Interval(0.1f);
 
         /// <inheritdoc />
         public override void Created() { }

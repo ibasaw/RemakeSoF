@@ -10,17 +10,47 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
     /// Vorbedingung: IsPlayerVisible >= 1.
     /// Effekt: Erhoehung von IsPlayerInRange.
     /// Springt periodisch um durch Quake/SoF2-Bewegungsphysik schneller aufzuholen.
+    /// Wenn die Sicht verloren geht: laeuft zur letzten bekannten Position
+    /// und scannt dort die Umgebung fuer mehrere Sekunden bevor zur Patrouille zurueckgekehrt wird.
     /// </summary>
     public class ChasePlayerAction : GoapActionBase<AIActionData>
     {
-        /// <summary>Minimales Intervall zwischen Chase-Spruengen in Sekunden.</summary>
-        private const float k_ChaseJumpIntervalMin = 1.5f;
+        /// <summary>
+        /// Minimales Intervall zwischen Chase-Spruengen in Sekunden.
+        /// Kompromiss: schnell genug fuer Bhop-Feel, aber nicht so dicht dass
+        /// der Bot auf Slopes/Treppen die Boden-Beschleunigung verliert.
+        /// </summary>
+        private const float k_ChaseJumpIntervalMin = 0.7f;
 
-        /// <summary>Maximales Intervall zwischen Chase-Spruengen in Sekunden.</summary>
-        private const float k_ChaseJumpIntervalMax = 3.5f;
+        /// <summary>
+        /// Maximales Intervall zwischen Chase-Spruengen in Sekunden.
+        /// Jitter damit der Bot nicht maschinell wirkt.
+        /// </summary>
+        private const float k_ChaseJumpIntervalMax = 1.4f;
+
+        /// <summary>Ankunftsschwelle zum Last-Known-Point (Meter).</summary>
+        private const float k_LastKnownArrivalThreshold = 2.5f;
+
+        /// <summary>Dauer der Sweep-Suche am Last-Known-Point (Sekunden).</summary>
+        private const float k_ScanDurationSeconds = 4.0f;
+
+        /// <summary>Sweep-Periode: eine volle Links-Rechts-Bewegung in Sekunden.</summary>
+        private const float k_ScanSweepPeriod = 2.0f;
+
+        /// <summary>Maximaler Sweep-Winkel relativ zur Vorwaertsrichtung in Grad.</summary>
+        private const float k_ScanSweepAngle = 75f;
+
+        /// <summary>Sweep-Blickdistanz vom Bot in Metern (visuelle Look-Target-Distanz).</summary>
+        private const float k_ScanLookDistance = 8f;
 
         /// <summary>Zeitpunkt des naechsten Chase-Sprungs (Time.time).</summary>
         private float m_NextChaseJumpTime;
+
+        /// <summary>Time.time-Zeitpunkt an dem der Scan begonnen hat (0 = nicht aktiv).</summary>
+        private float m_ScanStartTime;
+
+        /// <summary>Mittelpunkt des Scan-Bereichs (Last-Known-Position bei Eintritt).</summary>
+        private Vector3 m_ScanCenter;
 
         /// <inheritdoc />
         public override void Created() { }
@@ -29,6 +59,7 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
         public override void Start(IMonoAgent agent, AIActionData data)
         {
             m_NextChaseJumpTime = Time.time + Random.Range(k_ChaseJumpIntervalMin, k_ChaseJumpIntervalMax);
+            m_ScanStartTime = 0f;
         }
 
         /// <inheritdoc />
@@ -43,25 +74,11 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
             // Spieler nicht mehr sichtbar und kein Damage-Reaction → zur letzten bekannten Position laufen
             if (!controller.PlayerSensorDetected && !controller.WasDamagedRecently)
             {
-                // Letzte bekannte Position vorhanden → als Zwischen-Checkpoint hinlaufen
-                if (controller.LastKnownPlayerPosition.HasValue)
-                {
-                    Vector3 lastKnown = controller.LastKnownPlayerPosition.Value;
-                    float distToLastKnown = Vector3.Distance(
-                        new Vector3(agent.transform.position.x, 0f, agent.transform.position.z),
-                        new Vector3(lastKnown.x, 0f, lastKnown.z));
-
-                    if (distToLastKnown > 2.5f)
-                    {
-                        controller.SetMoveTarget(lastKnown);
-                        controller.SetLookTarget(lastKnown);
-                        return ActionRunState.Continue;
-                    }
-                }
-
-                // Angekommen oder keine Position → zurueck zu Patrol
-                return ActionRunState.Completed;
+                return PerformLastKnownSearch(agent, controller);
             }
+
+            // Spieler wieder sichtbar → Scan abbrechen, normaler Chase-Loop
+            m_ScanStartTime = 0f;
 
             // Echtzeit-Sensorposition verwenden (nicht gecachtes GOAP-Target)
             controller.FindNearestPlayerBySensors(out Vector3 direction, out float distance, out bool detected);
@@ -100,6 +117,67 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
             // Horizontale XZ-Distanz fuer Reichweite (3D-Distanz ist wegen Augenhoehe groesser)
             if (controller.PlayerSensorDistanceXZ <= controller.WeaponRangeMeters)
             {
+                return ActionRunState.Completed;
+            }
+
+            return ActionRunState.Continue;
+        }
+
+        /// <summary>
+        /// Sucht den verlorenen Spieler an der zuletzt bekannten Position:
+        /// 1) Lauf zum Last-Known-Point.
+        /// 2) Bei Ankunft: scanne Umgebung mit Links-Rechts-Sweep fuer mehrere Sekunden.
+        /// 3) Spieler erneut sichtbar / Damage → sofort wieder Chase.
+        /// 4) Scan-Timeout → Completed (Planner schaltet auf Patrol).
+        /// </summary>
+        private IActionRunState PerformLastKnownSearch(IMonoAgent agent, AIBotController controller)
+        {
+            // Keine Erinnerung mehr → fertig, Patrol uebernimmt
+            if (!controller.LastKnownPlayerPosition.HasValue)
+            {
+                m_ScanStartTime = 0f;
+                return ActionRunState.Completed;
+            }
+
+            Vector3 lastKnown = controller.LastKnownPlayerPosition.Value;
+            Vector3 botPos = agent.Transform.position;
+            float distXZ = Mathf.Sqrt(
+                (botPos.x - lastKnown.x) * (botPos.x - lastKnown.x)
+                + (botPos.z - lastKnown.z) * (botPos.z - lastKnown.z));
+
+            // Phase 1: hinlaufen
+            if (distXZ > k_LastKnownArrivalThreshold)
+            {
+                controller.SetMoveTarget(lastKnown);
+                controller.SetLookTarget(lastKnown);
+                m_ScanStartTime = 0f;
+                return ActionRunState.Continue;
+            }
+
+            // Phase 2: an LKP angekommen → Scan starten/fortsetzen
+            if (m_ScanStartTime <= 0f)
+            {
+                m_ScanStartTime = Time.time;
+                m_ScanCenter = lastKnown;
+            }
+
+            // Bot soll stehenbleiben am Scan-Punkt
+            controller.SetMoveTarget(m_ScanCenter);
+
+            // Sweep-Winkel: Sinus-Schwingung um Vorwaertsrichtung
+            float scanElapsed = Time.time - m_ScanStartTime;
+            float sweepPhase = (scanElapsed / k_ScanSweepPeriod) * Mathf.PI * 2f;
+            float sweepDeg = Mathf.Sin(sweepPhase) * k_ScanSweepAngle;
+
+            Vector3 forward = agent.Transform.forward;
+            Vector3 sweepDir = Quaternion.AngleAxis(sweepDeg, Vector3.up) * forward;
+            Vector3 lookPos = controller.EyePosition + sweepDir * k_ScanLookDistance;
+            controller.SetLookTarget(lookPos);
+
+            // Scan-Timeout → fertig
+            if (scanElapsed >= k_ScanDurationSeconds)
+            {
+                m_ScanStartTime = 0f;
                 return ActionRunState.Completed;
             }
 

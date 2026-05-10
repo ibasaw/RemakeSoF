@@ -13,4 +13,7 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
 
     /// <summary>Zufaellige Wander-Position in der Naehe des Bots.</summary>
     public class WanderTargetKey : ITargetKey { public string Name => nameof(WanderTargetKey); }
+
+    /// <summary>Position eines Cover-Punkts ohne Line-of-Sight zum naechsten Spieler.</summary>
+    public class CoverTargetKey : ITargetKey { public string Name => nameof(CoverTargetKey); }
 }

@@ -12,8 +12,8 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
     /// </summary>
     public class PlayerRangeSensor : LocalWorldSensorBase
     {
-        /// <summary>Sensor-Timer: Jedes Frame abtasten fuer reaktive AI.</summary>
-        public override ISensorTimer Timer => SensorTimer.Always;
+        /// <summary>Sensor-Timer: 10 Hz reicht; ShootPlayerAction prueft Reichweite ohnehin pro Tick.</summary>
+        public override ISensorTimer Timer => SensorTimer.Interval(0.1f);
 
         /// <inheritdoc />
         public override void Created() { }

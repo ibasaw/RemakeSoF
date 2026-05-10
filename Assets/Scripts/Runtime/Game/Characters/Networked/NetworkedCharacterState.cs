@@ -202,6 +202,23 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         public ushort Ping => m_Ping.Value;
         public string CurrentSkinName => m_CurrentSkinName.Value.ToString();
         public string CurrentWeaponName => m_CurrentWeaponName.Value.ToString();
+
+        /// <summary>
+        /// Server: Ob aktuell ein Waffen-Swap noch nicht committed wurde.
+        /// True solange die Swap-Animation laeuft und CurrentWeaponName noch den alten Wert hat.
+        /// AI nutzt das um doppelte Cycle-Anfragen waehrend eines Swaps zu vermeiden.
+        /// </summary>
+        public bool HasPendingWeaponSwap => !string.IsNullOrEmpty(m_PendingSwapTarget);
+
+        /// <summary>
+        /// Server: Effektiver Waffenname unter Beruecksichtigung eines laufenden Swaps.
+        /// Liefert das Pending-Swap-Target wenn vorhanden, sonst den committed Wert.
+        /// AI nutzt das fuer Reichweiten-/Melee-Checks damit Plan-Entscheidungen
+        /// schon auf der Zielwaffe basieren.
+        /// </summary>
+        public string EffectiveWeaponName => !string.IsNullOrEmpty(m_PendingSwapTarget)
+            ? m_PendingSwapTarget
+            : m_CurrentWeaponName.Value.ToString();
         public int CurrentClipAmmo => m_CurrentClipAmmo.Value;
         public int ReserveAmmo => m_ReserveAmmo.Value;
         public int AltClipAmmo => m_AltClipAmmo.Value;

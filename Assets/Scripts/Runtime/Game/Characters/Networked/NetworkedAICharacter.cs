@@ -6,6 +6,7 @@ using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Client;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Server;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
+using Tolik.RemakeSoF.Runtime.Game.Networked;
 using Tolik.RemakeSoF.Runtime.GoreManagement;
 using Tolik.RemakeSoF.Runtime.SoundManagement;
 using Tolik.RemakeSoF.Runtime.WeaponManagement;
@@ -73,6 +74,47 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>Letzte Attack-Sequenznummer fuer Re-Trigger-Erkennung.</summary>
         private byte m_LastAttackSequence;
+
+        // ===== Server Weapon Swap (Drop/Raise) =====
+        // Mirror der Spieler-Pipeline (NetworkedPlayerCharacter.OnServerWeaponSwapRequested).
+        // Bots haben kein Owner-Client und damit keinen ClientPlayerCharacter, der den
+        // Swap predicted — die gesamte Drop/Raise-Frame-Logik laeuft serverseitig hier
+        // und wird per NetworkAnimationState (IsSwapping-Bool) + ClientRpc (State-Hash)
+        // an alle Clients gespiegelt.
+
+        /// <summary>Server: Laeuft gerade eine Swap-Animation (Drop oder Raise).</summary>
+        private bool m_ServerIsSwapping;
+
+        /// <summary>Server: Aktuelle Phase des Waffenwechsels.</summary>
+        private WeaponSwapPhase m_ServerSwapPhase;
+
+        /// <summary>Server: Verbleibende Frames in der aktuellen Phase.</summary>
+        private int m_ServerSwapFramesRemaining;
+
+        /// <summary>Server: Frame-Akkumulator fuer Frame-genaue Tickerei.</summary>
+        private float m_ServerSwapFrameAccumulator;
+
+        /// <summary>Server: FPS der aktuellen Phase (aus Waffen-JSON).</summary>
+        private int m_ServerSwapFps = 10;
+
+        /// <summary>Server: Frames der Raise-Phase (vorberechnet beim Swap-Start).</summary>
+        private int m_ServerSwapRaiseFrames;
+
+        /// <summary>Server: FPS der Raise-Phase.</summary>
+        private int m_ServerSwapRaiseFps = 10;
+
+        /// <summary>Server: Zielwaffe, auf die nach der Drop-Phase gewechselt wird.</summary>
+        private string m_ServerSwapTargetWeapon;
+
+        /// <summary>Server: Animator-State-Name fuer die Raise-Animation (z.B. "TORSO_RAISE_KNIFE").</summary>
+        private string m_ServerSwapRaiseAnimName;
+
+        /// <summary>
+        /// Server-API: Liefert true wenn der Bot gerade einen Drop/Raise durchlaeuft.
+        /// Wird von ServerAICharacter.WriteAnimationState konsumiert, um IsSwapping
+        /// in die NetworkAnimationState zu spiegeln.
+        /// </summary>
+        public bool IsServerSwapping => m_ServerIsSwapping;
 
         /// <summary>Footstep-Handler fuer Schritt- und Lande-Sounds (auf Animator-GO).</summary>
         private ClientFootstepHandler m_FootstepHandler;
@@ -251,6 +293,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
         /// <summary>Animator-Parameter Hash: IsSwapping (bool).</summary>
         private static readonly int s_IsSwappingHash = Animator.StringToHash("IsSwapping");
 
+        /// <summary>Animator-Parameter Hash: SwapSpeed (float) — steuert Drop/Raise-Tempo.</summary>
+        private static readonly int s_SwapSpeedHash = Animator.StringToHash("SwapSpeed");
+
         /// <summary>Animator-Parameter Hash: CurrentWeapon (int).</summary>
         private static readonly int s_CurrentWeaponHash = Animator.StringToHash("CurrentWeapon");
 
@@ -259,6 +304,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>Torso-Layer Index im Animator Controller (fuer Attack Re-Trigger).</summary>
         private const int TORSO_LAYER_INDEX = 0;
+
+        /// <summary>
+        /// Basisdauer eines Swap-Clips im Animator Controller (6 Frames @ 20 fps).
+        /// Aus dem Verhaeltnis JSON-Wunschdauer / Clip-Dauer wird die Animator-Speed
+        /// fuer die Drop/Raise-Animation berechnet.
+        /// </summary>
+        private const float SWAP_CLIP_DURATION = 6f / 20f;
 
         /// <summary>
         /// Interpolationsgeschwindigkeit fuer Clients.
@@ -274,6 +326,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
             // Gore-State bei jedem Respawn zuruecksetzen (deckt ServerCharacterController.RespawnCharacter ab)
             m_CharacterState.OnCharacterRespawned += OnCharacterRespawned;
+
+            // Waffenwechsel-Anfragen vom Bot-Controller direkt commiten (keine Drop/Raise-Animation
+            // noetig, Bots haben kein Viewmodel). Andernfalls bleibt m_PendingSwapTarget ewig
+            // gesetzt und der Bot haelt fuer immer das Messer.
+            m_CharacterState.OnWeaponSwapRequested += OnServerAIWeaponSwapRequested;
 
             // Hitboxen aufbauen sobald Visual geladen ist (Server braucht Hitboxes fuer Bone-Tracking)
             SubscribeToVisualInstantiated();
@@ -454,6 +511,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             if (m_CharacterState != null)
             {
                 m_CharacterState.OnCharacterRespawned -= OnCharacterRespawned;
+                m_CharacterState.OnWeaponSwapRequested -= OnServerAIWeaponSwapRequested;
             }
 
             if (m_SkinHandler != null)
@@ -572,6 +630,243 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             }
 
             m_CharacterState.SetCurrentWeaponName("knife");
+        }
+
+        /// <summary>
+        /// Server: Startet den Waffenwechsel-Prozess (Drop alte Waffe, dann Raise neue Waffe).
+        /// Mirror von NetworkedPlayerCharacter.OnServerWeaponSwapRequested — Bots haben
+        /// kein Viewmodel, aber das Drittpersonen-Visual besitzt dieselben Drop/Raise-States.
+        /// Ohne Drop/Raise-Pulse bleibt der Animator im alten Idle stecken (Knife-Pose
+        /// obwohl der Bot z.B. das M4 traegt).
+        /// </summary>
+        private void OnServerAIWeaponSwapRequested(string targetWeapon)
+        {
+            if (!IsServer || string.IsNullOrEmpty(targetWeapon) || m_CharacterState == null)
+            {
+                return;
+            }
+
+            // Pre-Round-Countdown: kein Wechsel waehrend "3,2,1 GO"-Phase.
+            NetworkedGameState gameState = NetworkedGameState.Singleton;
+            if (gameState != null && gameState.roundStartCountdown.Value > 0)
+            {
+                return;
+            }
+
+            if (string.Equals(targetWeapon, m_CharacterState.CurrentWeaponName, System.StringComparison.Ordinal)
+                && !m_ServerIsSwapping)
+            {
+                return;
+            }
+
+            // Kein neuer Wechsel waehrend laufendem Swap (analog SoF2 weaponTime-Block).
+            if (m_ServerIsSwapping)
+            {
+                return;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            if (loader == null)
+            {
+                // Fallback: ohne Loader kein Animations-Lookup moeglich, sofort committen.
+                m_CharacterState.SetCurrentWeaponName(targetWeapon);
+                return;
+            }
+
+            // Drop-Daten der aktuellen Waffe (Animations-Name, Frames, FPS)
+            int dropFrames = 6;
+            int dropFps = 10;
+            string dropAnimName = null;
+            string dropSourceWeapon = m_CharacterState.CurrentWeaponName;
+
+            WeaponDefinition currentWeapon = loader.GetById(dropSourceWeapon);
+            if (currentWeapon?.Animations != null
+                && currentWeapon.Animations.TryGetValue("mp_drop", out WeaponAnimationEntry dropAnim))
+            {
+                dropFrames = dropAnim.Duration;
+                dropFps = dropAnim.Fps;
+                dropAnimName = dropAnim.Name;
+            }
+
+            // Raise-Daten der Zielwaffe (fuer spaetere Phase merken)
+            int raiseFrames = 6;
+            int raiseFps = 10;
+            string raiseAnimName = null;
+            WeaponDefinition targetWeaponDef = loader.GetById(targetWeapon);
+            if (targetWeaponDef?.Animations != null
+                && targetWeaponDef.Animations.TryGetValue("mp_raise", out WeaponAnimationEntry raiseAnim))
+            {
+                raiseFrames = raiseAnim.Duration;
+                raiseFps = raiseAnim.Fps;
+                raiseAnimName = raiseAnim.Name;
+            }
+
+            m_ServerIsSwapping = true;
+            m_ServerSwapPhase = WeaponSwapPhase.Drop;
+            m_ServerSwapFramesRemaining = dropFrames;
+            m_ServerSwapFrameAccumulator = 0f;
+            m_ServerSwapFps = dropFps;
+            m_ServerSwapRaiseFrames = raiseFrames;
+            m_ServerSwapRaiseFps = raiseFps;
+            m_ServerSwapTargetWeapon = targetWeapon;
+            m_ServerSwapRaiseAnimName = raiseAnimName;
+
+            // Drop-State sofort auf allen Clients (und auf dem Server-Animator) erzwingen.
+            int dropStateHash = NetworkedPlayerCharacter.GetDropStateHash(dropAnimName);
+            ForcePlaySwapStateLocal(dropStateHash, dropFrames, dropFps);
+            PlaySwapStateClientRpc(dropStateHash, dropFrames, dropFps);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[AI·Weapon] Bot {NetworkObjectId}: Swap gestartet {dropSourceWeapon} → {targetWeapon} (Drop {dropFrames}f@{dropFps}fps, Raise {raiseFrames}f@{raiseFps}fps)");
+#endif
+        }
+
+        /// <summary>
+        /// Server: Zaehlt Swap-Frames herunter und wechselt die Phase (Drop → Raise → Done).
+        /// Bei Drop-Ende wird die Waffe autoritativ gewechselt (NetworkVariable → OnWeaponChanged
+        /// auf allen Clients), danach laeuft die Raise-Phase.
+        /// </summary>
+        private void TickServerWeaponSwap(float deltaTime)
+        {
+            if (!m_ServerIsSwapping)
+            {
+                return;
+            }
+
+            m_ServerSwapFrameAccumulator += deltaTime;
+            float frameInterval = 1f / Mathf.Max(1, m_ServerSwapFps);
+            while (m_ServerSwapFrameAccumulator >= frameInterval && m_ServerSwapFramesRemaining > 0)
+            {
+                m_ServerSwapFrameAccumulator -= frameInterval;
+                m_ServerSwapFramesRemaining--;
+            }
+
+            if (m_ServerSwapFramesRemaining > 0)
+            {
+                return;
+            }
+
+            if (m_ServerSwapPhase == WeaponSwapPhase.Drop)
+            {
+                // Drop fertig: Waffe autoritativ wechseln (setzt NetworkVariable → ClientAICharacter.OnWeaponChanged).
+                m_CharacterState.SetCurrentWeaponName(m_ServerSwapTargetWeapon);
+
+                // Raise-Phase starten
+                m_ServerSwapPhase = WeaponSwapPhase.Raise;
+                m_ServerSwapFramesRemaining = m_ServerSwapRaiseFrames;
+                m_ServerSwapFrameAccumulator = 0f;
+                m_ServerSwapFps = m_ServerSwapRaiseFps;
+
+                int raiseStateHash = NetworkedPlayerCharacter.GetRaiseStateHash(m_ServerSwapRaiseAnimName);
+                ForcePlaySwapStateLocal(raiseStateHash, m_ServerSwapRaiseFrames, m_ServerSwapRaiseFps);
+                PlaySwapStateClientRpc(raiseStateHash, m_ServerSwapRaiseFrames, m_ServerSwapRaiseFps);
+            }
+            else if (m_ServerSwapPhase == WeaponSwapPhase.Raise)
+            {
+                // Raise fertig: Swap-Flag freigeben.
+                m_ServerIsSwapping = false;
+                m_ServerSwapPhase = WeaponSwapPhase.None;
+                m_ServerSwapTargetWeapon = null;
+                m_ServerSwapRaiseAnimName = null;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"[AI·Weapon] Bot {NetworkObjectId}: Swap abgeschlossen.");
+#endif
+            }
+        }
+
+        /// <summary>
+        /// Erzwingt den Animator-State fuer eine Swap-Animation (Drop oder Raise) auf
+        /// dem Torso-Layer ab Frame 0. Berechnet die Animator-Speed aus den JSON-Daten
+        /// (duration/fps) relativ zur Clip-Dauer (SWAP_CLIP_DURATION).
+        /// </summary>
+        private void ForcePlaySwapStateLocal(int stateHash, int duration, int fps)
+        {
+            if (m_Animator == null)
+            {
+                return;
+            }
+
+            float desiredDuration = (float)duration / Mathf.Max(1, fps);
+            float speed = SWAP_CLIP_DURATION / Mathf.Max(0.0001f, desiredDuration);
+            m_Animator.SetFloat(s_SwapSpeedHash, speed);
+            m_Animator.Play(stateHash, TORSO_LAYER_INDEX, 0f);
+        }
+
+        /// <summary>
+        /// Client-RPC: Spielt die Drop- bzw. Raise-Animation auf jedem Client ab.
+        /// Bots haben keinen Owner-Client, daher feuert der Server den State an alle.
+        /// Auf dem Host laeuft der Server-Animator bereits ueber ForcePlaySwapStateLocal,
+        /// der RPC wird dort trotzdem ausgefuehrt — Animator.Play ist idempotent (selber Frame 0).
+        /// </summary>
+        [ClientRpc]
+        private void PlaySwapStateClientRpc(int stateHash, int duration, int fps)
+        {
+            ForcePlaySwapStateLocal(stateHash, duration, fps);
+        }
+
+        // ===== Debug Tracer (Bot-Schuss) =====
+
+        [Header("Debug Tracer")]
+        /// <summary>Zeigt Debug-Tracer-Linien bei jedem Bot-Schuss auf allen Clients (Game-View + Scene-View). Server-Toggle, wird per ClientRpc broadcastet.</summary>
+        [SerializeField]
+        private bool m_ShowDebugTracers;
+
+        /// <summary>Dauer der sichtbaren Tracer-Linie in Sekunden.</summary>
+        private const float TRACER_DURATION = 2.0f;
+
+        /// <summary>Gecachter Sprites/Default Shader fuer Tracer-LineRenderer.</summary>
+        private static Shader s_CachedTracerShader;
+
+        /// <summary>
+        /// Server-Aufruf aus dem Hitscan-Pfad (ServerAICharacter.ProcessAIAttack).
+        /// Prueft den Server-Toggle und broadcastet die Tracer-Linie an alle Clients.
+        /// </summary>
+        public void BroadcastDebugTracer(Vector3 start, Vector3 end)
+        {
+            if (!IsServer || !m_ShowDebugTracers)
+            {
+                return;
+            }
+            ShowDebugTracerClientRpc(start, end);
+        }
+
+        /// <summary>
+        /// Client-RPC: Erstellt auf jedem Client eine sichtbare Debug-Tracer-Linie
+        /// (Magenta = Bot-Schuss, optisch unterscheidbar von Player-Tracern in Rot).
+        /// </summary>
+        [ClientRpc]
+        private void ShowDebugTracerClientRpc(Vector3 start, Vector3 end)
+        {
+            Debug.DrawLine(start, end, Color.magenta, TRACER_DURATION);
+            CreateDebugTracerLine(start, end);
+        }
+
+        /// <summary>
+        /// Erstellt eine temporaere sichtbare Tracer-Linie im Game-View per LineRenderer.
+        /// Spiegelt das Verhalten von NetworkedPlayerCharacter.CreateDebugTracerLine,
+        /// nutzt aber Magenta zur Unterscheidung von Player-Schuessen.
+        /// </summary>
+        private static void CreateDebugTracerLine(Vector3 start, Vector3 end)
+        {
+            GameObject lineObj = new("AI_DebugTracer");
+            LineRenderer lr = lineObj.AddComponent<LineRenderer>();
+            lr.positionCount = 2;
+            lr.SetPosition(0, start);
+            lr.SetPosition(1, end);
+            lr.startWidth = 0.02f;
+            lr.endWidth = 0.02f;
+            if (s_CachedTracerShader == null)
+            {
+                s_CachedTracerShader = Shader.Find("Sprites/Default");
+            }
+            Material tracerMat = new(s_CachedTracerShader);
+            lr.material = tracerMat;
+            lr.startColor = Color.magenta;
+            lr.endColor = Color.magenta;
+            lr.useWorldSpace = true;
+            Destroy(tracerMat, TRACER_DURATION);
+            Destroy(lineObj, TRACER_DURATION);
         }
 
         /// <summary>
@@ -856,6 +1151,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_ServerPosition.Value = transform.position;
                 m_ServerRotation.Value = transform.rotation;
 
+                // Server: Waffenwechsel-Frames ticken (Drop → SetCurrentWeaponName → Raise → Done)
+                TickServerWeaponSwap(Time.deltaTime);
+
                 // Server: Animation wird in WriteAnimationState() direkt angewendet
                 return;
             }
@@ -968,6 +1266,8 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_CharacterState.AddWeapon("knife");
             }
 
+            // Alle Spieler (auch Bots) starten mit Knife in der Hand.
+            // EvaluateWeaponState wechselt bei Sichtkontakt automatisch auf Fernkampf.
             m_CharacterState.SetCurrentWeaponName("knife");
 
             Debug.Log($"[AI·Init] Bot: Name='{botName}' | Skin='{skinName}' | Team={teamId} | Weapons={weapons?.Length ?? 1}");

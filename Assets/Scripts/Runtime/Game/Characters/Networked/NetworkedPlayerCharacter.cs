@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Newtonsoft.Json.Linq;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
+using Tolik.RemakeSoF.Runtime.AI.Audio;
 using Tolik.RemakeSoF.Runtime.ChatManagement;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.GametypeManagement;
@@ -256,6 +257,9 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
 
         /// <summary>Name der Zielwaffe beim Waffenwechsel.</summary>
         private string m_ServerSwapTargetWeapon;
+
+        /// <summary>Animator-State-Name der Raise-Animation (z.B. "TORSO_RAISE_ONEHANDED"), beim Drop-Start gemerkt.</summary>
+        private string m_ServerSwapRaiseAnimName;
 
         // ===== Server-Side Grenade Cook/Throw (SoF2-authentic hold-to-cook) =====
 
@@ -1325,6 +1329,11 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 fireSoundPath,
                 attackDef.Volume > 0f ? attackDef.Volume : 1f
             );
+
+            // AI-Audio: Schussabgabe als akustischen Reiz fuer Bots auf dem Server emittieren.
+            // Hoerradius skaliert grob mit Volume (1.0 = ~60m, leise Waffen weniger).
+            float aiHearRange = (attackDef.Volume > 0f ? attackDef.Volume : 1f) * 60f;
+            AudioStimulus.Emit(eyePos, m_CharacterState.TeamId, aiHearRange, AudioStimulus.SoundType.Gunshot);
 
             for (int i = 0; i < pelletCount; i++)
             {
@@ -3320,17 +3329,20 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             // Raise-Daten der Zielwaffe lesen
             int raiseFrames = 6;
             int raiseFps = 10;
+            string raiseAnimName = null;
             WeaponDefinition targetWeaponDef = loader.GetById(targetWeapon);
             if (targetWeaponDef?.Animations != null &&
                 targetWeaponDef.Animations.TryGetValue("mp_raise", out WeaponAnimationEntry raiseAnim))
             {
                 raiseFrames = raiseAnim.Duration;
                 raiseFps = raiseAnim.Fps;
+                raiseAnimName = raiseAnim.Name;
             }
 
             // Drop-Daten der aktuellen Waffe
             int dropFrames = 6;
             int dropFps = 10;
+            string dropAnimName = null;
             string dropSourceWeapon = m_CharacterState.CurrentWeaponName;
 
             WeaponDefinition currentWeapon = loader.GetById(dropSourceWeapon);
@@ -3339,6 +3351,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             {
                 dropFrames = dropAnim.Duration;
                 dropFps = dropAnim.Fps;
+                dropAnimName = dropAnim.Name;
             }
 
             m_ServerIsSwapping = true;
@@ -3349,6 +3362,12 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
             m_ServerSwapRaiseFrames = raiseFrames;
             m_ServerSwapRaiseFps = raiseFps;
             m_ServerSwapTargetWeapon = targetWeapon;
+            m_ServerSwapRaiseAnimName = raiseAnimName;
+
+            // Drop-Animation an alle Nicht-Owner-Clients broadcasten. Der Owner spielt
+            // sie bereits lokal via ClientPlayerCharacter.PerformSwap → ForcePlaySwapState.
+            int dropStateHash = GetDropStateHash(dropAnimName);
+            PlaySwapStateClientRpc(dropStateHash, dropFrames, dropFps);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[NetworkedPlayerCharacter] Server: Weapon swap started for client {OwnerClientId}: {dropSourceWeapon} → {targetWeapon} (Drop {dropFrames}f@{dropFps}fps, Raise {raiseFrames}f@{raiseFps}fps)");
@@ -3384,6 +3403,13 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     m_ServerSwapFramesRemaining = m_ServerSwapRaiseFrames;
                     m_ServerSwapFrameAccumulator = 0f;
                     m_ServerSwapFps = m_ServerSwapRaiseFps;
+
+                    // Raise-Animation an alle Nicht-Owner-Clients broadcasten.
+                    if (!string.IsNullOrEmpty(m_ServerSwapRaiseAnimName))
+                    {
+                        int raiseStateHash = GetRaiseStateHash(m_ServerSwapRaiseAnimName);
+                        PlaySwapStateClientRpc(raiseStateHash, m_ServerSwapRaiseFrames, m_ServerSwapRaiseFps);
+                    }
                 }
                 else if (m_ServerSwapPhase == WeaponSwapPhase.Raise)
                 {
@@ -3401,6 +3427,7 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                     }
 
                     m_ServerSwapTargetWeapon = null;
+                    m_ServerSwapRaiseAnimName = null;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                     Debug.Log($"[NetworkedPlayerCharacter] Server: Weapon swap completed for client {OwnerClientId}");
@@ -3575,6 +3602,25 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Networked
                 m_Animator.SetFloat(s_SwapSpeedHash, speed);
                 m_Animator.Play(stateHash, TORSO_LAYER_INDEX, 0f);
             }
+        }
+
+        /// <summary>
+        /// Server → alle Clients: Spielt die uebergebene Drop/Raise-Animation auf dem
+        /// Torso-Layer ab Frame 0 ab. Der Owner spielt seine eigene Swap-Animation
+        /// bereits lokal via ClientPlayerCharacter.PerformSwap → ForcePlaySwapState
+        /// (Client-Prediction), daher wird der RPC dort uebersprungen, um Replays zu
+        /// vermeiden. Remote-Clients sehen nur ueber diesen RPC die TORSO_DROP_*/
+        /// TORSO_RAISE_* States.
+        /// </summary>
+        [ClientRpc]
+        private void PlaySwapStateClientRpc(int stateHash, int duration, int fps)
+        {
+            if (IsOwner)
+            {
+                return;
+            }
+
+            ForcePlaySwapState(stateHash, duration, fps);
         }
 
         /// <summary>

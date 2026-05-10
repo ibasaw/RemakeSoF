@@ -125,6 +125,13 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
                 .AddCondition<IsPlayerVisible>(Comparison.GreaterThanOrEqual, 1)
                 .AddEffect<IsSafe>(EffectType.Increase);
 
+            cap.AddAction<TakeCoverAction>()
+                .SetTarget<CoverTargetKey>()
+                .SetBaseCost(0.8f)
+                .SetMoveMode(ActionMoveMode.PerformWhileMoving)
+                .AddCondition<IsPlayerVisible>(Comparison.GreaterThanOrEqual, 1)
+                .AddEffect<IsSafe>(EffectType.Increase);
+
             cap.AddAction<WanderAction>()
                 .SetTarget<WanderTargetKey>()
                 .SetBaseCost(5f)
@@ -141,6 +148,9 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
             // --- Target Sensors ---
             cap.AddTargetSensor<FleeTargetSensor>()
                 .SetTarget<FleeTargetKey>();
+
+            cap.AddTargetSensor<CoverTargetSensor>()
+                .SetTarget<CoverTargetKey>();
 
             cap.AddTargetSensor<WanderTargetSensor>()
                 .SetTarget<WanderTargetKey>();

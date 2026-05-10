@@ -14,8 +14,8 @@ namespace Tolik.RemakeSoF.Runtime.AI.GOAP
     /// </summary>
     public class AmmoSensor : LocalWorldSensorBase
     {
-        /// <summary>Sensor-Timer: Jedes Frame abtasten.</summary>
-        public override ISensorTimer Timer => SensorTimer.Always;
+        /// <summary>Sensor-Timer: Munition aendert sich nicht 60x/s; 4 Hz reicht voellig.</summary>
+        public override ISensorTimer Timer => SensorTimer.Interval(0.25f);
 
         /// <inheritdoc />
         public override void Created() { }

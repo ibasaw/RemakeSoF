@@ -1,7 +1,10 @@
+using Tolik.RemakeSoF.Runtime.AI.Audio;
+using Tolik.RemakeSoF.Runtime.AI.Personality;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.DataManagement;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Networked;
 using Tolik.RemakeSoF.Runtime.Game.Characters.Shared;
+using Tolik.RemakeSoF.Runtime.Game.Networked;
 using Tolik.RemakeSoF.Runtime.WeaponManagement;
 using UnityEngine;
 using UnityEngine.AI;
@@ -228,7 +231,12 @@ namespace Tolik.RemakeSoF.Runtime.AI
         private const float k_PlayerDetectionRadius = 30f;
 
         /// <summary>Ergebnis-Array fuer OverlapSphere (wiederverwendbar, vermeidet Allokationen).</summary>
-        private readonly Collider[] m_RadiusHits = new Collider[16];
+        /// <summary>
+        /// Buffer fuer OverlapSphere-Hits. Muss gross genug sein um zusaetzlich zu den
+        /// eigenen Hitbox-Collidern (~29 pro Character) auch gegnerische Spieler zu fassen,
+        /// sonst saturieren die eigenen Hitboxen den Buffer und Feinde werden nie gefunden.
+        /// </summary>
+        private readonly Collider[] m_RadiusHits = new Collider[128];
 
         /// <summary>Gecachte Spieler-LayerMask fuer OverlapSphere.</summary>
         private readonly int k_PlayerLayerMask = 1 << 7;
@@ -275,6 +283,63 @@ namespace Tolik.RemakeSoF.Runtime.AI
         /// <summary>Distanz bei der die letzte bekannte Position als erreicht gilt (Meter).</summary>
         private const float k_LastKnownArrivalDist = 2.5f;
 
+        // ===== Geteilter Team-LKP (Squad-Awareness) =====
+
+        /// <summary>Geteilter Last-Known-Position-Slot pro Team (Server-only, statisch).</summary>
+        private struct TeamSharedSighting
+        {
+            public Vector3 Position;
+            public float Time;
+        }
+
+        /// <summary>
+        /// Statisches Dictionary mit dem aktuellsten LKP pro Bot-Team.
+        /// Server-only: Bots laufen alle in derselben Server-Instanz, kein Netzwerk-Sync noetig.
+        /// Eintraege expirieren automatisch via Timestamp-Check (kein explizites Cleanup noetig).
+        /// </summary>
+        private static readonly System.Collections.Generic.Dictionary<uint, TeamSharedSighting> s_TeamSharedLkp
+            = new();
+
+        /// <summary>Maximales Alter eines geteilten LKP bevor er ignoriert wird (Sekunden).</summary>
+        private const float k_TeamSharedLkpDuration = 6f;
+
+        /// <summary>Mindestabstand fuer den geteilten LKP zur eigenen LKP-Position (verhindert Snap-Spam).</summary>
+        private const float k_TeamSharedLkpMinDelta = 1.5f;
+
+        // ===== Personality (per-Bot Verhaltens-Multiplikatoren) =====
+
+        /// <summary>Aktives Persoenlichkeitsprofil dieses Bots (in InitializeSensors zugewiesen).</summary>
+        private BotPersonality m_Personality = new();
+
+        /// <summary>Per-Bot Seed fuer deterministisches Aim-Noise (verschiedene Bots zittern verschieden).</summary>
+        private float m_AimNoiseSeed;
+
+        /// <summary>
+        /// Server-Zeitpunkt an dem der Bot zum ersten Mal einen Feind erspaeht hat
+        /// (nach vorheriger leerer Wahrnehmung). Dient als Startpunkt fuer ReactionTime-Gating.
+        /// </summary>
+        private float m_FirstSpotTime = -1f;
+
+        /// <summary>True wenn beim letzten Radius-Scan ein Feind gefunden wurde (fuer Edge-Detection).</summary>
+        private bool m_HadSightingLastScan;
+
+        /// <summary>Maximaler Aim-Fehler in Grad bei Accuracy = 0 (skaliert linear).</summary>
+        private const float k_MaxAimErrorDegrees = 4f;
+
+        // ===== Fire-Pattern (Trigger-Disziplin pro FireMode) =====
+
+        /// <summary>
+        /// Letzter beobachteter Clip-Wert. Wird genutzt um "Schuss gefeuert"-Events
+        /// zu erkennen (Clip dekrementiert) ohne Server-Round-Trip-Lag.
+        /// </summary>
+        private int m_LastObservedClip = -1;
+
+        /// <summary>Schuesse die im aktuellen Burst-Trigger-Druck bereits gefeuert wurden.</summary>
+        private int m_BurstShotsFired;
+
+        /// <summary>Time.time bis zu dem der Trigger "losgelassen" bleiben muss (Pause).</summary>
+        private float m_TriggerReleaseUntil;
+
         // ===== Predictive Aiming (Vorhalte-Zielen) =====
 
         /// <summary>Geschaetzte Geschwindigkeit des naechsten sichtbaren Spielers (aus Position-Delta).</summary>
@@ -308,8 +373,12 @@ namespace Tolik.RemakeSoF.Runtime.AI
         /// <summary>Ob die Stealth Awareness aktuell einen Spieler im Grossradius erkannt hat.</summary>
         private bool m_StealthAwarenessActive;
 
-        /// <summary>Ergebnis-Array fuer Stealth-Awareness OverlapSphere (wiederverwendbar).</summary>
-        private readonly Collider[] m_StealthHits = new Collider[16];
+        /// <summary>
+        /// Ergebnis-Array fuer Stealth-Awareness OverlapSphere (wiederverwendbar).
+        /// Gross dimensioniert weil eigene Hitbox-Collider (~29 pro Character) den Buffer
+        /// sonst saturieren bevor Feinde erfasst werden.
+        /// </summary>
+        private readonly Collider[] m_StealthHits = new Collider[128];
 
         /// <summary>Intervallzaehler fuer Stealth-Awareness-Scan (nicht jeden Frame noetig).</summary>
         private float m_StealthScanAccum;
@@ -386,14 +455,68 @@ namespace Tolik.RemakeSoF.Runtime.AI
             get
             {
                 UpdateWeaponRange();
-                return m_WeaponRangeMeters;
+                // Personality-Multiplikator: Sniper engagiert weiter, Cautious naeher.
+                return m_WeaponRangeMeters * m_Personality.engageRangeMul;
+            }
+        }
+
+        /// <summary>
+        /// True wenn die aktuelle Waffe eine Nahkampfwaffe ist (Messer etc.).
+        /// Wird von GOAP-Aktionen genutzt um Combat-Distanz-Verhalten zu unterscheiden:
+        /// Nahkampf = bis zum Spieler laufen, Fernkampf = Position halten in Sichtreichweite.
+        /// </summary>
+        public bool IsCurrentWeaponMelee
+        {
+            get
+            {
+                if (m_CharacterState == null)
+                {
+                    return true;
+                }
+
+                WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+                if (loader == null)
+                {
+                    return true;
+                }
+
+                WeaponDefinition weaponDef = loader.GetById(m_CharacterState.CurrentWeaponName);
+                return weaponDef == null || weaponDef.IsMelee;
             }
         }
 
         /// <summary>Augenposition des Bots in Weltkoordinaten.</summary>
         public Vector3 EyePosition => transform.position + new Vector3(0f, k_SensorHeightOffset, 0f);
 
-        // ===== GOAP Intent-Setter (aufgerufen von GOAP-Aktionen in Perform()) =====
+        /// <summary>Eigene Team-ID des Bots (0 = None / FFA, 1 = Red, 2 = Blue).</summary>
+        public uint OwnTeamId => m_CharacterState != null ? m_CharacterState.TeamId : 0u;
+
+        /// <summary>
+        /// Prueft ob ein anderer Charakter ein gueltiges feindliches Ziel ist.
+        /// Returns false wenn null, tot, oder im selben Team (sofern nicht FFA).
+        /// In FFA (TeamId == 0 auf BEIDEN Seiten) sind alle anderen Spieler hostile.
+        /// In Team-Spielen sind Spieler mit gleicher TeamId immer freundlich (auch ohne g_friendlyfire,
+        /// damit Bots nicht aus Versehen Teamkollegen anvisieren).
+        /// </summary>
+        public bool IsHostileTarget(NetworkedCharacterState other)
+        {
+            if (other == null || !other.IsAlive)
+            {
+                return false;
+            }
+
+            uint ownTeam = OwnTeamId;
+            uint otherTeam = other.TeamId;
+
+            // FFA: keiner hat ein Team → alle sind feindlich
+            if (ownTeam == 0u && otherTeam == 0u)
+            {
+                return true;
+            }
+
+            // Team-Spiel: nur unterschiedliche Teams sind feindlich
+            return ownTeam != otherTeam;
+        }
 
         /// <summary>Setzt die Bewegungs-Zielposition fuer diesen Frame. Berechnet ggf. einen NavMesh-Pfad.</summary>
         public void SetMoveTarget(Vector3 position)
@@ -424,6 +547,20 @@ namespace Tolik.RemakeSoF.Runtime.AI
 
             m_IsDirectLOSSteering = false;
             UpdateNavPath(position);
+        }
+
+        /// <summary>
+        /// Stoppt jede Bewegung (Move-Target = null) und leert den NavMesh-Pfad.
+        /// Genutzt von GOAP-Aktionen wenn der Bot Position halten soll
+        /// (z.B. Fernkampfwaffe in Sichtreichweite).
+        /// </summary>
+        public void StopMovement()
+        {
+            m_MoveTarget = null;
+            m_IsDirectLOSSteering = false;
+            m_PathCorners = System.Array.Empty<Vector3>();
+            m_PathIndex = 0;
+            m_LastPathTarget = Vector3.zero;
         }
 
         /// <summary>Setzt die Blick-/Zielposition fuer diesen Frame.</summary>
@@ -879,11 +1016,10 @@ namespace Tolik.RemakeSoF.Runtime.AI
                 return;
             }
 
-            // Im Kampf keine Sensor-Ausweichmanoever (GOAP steuert)
-            if (m_ShouldAttack)
-            {
-                return;
-            }
+            // Im Kampf: 180°-Turn unterdruecken (Bot wuerde das Ziel komplett verlieren).
+            // Springen, Ducken und kurzes Side-Step bleiben erlaubt — sonst bleibt der Bot
+            // im Melee-Chase an Hindernissen kleben (Stufen, Kanten, Tueren).
+            bool combatMode = m_ShouldAttack;
 
             Sensor3D[] sensors = m_SensorArray.Sensors;
             if (sensors == null || sensors.Length < 35)
@@ -994,7 +1130,9 @@ namespace Tolik.RemakeSoF.Runtime.AI
             }
 
             // 3. Umdrehen: ALLE Seiten blockiert (Front + Links + Rechts) → 180° Kehrtwendung
-            if (centerMinDist < k_ObstacleCloseThreshold
+            //    Im Kampf NICHT umdrehen (sonst verliert der Bot das Ziel).
+            if (!combatMode
+                && centerMinDist < k_ObstacleCloseThreshold
                 && leftMinDist < k_ObstacleNearThreshold
                 && rightMinDist < k_ObstacleNearThreshold)
             {
@@ -1005,7 +1143,9 @@ namespace Tolik.RemakeSoF.Runtime.AI
                 m_PathCorners = System.Array.Empty<Vector3>();
                 m_PathIndex = 0;
             }
-            // 4. Seitliches Ausweichen: Nur Mitte blockiert, eine Seite frei
+            // 4. Seitliches Ausweichen: Nur Mitte blockiert, eine Seite frei.
+            //    Im Kampf trotzdem ausweichen damit Hindernisse beim Chase nicht haengen
+            //    bleiben — Aim wird im naechsten Frame durch SetLookTarget wiederhergestellt.
             else if (centerMinDist < k_ObstacleCloseThreshold)
             {
                 if (leftMinDist > rightMinDist)
@@ -1117,7 +1257,13 @@ namespace Tolik.RemakeSoF.Runtime.AI
             if (m_StuckReverseTimer > 0f)
             {
                 m_StuckReverseTimer -= Time.deltaTime;
-                m_ShouldCrouch = true;
+
+                // Ducken nur wenn der Bot nicht gerade einen Spieler verfolgt —
+                // beim Chase verlangsamt PmDuckScale=0.25 die Befreiung massiv.
+                if (!PlayerSensorDetected)
+                {
+                    m_ShouldCrouch = true;
+                }
 
                 // Bewegungsrichtung umkehren: MoveTarget hinter den Bot setzen
                 Vector3 behindBot = transform.position - transform.forward * 5f;
@@ -1178,7 +1324,8 @@ namespace Tolik.RemakeSoF.Runtime.AI
 
             m_StuckTimer += k_StuckCheckInterval;
 
-            // Stuck waehrend Chase: Letzte gespiegelte Spieler-Aktion nochmal ausfuehren
+            // Stuck waehrend Chase: Nur Jump spiegeln — Ducken verlangsamt den Bot
+            // (PmDuckScale=0.25) und bricht Bhop-Beschleunigung beim Verfolgen.
             if (isChasingPlayer && m_StuckTimer >= k_StuckPhase1)
             {
                 if (m_LastMirrorJump)
@@ -1186,12 +1333,7 @@ namespace Tolik.RemakeSoF.Runtime.AI
                     m_ShouldJump = true;
                 }
 
-                if (m_LastMirrorCrouch)
-                {
-                    m_ShouldCrouch = true;
-                }
-
-                Debug.Log($"[AI·Stuck] Chase-Replay: Jump={m_LastMirrorJump} Crouch={m_LastMirrorCrouch} | T={m_StuckTimer:F1}s");
+                Debug.Log($"[AI·Stuck] Chase-Replay: Jump={m_LastMirrorJump} | T={m_StuckTimer:F1}s");
             }
 
             // Phase 1: Wegpunkt ueberspringen + vertikaler Sprung
@@ -1705,8 +1847,9 @@ namespace Tolik.RemakeSoF.Runtime.AI
         }
 
         /// <summary>
-        /// Prueft ob der von einem Sensor getroffene Spieler noch lebt.
-        /// Gibt false zurueck wenn kein Collider vorhanden oder der Spieler tot ist.
+        /// Prueft ob der von einem Sensor getroffene Spieler ein gueltiges feindliches Ziel ist.
+        /// Gibt false zurueck wenn kein Collider, Spieler tot, oder Teammitglied.
+        /// Bei fehlendem CharacterState wird der Hit als Welt-Geometrie behandelt (true).
         /// </summary>
         private bool IsHitPlayerAlive(Sensor3D sensor)
         {
@@ -1718,10 +1861,11 @@ namespace Tolik.RemakeSoF.Runtime.AI
             NetworkedCharacterState hitState = sensor.HitCollider.GetComponentInParent<NetworkedCharacterState>();
             if (hitState == null)
             {
+                // Kein CharacterState → Welt-Geometrie / Prop, fuer FOV-Sensor weiterhin gueltig
                 return true;
             }
 
-            return hitState.IsAlive;
+            return IsHostileTarget(hitState);
         }
 
         /// <summary>
@@ -1757,8 +1901,10 @@ namespace Tolik.RemakeSoF.Runtime.AI
                 m_TrackedPlayerLastPos = playerHeadPos;
                 m_TrackedPlayerLastTime = now;
 
-                // Vorhalt-Offset: Ziel = aktuelle Position + Velocity * LeadTime
-                Vector3 leadOffset = m_TrackedPlayerVelocity * k_AimLeadTimeSec;
+                // Vorhalt-Offset: Ziel = aktuelle Position + Velocity * LeadTime * Personality-Lead-Compensation.
+                // Rookies (aimLeadCompensation~0.3) schiessen fast auf aktuelle Position, Veteranen (~1) voll vorausziehend.
+                float leadCompensation = Mathf.Clamp01(m_Personality.aimLeadCompensation);
+                Vector3 leadOffset = m_TrackedPlayerVelocity * k_AimLeadTimeSec * leadCompensation;
                 if (leadOffset.sqrMagnitude > k_AimLeadMaxOffset * k_AimLeadMaxOffset)
                 {
                     leadOffset = leadOffset.normalized * k_AimLeadMaxOffset;
@@ -1767,6 +1913,18 @@ namespace Tolik.RemakeSoF.Runtime.AI
                 Vector3 predictedPos = playerHeadPos + leadOffset;
                 direction = (predictedPos - eyePos).normalized;
                 distanceMeters = Vector3.Distance(eyePos, predictedPos);
+
+                // Personality-Accuracy: Aim-Noise auf direction. Bei accuracy=1 keine Streuung,
+                // bei accuracy=0 maximale Streuung (k_MaxAimErrorDegrees). Perlin-Noise bewegt sich
+                // smooth ueber Zeit (kein Frame-Jitter), Seed sorgt fuer Bot-individuelles Muster.
+                float aimErrorDeg = Mathf.Clamp01(1f - m_Personality.accuracy) * k_MaxAimErrorDegrees;
+                if (aimErrorDeg > 0.001f)
+                {
+                    float t = Time.time * 0.6f;
+                    float yawErr = (Mathf.PerlinNoise(t, m_AimNoiseSeed) - 0.5f) * 2f * aimErrorDeg;
+                    float pitchErr = (Mathf.PerlinNoise(m_AimNoiseSeed, t) - 0.5f) * 2f * aimErrorDeg;
+                    direction = Quaternion.Euler(pitchErr, yawErr, 0f) * direction;
+                }
             }
             else if (PlayerMemoryActive)
             {
@@ -1781,6 +1939,74 @@ namespace Tolik.RemakeSoF.Runtime.AI
                     direction = toLastKnown / distanceMeters;
                 }
             }
+        }
+
+        /// <summary>
+        /// Fire-Pattern-Gate: Simuliert Trigger-Druecken/Loslassen-Rhythmus passend zum
+        /// FireMode der aktuellen Waffe. Erkennt gefeuerte Schuesse anhand des
+        /// Clip-Dekrements (kein Server-Roundtrip noetig).
+        ///
+        /// - "auto": Trigger gehalten (kein Gate).
+        /// - "single": Nach jedem Schuss Trigger fuer triggerDisciplineSec loslassen.
+        /// - "burst": Nach burstShots Schuessen Trigger fuer triggerDisciplineSec*1.5 loslassen.
+        ///
+        /// Gibt true zurueck wenn der Attack-Button diesen Tick gesetzt werden darf.
+        /// </summary>
+        private bool UpdateFirePatternGate()
+        {
+            if (m_CharacterState == null)
+            {
+                return true;
+            }
+
+            // Schuss-Erkennung via Clip-Dekrement (Infinite-Ammo-Waffen werden ueber FireDelay-Timer
+            // unten abgedeckt; hier reicht uns das Clip-Delta als Schuss-Signal).
+            int clip = m_CharacterState.CurrentClipAmmo;
+            if (m_LastObservedClip < 0)
+            {
+                m_LastObservedClip = clip;
+            }
+            bool shotFired = clip < m_LastObservedClip;
+            m_LastObservedClip = clip;
+
+            // Aktive Trigger-Release-Phase blockt Attack komplett.
+            if (Time.time < m_TriggerReleaseUntil)
+            {
+                return false;
+            }
+
+            WeaponDataLoader loader = ServiceLocator.Get<WeaponDataLoader>();
+            WeaponDefinition weapon = loader?.GetById(m_CharacterState.CurrentWeaponName);
+            string fireMode = weapon?.Attack?.FireMode;
+            if (string.IsNullOrEmpty(fireMode))
+            {
+                fireMode = "auto";
+            }
+
+            if (shotFired)
+            {
+                if (fireMode == "single")
+                {
+                    m_TriggerReleaseUntil = Time.time + Mathf.Max(0.05f, m_Personality.triggerDisciplineSec);
+                    m_BurstShotsFired = 0;
+                    return false;
+                }
+
+                if (fireMode == "burst")
+                {
+                    m_BurstShotsFired++;
+                    int burstLimit = Mathf.Max(1, m_Personality.burstShots);
+                    if (m_BurstShotsFired >= burstLimit)
+                    {
+                        m_TriggerReleaseUntil = Time.time + Mathf.Max(0.10f, m_Personality.triggerDisciplineSec * 1.5f);
+                        m_BurstShotsFired = 0;
+                        return false;
+                    }
+                }
+                // "auto": einfach weiterhalten.
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -1831,9 +2057,9 @@ namespace Tolik.RemakeSoF.Runtime.AI
                     continue;
                 }
 
-                // Lebt der Spieler noch?
+                // Feindliches Ziel? (lebend + anderes Team / FFA)
                 NetworkedCharacterState targetState = col.GetComponentInParent<NetworkedCharacterState>();
-                if (targetState == null || !targetState.IsAlive)
+                if (!IsHostileTarget(targetState))
                 {
                     continue;
                 }
@@ -1860,8 +2086,178 @@ namespace Tolik.RemakeSoF.Runtime.AI
                     m_LastKnownPlayerDistance = dist;
                     m_LastKnownPlayerDistanceXZ = m_NearestPlayerDistanceXZ;
                     m_LastPlayerSeenTime = Time.time;
+
+                    // Squad-Awareness: Sichtung an Teamkollegen weitergeben (sofern Profil das erlaubt)
+                    if (m_Personality.shareSightingsToTeam)
+                    {
+                        PublishTeamSighting(targetPos);
+                    }
                 }
             }
+
+            // Personality-ReactionTime: Bot verzoegert die Reaktion auf einen NEUEN Sichtkontakt.
+            // Erkennen wir gerade einen Feind und der Timer war noch nicht aktiv → Timer starten.
+            // Wichtig: NICHT auf m_HadSightingLastScan pruefen — solange reactionPending laeuft
+            // wird m_NearestPlayerTransform unten genullt, wodurch m_HadSightingLastScan=false bleibt.
+            // Wuerden wir das hier als Reset-Signal interpretieren, setzten wir m_FirstSpotTime
+            // jeden Frame neu und der Bot waere fuer immer "in Reaktion".
+            bool sightingNow = m_NearestPlayerTransform != null;
+            if (sightingNow && m_FirstSpotTime <= 0f)
+            {
+                m_FirstSpotTime = Time.time;
+            }
+            if (!sightingNow)
+            {
+                m_FirstSpotTime = -1f;
+            }
+
+            bool reactionPending = sightingNow
+                && m_FirstSpotTime > 0f
+                && (Time.time - m_FirstSpotTime) < m_Personality.reactionTimeSec;
+
+            if (reactionPending)
+            {
+                // Sichtung "verschlucken" — Bot hat den Feind zwar gesehen, aber sein Hirn
+                // hat noch nicht reagiert. Memory NICHT schreiben (sonst bleibt der LKP
+                // hartnaeckig und der Reaktions-Effekt wird wirkungslos).
+                m_NearestPlayerTransform = null;
+                m_NearestPlayerCharacter = null;
+                m_NearestPlayerDistance = float.MaxValue;
+                m_NearestPlayerDistanceXZ = float.MaxValue;
+            }
+
+            m_HadSightingLastScan = sightingNow && !reactionPending;
+
+            // Wenn der Bot selbst nichts sieht aber ein Teamkollege etwas Frisches gemeldet hat,
+            // uebernimm den geteilten LKP — der Bot laeuft dann ueber ChasePlayerAction zur Position.
+            if (m_NearestPlayerTransform == null)
+            {
+                TryAdoptTeamSighting();
+            }
+        }
+
+        /// <summary>
+        /// Reagiert auf akustische Reize anderer Akteure (Schuesse, Explosionen).
+        /// Wenn der Reiz von einem Feind in Hoerweite kommt, wird er als LKP behandelt
+        /// und an Teamkollegen weitergegeben. Server-only Event.
+        /// </summary>
+        private void OnAudioStimulus(AudioStimulus.Stimulus stim)
+        {
+            if (m_CharacterState == null || !m_CharacterState.IsAlive)
+            {
+                return;
+            }
+
+            // Eigene Geraeusche ignorieren (Bot soll nicht auf seine eigenen Schuesse reagieren).
+            // Teamkollegen ignorieren — sie senden ohnehin Squad-LKP-Sichtungen statt Audio.
+            if (stim.EmitterTeamId != 0u && stim.EmitterTeamId == OwnTeamId)
+            {
+                return;
+            }
+
+            // Hoerradius: Personality bestimmt wie weit der Bot hoert,
+            // gedeckelt durch den Reichweiten-Cap der Schallquelle.
+            float hearRange = Mathf.Min(m_Personality.audioHearRangeMeters, stim.MaxRangeMeters);
+            float sqrDist = (stim.Position - transform.position).sqrMagnitude;
+            if (sqrDist > hearRange * hearRange)
+            {
+                return;
+            }
+
+            // Direkten Sichtkontakt nicht ueberschreiben (frischer Sicht-LKP > Audio-LKP).
+            if (m_NearestPlayerTransform != null)
+            {
+                return;
+            }
+
+            // Eigener LKP frischer? → ignorieren.
+            if (m_LastPlayerSeenTime > stim.Time)
+            {
+                return;
+            }
+
+            // Audio-LKP uebernehmen
+            Vector3 eyePos = EyePosition;
+            m_LastKnownPlayerPosition = stim.Position;
+            m_LastPlayerSeenTime = stim.Time;
+            m_LastKnownPlayerDistance = Vector3.Distance(eyePos, stim.Position);
+            m_LastKnownPlayerDistanceXZ = Vector3.Distance(
+                new Vector3(eyePos.x, 0f, eyePos.z),
+                new Vector3(stim.Position.x, 0f, stim.Position.z));
+
+            // An Teamkollegen weitergeben — wenn ein Bot einen Schuss hoert, sollen die anderen
+            // im Team auch Bescheid wissen (sofern Profil teilt).
+            if (m_Personality.shareSightingsToTeam)
+            {
+                PublishTeamSighting(stim.Position);
+            }
+        }
+
+        /// <summary>
+        /// Schreibt den aktuellen Sichtungspunkt in den geteilten Team-Slot, sofern Team-Spiel.
+        /// In FFA (TeamId == 0) wird nichts geteilt.
+        /// </summary>
+        private void PublishTeamSighting(Vector3 targetPos)
+        {
+            uint team = OwnTeamId;
+            if (team == 0u)
+            {
+                return;
+            }
+
+            s_TeamSharedLkp[team] = new TeamSharedSighting
+            {
+                Position = targetPos,
+                Time = Time.time,
+            };
+        }
+
+        /// <summary>
+        /// Uebernimmt einen frischen geteilten LKP eines Teamkollegen wenn der eigene fehlt
+        /// oder aelter ist als der geteilte. Ignoriert eigene gerade gepublishten Sichtungen
+        /// indirekt ueber den MinDelta-Check (sonst wuerde der Bot seinen eigenen LKP zurueckziehen).
+        /// </summary>
+        private void TryAdoptTeamSighting()
+        {
+            uint team = OwnTeamId;
+            if (team == 0u)
+            {
+                return;
+            }
+
+            if (!s_TeamSharedLkp.TryGetValue(team, out TeamSharedSighting shared))
+            {
+                return;
+            }
+
+            float age = Time.time - shared.Time;
+            if (age >= k_TeamSharedLkpDuration)
+            {
+                return;
+            }
+
+            // Eigener LKP ist juenger als der geteilte → nichts tun
+            if (m_LastPlayerSeenTime > 0f && shared.Time <= m_LastPlayerSeenTime)
+            {
+                return;
+            }
+
+            // Position ist quasi identisch zum eigenen letzten LKP → kein Update noetig
+            if (m_LastPlayerSeenTime > 0f
+                && (shared.Position - m_LastKnownPlayerPosition).sqrMagnitude
+                    < k_TeamSharedLkpMinDelta * k_TeamSharedLkpMinDelta)
+            {
+                return;
+            }
+
+            // Geteilte Sichtung uebernehmen
+            Vector3 eyePos = EyePosition;
+            m_LastKnownPlayerPosition = shared.Position;
+            m_LastPlayerSeenTime = shared.Time;
+            m_LastKnownPlayerDistance = Vector3.Distance(eyePos, shared.Position);
+            m_LastKnownPlayerDistanceXZ = Vector3.Distance(
+                new Vector3(eyePos.x, 0f, eyePos.z),
+                new Vector3(shared.Position.x, 0f, shared.Position.z));
         }
 
         /// <summary>
@@ -1907,9 +2303,9 @@ namespace Tolik.RemakeSoF.Runtime.AI
                     continue;
                 }
 
-                // Lebt der Spieler noch?
+                // Feindliches Ziel? Stealth-Awareness ignoriert Teammitglieder.
                 NetworkedCharacterState targetState = col.GetComponentInParent<NetworkedCharacterState>();
-                if (targetState == null || !targetState.IsAlive)
+                if (!IsHostileTarget(targetState))
                 {
                     continue;
                 }
@@ -2007,7 +2403,28 @@ namespace Tolik.RemakeSoF.Runtime.AI
             m_SensorArray.Generate(transform, k_SensorHeightOffset);
             m_SensorsReady = m_SensorArray.SensorCount > 0;
 
-            Debug.Log($"[AI·Sensor] Init: {m_SensorArray.SensorCount} Sensoren | Root='{transform.name}' | H={k_SensorHeightOffset:F2}m | FOV=120°×40°");
+            // Persoenlichkeit zuweisen (gewichtete Zufallsauswahl aus JSON-Profilen)
+            BotPersonalityLoader personalityLoader = ServiceLocator.Get<BotPersonalityLoader>();
+            if (personalityLoader != null && personalityLoader.ProfileCount > 0)
+            {
+                m_Personality = personalityLoader.PickRandom();
+            }
+
+            // Per-Bot Aim-Noise-Seed (verschiedene Bots zittern unterschiedlich)
+            m_AimNoiseSeed = Random.value * 1000f;
+
+            // Audio-LKP: auf Schussgeraeusche etc. reagieren
+            AudioStimulus.OnEmitted += OnAudioStimulus;
+
+            Debug.Log($"[AI·Sensor] Init: {m_SensorArray.SensorCount} Sensoren | Persoenlichkeit='{m_Personality.name}' (Acc={m_Personality.accuracy:F2}, RT={m_Personality.reactionTimeSec:F2}s, Range×{m_Personality.engageRangeMul:F2})");
+        }
+
+        /// <summary>
+        /// Cleanup: Audio-Subscription abmelden (verhindert Memory-Leak bei Bot-Despawn).
+        /// </summary>
+        private void OnDestroy()
+        {
+            AudioStimulus.OnEmitted -= OnAudioStimulus;
         }
 
         // ===== Haupttick: Baut PlayerCommand aus GOAP-Intents =====
@@ -2212,15 +2629,61 @@ namespace Tolik.RemakeSoF.Runtime.AI
             }
 
             // Auto-Reload: Magazin leer aber Reserve vorhanden → nachladen
-            if (m_CharacterState != null && m_CharacterState.CurrentClipAmmo <= 0 && m_CharacterState.ReserveAmmo > 0)
+            bool clipEmpty = m_CharacterState != null && m_CharacterState.CurrentClipAmmo <= 0;
+            bool hasReserve = m_CharacterState != null && m_CharacterState.ReserveAmmo > 0;
+            if (clipEmpty && hasReserve)
             {
                 buttons |= CommandButtons.Reload;
             }
 
             // Action-Buttons
-            if (m_ShouldAttack)
+            // Bot darf nicht feuern wenn Clip leer (sonst spamt er Attack-Sounds und blockt
+            // sich selbst im Cooldown). Server gated zusaetzlich, aber Client-Gate spart RPC-Last.
+            bool currentWeaponInfinite = false;
+            if (m_CharacterState != null)
+            {
+                WeaponDataLoader weaponLoader = ServiceLocator.Get<WeaponDataLoader>();
+                WeaponDefinition currentWeaponDef = weaponLoader?.GetById(m_CharacterState.CurrentWeaponName);
+                currentWeaponInfinite = currentWeaponDef?.Ammo?.Infinite ?? false;
+            }
+            bool canFire = !clipEmpty || currentWeaponInfinite;
+            bool firePatternAllow = UpdateFirePatternGate();
+            if (m_ShouldAttack && canFire && firePatternAllow)
             {
                 buttons |= CommandButtons.Attack;
+            }
+
+            // SoF2-Style Bhop:
+            // 1) Step-Up-Jump: Wenn der naechste Wegpunkt deutlich hoeher liegt als der Bot
+            //    (ueber PmStepSize hinaus), springe rechtzeitig statt nur die StepUp-Mechanic
+            //    zu nutzen — sonst verliert der Bot Schwung an Treppen/Kanten.
+            // 2) Land-Chain: Sobald der Bot landet und sich noch in Bewegung Richtung Ziel
+            //    befindet, sofort wieder springen → Quake/SoF2 Bhop-Beschleunigung
+            //    (kein Boden-Friction-Tick).
+            if (m_PhysicsSimulation != null && m_MoveTarget.HasValue && moveInput.sqrMagnitude > 0.1f)
+            {
+                // (1) Step-Up-Jump
+                if (m_PathCorners.Length > 0 && m_PathIndex < m_PathCorners.Length)
+                {
+                    Vector3 nextWp = m_PathCorners[m_PathIndex];
+                    float yDelta = nextWp.y - transform.position.y;
+                    Vector3 flatDelta = new(nextWp.x - transform.position.x, 0f, nextWp.z - transform.position.z);
+                    float xzDist = flatDelta.magnitude;
+
+                    // Hoehensprung > StepSize und nah genug zum Anlaufen (~2m vor der Kante)
+                    if (yDelta > m_PhysicsSimulation.PmStepSize && xzDist < 2f && xzDist > 0.1f)
+                    {
+                        m_ShouldJump = true;
+                    }
+                }
+
+                // (2) Land-Chain (Bhop): Direkt nach Landung wieder springen.
+                //     PlayerSensorDetected = aktiver Chase → besonders wertvoll fuer Bhop.
+                //     JumpDebounce der Simulation verhindert Spam nach harter Landung.
+                if (m_PhysicsSimulation.JustLanded && !m_PhysicsSimulation.IsDebounceActive)
+                {
+                    m_ShouldJump = true;
+                }
             }
 
             if (m_ShouldJump)
@@ -2266,7 +2729,24 @@ namespace Tolik.RemakeSoF.Runtime.AI
                 return;
             }
 
+            // Erst zur Waffe wechseln sobald die Runde tatsaechlich laeuft (nach 3,2,1 GO).
+            // Waehrend des Pre-Round-Countdowns bleibt der Bot bei der Startwaffe (Messer).
+            NetworkedGameState gameState = NetworkedGameState.Singleton;
+            if (gameState != null && gameState.roundStartCountdown.Value > 0)
+            {
+                return;
+            }
+
             if (Time.time - m_LastWeaponEvalTime < k_WeaponEvalInterval)
+            {
+                return;
+            }
+
+            // Waehrend eines laufenden Swaps NICHT erneut cyclen — sonst Ping-Pong:
+            // CurrentWeaponName ist noch der alte Wert (z.B. "knife"), aber CycleWeapon
+            // operiert auf m_PendingSwapTarget (z.B. "m4") und wuerde von dort weiter
+            // auf "knife" wrappen. Erst warten bis der Swap committed ist.
+            if (m_CharacterState.HasPendingWeaponSwap)
             {
                 return;
             }
@@ -2298,7 +2778,7 @@ namespace Tolik.RemakeSoF.Runtime.AI
             if (PlayerSensorDetected && currentWeapon != null && currentWeapon.IsMelee)
             {
                 m_CharacterState.ServerCycleWeapon(1);
-                Debug.Log($"[AI·Weapon] {m_CharacterState.CharacterName}: Nahkampfwaffe im Kampf, wechsle zu Fernkampf.");
+                Debug.Log($"[AI·Weapon] {m_CharacterState.CharacterName}: Nahkampfwaffe '{currentWeaponName}' im Kampf, wechsle zu Fernkampf.");
             }
         }
 

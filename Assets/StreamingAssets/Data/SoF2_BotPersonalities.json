@@ -1,0 +1,77 @@
+{
+  "_comment": "Bot-Persoenlichkeiten — Multiplikatoren auf Bot-Basisverhalten. Werte sind hot-tweakbar; Server neu starten genuegt.",
+  "_fields": {
+    "name": "Eindeutiger Name des Profils.",
+    "weight": "Spawn-Gewichtung (relativ). 0 = nie spawnen, 1 = Standard, 3 = dreifach so haeufig.",
+    "reactionTimeSec": "Sekunden vom ersten Sichtkontakt bis Bot reagiert. 0.15 = schnell, 0.55 = traege.",
+    "accuracy": "0..1. 1 = perfektes Aim, 0 = sehr ungenau. Wirkt als Winkel-Streuung auf direction (max 4 Grad bei 0).",
+    "engageRangeMul": "Multiplikator auf m_WeaponRangeMeters fuer Engage-Entscheidung. >1 = engagiert weiter, <1 = haelt naeher.",
+    "audioHearRangeMeters": "Radius in Metern, in dem der Bot Schussgeraeusche eines Feindes als LKP uebernimmt.",
+    "shareSightingsToTeam": "Ob dieser Bot eigene Sichtungen an Teamkollegen meldet (Squad-LKP-Publish).",
+    "triggerDisciplineSec": "Pause zwischen Trigger-Druecken bei Single/Burst-Waffen. 0.10 = schneller Tap-Fire, 0.35 = traege. Wird auf 'auto' nicht angewendet.",
+    "burstShots": "Schuesse pro Burst-Trigger-Druck bei Burst-Fire-Waffen. 1=einzeln, 3=SoF2-Standard, 5=aggressiv.",
+    "aimLeadCompensation": "0..1. Skaliert Predictive-Aiming-Vorhalt. 1 = volle Vorhaltung, 0 = schiesst auf aktuelle Position."
+  },
+  "profiles": [
+    {
+      "name": "Aggressive",
+      "weight": 2.0,
+      "reactionTimeSec": 0.15,
+      "accuracy": 0.85,
+      "engageRangeMul": 1.30,
+      "audioHearRangeMeters": 35.0,
+      "shareSightingsToTeam": true,
+      "triggerDisciplineSec": 0.12,
+      "burstShots": 5,
+      "aimLeadCompensation": 0.85
+    },
+    {
+      "name": "Cautious",
+      "weight": 2.0,
+      "reactionTimeSec": 0.40,
+      "accuracy": 0.78,
+      "engageRangeMul": 0.80,
+      "audioHearRangeMeters": 40.0,
+      "shareSightingsToTeam": true,
+      "triggerDisciplineSec": 0.28,
+      "burstShots": 3,
+      "aimLeadCompensation": 0.75
+    },
+    {
+      "name": "Sniper",
+      "weight": 1.0,
+      "reactionTimeSec": 0.25,
+      "accuracy": 0.95,
+      "engageRangeMul": 1.60,
+      "audioHearRangeMeters": 25.0,
+      "shareSightingsToTeam": true,
+      "triggerDisciplineSec": 0.45,
+      "burstShots": 1,
+      "aimLeadCompensation": 1.0
+    },
+    {
+      "name": "Rookie",
+      "weight": 1.5,
+      "reactionTimeSec": 0.55,
+      "accuracy": 0.55,
+      "engageRangeMul": 0.90,
+      "audioHearRangeMeters": 20.0,
+      "shareSightingsToTeam": false,
+      "triggerDisciplineSec": 0.35,
+      "burstShots": 2,
+      "aimLeadCompensation": 0.30
+    },
+    {
+      "name": "Veteran",
+      "weight": 1.0,
+      "reactionTimeSec": 0.20,
+      "accuracy": 0.88,
+      "engageRangeMul": 1.10,
+      "audioHearRangeMeters": 50.0,
+      "shareSightingsToTeam": true,
+      "triggerDisciplineSec": 0.18,
+      "burstShots": 3,
+      "aimLeadCompensation": 1.0
+    }
+  ]
+}
