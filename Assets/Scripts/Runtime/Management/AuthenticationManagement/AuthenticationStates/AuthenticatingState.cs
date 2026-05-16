@@ -22,29 +22,12 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
             m_Username = username;
             m_Password = password;
         }
-        private async Task MockAuthenticationProcess()
-        {
-            await Task.Delay(2000); // Simulate network delay
-
-            var response = new AuthenticationResponse
-            {
-                message = "Authentication successful",
-                token = "mock-jwt-token",
-                playerId = "123-playerID-123542352335325",
-                username = m_Username,
-                selectedSkinName = "mullins_jungle"
-            };
-            Manager.m_Authenticated.Configure(response);
-            Manager.OnAuthenticationSuccess();
-        }
-
         public override async void Enter()
         {
             AuthenticationEvent authEvent = new() { status = AuthenticationStatus.Authenticating };
             Manager.EventManager.Broadcast(authEvent);
 
-            //await LoginViaMasterServer(m_Username, m_Password);
-            await MockAuthenticationProcess();
+            await LoginViaMasterServer(m_Username, m_Password);
         }
 
         public override void Exit() { }

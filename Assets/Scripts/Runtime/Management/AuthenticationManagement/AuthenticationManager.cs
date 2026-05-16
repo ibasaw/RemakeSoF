@@ -23,7 +23,17 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
             DontDestroyOnLoad(gameObject);
             List<AuthenticationState> states = new() { m_Unauthenticated, m_Authenticating, m_Authenticated, m_SessionExpired };
             InitializeStates(states, m_Unauthenticated);
-            //Debug.Log("[AuthenticationManager] Initialized");
+            TryRestoreSession();
+        }
+
+        // Restores a previously saved session so the user skips the login screen on relaunch.
+        // If the server later rejects the token, SessionExpiredState clears the store and the user re-logs in.
+        void TryRestoreSession()
+        {
+            AuthenticationResponse saved = AuthSessionStore.TryLoad();
+            if (saved == null) return;
+            m_Authenticated.Configure(saved);
+            ChangeState(m_Authenticated);
         }
 
         public bool IsAuthenticated()

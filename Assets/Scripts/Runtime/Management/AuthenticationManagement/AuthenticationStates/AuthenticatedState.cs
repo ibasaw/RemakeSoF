@@ -17,7 +17,8 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
 
         public override void Enter()
         {
-            var authEvent = new AuthenticationEvent { status = AuthenticationStatus.Success };
+            AuthSessionStore.Save(m_AuthResponse);
+            AuthenticationEvent authEvent = new() { status = AuthenticationStatus.Success };
             Manager.EventManager.Broadcast(authEvent);
             Manager.EventManager.Broadcast(new UserAuthenticatedEvent(m_AuthResponse));
         }
@@ -26,6 +27,7 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
 
         public override void OnUserRequestedLogout()
         {
+            AuthSessionStore.Clear();
             Manager.ChangeState(Manager.m_Unauthenticated);
         }
 

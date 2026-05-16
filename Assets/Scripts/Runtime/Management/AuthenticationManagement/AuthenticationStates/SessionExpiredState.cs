@@ -15,7 +15,8 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
 
         public override void Enter()
         {
-            var authEvent = new AuthenticationEvent { status = m_ExpireReason };
+            AuthSessionStore.Clear();
+            AuthenticationEvent authEvent = new() { status = m_ExpireReason };
             Manager.EventManager.Broadcast(authEvent);
             Manager.EventManager.Broadcast(new SessionExpiredEvent());
         }
