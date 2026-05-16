@@ -408,6 +408,64 @@ namespace Tolik.RemakeSoF.Runtime.DataManagement
                 return MasterServerRegisterResult.CreateFailure(e.Message);
             }
         }
+
+        /// <summary>
+        /// Fetches the auth policy (username/password length constraints) from the master server.
+        /// Returns null on any failure — caller treats null as "no hint available".
+        /// </summary>
+        public async Task<AuthPolicy> FetchAuthPolicyAsync()
+        {
+            try
+            {
+                using UnityWebRequest request = UnityWebRequest.Get($"{m_MasterServerUrl}/api/auth/policy");
+                await request.SendWebRequest();
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[MasterServerService] FetchAuthPolicy failed: {request.responseCode} - {request.error}");
+                    return null;
+                }
+
+                AuthPolicy policy = JsonUtility.FromJson<AuthPolicy>(request.downloadHandler.text);
+                if (policy == null || policy.username == null || policy.password == null)
+                {
+                    Debug.LogWarning("[MasterServerService] FetchAuthPolicy: invalid payload shape.");
+                    return null;
+                }
+
+                return policy;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[MasterServerService] FetchAuthPolicy Exception: {e.Message}");
+                return null;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Auth policy DTO returned by GET /api/auth/policy on the master server.
+    /// Mirrors the JSON shape exactly — JsonUtility requires plain serializable types.
+    /// </summary>
+    [Serializable]
+    public class AuthPolicy
+    {
+        public LengthRange username;
+        public LengthRange password;
+        public EmailRule email;
+
+        [Serializable]
+        public class LengthRange
+        {
+            public int min_length;
+            public int max_length;
+        }
+
+        [Serializable]
+        public class EmailRule
+        {
+            public string format;
+        }
     }
 
     /// <summary>

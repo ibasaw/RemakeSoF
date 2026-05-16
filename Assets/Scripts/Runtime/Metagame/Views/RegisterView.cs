@@ -1,10 +1,17 @@
 using UnityEngine.UIElements;
 using System.Text.RegularExpressions;
+using Tolik.RemakeSoF.Runtime.DataManagement;
 
 namespace Tolik.RemakeSoF.Runtime
 {
     internal class RegisterView : View<MetagameApplication>
     {
+        /// <summary>
+        /// Floor applied to the server-provided username minimum length. Guards against a misconfigured
+        /// or compromised master server returning 0 and effectively disabling client-side validation.
+        /// </summary>
+        const int k_UsernameMinLengthFloor = 3;
+
         Button m_BackToLoginButton;
         Button m_RegisterButton;
         TextField m_UsernameTextField;
@@ -12,6 +19,11 @@ namespace Tolik.RemakeSoF.Runtime
         TextField m_PasswordTextField;
         TextField m_ConfirmPasswordTextField;
         Label m_StatusLabel;
+        Label m_UsernameHintLabel;
+        Label m_EmailHintLabel;
+        Label m_PasswordHintLabel;
+        Label m_RepeatPasswordHintLabel;
+        AuthPolicy m_AuthPolicy;
         UIDocument m_UIDocument;
 
         void Awake()
@@ -31,44 +43,24 @@ namespace Tolik.RemakeSoF.Runtime
             m_EmailTextField = root.Q<TextField>("emailTextField");
             m_StatusLabel = root.Q<Label>("statusLabel");
 
+            m_UsernameHintLabel = root.Q<Label>("usernameHintLabel");
+            m_EmailHintLabel = root.Q<Label>("emailHintLabel");
+            m_PasswordHintLabel = root.Q<Label>("passwordHintLabel");
+            m_RepeatPasswordHintLabel = root.Q<Label>("repeatPasswordHintLabel");
+
+            RenderAuthPolicyHints();
+
             m_BackToLoginButton.RegisterCallback<ClickEvent>(OnClickBackToLogin);
             m_RegisterButton.RegisterCallback<ClickEvent>(OnClickRegister);
 
             m_BackToLoginButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
             m_RegisterButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
-
-            m_UsernameTextField.RegisterValueChangedCallback(OnUsernameChanged);
-            m_PasswordTextField.RegisterValueChangedCallback(OnPasswordChanged);
-            m_ConfirmPasswordTextField.RegisterValueChangedCallback(OnConfirmPasswordChanged);
-            m_EmailTextField.RegisterValueChangedCallback(OnEmailChanged);
         }
 
         void OnDisable()
         {
             m_BackToLoginButton.UnregisterCallback<ClickEvent>(OnClickBackToLogin);
             m_RegisterButton.UnregisterCallback<ClickEvent>(OnClickRegister);
-            
-            m_UsernameTextField.UnregisterValueChangedCallback(OnUsernameChanged);
-            m_PasswordTextField.UnregisterValueChangedCallback(OnPasswordChanged);
-            m_ConfirmPasswordTextField.UnregisterValueChangedCallback(OnConfirmPasswordChanged);
-            m_EmailTextField.UnregisterValueChangedCallback(OnEmailChanged);
-        }
-
-        void OnUsernameChanged(ChangeEvent<string> username)
-        {
-            m_UsernameTextField.value = username.newValue;
-        }
-        void OnPasswordChanged(ChangeEvent<string> password)
-        {
-            m_PasswordTextField.value = password.newValue;
-        }
-        void OnConfirmPasswordChanged(ChangeEvent<string> password)
-        {
-            m_ConfirmPasswordTextField.value = password.newValue;
-        }
-        void OnEmailChanged(ChangeEvent<string> email)
-        {
-            m_EmailTextField.value = email.newValue;
         }
 
         void OnClickBackToLogin(ClickEvent evt)
@@ -137,12 +129,47 @@ namespace Tolik.RemakeSoF.Runtime
             m_StatusLabel.text = "";
         }
 
+        /// <summary>
+        /// Applies the auth policy fetched from the master server. Drives the grey hint labels under each field.
+        /// Pass null to clear the hints (e.g. when the server is unreachable).
+        /// </summary>
+        public void ApplyAuthPolicy(AuthPolicy policy)
+        {
+            m_AuthPolicy = policy;
+            RenderAuthPolicyHints();
+        }
+
+        void RenderAuthPolicyHints()
+        {
+            if (m_UsernameHintLabel == null)
+            {
+                return;
+            }
+
+            if (m_AuthPolicy == null)
+            {
+                m_UsernameHintLabel.text = string.Empty;
+                m_EmailHintLabel.text = string.Empty;
+                m_PasswordHintLabel.text = string.Empty;
+                m_RepeatPasswordHintLabel.text = string.Empty;
+                return;
+            }
+
+            m_UsernameHintLabel.text = $"{m_AuthPolicy.username.min_length}-{m_AuthPolicy.username.max_length} characters";
+            m_PasswordHintLabel.text = $"At least {m_AuthPolicy.password.min_length} characters";
+            m_RepeatPasswordHintLabel.text = "Must match the password above";
+            m_EmailHintLabel.text = "Valid email address";
+        }
+
         public bool ValidateRegistrationData()
         {
             string username = m_UsernameTextField.text.Trim();
             string email = m_EmailTextField.text.Trim();
             string password = m_PasswordTextField.text;
             string confirmPassword = m_ConfirmPasswordTextField.text;
+
+            int policyMin = m_AuthPolicy?.username?.min_length ?? k_UsernameMinLengthFloor;
+            int usernameMin = System.Math.Max(k_UsernameMinLengthFloor, policyMin);
 
             // Validate username
             if (string.IsNullOrEmpty(username))
@@ -151,9 +178,9 @@ namespace Tolik.RemakeSoF.Runtime
                 return false;
             }
 
-            if (username.Length < 3)
+            if (username.Length < usernameMin)
             {
-                SetStatusMessage("Username must be at least 3 characters long!", true);
+                SetStatusMessage($"Username must be at least {usernameMin} characters long!", true);
                 return false;
             }
 

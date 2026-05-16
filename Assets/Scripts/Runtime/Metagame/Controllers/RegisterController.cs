@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Tolik.RemakeSoF.Runtime.ApplicationLifecycle;
 using Tolik.RemakeSoF.Runtime.ConnectionManagement;
 using Tolik.RemakeSoF.Runtime.DataManagement;
@@ -86,6 +87,35 @@ namespace Tolik.RemakeSoF.Runtime
         void OnChangeToRegister(ChangeToRegisterEvent evt)
         {
             View.Show();
+            _ = FetchAuthPolicyAsync();
+        }
+
+        /// <summary>
+        /// Fire-and-forget fetch of the master server's auth policy. Failures are swallowed and
+        /// surface as "no hint" in the view — server-side validation remains authoritative.
+        /// </summary>
+        private async Task FetchAuthPolicyAsync()
+        {
+            try
+            {
+                MasterServerService masterService = ServiceLocator.Get<MasterServerService>();
+                if (masterService == null)
+                {
+                    return;
+                }
+
+                AuthPolicy policy = await masterService.FetchAuthPolicyAsync();
+
+                // Awaited continuation may resume after the view is destroyed during scene unload.
+                if (this != null && View != null)
+                {
+                    View.ApplyAuthPolicy(policy);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[RegisterController] FetchAuthPolicy failed: {e.Message}");
+            }
         }
 
         void OnDestroy()
