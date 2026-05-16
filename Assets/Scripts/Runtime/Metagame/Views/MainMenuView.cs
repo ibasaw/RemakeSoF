@@ -61,10 +61,9 @@ namespace Tolik.RemakeSoF.Runtime
             {
                 Name = "logoutButton",
                 HoverIconPath = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.logoutButtonGlow)?.Texture,
-                //TargetView = App.View.LogoutView
                 OnClick = (cfg) =>
                 {
-                    Debug.Log("Logout button clicked");
+                    ApplicationEntryPoint.Singleton.AuthenticationManager.Logout();
                 }
             });
         }
@@ -80,11 +79,17 @@ namespace Tolik.RemakeSoF.Runtime
             Texture2D mainMenuBackgroundTexture = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.background)?.Texture;
             m_MainMenuBackground.style.backgroundImage = new StyleBackground(mainMenuBackgroundTexture);
             
-            // Buttons finden + callbacks registrieren
-            foreach (var cfg in m_ButtonConfigs)
+            // Buttons + callbacks
+            foreach (ButtonConfig cfg in m_ButtonConfigs)
             {
                 cfg.ButtonRef = root.Q<Button>(cfg.Name);
-                cfg.ButtonRef.iconImage = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.GetType().GetField(cfg.Name).GetValue(configuration.metagame.mainMenu).ToString())?.Texture;
+                // Defensive: if the matching field is missing or its value is null, skip the icon — button shows text only.
+                FieldInfo iconField = configuration.metagame.mainMenu.GetType().GetField(cfg.Name);
+                string iconPath = iconField?.GetValue(configuration.metagame.mainMenu) as string;
+                if (!string.IsNullOrEmpty(iconPath))
+                {
+                    cfg.ButtonRef.iconImage = ServiceLocator.Get<TextureManager>().GetTextureData(iconPath)?.Texture;
+                }
 
                 if (cfg.TargetView != null)
                 {
@@ -205,5 +210,6 @@ namespace Tolik.RemakeSoF.Runtime
                 cfg.ButtonRef.UnregisterCallback<PointerLeaveEvent>(evt => OnPointerLeaveEvent(evt, cfg));
             }
         }
+
     }
 }

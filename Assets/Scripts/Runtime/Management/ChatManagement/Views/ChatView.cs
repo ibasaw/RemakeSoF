@@ -60,10 +60,14 @@ namespace Tolik.RemakeSoF.Runtime.ChatManagement
         void OnEnable()
         {
             EnsureInitialized();
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged += OnActiveSceneChanged;
+            ApplySceneVisibility(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
         }
 
         void OnDisable()
         {
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+
             if (m_ChatInput != null)
             {
                 m_ChatInput.UnregisterCallback<KeyUpEvent>(OnInputSubmit);
@@ -115,6 +119,42 @@ namespace Tolik.RemakeSoF.Runtime.ChatManagement
             m_Initialized = true;
         }
 
+        void OnActiveSceneChanged(UnityEngine.SceneManagement.Scene previous, UnityEngine.SceneManagement.Scene next)
+        {
+            ApplySceneVisibility(next.name);
+        }
+
+        /// <summary>
+        /// Chat is a gameplay-only HUD. Hide the entire root in non-game scenes so it does not
+        /// bleed onto the Metagame screens (login/register/loadout/main menu).
+        /// </summary>
+        void ApplySceneVisibility(string sceneName)
+        {
+            if (m_UIDocument == null)
+            {
+                return;
+            }
+
+            VisualElement root = m_UIDocument.rootVisualElement;
+            if (root == null)
+            {
+                return;
+            }
+
+            bool inGame = ChatController.IsGameplayScene(sceneName);
+            root.style.display = inGame ? DisplayStyle.Flex : DisplayStyle.None;
+
+            // Close the chat panel if we leave gameplay while it was open.
+            if (!inGame && IsOpen)
+            {
+                IsOpen = false;
+                if (m_ChatRoot != null)
+                {
+                    m_ChatRoot.style.display = DisplayStyle.None;
+                }
+            }
+        }
+
         void Update()
         {
             if (m_FocusDelayFrames > 0)
@@ -147,6 +187,10 @@ namespace Tolik.RemakeSoF.Runtime.ChatManagement
         /// </summary>
         public void Toggle()
         {
+            if (!ChatController.IsGameplayScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name))
+            {
+                return;
+            }
             EnsureInitialized();
             IsOpen = !IsOpen;
 

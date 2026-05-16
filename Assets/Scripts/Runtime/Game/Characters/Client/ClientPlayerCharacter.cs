@@ -752,9 +752,6 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
 
         private void Awake()
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-
             // AvatarActions instanziieren (noch nicht aktiviert)
             m_AvatarActions = new AvatarActions();
             m_PlayerActions = m_AvatarActions.Player;
@@ -937,6 +934,10 @@ namespace Tolik.RemakeSoF.Runtime.Game.Characters.Client
             m_CameraRoot.SetActive(true);
             m_AimCameraController.enabled = true;
             m_CameraSwitcher.enabled = true;
+
+            // Owner-only: Awake fires for remote bots/clients too and would hide the Editor cursor.
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
 
             // FP-Body-Hiding: auf Kamera-Modus-Wechsel reagieren
             m_CameraSwitcher.OnCameraModeChanged += OnCameraModeChanged;

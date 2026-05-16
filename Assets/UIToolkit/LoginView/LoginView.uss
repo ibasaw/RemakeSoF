@@ -1,0 +1,53 @@
+/* ============================================================
+   Input fields — text fields, passwords
+   Scoped to LoginView only (.unity-text-field is generic so this
+   may affect other panels if they share this stylesheet — they
+   don't, this USS is loaded only by LoginView.uxml).
+   ============================================================ */
+
+/* Spacing between consecutive TextFields (and the label/button below). */
+.unity-text-field {
+    margin-bottom: 20px;
+}
+
+/* Base: thick transparent border so the box stays the same size on focus. */
+.unity-text-field > .unity-text-field__input {
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-color: rgba(255, 255, 255, 0);
+    border-right-color: rgba(255, 255, 255, 0);
+    border-top-color: rgba(255, 255, 255, 0);
+    border-bottom-color: rgba(255, 255, 255, 0);
+    transition-property: border-color, background-color;
+    transition-duration: 120ms;
+}
+
+/* Hover: bright white 2px border so the mouse target is obvious. */
+.unity-text-field > .unity-text-field__input:hover {
+    border-left-color: rgb(255, 255, 255);
+    border-right-color: rgb(255, 255, 255);
+    border-top-color: rgb(255, 255, 255);
+    border-bottom-color: rgb(255, 255, 255);
+    background-color: rgb(40, 40, 40);
+}
+
+/* Focus: bright cyan border + brighter background + bright caret. */
+.unity-text-field > .unity-text-field__input:focus {
+    border-left-color: rgb(80, 200, 255);
+    border-right-color: rgb(80, 200, 255);
+    border-top-color: rgb(80, 200, 255);
+    border-bottom-color: rgb(80, 200, 255);
+    background-color: rgb(25, 40, 55);
+    -unity-cursor-color: rgb(255, 255, 255);
+}
+
+/* Pulse class toggled every 500 ms by LoginView.cs on the focused field
+   to mimic a bash-style blinking cursor (USS has no @keyframes). */
+.unity-text-field > .unity-text-field__input.focus-blink-on {
+    border-left-color: rgb(180, 240, 255);
+    border-right-color: rgb(180, 240, 255);
+    border-top-color: rgb(180, 240, 255);
+    border-bottom-color: rgb(180, 240, 255);
+}

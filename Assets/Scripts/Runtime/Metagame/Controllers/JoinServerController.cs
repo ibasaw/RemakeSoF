@@ -53,7 +53,12 @@ namespace Tolik.RemakeSoF.Runtime
             RemoveListener<RefreshServerListEvent>(OnRefreshServerList);
             RemoveListener<ConnectToServerEvent>(OnConnectToServer);
             RemoveListener<LoadMoreServersEvent>(OnLoadMoreServers);
-            ConnectionManager.EventManager.RemoveListener<ConnectionEvent>(OnConnectionEvent);
+            // Null-guard: AEP/ConnectionManager may already be destroyed before this controller (teardown order).
+            ApplicationEntryPoint aep = ApplicationEntryPoint.Singleton;
+            if (aep != null && aep.ConnectionManager != null && aep.ConnectionManager.EventManager != null)
+            {
+                aep.ConnectionManager.EventManager.RemoveListener<ConnectionEvent>(OnConnectionEvent);
+            }
         }
 
         /// <summary>

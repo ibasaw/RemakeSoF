@@ -28,13 +28,50 @@ namespace Tolik.RemakeSoF.Runtime.ChatManagement
         void OnEnable()
         {
             toggleChatAction.action.performed += OnToggleChatAction;
-            toggleChatAction.action.Enable();
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged += OnActiveSceneChanged;
+            ApplySceneGate(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
         }
 
         void OnDisable()
         {
             toggleChatAction.action.performed -= OnToggleChatAction;
             toggleChatAction.action.Disable();
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+        }
+
+        void OnActiveSceneChanged(UnityEngine.SceneManagement.Scene previous, UnityEngine.SceneManagement.Scene next)
+        {
+            ApplySceneGate(next.name);
+        }
+
+        /// <summary>
+        /// Chat input only listens during gameplay. Without this gate the ToggleChat action
+        /// stays enabled after leaving a gameplay scene — pressing 'T' in any Metagame TextField
+        /// would open the chat panel, steal UIToolkit focus and lock the cursor.
+        /// </summary>
+        void ApplySceneGate(string sceneName)
+        {
+            if (IsGameplayScene(sceneName))
+            {
+                toggleChatAction.action.Enable();
+            }
+            else
+            {
+                toggleChatAction.action.Disable();
+                // Restore cursor in case we left gameplay while chat was open / cursor locked.
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+        }
+
+        /// <summary>
+        /// A scene counts as gameplay unless it is one of the explicit menu/bootstrap scenes.
+        /// Opt-out by name keeps new gameplay scenes (GameScene02, GameScene03, …) working
+        /// without further code changes.
+        /// </summary>
+        internal static bool IsGameplayScene(string sceneName)
+        {
+            return sceneName != "StartupScene" && sceneName != "MetagameScene";
         }
 
         /// <summary>
@@ -42,6 +79,10 @@ namespace Tolik.RemakeSoF.Runtime.ChatManagement
         /// </summary>
         void OnToggleChatAction(InputAction.CallbackContext ctx)
         {
+            if (!IsGameplayScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name))
+            {
+                return;
+            }
             Broadcast(new ToggleChatEvent());
         }
 

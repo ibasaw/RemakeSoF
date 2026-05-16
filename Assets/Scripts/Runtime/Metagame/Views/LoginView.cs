@@ -49,9 +49,6 @@ namespace Tolik.RemakeSoF.Runtime
             m_ChangeToRegisterButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
             m_QuitButton.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
 
-            m_UsernameTextField.RegisterValueChangedCallback(OnUsernameChanged);
-            m_PasswordTextField.RegisterValueChangedCallback(OnPasswordChanged);
-
             // Focus auf usernameTextField beim Start + Cursor blinkt automatisch
             m_UsernameTextField.Focus();
 
@@ -68,7 +65,7 @@ namespace Tolik.RemakeSoF.Runtime
 
         public void SetLogoTexture(Texture2D texture)
         {
-            if (texture != null)
+            if (texture != null && m_LogoImage != null)
             {
                 m_LogoImage.style.backgroundImage = new StyleBackground(texture);
             }
@@ -107,18 +104,6 @@ namespace Tolik.RemakeSoF.Runtime
             m_LoginButton.UnregisterCallback<ClickEvent>(OnClickLogin);
             m_ChangeToRegisterButton.UnregisterCallback<ClickEvent>(OnClickChangeToRegister);
             m_QuitButton.UnregisterCallback<ClickEvent>(OnClickQuit);
-
-            m_UsernameTextField.UnregisterValueChangedCallback(OnUsernameChanged);
-            m_UsernameTextField.UnregisterValueChangedCallback(OnPasswordChanged);
-        }
-
-        void OnUsernameChanged(ChangeEvent<string> username)
-        {
-            m_UsernameTextField.value = username.newValue;
-        }
-        void OnPasswordChanged(ChangeEvent<string> password)
-        {
-            m_PasswordTextField.value = password.newValue;
         }
 
         void OnClickQuit(ClickEvent evt)

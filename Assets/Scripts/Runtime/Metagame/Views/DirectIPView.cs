@@ -51,15 +51,16 @@ namespace Tolik.RemakeSoF.Runtime
 
         void SanitizeAndSetIpAddress(string ipAddressToSanitize)
         {
-            var ipAddress = Sanitize(ipAddressToSanitize);
-            m_IPTextField.value = ipAddress;
+            string ipAddress = Sanitize(ipAddressToSanitize);
+            if (ipAddress == ipAddressToSanitize) return;
+            m_IPTextField.SetValueWithoutNotify(ipAddress);
         }
 
         void SanitizeAndSetPort(string portToSanitize)
         {
-            var sanitizedPort = Sanitize(portToSanitize);
-            ushort.TryParse(sanitizedPort, out var parsedPort);
-            m_PortTextField.value = parsedPort.ToString();
+            string sanitizedPort = Sanitize(portToSanitize);
+            if (sanitizedPort == portToSanitize) return;
+            m_PortTextField.SetValueWithoutNotify(sanitizedPort);
         }
 
         /// <summary>
