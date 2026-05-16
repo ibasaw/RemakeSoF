@@ -137,3 +137,12 @@ server_build
 Art
 Art.meta
 
+/.idea/.gitignore
+/.idea/encodings.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/php.xml
+/.idea/RemakeSoF.iml
+/.idea/vcs.xml
+/.serena/.gitignore
+/.serena/project.yml

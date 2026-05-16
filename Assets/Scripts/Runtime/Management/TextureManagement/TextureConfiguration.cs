@@ -34,6 +34,8 @@ namespace Tolik.RemakeSoF.Runtime.TextureManagement
                 public string loadoutButton;
                 public string logoutButtonGlow;
                 public string logoutButton;
+                public string quitButtonGlow;
+                public string quitButton;
             }
 
             [Serializable]
