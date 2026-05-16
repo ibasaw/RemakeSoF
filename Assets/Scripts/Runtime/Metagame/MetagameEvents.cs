@@ -56,6 +56,13 @@ namespace Tolik.RemakeSoF.Runtime
     }
 
     /// <summary>
+    /// Broadcast by MainMenuView when the user clicks the logout button. The view shows
+    /// a confirmation overlay locally; this event fires only after the user confirms.
+    /// MainMenuController listens and delegates to AuthenticationManager.Logout().
+    /// </summary>
+    internal class UserRequestedLogoutEvent : AppEvent { }
+
+    /// <summary>
     /// Called when a player hit the toggle console hotkey (default: 'k')
     /// </summary>
     internal class ToggleConsoleEvent : AppEvent { }

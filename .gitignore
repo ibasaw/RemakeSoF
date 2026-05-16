@@ -146,3 +146,7 @@ Art.meta
 /.idea/vcs.xml
 /.serena/.gitignore
 /.serena/project.yml
+/.claude/agents/code-reviewer.md
+/.claude/agents/security-reviewer.md
+/.mcp.json
+/todos.md

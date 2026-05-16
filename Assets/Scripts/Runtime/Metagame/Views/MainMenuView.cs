@@ -12,6 +12,10 @@ namespace Tolik.RemakeSoF.Runtime
     {
         private VisualElement m_ContentBackground;
         private VisualElement m_MainMenuBackground;
+        VisualElement m_LogoutConfirmPanel;
+        Button m_LogoutConfirmYes;
+        Button m_LogoutConfirmQuit;
+        Button m_LogoutConfirmNo;
         UIDocument m_UIDocument;
 
         // Ein Container für alle Button-Infos
@@ -63,7 +67,7 @@ namespace Tolik.RemakeSoF.Runtime
                 HoverIconPath = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.logoutButtonGlow)?.Texture,
                 OnClick = (cfg) =>
                 {
-                    ApplicationEntryPoint.Singleton.AuthenticationManager.Logout();
+                    ShowLogoutConfirmation();
                 }
             });
         }
@@ -74,9 +78,21 @@ namespace Tolik.RemakeSoF.Runtime
 
             m_ContentBackground = root.Q<VisualElement>("contentBackground");
             m_MainMenuBackground = root.Q<VisualElement>("mainMenu");
-            TextureConfiguration configuration = ServiceLocator.Get<TextureManager>().Configuration;
 
-            Texture2D mainMenuBackgroundTexture = ServiceLocator.Get<TextureManager>().GetTextureData(configuration.metagame.mainMenu.background)?.Texture;
+            // Defensive: TextureManager is registered in ApplicationEntryPoint AFTER multiplayer-role
+            // gating. OnEnable can fire earlier — typically during an Editor domain reload while in
+            // MetagameScene — at which point ServiceLocator.Get<TextureManager>() returns null and the
+            // .Configuration access NREs. Skip texture-dependent init; the view will repaint correctly
+            // on the next legitimate Show()/Hide() cycle once the service is registered.
+            TextureManager textureManager = ServiceLocator.Get<TextureManager>();
+            if (textureManager == null)
+            {
+                Debug.LogWarning("[MainMenuView] OnEnable ran before TextureManager was registered. Skipping texture init.");
+                return;
+            }
+            TextureConfiguration configuration = textureManager.Configuration;
+
+            Texture2D mainMenuBackgroundTexture = textureManager.GetTextureData(configuration.metagame.mainMenu.background)?.Texture;
             m_MainMenuBackground.style.backgroundImage = new StyleBackground(mainMenuBackgroundTexture);
             
             // Buttons + callbacks
@@ -88,7 +104,7 @@ namespace Tolik.RemakeSoF.Runtime
                 string iconPath = iconField?.GetValue(configuration.metagame.mainMenu) as string;
                 if (!string.IsNullOrEmpty(iconPath))
                 {
-                    cfg.ButtonRef.iconImage = ServiceLocator.Get<TextureManager>().GetTextureData(iconPath)?.Texture;
+                    cfg.ButtonRef.iconImage = textureManager.GetTextureData(iconPath)?.Texture;
                 }
 
                 if (cfg.TargetView != null)
@@ -112,6 +128,82 @@ namespace Tolik.RemakeSoF.Runtime
 
                 cfg.ButtonRef.RegisterCallback<PointerLeaveEvent>(evt => OnPointerLeaveEvent(evt, cfg));
             }
+
+            m_LogoutConfirmPanel = root.Q<VisualElement>("logoutConfirmPanel");
+            m_LogoutConfirmYes = root.Q<Button>("logoutConfirmYes");
+            m_LogoutConfirmQuit = root.Q<Button>("logoutConfirmQuit");
+            m_LogoutConfirmNo = root.Q<Button>("logoutConfirmNo");
+
+            if (m_LogoutConfirmYes != null)
+            {
+                m_LogoutConfirmYes.RegisterCallback<ClickEvent>(OnLogoutConfirmYes);
+                m_LogoutConfirmYes.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            }
+            if (m_LogoutConfirmQuit != null)
+            {
+                m_LogoutConfirmQuit.RegisterCallback<ClickEvent>(OnLogoutConfirmQuit);
+                m_LogoutConfirmQuit.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            }
+            if (m_LogoutConfirmNo != null)
+            {
+                m_LogoutConfirmNo.RegisterCallback<ClickEvent>(OnLogoutConfirmNo);
+                m_LogoutConfirmNo.RegisterCallback<PointerEnterEvent>(_ => UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Hilite));
+            }
+        }
+
+        /// <summary>
+        /// Reveals the inline logout confirmation overlay. Hidden by default in the UXML.
+        /// </summary>
+        void ShowLogoutConfirmation()
+        {
+            if (m_LogoutConfirmPanel == null) return;
+            m_LogoutConfirmPanel.style.display = DisplayStyle.Flex;
+        }
+
+        void HideLogoutConfirmation()
+        {
+            if (m_LogoutConfirmPanel == null) return;
+            m_LogoutConfirmPanel.style.display = DisplayStyle.None;
+        }
+
+        void OnLogoutConfirmYes(ClickEvent evt)
+        {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.ApplyChanges);
+            HideLogoutConfirmation();
+            Broadcast(new UserRequestedLogoutEvent());
+        }
+
+        void OnLogoutConfirmQuit(ClickEvent evt)
+        {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.ApplyChanges);
+            HideLogoutConfirmation();
+            // Quit closes the process without clearing the saved session — next launch
+            // restores the current identity automatically via AuthSessionStore.TryLoad.
+            // In the Editor, Application.Quit is a no-op while in Play mode, so explicitly
+            // exit Play mode for the developer feedback loop.
+            Debug.Log("[MainMenuView] Quit to desktop chosen — exiting application (session preserved).");
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.ExitPlaymode();
+#else
+            UnityEngine.Application.Quit();
+#endif
+        }
+
+        void OnLogoutConfirmNo(ClickEvent evt)
+        {
+            UIMenuSoundPlayer.Play(UIMenuSoundPlayer.Click);
+            HideLogoutConfirmation();
+        }
+
+        /// <summary>
+        /// Enables/disables the logout button. Called by the controller while a network
+        /// connection is in flight, to avoid logging out mid-handshake.
+        /// </summary>
+        public void SetLogoutEnabled(bool enabled)
+        {
+            ButtonConfig logoutCfg = m_ButtonConfigs.Find(b => b.Name == "logoutButton");
+            if (logoutCfg == null || logoutCfg.ButtonRef == null) return;
+            logoutCfg.ButtonRef.SetEnabled(enabled);
         }
 
         public void LoadSubViewByName(string viewName)

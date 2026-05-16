@@ -1,15 +1,29 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UIToolkit/UnityStyleSheet.uss?fileID=7433441132597879392&amp;guid=819e6491a1421a14db87a36e0c93b136&amp;type=3#UnityStyleSheet" />
+    <Style src="project://database/Assets/UIToolkit/MainMenuView/MainMenuView.uss" />
     <ui:VisualElement name="mainMenu" style="justify-content: space-between; align-items: center; width: 100%; height: 100%;">
         <ui:VisualElement name="contentBackground" style="flex-grow: 1; width: 90%; flex-shrink: 1; align-items: stretch; justify-content: flex-start; margin-top: 70px; margin-bottom: 140px;">
             <ui:VisualElement name="myContainerTest" style="flex-grow: 1; background-size: 100% 100%;" />
         </ui:VisualElement>
-        <ui:VisualElement name="bottomButtonGroup" style="flex-grow: 1; width: 760px; height: 75px; flex-shrink: 1; flex-direction: row; position: absolute; bottom: 65px; left: 565px; flex-basis: auto; justify-content: center; align-items: flex-start; align-content: flex-start; align-self: auto;">
-            <ui:Button name="joinServerButton" style="background-color: rgba(188, 188, 188, 0); -unity-background-image-tint-color: rgb(111, 245, 0); width: 20%; height: 100%; border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
-            <ui:Button name="createServerButton" style="background-color: rgba(188, 188, 188, 0); -unity-background-image-tint-color: rgb(111, 245, 0); width: 20%; height: 100%; border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
-            <ui:Button name="loadoutButton" tooltip="Tester" style="background-color: rgba(188, 188, 188, 0); -unity-background-image-tint-color: rgb(111, 245, 0); width: 20%; background-size: 100% 100%; height: 100%; border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
-            <ui:Button name="optionsButton" style="background-color: rgba(188, 188, 188, 0); -unity-background-image-tint-color: rgb(111, 245, 0); width: 20%; height: 100%; border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
-            <ui:Button name="logoutButton" style="background-color: rgba(188, 188, 188, 0); -unity-background-image-tint-color: rgb(111, 245, 0); width: 20%; height: 100%; border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
+        <ui:VisualElement name="bottomButtonBar" style="position: absolute; left: 0; right: 0; bottom: 65px; height: 75px; flex-direction: row; justify-content: center; align-items: flex-start;">
+            <ui:VisualElement name="bottomButtonGroup" style="flex-direction: row; height: 100%; justify-content: center; align-items: stretch;">
+                <ui:Button name="joinServerButton" style="width: 152px; height: 100%; flex-shrink: 0; background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgb(111, 245, 0); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
+                <ui:Button name="createServerButton" style="width: 152px; height: 100%; flex-shrink: 0; background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgb(111, 245, 0); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
+                <ui:Button name="loadoutButton" tooltip="Tester" style="width: 152px; height: 100%; flex-shrink: 0; background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgb(111, 245, 0); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
+                <ui:Button name="optionsButton" style="width: 152px; height: 100%; flex-shrink: 0; background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgb(111, 245, 0); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
+                <ui:Button name="logoutButton" style="width: 152px; height: 100%; flex-shrink: 0; background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgb(111, 245, 0); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="logoutConfirmPanel" picking-mode="Position" style="display: none; position: absolute; left: 0; top: 0; right: 0; bottom: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.75); justify-content: center; align-items: center;">
+            <ui:VisualElement style="background-color: rgb(25, 25, 25); padding-top: 30px; padding-bottom: 30px; padding-left: 40px; padding-right: 40px; min-width: 520px; align-items: center; border-left-width: 2px; border-right-width: 2px; border-top-width: 2px; border-bottom-width: 2px; border-left-color: rgb(80, 200, 255); border-right-color: rgb(80, 200, 255); border-top-color: rgb(80, 200, 255); border-bottom-color: rgb(80, 200, 255);">
+                <ui:Label text="Leave the game?" style="color: rgb(255, 255, 255); font-size: 22px; -unity-font-style: bold; margin-bottom: 8px;" />
+                <ui:Label name="logoutConfirmHint" text="Log out clears your saved session. Quit to desktop preserves it — next launch logs you back in automatically." style="color: rgb(160, 160, 160); font-size: 13px; margin-bottom: 24px; -unity-font-style: italic;" />
+                <ui:VisualElement style="flex-direction: row; justify-content: center; align-items: center;">
+                    <ui:Button name="logoutConfirmYes" text="Log out" class="button" style="margin-right: 14px;" />
+                    <ui:Button name="logoutConfirmQuit" text="Quit to desktop" class="button" style="margin-right: 14px;" />
+                    <ui:Button name="logoutConfirmNo" text="Cancel" class="button" />
+                </ui:VisualElement>
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

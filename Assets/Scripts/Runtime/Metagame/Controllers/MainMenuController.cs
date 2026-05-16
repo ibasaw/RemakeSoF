@@ -20,8 +20,10 @@ namespace Tolik.RemakeSoF.Runtime
             AddListener<ExitMatchmakerQueueEvent>(OnExitMatchmakerQueue);
             AddListener<EnterIPConnectionEvent>(OnEnterIPConnection);
             AddListener<ExitIPConnectionEvent>(OnExitIPConnection);
+            AddListener<UserRequestedLogoutEvent>(OnUserRequestedLogout);
             ConnectionManager.EventManager.AddListener<ConnectionEvent>(OnConnectionEvent);
             AuthenticationManager.EventManager.AddListener<UserAuthenticatedEvent>(OnUserAuthenticatedEvent);
+            AuthenticationManager.EventManager.AddListener<UserUnauthenticatedEvent>(OnUserUnauthenticatedEvent);
         }
 
         void Start()
@@ -43,8 +45,10 @@ namespace Tolik.RemakeSoF.Runtime
             RemoveListener<ExitMatchmakerQueueEvent>(OnExitMatchmakerQueue);
             RemoveListener<EnterIPConnectionEvent>(OnEnterIPConnection);
             RemoveListener<ExitIPConnectionEvent>(OnExitIPConnection);
+            RemoveListener<UserRequestedLogoutEvent>(OnUserRequestedLogout);
             ConnectionManager.EventManager.RemoveListener<ConnectionEvent>(OnConnectionEvent);
             AuthenticationManager.EventManager.RemoveListener<UserAuthenticatedEvent>(OnUserAuthenticatedEvent);
+            AuthenticationManager.EventManager.RemoveListener<UserUnauthenticatedEvent>(OnUserUnauthenticatedEvent);
         }
 
         void OnEnterMatchmakerQueue(EnterMatchmakerQueueEvent evt)
@@ -71,6 +75,10 @@ namespace Tolik.RemakeSoF.Runtime
         {
             switch (evt.status)
             {
+                case ConnectStatus.Connecting:
+                    // Block logout mid-handshake to avoid leaving the session in a half-state.
+                    View.SetLogoutEnabled(false);
+                    break;
                 case ConnectStatus.Success:
                 case ConnectStatus.ServerFull:
                 case ConnectStatus.IncompatibleVersions:
@@ -78,6 +86,7 @@ namespace Tolik.RemakeSoF.Runtime
                 case ConnectStatus.GenericDisconnect:
                 case ConnectStatus.ServerEndedSession:
                 case ConnectStatus.StartClientFailed:
+                    View.SetLogoutEnabled(true);
                     View.Show();
                     break;
             }
@@ -92,6 +101,28 @@ namespace Tolik.RemakeSoF.Runtime
 
             View.Show();
             View.LoadSubViewByName("loadoutButton"); // start show Loadout view by default when player is authenticated and main menu is shown
+        }
+
+        /// <summary>
+        /// MainMenuView confirmed the logout via its inline overlay. Delegate to the manager,
+        /// which clears the persisted session and transitions to UnauthenticatedState.
+        /// </summary>
+        void OnUserRequestedLogout(UserRequestedLogoutEvent evt)
+        {
+            Debug.Log("[MainMenuController] User confirmed logout — delegating to AuthenticationManager.");
+            AuthenticationManager.Logout();
+        }
+
+        /// <summary>
+        /// Fired by UnauthenticatedState on entry (post-logout or post-expiry). Hide the menu
+        /// so the LoginView (re-shown by LoginController) is not occluded, and reset the
+        /// cached player data so a different user does not briefly inherit the previous skin / name.
+        /// </summary>
+        void OnUserUnauthenticatedEvent(UserUnauthenticatedEvent evt)
+        {
+            Debug.Log("[MainMenuController] User unauthenticated — hiding menu and resetting player data.");
+            App.Model.PlayerData.Reset();
+            View.Hide();
         }
     }
 }

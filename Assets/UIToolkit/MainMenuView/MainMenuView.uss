@@ -1,0 +1,3 @@
+/* MainMenuView styles — currently empty.
+   The bottom row uses inline styles for tinted icon hover via background-image.
+   The logout/quit confirmation modal uses inline styles too. */
