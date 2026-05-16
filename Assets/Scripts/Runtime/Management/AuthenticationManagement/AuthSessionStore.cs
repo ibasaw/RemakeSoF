@@ -55,7 +55,21 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
                 Directory.CreateDirectory(DirectoryPath);
                 string json = JsonUtility.ToJson(response);
                 string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
-                File.WriteAllText(FilePath, encoded);
+
+                // Atomic swap: write to .tmp then rename over the target so a crash mid-write
+                // can never leave a zero-byte session.dat that TryLoad would silently reject.
+                string tmpPath = FilePath + ".tmp";
+                File.WriteAllText(tmpPath, encoded);
+                TrySetOwnerOnlyPermissions(tmpPath);
+
+                if (File.Exists(FilePath))
+                {
+                    File.Replace(tmpPath, FilePath, null);
+                }
+                else
+                {
+                    File.Move(tmpPath, FilePath);
+                }
                 TrySetOwnerOnlyPermissions(FilePath);
             }
             catch (Exception ex)

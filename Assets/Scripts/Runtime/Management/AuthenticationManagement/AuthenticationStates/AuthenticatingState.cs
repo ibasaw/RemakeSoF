@@ -64,6 +64,7 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
                 if (result.IsSuccess)
                 {
                     Manager.m_Authenticated.Configure(result.Response);
+                    AuthSessionStore.Save(result.Response);
                     Manager.OnAuthenticationSuccess();
                 }
                 else

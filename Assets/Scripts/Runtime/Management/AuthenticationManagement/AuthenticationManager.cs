@@ -43,10 +43,21 @@ namespace Tolik.RemakeSoF.Runtime.AuthenticationManagement
 
         /// <summary>
         /// Attempt to authenticate with the provided credentials.
+        /// Always routes through AuthenticatingState regardless of the current state, so a
+        /// previously-restored session does not silently swallow a fresh login attempt with
+        /// different credentials. If the typed username differs from the cached one, the
+        /// persisted session file is wiped first to prevent stale-identity leakage if the
+        /// network call later fails or the process is killed mid-save.
         /// </summary>
         public void Authenticate(string username, string password)
         {
-            m_CurrentState.OnAuthenticationAttempt(username, password);
+            AuthenticationResponse cached = AuthSessionStore.TryLoad();
+            if (cached != null && !string.Equals(cached.username, username, StringComparison.Ordinal))
+            {
+                AuthSessionStore.Clear();
+            }
+            m_Authenticating.Configure(username, password);
+            ChangeState(m_Authenticating);
         }
 
         /// <summary>
